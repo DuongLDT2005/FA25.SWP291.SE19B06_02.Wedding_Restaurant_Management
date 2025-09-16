@@ -55,10 +55,17 @@ src/server.js     - Start server, lắng nghe cổng
 
 ### Frontend (React)
 assets/ : Hình ảnh, icon, font
+
 components/ : Reusable UI components (Button, Modal, Navbar)
+
 features/ : Module theo chức năng hoặc role (auth, customer, owner, admin, restaurant, payment)
+
 services/ : Gọi API backend bằng axios/fetch
+
 hooks/ : Custom hooks (useAuth, useBooking)
+
 utils/ : Helper functions dùng chung
+
 App.js : Quản lý routes, phân quyền theo role
+
 index.js : Render React app vào DOM
