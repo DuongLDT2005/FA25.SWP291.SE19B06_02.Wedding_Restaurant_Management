@@ -1,0 +1,138 @@
+.sign--up--container h1 {
+    text-align: center;
+    color: #993344;
+}
+
+.sign--up {
+    display: flex;
+    border-radius: 20px;
+    margin: 7vh 7vw;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    height: 80vh;
+}
+
+.sign--up--slogan {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    justify-content: center;
+    color: #fefaf9;
+    background: linear-gradient(20deg, #993344 0%, #C2858F 100%);
+    border-radius: 20px 0 0 20px;
+}
+
+.sign--up--slogan h2,
+.sign--up--slogan p {
+    font-size: 1.5rem;
+    margin: 0 10%;
+}
+
+.sign--up--slogan h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2%;
+}
+
+.sign--up--container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin: 2%;
+    justify-content: center;
+}
+
+.sign--up--container .sign--up--form div {
+    margin-bottom: 2%;
+    padding: 1rem 1%;
+    position: relative;
+    border: 3px solid #ddd;
+    border-radius: 20px;
+}
+
+.sign--up--form .file--upload {
+    border: none !important;
+    padding: 0 !important;
+    margin: 10px;
+}
+
+.sign--up--container h1 {
+    margin-bottom: 5%;
+}
+
+.sign--up--container input {
+    font-weight: 600;
+    padding-left: 10px;
+    border: none;
+    outline: none;
+    width: 90%;
+}
+
+.sign--up--container span {
+    color: #993344;
+    cursor: pointer;
+}
+
+.file--upload p {
+    color: #993344;
+    margin: 10px 0;
+    font-weight: 600;
+}
+
+.file--upload input[type="file"] {
+    padding-left: 0;
+}
+
+.file--upload input[type="file"]::-webkit-file-upload-button {
+    background: #C2858F;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file--upload input[type="file"]::-webkit-file-upload-button:hover {
+    background: #993344;
+}
+.sign--up--container button {
+    width: 100%;
+    background: radial-gradient(circle, #C2858F 0%, #993344 100%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border: none;
+    border-radius: 20px;
+    padding: 13px 0;
+    margin-top: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sign--up--container button:hover {
+    transform: translateY(-5px);
+}
+
+.sign--up--message {
+    text-align: center;
+    margin: 5px 0;
+    font-weight: 600;
+    color: #993344;
+}
+
+.sign--up--link {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.sign--up--link a {
+    text-decoration: none;
+    color: #993344;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.sign--up--link a:hover {
+    color: #C2858F;
+}
