@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Routes, Route} from "react-router-dom";
 import Header from './components/Header';
 import Content from './pages/homePage';
 import Footer from './components/Footer';
-import SignUp from './pages/owner/signUp/signUpForOwner';
-import "./styles/general.css"; // Import file CSS chung
+import SignUp from './pages/auth/signUp/signUpForOwner';
+import HeaderWithoutSearch from "./components/HeaderWithoutSearch";
+import "./styles/generalStyles.css"; // Import file CSS chung
 import React from 'react';
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -20,9 +21,11 @@ function MainLayout({ children }) {
 
 function AuthLayout({ children }) {
   return (
-    <div className="wrapper">
+    <>
+      {<HeaderWithoutSearch />}
       {children}
-    </div>
+      {<Footer />}
+    </>
   );
 }
 

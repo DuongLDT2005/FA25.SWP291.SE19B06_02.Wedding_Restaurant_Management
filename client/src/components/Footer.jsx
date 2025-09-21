@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/Footer.css"
+import "../styles/FooterStyles.css"
 import { Link } from "react-router-dom";
 function Footer() {
     return(
@@ -15,53 +15,53 @@ function Footer() {
                 <div className="footer-column">
                     <h4>About Us</h4>
                     <ul>
-                        <li><a href="#">Company Overview</a></li>
-                        <li><a href="#">Our Mission & Values</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Press Releases</a></li>
+                        <li><Link to="#">Company Overview</Link></li>
+                        <li><Link to="#">Our Mission & Values</Link></li>
+                        <li><Link to="#">Careers</Link></li>
+                        <li><Link to="#">Blog</Link></li>
+                        <li><Link to="#">Press Releases</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-column">
                     <h4>Customer Service</h4>
                     <ul>
-                        <li><a href="#">Contact Us</a></li>
-                        <li><a href="#">FAQs</a></li>
-                        <li><a href="#">Live Chat</a></li>
-                        <li><a href="#">Cancellation Policy</a></li>
-                        <li><a href="#">Booking Policies</a></li>
+                        <li><Link to="#">Contact Us</Link></li>
+                        <li><Link to="#">FAQs</Link></li>
+                        <li><Link to="#">Live Chat</Link></li>
+                        <li><Link to="#">Cancellation Policy</Link></li>
+                        <li><Link to="#">Booking Policies</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-column">
                     <h4>Explore</h4>
                     <ul>
-                        <li><a href="#">Destinations</a></li>
-                        <li><a href="#">Special Offers</a></li>
-                        <li><a href="#">Last-Minute Deals</a></li>
-                        <li><a href="#">Travel Guides</a></li>
-                        <li><a href="#">Blog & Travel Tips</a></li>
+                        <li><Link to="#">Destinations</Link></li>
+                        <li><Link to="#">Special Offers</Link></li>
+                        <li><Link to="#">Last-Minute Deals</Link></li>
+                        <li><Link to="#">Travel Guides</Link></li>
+                        <li><Link to="#">Blog & Travel Tips</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-column">
                     <h4>Support</h4>
                     <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms & Conditions</a></li>
-                        <li><a href="#">Accessibility</a></li>
-                        <li><a href="#">Feedback & Suggestions</a></li>
-                        <li><a href="#">Sitemap</a></li>
+                        <li><Link to="#">Privacy Policy</Link></li>
+                        <li><Link to="#">Terms & Conditions</Link></li>
+                        <li><Link to="#">Accessibility</Link></li>
+                        <li><Link to="#">Feedback & Suggestions</Link></li>
+                        <li><Link to="#">Sitemap</Link></li>
                     </ul>
                 </div>
 
                 <div className="footer-column">
                     <h4>Membership</h4>
                     <ul>
-                        <li><a href="#">Loyalty Program</a></li>
-                        <li><a href="#">Unlock Exclusive Offers</a></li>
-                        <li><a href="#">Rewards & Benefits</a></li>
+                        <li><Link to="#">Loyalty Program</Link></li>
+                        <li><Link to="#">Unlock Exclusive Offers</Link></li>
+                        <li><Link to="#">Rewards & Benefits</Link></li>
                     </ul>
                 </div>
             </div>

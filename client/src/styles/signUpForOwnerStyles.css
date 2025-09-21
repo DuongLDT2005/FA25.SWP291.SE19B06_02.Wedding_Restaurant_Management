@@ -1,6 +1,9 @@
+#root{
+    margin-top: 8%;
+}
 .sign--up--container h1 {
     text-align: center;
-    color: #993344;
+    margin-bottom: 0;
 }
 
 .sign--up {
@@ -8,7 +11,7 @@
     border-radius: 20px;
     margin: 7vh 7vw;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    height: 80vh;
+    height: 85vh;
 }
 
 .sign--up--slogan {
@@ -17,7 +20,7 @@
     width: 60%;
     justify-content: center;
     color: #fefaf9;
-    background: linear-gradient(20deg, #993344 0%, #C2858F 100%);
+    background: #993344;
     border-radius: 20px 0 0 20px;
 }
 
@@ -25,10 +28,11 @@
 .sign--up--slogan p {
     font-size: 1.5rem;
     margin: 0 10%;
+    width: 50%;
 }
 
 .sign--up--slogan h2 {
-    font-size: 2.5rem;
+    font-size: 4rem;
     margin-bottom: 2%;
 }
 
@@ -42,10 +46,10 @@
 
 .sign--up--container .sign--up--form div {
     margin-bottom: 2%;
-    padding: 1rem 1%;
+    padding: 3% 1%;
     position: relative;
     border: 3px solid #ddd;
-    border-radius: 20px;
+    border-radius: 10px;
 }
 
 .sign--up--form .file--upload {
@@ -63,7 +67,7 @@
     padding-left: 10px;
     border: none;
     outline: none;
-    width: 90%;
+    width: 95%;
 }
 
 .sign--up--container span {
@@ -72,7 +76,6 @@
 }
 
 .file--upload p {
-    color: #993344;
     margin: 10px 0;
     font-weight: 600;
 }
@@ -82,7 +85,7 @@
 }
 
 .file--upload input[type="file"]::-webkit-file-upload-button {
-    background: #C2858F;
+    background: #993344;
     color: #fff;
     border: none;
     border-radius: 20px;
@@ -91,17 +94,14 @@
     transition: all 0.3s ease;
 }
 
-.file--upload input[type="file"]::-webkit-file-upload-button:hover {
-    background: #993344;
-}
 .sign--up--container button {
     width: 100%;
-    background: radial-gradient(circle, #C2858F 0%, #993344 100%);
+    background: #993344 100%;
     color: #fff;
     font-weight: 600;
     font-size: 1.08rem;
     border: none;
-    border-radius: 20px;
+    border-radius: 10px;
     padding: 13px 0;
     margin-top: 8px;
     margin-bottom: 6px;
@@ -126,13 +126,29 @@
 }
 
 .sign--up--link a {
+    position: relative;
     text-decoration: none;
-    color: #993344;
+    color: #f6a401;
     font-weight: 600;
     transition: all 0.3s ease;
     cursor: pointer;
 }
+.sign--up--link a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 0;
+    height: 2px;
+    background-color: #f6a401;
+    transition: width 0.3s ease;
+}
 
 .sign--up--link a:hover {
-    color: #C2858F;
+    font-weight: 700;
+}
+
+.sign--up--link a:hover::after {
+    width: 100%;
+    /* độ dài thanh gạch ngang */
 }
