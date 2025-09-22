@@ -1,5 +1,4 @@
 import UserDAO from "../dao/userDao.js";
-import Validation from "./validation.js";
 
 class UserController {
     static async getAllUsers(req, res) {
@@ -46,29 +45,14 @@ class UserController {
     }
 
     static async createUser(req, res) {
-        const { email, fullName, phone, password, role, status } = req.body;
-        // Validate required fields
-        if (!email || !fullName || !phone || !password || role === undefined) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        // Validate email
-        if (!await Validation.validEmail(email)) {
-            return res.status(400).json({ error: 'Invalid email format' });
-        }
-        // Validate phone
-        if (!await Validation.validPhone(phone)) {
-            return res.status(400).json({ error: 'Invalid phone format' });
-        }
-        // Validate strong password
-        if (!await Validation.validPassword(password)) {
-            return res.status(400).json({ error: 'Password must be at least 8 characters, include uppercase, lowercase, digit, and special character' });
-        }
         try {
+            if (!req.body) {
+                return res.status(400).json({ error: 'Request body cannot be null' });
+            }
             const newUser = await UserDAO.createUser(req.body);
             res.status(201).json(newUser);
         } catch (error) {
             console.error('Error creating user:', error);
-            
             res.status(500).json({ error: 'Internal server error' });
         }
     }
