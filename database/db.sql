@@ -9,25 +9,24 @@ CREATE TABLE User (
     fullName VARCHAR(255) NOT NULL,
     phone VARCHAR(15) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role TINYINT NOT NULL, -- 0: CUSTOMER, 1: OWNER, 2: ADMIN
+    role VARCHAR(20) NOT NULL,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
+    CHECK (role IN ('CUSTOMER', 'OWNER', 'ADMIN'))
 );
 
 -- Table Customer
 CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
-    weddingRole TINYINT NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
+    weddingRole VARCHAR(20) NOT NULL,
     partnerName VARCHAR(255),
-    FOREIGN KEY (customerID) REFERENCES User(userID) ON DELETE CASCADE
+    FOREIGN KEY (customerID) REFERENCES User(userID) ON DELETE CASCADE,
+    CHECK (weddingRole IN ('BRIDE', 'GROOM', 'OTHER'))
 );
 
 -- Table Owner
 CREATE TABLE Owner (
     ownerID INT PRIMARY KEY,
-    licenseUrl VARCHAR(255) NOT NULL,
-    status TINYINT NOT NULL DEFAULT 0, -- 0: pending, 1: rejected, 2: negotiating, 3: active, 4: inactive
-	commissionRate DECIMAL(3,2) DEFAULT NULL CHECK (commissionRate >= 0 AND commissionRate <= 1),
     FOREIGN KEY (ownerID) REFERENCES User(userID) ON DELETE CASCADE
 );
 
@@ -49,7 +48,7 @@ CREATE TABLE Restaurant (
     hallCount INT DEFAULT 0,
     addressID INT NOT NULL,
     thumbnailURL VARCHAR(255) NOT NULL,
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
     FOREIGN KEY (ownerID) REFERENCES Owner(ownerID) ON DELETE CASCADE,
     FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE CASCADE
 );
@@ -70,24 +69,17 @@ CREATE TABLE BankAccount (
     accountNumber VARCHAR(255) NOT NULL,
     accountHolder VARCHAR(255) NOT NULL,
     branch VARCHAR(255),
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
     FOREIGN KEY (ownerID) REFERENCES Owner(ownerID) ON DELETE CASCADE
 );
 
 -- Table Amenity
 CREATE TABLE Amenity (
     amenityID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
-);
-
--- Table RestaurantAmenities
-CREATE TABLE RestaurantAmenities (
     restaurantID INT NOT NULL,
-    amenityID INT NOT NULL,
-    PRIMARY KEY (restaurantID, amenityID),
-	FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (amenityID) REFERENCES Amenity(amenityID) ON DELETE CASCADE ON UPDATE CASCADE
+    name VARCHAR(255) NOT NULL,
+    status BIT DEFAULT 1,
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
 );
 
 -- Table Hall
@@ -97,9 +89,10 @@ CREATE TABLE Hall (
     name VARCHAR(255) NOT NULL,
     description VARCHAR(255) NOT NULL,
     capacity INT NOT NULL,
-    area DECIMAL(7,2) NOT NULL,
+    area DECIMAL(5,2) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
+    occupied BIT DEFAULT 0,
     FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
 );
 
@@ -117,29 +110,25 @@ CREATE TABLE Menu (
     restaurantID INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
     FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
 );
 
 -- Table DishCategory
 CREATE TABLE DishCategory (
     categoryID INT AUTO_INCREMENT PRIMARY KEY,
-    restaurantID INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     requiredQuantity INT DEFAULT 1 CHECK(requiredQuantity > 0),
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE ON UPDATE CASCADE
+    status BIT DEFAULT 1
 );
 
 -- Table Dish
 CREATE TABLE Dish (
     dishID INT AUTO_INCREMENT PRIMARY KEY,
-    restaurantID INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     categoryID INT NOT NULL,
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (categoryID) REFERENCES DishCategory(categoryID) ON DELETE CASCADE,
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    status BIT DEFAULT 1,
+    FOREIGN KEY (categoryID) REFERENCES DishCategory(categoryID) ON DELETE CASCADE
 );
 
 -- Table DishMenu (many-to-many)
@@ -158,7 +147,7 @@ CREATE TABLE Service (
     name VARCHAR(100) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
     unit VARCHAR(50),
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1,
     FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
 );
 
@@ -168,14 +157,14 @@ CREATE TABLE Promotion (
     restaurantID INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     description VARCHAR(255),
-    minTable INT DEFAULT 0 CHECK(minTable >= 0),
-    discountType TINYINT NOT NULL,  -- 0: PERCENT, 1: FREE
+    minTable INT DEFAULT 1 CHECK(minTable >= 0),
+    discountType VARCHAR(20),
     discountValue DECIMAL(15,2) CHECK(discountValue >= 0),
     startDate DATE NOT NULL,
     endDate DATE NOT NULL,
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status BIT DEFAULT 1,
     FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE,
+    CHECK (discountType IN ('PERCENT','FREE')),
     CHECK (startDate <= endDate)
 );
 
@@ -199,15 +188,16 @@ CREATE TABLE Booking (
     endTime TIME NOT NULL,
     tableCount INT DEFAULT 1 CHECK(tableCount > 0),
     specialRequest VARCHAR(255),
-    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: CANCELLED, 3: DEPOSITED, 4: COMPLEDTED
+    status VARCHAR(20) DEFAULT 'PENDING',
     totalAmount DECIMAL(15,2) NOT NULL,
     discountAmount DECIMAL(15,2) DEFAULT 0,
     finalPrice DECIMAL(15,2) NOT NULL,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    checked BIT DEFAULT 0, -- 0: CHECKED, 1: UNCHECKED
+    checked BIT DEFAULT 0,
     FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON DELETE CASCADE,
     FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON DELETE CASCADE,
-    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON DELETE CASCADE
+    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON DELETE CASCADE,
+    CHECK (status IN ('PENDING','CONFIRMED','CANCELLED', 'DEPOSITED', 'COMPLETED'))
 );
 
 -- Table BookingDish
@@ -244,39 +234,34 @@ CREATE TABLE Payment (
     paymentID INT AUTO_INCREMENT PRIMARY KEY,
     bookingID INT NOT NULL,
     amount DECIMAL(15,2) NOT NULL CHECK(amount >= 0),
-    type BIT DEFAULT 0, -- 0: DEPOSIT, 1: REMAINING
+    type VARCHAR(20) NOT NULL,
     paymentMethod VARCHAR(50),
-    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: FAILED, 3: EXPIRED, 4: CANCELLED
-    transactionRef VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'PENDING',
+    vnp VARCHAR(255),
     paymentDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    released bit DEFAULT 0,
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE
+    commissionRate DECIMAL(5,2) DEFAULT 0 CHECK(commissionRate >=0),
+    commissionAmount DECIMAL(15,2) DEFAULT 0 CHECK(commissionAmount >=0),
+    ownerAmount DECIMAL(15,2) DEFAULT 0 CHECK(ownerAmount >=0),
+    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE,
+    CHECK (type IN ('DEPOSIT','REMAINING')),
+    CHECK (status IN ('PENDING','CONFIRMED','FAILED', 'EXPIRED', 'CANCELLED'))
 );
 
--- Table Payouts
-CREATE TABLE Payouts (
-    payoutId INT AUTO_INCREMENT PRIMARY KEY,
-    paymentId INT NOT NULL,
-    ownerId INT NOT NULL,
-    grossAmount DECIMAL(15,2) NOT NULL CHECK (grossAmount >= 0),
-    commission DECIMAL(15,2) NOT NULL CHECK (commission >= 0),
-    netAmount DECIMAL(15,2) NOT NULL CHECK (netAmount >= 0),
-    status TINYINT NOT NULL DEFAULT 0,   -- 0: pending, 1: paid, 2: failed
-    transactionRef VARCHAR(100),
-    releasedBy INT,   -- admin user ID
-    releasedAt DATETIME,
+-- Table ExtraService
+CREATE TABLE ExtraService (
+    extraServiceID INT AUTO_INCREMENT PRIMARY KEY,
+    bookingID INT NOT NULL,
+    serviceID INT,
+    customName VARCHAR(255),
+    quantity INT DEFAULT 1 CHECK(quantity >0),
+    unitPrice DECIMAL(15,2) DEFAULT 0 CHECK(unitPrice >=0),
+    unit VARCHAR(50),
+    totalPrice DECIMAL(15,2) DEFAULT 0 CHECK(totalPrice >=0),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_payout_payment FOREIGN KEY (paymentId)
-        REFERENCES Payment(paymentID)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_payout_owner FOREIGN KEY (ownerId)
-        REFERENCES Owner(ownerID)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_payout_releasedBy FOREIGN KEY (releasedBy)
-        REFERENCES User(userID)
-        ON DELETE SET NULL ON UPDATE CASCADE
+    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE,
+    FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE CASCADE,
+    CHECK (serviceID IS NOT NULL OR customName IS NOT NULL)
 );
-
 
 -- Table Contract
 CREATE TABLE Contract (
@@ -286,21 +271,19 @@ CREATE TABLE Contract (
     signedAt DATETIME,
     ownerSignature VARCHAR(255),
     customerSignature VARCHAR(255),
-    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: SIGNED, 2: CANCELLED
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE
+    status VARCHAR(20) DEFAULT 'PENDING',
+    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE,
+    CHECK (status IN ('PENDING','SIGNED','CANCELLED'))
 );
 
 -- Table Review
 CREATE TABLE Review (
     reviewID INT AUTO_INCREMENT PRIMARY KEY,
-    bookingID INT NOT NULL,
-    customerID INT NOT NULL,
+    bookingID INT NOT NULL UNIQUE,
     rating INT CHECK(rating BETWEEN 1 AND 5),
-    comment TEXT,
+    comment VARCHAR(255),
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE,
-    FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON DELETE CASCADE,
-    UNIQUE (bookingID, customerID)
+    FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE
 );
 
 -- Table Report
@@ -312,18 +295,19 @@ CREATE TABLE Report (
     targetType VARCHAR(20) NOT NULL,   
     reasonType VARCHAR(30) NOT NULL,  
     content VARCHAR(255),
-    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: REJECTED
+    status VARCHAR(20) DEFAULT 'PENDING',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     seen BIT DEFAULT 0,
     FOREIGN KEY (userID) REFERENCES User(userID) ON DELETE CASCADE,
     FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE,
     FOREIGN KEY (reviewID) REFERENCES Review(reviewID) ON DELETE SET NULL,
---     CHECK (reviewID IS NOT NULL OR targetType = 'RESTAURANT'),
+    CHECK (reviewID IS NOT NULL OR targetType = 'RESTAURANT'),
     CHECK (targetType IN ('RESTAURANT','REVIEW')),
     CHECK (
         (targetType = 'RESTAURANT' AND reasonType IN ('FAKE_INFO','SPAM','FRAUD','INAPPROPRIATE','OTHER'))
         OR
         (targetType = 'REVIEW' AND reasonType IN ('FAKE_REVIEW','SPAM','INAPPROPRIATE','IRRELEVANT','OTHER'))
-    )
+    ),
+    CHECK (status IN ('PENDING','CONFIRMED','REJECTED'))
 );
 

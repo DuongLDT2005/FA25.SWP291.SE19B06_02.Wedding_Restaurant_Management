@@ -1,0 +1,130 @@
+/* Container tổng */
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f9f9f9;
+  padding: 20px;
+}
+
+/* Card chính */
+.signup-card {
+  display: flex;
+  background: #fff;         /* nền trắng */
+  border: 1px solid #ccc;   /* viền xám nhẹ */
+  border-radius: 8px;       /* bo góc */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* bóng đổ */
+  width: 800px;             /* chiều rộng */
+  margin: auto;             /* căn giữa */
+  overflow: hidden;         /* tránh tràn */
+}
+
+/* Bên trái */
+.signup-left {
+  flex: 1;
+  background: #993344;       /* đỏ */
+  color: #fefaf9;            /* chữ trắng ngà */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 50px;
+}
+
+.signup-left h1 {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+
+.signup-left p {
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Bên phải */
+.signup-right {
+  flex: 2;
+  padding: 40px;
+  background: #fff;
+}
+
+.signup-right h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.signup-right input,
+.signup-right select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+/* Email group */
+.email-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.email-group input {
+  padding-right: 90px;  /* chừa chỗ cho @gmail.com */
+}
+
+.email-group span {
+  position: absolute;
+  right: 12px;
+  color: #aaa;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+/* Button */
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  background: #993344;
+  color: #fefaf9;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-submit:hover {
+  background: #772633;
+}
+
+/* Error */
+.error {
+  color: red;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Links */
+.links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.links a {
+  color: #f6a401;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
