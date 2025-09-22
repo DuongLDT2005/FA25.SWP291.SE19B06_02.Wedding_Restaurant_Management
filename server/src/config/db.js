@@ -11,6 +11,7 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,   // WeddingRestaurantManagement
 });
 
+
 // Test kết nối
 (async () => {
   try {
