@@ -1,33 +1,37 @@
 import UserDAO from "../dao/userDao.js";
 import Validation from "./validation.js";
+
 class UserController {
     static async getAllUsers(req, res) {
         try {
             const userList = await UserDAO.getAllUsers();
-            res.json(userList);
+            res.json(userList.getUsers());
         } catch (error) {
             console.error('Error fetching users:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async getOwners(req, res) {
         try {
-            const userList = await UserDAO.getOwners();
-            res.json(userList);
+            const userList = await UserDAO.getAllUsers();
+            res.json(userList.getOwners());
         } catch (error) {
             console.error('Error fetching owners:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async getCustomers(req, res) {
         try {
-            const userList = await UserDAO.getCustomers();
-            res.json(userList);
+            const userList = await UserDAO.getAllUsers();
+            res.json(userList.getCustomers());
         } catch (error) {
             console.error('Error fetching customers:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async getUserById(req, res) {
         try {
             const user = await UserDAO.getUserById(req.params.id);
@@ -40,6 +44,7 @@ class UserController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async createUser(req, res) {
         const { email, fullName, phone, password, role, status } = req.body;
         // Validate required fields
@@ -63,9 +68,11 @@ class UserController {
             res.status(201).json(newUser);
         } catch (error) {
             console.error('Error creating user:', error);
+            
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async updateUser(req, res) {
         try {
             const updatedUser = await UserDAO.updateUser(req.params.id, req.body);
@@ -75,6 +82,7 @@ class UserController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+
     static async deleteUser(req, res) {
         try {
             const success = await UserDAO.deleteUser(req.params.id);
