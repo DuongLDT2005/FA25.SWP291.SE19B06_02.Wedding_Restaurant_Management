@@ -1,15 +1,10 @@
 import express from "express";
-import cors from "cors";
+import restaurantRoutes from "./routes/restaurantRoutes.js";
 
 const app = express();
 
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
+app.use("/api/restaurants",restaurantRoutes);
 
 export default app;
