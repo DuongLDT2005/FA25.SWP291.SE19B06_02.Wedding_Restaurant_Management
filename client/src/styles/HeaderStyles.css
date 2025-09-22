@@ -1,0 +1,144 @@
+/* Header */
+/* Navbar */
+.navbar--header {
+    display: flex;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    justify-content: space-between;
+    background-color: rgba(168, 77, 89, 0.8);
+    height: 80px;
+    z-index: 3;
+}
+
+.navbar--header--left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-left: 100px;
+}
+
+.navbar--header--right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-right: 150px;
+}
+
+.navbar--header--right ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.navbar--header--right li a {
+    text-decoration: none;
+    color: #fefaf9;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.navbar--header--right li a:hover {
+    color: white;
+}
+
+.button--header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.button--header button {
+    padding: 10px 30px;
+    cursor: pointer;
+    border: #993344 1px solid;
+    border-radius: 5px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.button--header button:hover {
+    transform: scale(1.05);
+}
+
+.button--header #register {
+    background: none;
+    color: #fefaf9;
+    border-color: #fefaf9;
+    font-weight: 600;
+}
+
+.button--header #signin {
+    background-color: #fefaf9;
+    color: #993344;
+    font-weight: 600;
+}
+
+/* Header section */
+.header--section {
+    justify-content: space-between;
+    align-items: center;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.header--image img {
+    background-position: center;
+    background-size: cover;
+    object-fit: cover;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 47vh;
+    opacity: 0.7;
+}
+
+.header--text {
+    padding: 90px 100px;
+    color: #fefaf9;
+    width: 50%;
+}
+
+.header--searchbar {
+    display: flex;
+    margin: 0 130px;
+    padding: 20px;
+    background-color: #fefaf9;
+    border-radius: 5px;
+    box-shadow: 2px 3px 10px rgb(0, 0, 0, 0.3);
+}
+
+.option--field {
+    display: flex;
+    color: #993344;
+}
+
+.option--field i {
+    margin: 3px 10px;
+    color: #993344;
+}
+
+.option--field input {
+    border: none;
+    outline: none;
+    margin-top: 5px;
+}
+
+.option--field button {
+    background-color: #993344;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 70px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option--field button:hover {
+    transform: scale(1.03);
+}

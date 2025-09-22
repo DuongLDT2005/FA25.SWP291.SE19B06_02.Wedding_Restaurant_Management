@@ -1,0 +1,56 @@
+.content {
+    margin: 50px 130px;
+}
+
+.content--list {
+    display: grid;
+    gap: 30px;
+    margin-bottom: 10px;
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.content--section h2 {
+    color: #993344;
+    margin-bottom: 30px;
+    position: relative;
+    display: inline-block;
+}
+
+.content--section h2::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 0;
+    height: 3px;
+    background-color: #993344;
+    transition: width 0.3s ease;
+}
+
+.content--section h2:hover {
+    font-weight: 700;
+}
+
+.content--section h2:hover::after {
+    width: 80%;
+    /* độ dài thanh gạch ngang */
+}
+.content--card{
+    transition: all 0.5s ease;
+    cursor: pointer;
+}
+.content--card:hover {
+    transform: translateY(-10px);
+}
+.content--image img {
+    width: 200px;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.content--price {
+    display: flex;
+    gap: 5px;
+    color: #D2B981;
+}
