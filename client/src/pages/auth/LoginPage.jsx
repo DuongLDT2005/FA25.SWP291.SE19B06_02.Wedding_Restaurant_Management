@@ -4,15 +4,17 @@ import { login, forgotPassword } from "../../services/authService";
 import "../../styles/LoginStyles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState("");
   const [globalError, setGlobalError] = useState("");
+  const [forgotGlobalError, setForgotGlobalError] = useState("");
 
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -25,7 +27,7 @@ export default function LoginPage() {
 
   const emailIsValid = (e) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e.trim());
   const navigate = useNavigate();
-  
+
   // 🔹 Submit login
   const handleSubmit = async (ev) => {
     ev.preventDefault();
@@ -47,7 +49,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const data = await login({ email, password, remember });
+      const data = await login({ email, password });
       setInfo("Đăng nhập thành công — điều hướng...");
       console.log("Login success:", data);
       // Redirect theo role
@@ -70,7 +72,7 @@ export default function LoginPage() {
     ev.preventDefault();
     setForgotEmailError("");
     setInfo("");
-    setGlobalError("");
+    setForgotGlobalError("");
 
     if (!emailIsValid(forgotEmail)) {
       setForgotEmailError("Email không hợp lệ");
@@ -84,7 +86,7 @@ export default function LoginPage() {
       setShowForgot(false);
       setForgotEmail("");
     } catch (err) {
-      setGlobalError(err.message);
+      setForgotGlobalError(err.message);
     } finally {
       setForgotLoading(false);
     }
@@ -103,131 +105,122 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        {/* Left side */}
-        <div className="login-box-left">
-          <h1>Welcome back!</h1>
-          <p>Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại LifEvent.com.</p>
-        </div>
+    <>
+      <Header />
+      <div className="login-container">
+        <div className="login-box">
+          {/* Left side */}
+          <div className="login-box-left">
+            <h1>Welcome back!</h1>
+            <p>Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại LifEvent.com.</p>
+          </div>
 
-        {/* Right side */}
-        <div className="login-box-right">
-          <h1>Đăng Nhập</h1>
+          {/* Right side */}
+          <div className="login-box-right">
+            <h1>Đăng Nhập</h1>
 
-          {globalError && <div className="alert error">{globalError}</div>}
-          {info && <div className="alert success">{info}</div>}
+            {globalError && <div className="alert error">{globalError}</div>}
+            {info && <div className="alert success">{info}</div>}
 
-          <form onSubmit={handleSubmit} className="form">
-            {/* Email */}
-            <div className="form-group">
-              <input
-                name="email"
-                type="email"
-                value={email}
-                className={emailError ? "is-invalid" : ""}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
-              />
-              {emailError && <div className="invalid-feedback">{emailError}</div>}
-            </div>
-
-            {/* Password */}
-            <div className="form-group">
-              <div className="password-wrapper">
-                <input
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  className={passwordError ? "is-invalid" : ""}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mật khẩu"
+            <form onSubmit={handleSubmit} className="form">
+              {/* Email */}
+              <div className="form-group">
+                <input name="email" type="email" value={email} className={emailError ? "is-invalid" : ""} onChange={(e) => setEmail(e.target.value)} placeholder="Email"
                 />
-                <span
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                </span>
+                {emailError && <div className="invalid-feedback">{emailError}</div>}
               </div>
-              {passwordError && <div className="invalid-feedback">{passwordError}</div>}
-            </div>
 
-            {/* Options */}
-            <div className="form-options">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={remember}
-                  onChange={() => setRemember(!remember)}
-                />{" "}
-                Ghi nhớ tôi
-              </label>
-              <button
-                type="button"
-                className="link-btn"
-                onClick={() => setShowForgot(true)}
-              >
-                Quên mật khẩu?
+              {/* Password */}
+              <div className="form-group">
+                <div className="password-wrapper">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    className={passwordError ? "is-invalid" : ""}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Mật khẩu"
+                  />
+                  <span
+                    className="toggle-password"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                  </span>
+                </div>
+                {passwordError && <div className="invalid-feedback">{passwordError}</div>}
+              </div>
+
+              {/* Options */}
+              <div className="form-options">
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => setShowForgot(true)}
+                >
+                  Quên mật khẩu?
+                </button>
+              </div>
+
+              <button type="submit" disabled={loading} className="btn primary">
+                {loading ? "Đang xử lý..." : "Đăng nhập"}
+              </button>
+            </form>
+
+            <div className="divider">Hoặc đăng nhập với</div>
+
+            <div className="google-login-center">
+              <button className="google-login-icon-btn" onClick={openGoogleSignIn}>
+                <img
+                  src="https://developers.google.com/identity/images/g-logo.png"
+                  alt="Google logo"
+                />
               </button>
             </div>
 
-            <button type="submit" disabled={loading} className="btn primary">
-              {loading ? "Đang xử lý..." : "Đăng nhập"}
-            </button>
-          </form>
-
-          <div className="divider">Hoặc đăng nhập với</div>
-
-          <div className="google-login-center">
-            <button className="google-login-icon-btn" onClick={openGoogleSignIn}>
-              <img
-                src="https://developers.google.com/identity/images/g-logo.png"
-                alt="Google logo"
-              />
-            </button>
+            <p className="signup-links">
+              Bạn mới đặt tiệc lần đầu? <a href="/signup/customer">Tham gia ngay</a>
+            </p>
+            <p className="signup-links">
+              Bạn là chủ nhà hàng mới muốn hợp tác?{" "}
+              <a href="/signup/owner">Đăng ký ngay</a>
+            </p>
           </div>
-
-          <p className="signup-links">
-            Bạn mới đặt tiệc lần đầu? <a href="/signup/customer">Tham gia ngay</a>
-          </p>
-          <p className="signup-links">
-            Bạn là chủ nhà hàng mới muốn hợp tác?{" "}
-            <a href="/signup/owner">Đăng ký ngay</a>
-          </p>
         </div>
+
+        {/* Forgot Password Modal */}
+        {showForgot && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h2>Đặt lại mật khẩu</h2>
+              <p>Nhập email để nhận đường dẫn đặt lại mật khẩu.</p>
+              {forgotGlobalError && <div className="alert error">{forgotGlobalError}</div>}
+              {forgotEmailError && <div className="alert error">{forgotEmailError}</div>}
+              <form onSubmit={handleForgot}>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => setShowForgot(false)}
+                  >
+                    Hủy
+                  </button>
+                  <button type="submit" className="btn primary" disabled={forgotLoading}>
+                    {forgotLoading ? "Đang gửi..." : "Gửi"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Forgot Password Modal */}
-      {showForgot && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h2>Đặt lại mật khẩu</h2>
-            <p>Nhập email để nhận đường dẫn đặt lại mật khẩu.</p>
-            {forgotEmailError && <div className="alert error">{forgotEmailError}</div>}
-            <form onSubmit={handleForgot}>
-              <input
-                type="email"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                placeholder="you@example.com"
-              />
-              <div className="modal-actions">
-                <button
-                  type="button"
-                  className="btn secondary"
-                  onClick={() => setShowForgot(false)}
-                >
-                  Hủy
-                </button>
-                <button type="submit" className="btn primary" disabled={forgotLoading}>
-                  {forgotLoading ? "Đang gửi..." : "Gửi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      <Footer />
+    </>
   );
 }

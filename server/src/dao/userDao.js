@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-import User from '../models/user.js';
+import User from '../models/User.js';
 import UserList from '../models/UserList.js';
 
 class UserDAO {

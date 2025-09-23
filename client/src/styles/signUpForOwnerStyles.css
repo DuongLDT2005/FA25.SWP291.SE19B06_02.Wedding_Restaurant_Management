@@ -1,6 +1,10 @@
-#root{
-    margin-top: 8%;
+.sign--up {
+    min-height: 100%vh;
 }
+.sign--up--form{
+    min-height: 100%vh;
+}
+
 .sign--up--container h1 {
     text-align: center;
     margin-bottom: 0;
@@ -40,17 +44,10 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    margin: 2%;
+    padding: 30px;
     justify-content: center;
 }
 
-.sign--up--container .sign--up--form div {
-    margin-bottom: 2%;
-    padding: 3% 1%;
-    position: relative;
-    border: 3px solid #ddd;
-    border-radius: 10px;
-}
 
 .sign--up--form .file--upload {
     border: none !important;
@@ -63,50 +60,97 @@
 }
 
 .sign--up--container input {
-    font-weight: 600;
-    padding-left: 10px;
-    border: none;
-    outline: none;
-    width: 95%;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+  width: 100%;
+  max-width: 446px;
+  padding: 10px 12px;
+  box-sizing: border-box;
 }
-
+.icon--show {
+    font-size: 18px;
+    position: relative;
+    top: 18px;
+}
 .sign--up--container span {
-    color: #993344;
+    position: relative;
+    left: -30px;
+    top: 2px;
+    z-index: 2;
     cursor: pointer;
 }
 
-.file--upload p {
-    margin: 10px 0;
-    font-weight: 600;
+.file--upload {
+  margin: 15px 0;
 }
 
 .file--upload input[type="file"] {
-    padding-left: 0;
+  border: none;            /* bỏ border */
+  box-shadow: none;        /* bỏ shadow nếu có */
+  padding: 0;
+  margin: 0;
 }
 
 .file--upload input[type="file"]::-webkit-file-upload-button {
-    background: #993344;
-    color: #fff;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  background: #993344;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.file--upload input[type="file"]::-webkit-file-upload-button:hover {
+  background: #7a2835;
 }
 
 .sign--up--container button {
     width: 100%;
+    max-width: 452px;
     background: #993344 100%;
+    border: none !important;
     color: #fff;
     font-weight: 600;
     font-size: 1.08rem;
     border: none;
-    border-radius: 10px;
+    border-radius: 6px;
     padding: 13px 0;
-    margin-top: 8px;
-    margin-bottom: 6px;
+    margin: 8px 0;
     cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrapper input {
+  width: 100%;
+  max-width: 452px;
+  padding: 10px 12px; /* chừa chỗ cho icon bên phải */
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #777;
+  font-size: 18px;
 }
 
 .sign--up--container button:hover {
@@ -118,6 +162,12 @@
     margin: 5px 0;
     font-weight: 600;
     color: #993344;
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 0.85rem;
+    margin-bottom: 2px;
 }
 
 .sign--up--link {
@@ -133,6 +183,7 @@
     transition: all 0.3s ease;
     cursor: pointer;
 }
+
 .sign--up--link a::after {
     content: '';
     position: absolute;
