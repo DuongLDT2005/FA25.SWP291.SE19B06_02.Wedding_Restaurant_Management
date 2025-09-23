@@ -1,0 +1,2 @@
+Sửa lại phần address sẽ thành 1 object ( Tức là sẽ có thể nhập vào theo - số nhà, đường, phường),
+khi show ra thì in ra adress với các thuộc tính đó.

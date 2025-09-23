@@ -3,6 +3,7 @@ import RestaurantController from "../controllers/RestaurantController.js";
 
 const router = Router();
 
+router.get("/owner/:ownerID",RestaurantController.getAllByOwnerID);
 router.get("/", RestaurantController.getAll);
 router.get("/:id", RestaurantController.getById);
 router.post("/",RestaurantController.createRestaurant);
