@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/homePageStyles.css"
+import "../styles/HomePageStyles.css"
 import SearchBar from "../components/SearchBar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -10,7 +10,7 @@ function Content() {
             <Header />
             <SearchBar /> 
             <div className="content">
-                {/* Content 1 */}
+                {/* Content 1 */}s
                 <div className="content--section">
                     <h2>Content 1</h2>
                     <div className="content--list">
