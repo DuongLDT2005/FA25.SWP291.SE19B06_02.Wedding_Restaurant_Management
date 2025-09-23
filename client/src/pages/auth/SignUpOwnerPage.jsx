@@ -78,6 +78,7 @@ function SignUpForOwner() {
 
     try {
       const secureUrl = await uploadImageToCloudinary(file);
+      console.log("Cloudinary URL:", secureUrl);
       await signUpOwner({ name, phoneNumber, email, password, licenseUrl: secureUrl });
 
       // 👉 Không dùng toast hay alert, chỉ reset form
