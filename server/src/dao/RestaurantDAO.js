@@ -28,7 +28,7 @@ class RestaurantDAO {
     }));
   }
 
-  static async getById(restaurantID) {
+  static async getByID(restaurantID) {
     const [rows] = await db.query(
       `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
       FROM Restaurant r
@@ -135,7 +135,7 @@ constructor({
 
       await conn.commit();
 
-      return await this.getById(restaurantID);
+      return await this.getByID(restaurantID);
     } catch (err) {
       await conn.rollback();
       throw err;
