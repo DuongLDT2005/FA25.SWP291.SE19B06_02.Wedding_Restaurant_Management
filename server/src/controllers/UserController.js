@@ -1,4 +1,5 @@
 import UserDAO from "../dao/userDao.js";
+import { hashPassword } from "../services/userService.js";
 
 class UserController {
     static async getAllUsers(req, res) {
@@ -44,22 +45,49 @@ class UserController {
         }
     }
 
-    static async createUser(req, res) {
+    static async createOwner(req, res) {
         try {
-            if (!req.body) {
+            const ownerData = req.body;
+            if (!ownerData) {
                 return res.status(400).json({ error: 'Request body cannot be null' });
             }
-            const newUser = await UserDAO.createUser(req.body);
-            res.status(201).json(newUser);
+            ownerData.role = 'owner'; // Set role to 'owner'
+            if (ownerData.password) {
+                ownerData.password = await hashPassword(ownerData.password);
+            }
+            const newOwner = await UserDAO.createOwner(ownerData);
+            res.status(201).json(newOwner);
         } catch (error) {
-            console.error('Error creating user:', error);
+            console.error('Error creating owner:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    static async createCustomer(req, res) {
+        try {
+            const customerData = req.body;
+            if (!customerData) {
+                return res.status(400).json({ error: 'Request body cannot be null' });
+            }
+            customerData.role = 'customer'; // Set role to 'customer'
+            if (customerData.password) {
+                customerData.password = await hashPassword(customerData.password);
+            }
+            const newCustomer = await UserDAO.createCustomer(customerData);
+            res.status(201).json(newCustomer);
+        } catch (error) {
+            console.error('Error creating customer:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }
 
     static async updateUser(req, res) {
         try {
-            const updatedUser = await UserDAO.updateUser(req.params.id, req.body);
+            const userData = req.body;
+            if (userData.password) {
+                userData.password = await hashPassword(userData.password);
+            }
+            const updatedUser = await UserDAO.updateUser(req.params.id, userData);
             res.json(updatedUser);
         } catch (error) {
             console.error('Error updating user:', error);

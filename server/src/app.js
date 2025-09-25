@@ -6,5 +6,5 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/restaurants",restaurantRoutes);
-app.use("/api/users",userRoutes);
+app.use("/api/auth",userRoutes);
 export default app;
