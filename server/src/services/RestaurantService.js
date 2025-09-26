@@ -1,33 +1,42 @@
 import RestaurantDAO from "../dao/RestaurantDAO.js";
+import RestaurantImageDAO from "../dao/RestaurantImageDAO.js";
+import AddressDAO from "../dao/AddressDAO.js";
 
 class RestaurantService {
-  static async getAllRestaurants() {
+  static async getAll() {
     return await RestaurantDAO.getAll();
   }
 
-  static async getRestaurantByOwnerID(ownerID) {
+  static async getByOwnerID(ownerID) {
     return await RestaurantDAO.getAllByOwnerID(ownerID);
   }
 
-  static async getRestaurantByID(id) {
-    return await RestaurantDAO.getByID(id);
+  static async getByID(restaurantID) {
+    return await RestaurantDAO.getByID(restaurantID);
   }
 
-  static async createRestaurant(data) {
+  static async create(data) {
     if (!data.name || !data.ownerID) {
       throw new Error("Restaurant name and ownerID are required");
     }
     return await RestaurantDAO.createRestaurant(data);
   }
 
-  static async updateRestaurant(id, data){
-    return await RestaurantDAO.updateRestaurant(id, data);
+  static async update(restaurantID, data){
+    return await RestaurantDAO.updateRestaurant(restaurantID, data);
   }
 
   static async changeRestaurantStatus(id) {
     return await RestaurantDAO.toggleRestaurantStatus(id);
   }
 
+  static async addImage(restaurantID, imageURL){
+    return await RestaurantImageDAO.addImage(restaurantID, imageURL);
+  }
+
+  static async deleteImage(imageID){
+    return await RestaurantImageDAO.deleteImage(imageID);
+  }
 }
 
 export default RestaurantService;

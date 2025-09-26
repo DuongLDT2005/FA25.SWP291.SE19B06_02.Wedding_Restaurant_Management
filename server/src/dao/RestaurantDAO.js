@@ -1,10 +1,8 @@
 import db from "../config/db.js";
 import Restaurant from "../models/Restaurant.js";
+import RestaurantImage from "../models/RestaurantImage.js";
 
 class RestaurantDAO {
-
-//Ngoài ảnh chính của 1 res sẽ có nhiều res ( RestaurantImage trong database ) => Quản lý được (Thêm, sửa, xoá)
-//Khi xem cụ thể 1 nhà hàng, display những ảnh trong Restaurant Image, còn khi đang tìm thì chỉ display ThumbnailURL
   static async getAll() {
     const [rows] = await db.query(
       `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
@@ -39,11 +37,20 @@ class RestaurantDAO {
       WHERE r.restaurantID = ?`,
       [restaurantID]
     );
+
     if (rows.length === 0) return null;
+
+    const [images] = await db.query(
+      `SELECT ri.imageID, ri.imageURL 
+        FROM RestaurantImage ri 
+        WHERE ri.restaurantID = ?`,
+      [restaurantID]
+    );
 
     return {
       ...new Restaurant(rows[0]),
       address: rows[0].fullAddress,
+      images: images.map(img => new RestaurantImage(img)),
     };
   }
   /* 
@@ -105,7 +112,7 @@ constructor({
 
   static async updateRestaurant(
     restaurantID,
-    { ownerID, name, description, address, thumbnailURL}
+    { ownerID, name, description, address, thumbnailURL }
   ) {
     const conn = await db.getConnection();
     try {
@@ -122,7 +129,7 @@ constructor({
       if (address) {
         await conn.query(
           `UPDATE Address SET number = ?, street = ?, ward = ? WHERE addressID = ?`,
-          [address.number, address.street,address.ward, addressID]
+          [address.number, address.street, address.ward, addressID]
         );
       }
 
