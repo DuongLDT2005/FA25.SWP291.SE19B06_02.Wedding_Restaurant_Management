@@ -73,5 +73,6 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 npm install bootstrap
 ### Install fontawesome
 npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fortawesome/fontawesome-svg-core
+npm install @fortawesome/fontawesome-free
 ## Install router-dom
 npm install react-router-dom

@@ -1,6 +1,7 @@
 import React from "react";
 import "../styles/HeaderStyles.css"
 import { Link } from "react-router-dom";
+
 function Header() {
   return (
     <div className="header">
@@ -15,7 +16,7 @@ function Header() {
                     <li><Link to="">Đặt Phòng</Link></li>
                     <li><Link to="">Khám Phá</Link></li>
                     <li><Link to="">Hội viên</Link></li>
-                    <li><Link to="/signUpForOwner">Trở Thành Chủ</Link></li>
+                    <li><Link to="/signup/owner">Trở Thành Chủ</Link></li>
                 </ul>
                 <div className="button--header">      
                     <button id="register">Đăng Ký</button>
@@ -24,7 +25,7 @@ function Header() {
             </div>
 
         </div>
-        <div className="header--section">
+        {/* <div className="header--section">
             <div>
                 <div className="header--image"><img src="/assets/img/wedding_main.jpg" alt="wedding"/></div>
                 <div className="header--text">
@@ -64,7 +65,6 @@ function Header() {
                 <div className="option--field">
                     <i className="fa-solid fa-user"></i>
                     <div>
-                        {/* htmlFor thay cho for */}
                         <label htmlFor="guest">Guests</label>
                         <input type="text" id="guest" name="guest" placeholder="Enter here..."/>
                     </div>
@@ -73,7 +73,7 @@ function Header() {
                     <button type="submit">Book now</button>
                 </div>
             </div>
-        </div>
+        </div> */}
     </div>
   );
 }

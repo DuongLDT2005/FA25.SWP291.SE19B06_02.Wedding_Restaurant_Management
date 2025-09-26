@@ -1,8 +1,9 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "../pages/Home";
-import SignUp from "../pages/auth/signUpCus";
+import Home from "../pages/homePage";
+import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
+import SignUpOwner from "../pages/auth/SignUpOwnerPage";
 
 
 function AppRoutes() {
@@ -10,7 +11,8 @@ function AppRoutes() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signup/customer" element={<SignUpCustomer />} />
+        <Route path="/signup/owner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
         {/* Thêm các route khác tại đây */}
       </Routes>
