@@ -2,6 +2,9 @@ import db from "../config/db.js";
 import Restaurant from "../models/Restaurant.js";
 
 class RestaurantDAO {
+
+//Ngoài ảnh chính của 1 res sẽ có nhiều res ( RestaurantImage trong database ) => Quản lý được (Thêm, sửa, xoá)
+//Khi xem cụ thể 1 nhà hàng, display những ảnh trong Restaurant Image, còn khi đang tìm thì chỉ display ThumbnailURL
   static async getAll() {
     const [rows] = await db.query(
       `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
@@ -102,7 +105,7 @@ constructor({
 
   static async updateRestaurant(
     restaurantID,
-    { ownerID, name, description, address, thumbnailURL, status }
+    { ownerID, name, description, address, thumbnailURL}
   ) {
     const conn = await db.getConnection();
     try {
@@ -127,10 +130,10 @@ constructor({
         `
       UPDATE Restaurant
       SET ownerID = ?, name = ?, description = ?, 
-          thumbnailURL = ?, status = ?
+          thumbnailURL = ?
       WHERE restaurantID = ?
     `,
-        [ownerID, name, description, thumbnailURL, status, restaurantID]
+        [ownerID, name, description, thumbnailURL, restaurantID]
       );
 
       await conn.commit();
@@ -144,9 +147,9 @@ constructor({
     }
   }
 
-  static async deleteRestaurant(restaurantID) {
+  static async toggleRestaurantStatus(restaurantID) {
     const [result] = await db.query(
-      "DELETE FROM Restaurant WHERE restaurantID = ?",
+      "UPDATE Restaurant SET status = CASE WHEN status = 1 THEN 0 ELSE 1 END WHERE restaurantID = ?",
       [restaurantID]
     );
     return result.affectedRows > 0;

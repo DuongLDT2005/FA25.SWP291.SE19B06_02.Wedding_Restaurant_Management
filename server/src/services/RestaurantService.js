@@ -24,8 +24,8 @@ class RestaurantService {
     return await RestaurantDAO.updateRestaurant(id, data);
   }
 
-  static async deleteRestaurant(id) {
-    return await RestaurantDAO.deleteRestaurant(id);
+  static async changeRestaurantStatus(id) {
+    return await RestaurantDAO.toggleRestaurantStatus(id);
   }
 
 }

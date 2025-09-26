@@ -50,16 +50,16 @@ class RestaurantController {
     }
   }
 
-  static async remove(req, res) {
+  static async changeRestaurantStatus(req, res) {
     try {
-      const success = await RestaurantService.deleteRestaurant(req.params.id);
+      const success = await RestaurantService.changeRestaurantStatus(req.params.id);
       if (!success) return res.status(404).json({ message: "Restaurant not found" });
-      res.status(204).end(); // no content
+      res.status(204).end();
     } catch (err) {
       res.status(500).json({ message: "Error deleting restaurant", error: err.message });
     }
   }
-
+  
 }
 
 export default RestaurantController;
