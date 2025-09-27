@@ -1,6 +1,6 @@
 export async function uploadImageToCloudinary(file) {
-    const cloudName = "datmsosje"; 
-    const uploadPreset = "wedding"; 
+    const cloudName = "datmsosje";
+    const uploadPreset = "wedding";
 
     const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
 
@@ -15,7 +15,7 @@ export async function uploadImageToCloudinary(file) {
         });
 
         const data = await res.json();
-
+        console.log("Cloudinary response:", data);
         if (data.secure_url) {
             return data.secure_url;
         } else {

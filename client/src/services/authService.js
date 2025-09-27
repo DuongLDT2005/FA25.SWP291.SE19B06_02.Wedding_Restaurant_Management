@@ -84,7 +84,7 @@ export const signUpCustomer = async ({ fullname, weddingRole, partner, phone, em
 
 // Function saveOwner to save owner data to backend
 export async function saveOwner({ name, phoneNumber, email, password, licenseUrl }) {
-  const apiUrl = process.env.REACT_APP_API_URL + "/owners/saveImage";
+  const apiUrl = `${API_URL}/signup/owner`;
 
   const response = await fetch(apiUrl, {
     method: "POST",

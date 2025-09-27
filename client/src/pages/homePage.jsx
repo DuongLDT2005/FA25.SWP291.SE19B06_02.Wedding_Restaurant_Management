@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/HomePageStyles.css"
+import "../styles/homePageStyles.css"
 import SearchBar from "../components/SearchBar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -8,7 +8,7 @@ function Content() {
     return (
         <>
             <Header />
-            <SearchBar /> 
+            <SearchBar />
             <div className="content">
                 {/* Content 1 */}s
                 <div className="content--section">
