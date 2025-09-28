@@ -1,5 +1,4 @@
-/* Header */
-/* Navbar */
+
 .navbar--header {
     display: flex;
     position: fixed;
@@ -7,9 +6,18 @@
     right: 0;
     left: 0;
     justify-content: space-between;
-    background-color: rgba(168, 77, 89, 0.8);
+    background-color: transparent;
+    border-bottom: 1px solid #fefaf9;
     height: 80px;
     z-index: 3;
+    transition: all 0.3s ease;
+}
+
+.navbar--header.scrolled {
+    background-color: rgba(168, 77, 89, 0.8);
+    backdrop-filter: blur(2px);
+    border-bottom:none;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
 .navbar--header--left {
@@ -17,6 +25,15 @@
     align-items: center;
     gap: 20px;
     margin-left: 100px;
+}
+
+.navbar--header--left h2 {
+    color: #2D0F14;
+    transition: color 0.3s ease;
+}
+
+.navbar--header.scrolled .navbar--header--left h2 {
+    color: #fefaf9;
 }
 
 .navbar--header--right {
@@ -34,14 +51,16 @@
 
 .navbar--header--right li a {
     text-decoration: none;
-    color: #fefaf9;
+    color: #2D0F14;
     font-size: 16px;
     font-weight: 500;
+    transition: color 0.3s ease;
 }
 
-.navbar--header--right li a:hover {
-    color: white;
+.navbar--header.scrolled .navbar--header--right li a {
+    color: #fefaf9;
 }
+
 
 .button--header {
     display: flex;
@@ -67,12 +86,26 @@
     color: #fefaf9;
     border-color: #fefaf9;
     font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.navbar--header.scrolled .button--header #register {
+    color: #fefaf9;
+    border-color: #fefaf9;
 }
 
 .button--header #signin {
     background-color: #fefaf9;
-    color: #993344;
+    color: #2D0F14;
+    border-color: #fefaf9;
     font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.navbar--header.scrolled .button--header #signin {
+    background-color: #fefaf9;
+    color: #993344;
+    border-color: #993344;
 }
 
 /* Header section */
@@ -102,43 +135,4 @@
     padding: 90px 100px;
     color: #fefaf9;
     width: 50%;
-}
-
-.header--searchbar {
-    display: flex;
-    margin: 0 130px;
-    padding: 20px;
-    background-color: #fefaf9;
-    border-radius: 5px;
-    box-shadow: 2px 3px 10px rgb(0, 0, 0, 0.3);
-}
-
-.option--field {
-    display: flex;
-    color: #993344;
-}
-
-.option--field i {
-    margin: 3px 10px;
-    color: #993344;
-}
-
-.option--field input {
-    border: none;
-    outline: none;
-    margin-top: 5px;
-}
-
-.option--field button {
-    background-color: #993344;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 70px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.option--field button:hover {
-    transform: scale(1.03);
 }

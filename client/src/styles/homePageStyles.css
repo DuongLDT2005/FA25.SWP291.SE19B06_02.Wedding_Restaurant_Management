@@ -4,9 +4,10 @@
 
 .content--list {
     display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 30px;
     margin-bottom: 10px;
-    grid-template-columns: repeat(5, 1fr);
+
 }
 
 .content--section h2 {
@@ -35,13 +36,16 @@
     width: 80%;
     /* độ dài thanh gạch ngang */
 }
-.content--card{
+
+.content--card {
     transition: all 0.5s ease;
     cursor: pointer;
 }
+
 .content--card:hover {
     transform: translateY(-10px);
 }
+
 .content--image img {
     width: 200px;
     height: 150px;
@@ -51,6 +55,14 @@
 
 .content--price {
     display: flex;
-    gap: 5px;
     color: #D2B981;
+}
+
+.content--price h5 {
+    margin: 0;
+}
+
+.content--info p,
+h3 {
+    margin: 0;
 }
