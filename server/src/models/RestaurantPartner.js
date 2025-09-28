@@ -1,6 +1,6 @@
 import User from "./User.js";
 
-class Owner extends User {
+class RestaurantPartner extends User {
     constructor(userID, email, fullName, phone, password, role, status, createdAt, licenseUrl, negotiationStatus, commissionRate) {
         super(userID, email, fullName, phone, password, role, status, createdAt);
         this.licenseUrl = licenseUrl; // url image license
@@ -15,4 +15,4 @@ export const negoStatus = {
     active:3,
     inactive:4
 } 
-export default Owner;
+export default RestaurantPartner;

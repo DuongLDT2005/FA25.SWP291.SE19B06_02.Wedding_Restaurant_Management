@@ -1,11 +1,9 @@
-import UserDAO from "../dao/userDao.js";
-import { hashPassword } from "../services/userService.js";
-
+import UserService from "../services/UserService.js";
 class UserController {
     static async getAllUsers(req, res) {
         try {
-            const userList = await UserDAO.getAllUsers();
-            res.json(userList.getUsers());
+            const userList = await UserService.getAllUsers();
+            res.json(userList);
         } catch (error) {
             console.error('Error fetching users:', error);
             res.status(500).json({ error: 'Internal server error' });
@@ -14,8 +12,8 @@ class UserController {
 
     static async getOwners(req, res) {
         try {
-            const userList = await UserDAO.getAllUsers();
-            res.json(userList.getOwners());
+            const userList = await UserService.getAllOwners();
+            res.json(userList);
         } catch (error) {
             console.error('Error fetching owners:', error);
             res.status(500).json({ error: 'Internal server error' });
@@ -24,8 +22,8 @@ class UserController {
 
     static async getCustomers(req, res) {
         try {
-            const userList = await UserDAO.getAllUsers();
-            res.json(userList.getCustomers());
+            const userList = await UserService.getAllCustomers();
+            res.json(userList);
         } catch (error) {
             console.error('Error fetching customers:', error);
             res.status(500).json({ error: 'Internal server error' });
@@ -34,7 +32,7 @@ class UserController {
 
     static async getUserById(req, res) {
         try {
-            const user = await UserDAO.getUserById(req.params.id);
+            const user = await UserService.getUserById(req.params.id);
             if (!user) {
                 return res.status(404).json({ error: 'User not found' });
             }
@@ -45,49 +43,10 @@ class UserController {
         }
     }
 
-    static async createOwner(req, res) {
-        try {
-            const ownerData = req.body;
-            if (!ownerData) {
-                return res.status(400).json({ error: 'Request body cannot be null' });
-            }
-            ownerData.role = 'owner'; // Set role to 'owner'
-            if (ownerData.password) {
-                ownerData.password = await hashPassword(ownerData.password);
-            }
-            const newOwner = await UserDAO.createOwner(ownerData);
-            res.status(201).json(newOwner);
-        } catch (error) {
-            console.error('Error creating owner:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
-    static async createCustomer(req, res) {
-        try {
-            const customerData = req.body;
-            if (!customerData) {
-                return res.status(400).json({ error: 'Request body cannot be null' });
-            }
-            customerData.role = 'customer'; // Set role to 'customer'
-            if (customerData.password) {
-                customerData.password = await hashPassword(customerData.password);
-            }
-            const newCustomer = await UserDAO.createCustomer(customerData);
-            res.status(201).json(newCustomer);
-        } catch (error) {
-            console.error('Error creating customer:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-
     static async updateUser(req, res) {
         try {
             const userData = req.body;
-            if (userData.password) {
-                userData.password = await hashPassword(userData.password);
-            }
-            const updatedUser = await UserDAO.updateUser(req.params.id, userData);
+            const updatedUser = await UserService.updateUser(req.params.id, userData);
             res.json(updatedUser);
         } catch (error) {
             console.error('Error updating user:', error);
@@ -97,7 +56,7 @@ class UserController {
 
     static async deleteUser(req, res) {
         try {
-            const success = await UserDAO.deleteUser(req.params.id);
+            const success = await UserService.deleteUser(req.params.id);
             if (!success) {
                 return res.status(404).json({ error: 'User not found' });
             }
@@ -106,6 +65,23 @@ class UserController {
             console.error('Error deleting user:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
+    }
+    static async updateUserStatus(req, res) {
+    try {
+        const { status } = req.body;
+        const userId = req.params.id; // Get user ID from URL params
+        if (!status) {
+            return res.status(400).json({ error: 'Status is required' });
+        }
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        const updatedUser = await UserService.updateUserStatus(userId, status);
+        res.json(updatedUser);
+    } catch (error) {
+        console.error('Error updating user status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
     }
 }
 
