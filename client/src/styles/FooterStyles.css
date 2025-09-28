@@ -89,13 +89,13 @@
 }
 
 .footer-socials a.twitter:hover {
-    color: #1da1f2;
+    color: black;
 }
 
 .footer-socials a.linkedin:hover {
     color: #0077b5;
 }
 
-.footer-socials a.whatsapp:hover {
-    color: #25d366;
+.footer-socials a.facebook:hover {
+    color: #1da1f2;
 }

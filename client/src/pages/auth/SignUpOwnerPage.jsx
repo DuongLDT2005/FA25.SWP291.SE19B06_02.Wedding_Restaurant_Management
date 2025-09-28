@@ -10,7 +10,7 @@ function SignUpForOwner() {
   const [file, setFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
+  const [passwordError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   // Validate form
@@ -32,7 +32,7 @@ function SignUpForOwner() {
     if (!emailRegex.test(email)) {
       newErrors.email = "Email không đúng định dạng.";
     }
-
+    // thêm validate password
     const passwordRegex = /^[A-Za-z0-9]{6,}$/;
     if (!passwordRegex.test(password)) {
       newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ hoặc số.";
