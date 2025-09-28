@@ -11,10 +11,10 @@ class RestaurantController {
     }
   }
 
-  static async getByOwner(req,res){
+  static async getByPartner(req,res){
     try{
-      const {ownerID} = req.params;
-      const restaurants = await RestaurantService.getByOwnerID(ownerID);
+      const {partnerID} = req.params;
+      const restaurants = await RestaurantService.getByPartnerID(partnerID);
       res.json(restaurants);
     }catch(err){
       res.status(500).json({message: "Error fetching restaurant",error: err.message});
@@ -79,6 +79,23 @@ class RestaurantController {
       res.json("Success");
     }catch(err){
       res.status(500).json({error : err.message});
+    }
+  }
+
+  static async search(req,res){
+    try{
+      const  {location,capacity,date,minPrice,maxPrice} = req.query;
+
+      const results = await RestaurantService.search({
+        location,
+        capacity : capacity ? parseInt(capacity) : null,
+        date,
+        minPrice : minPrice ? parseFloat(minPrice) : null,
+        maxPrice : maxPrice ? parseFloat(maxPrice) : null,
+      });
+      res.json(results)
+    }catch(err){
+      res.status(500).json({message : "Error searching restaurants", error : err.message});
     }
   }
 
