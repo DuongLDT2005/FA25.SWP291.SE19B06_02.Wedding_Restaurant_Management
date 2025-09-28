@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/restaurants",restaurantRoutes);
-app.use("/api/restaurants/halls", hallRoutes);
+app.use("/api/halls", hallRoutes);
 app.use("/api/auth",authRoutes);
 app.use("/api/admin",userRoutes);
 export default app;

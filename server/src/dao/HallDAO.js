@@ -1,5 +1,5 @@
-import Hall from "../models/Hall";
-import db from "../config/database.js";
+import Hall from "../models/Hall.js";
+import db from "../config/db.js";
 import { hallStatus } from "../models/Hall.js";
 class HallDAO {
     static async createHall(hall) {

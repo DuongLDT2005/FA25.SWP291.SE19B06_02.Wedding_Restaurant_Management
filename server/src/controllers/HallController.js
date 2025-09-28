@@ -1,4 +1,4 @@
-import HallServices from "../services/HallServices";
+import HallServices from "../services/HallServices.js";
 class HallController {
     static async createHall(req, res) {
         try {

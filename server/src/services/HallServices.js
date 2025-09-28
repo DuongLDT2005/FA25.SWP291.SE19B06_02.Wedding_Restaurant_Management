@@ -1,4 +1,4 @@
-import HallDAO from "../dao/HallDAO";
+import HallDAO from "../dao/HallDAO.js";
 
 class HallServices {
     static async createHall(hallData) {
