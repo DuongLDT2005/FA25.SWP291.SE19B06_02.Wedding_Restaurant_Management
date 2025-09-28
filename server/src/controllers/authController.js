@@ -1,5 +1,4 @@
 import AuthServices from "../services/AuthServices.js";
-import UserService from "../services/UserService.js";
 class AuthController {
    static async login(req, res) {
         try {
@@ -48,7 +47,7 @@ class AuthController {
             if (!ownerData) {
                 return res.status(400).json({ error: 'Request body cannot be null' });
             }
-            const newOwner = await UserService.signUpOwner(ownerData);
+            const newOwner = await AuthServices.signUpOwner(ownerData);
             res.status(201).json(newOwner);
         } catch (error) {
             console.error('Error creating owner:', error);
@@ -62,7 +61,7 @@ class AuthController {
             if (!customerData) {
                 return res.status(400).json({ error: 'Request body cannot be null' });
             }
-            const newCustomer = await UserService.signUpCustomer(customerData);
+            const newCustomer = await AuthServices.signUpCustomer(customerData);
             res.status(201).json(newCustomer);
         } catch (error) {
             console.error('Error creating customer:', error);

@@ -1,28 +1,7 @@
 import UserDAO from "../dao/userDao.js";
-import { hashPassword } from "./AuthServices.js";
+
 class UserService {
-     static async signUpCustomer(userData) {
-        if (!userData) {
-            throw new Error('User data cannot be null');
-        }
-        if (userData.password) {
-            userData.password = await hashPassword(userData.password);
-        }
-        
-        const newCustomer = await UserDAO.createCustomer(userData);
-        return newCustomer;
-        }
-    
-    static async signUpOwner(userData) {
-        if (!userData) {
-            throw new Error('User data cannot be null');
-        }
-        if (userData.password) {
-            userData.password = await hashPassword(userData.password);
-        }
-        const newOwner = await UserDAO.createOwner(userData);
-        return newOwner;
-    }
+     
     static async updateUser(id,userData) {
         if (!userData || !id) {
             throw new Error('User data or User ID cannot be null');
@@ -67,6 +46,7 @@ class UserService {
         const updatedUser = await UserDAO.updateStatusUser(userId, status);
         return updatedUser;
     }
+
     
     
 }

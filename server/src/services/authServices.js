@@ -15,7 +15,28 @@ export async function hashPassword(password) {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 class AuthServices {
+    static async signUpCustomer(userData) {
+        if (!userData) {
+            throw new Error('User data cannot be null');
+        }
+        if (userData.password) {
+            userData.password = await hashPassword(userData.password);
+        }
+        
+        const newCustomer = await UserDAO.createCustomer(userData);
+        return newCustomer;
+        }
     
+    static async signUpOwner(userData) {
+        if (!userData) {
+            throw new Error('User data cannot be null');
+        }
+        if (userData.password) {
+            userData.password = await hashPassword(userData.password);
+        }
+        const newOwner = await UserDAO.createOwner(userData);
+        return newOwner;
+    }
 
   static async loginWithEmail(email, password) {
     const user = await UserDAO.findByEmail(email);
