@@ -16,8 +16,8 @@ class RestaurantService {
   }
 
   static async create(data) {
-    if (!data.name || !data.ownerID) {
-      throw new Error("Restaurant name and ownerID are required");
+    if (!data.name || !data.restaurantPartnerID) {
+      throw new Error("Restaurant name and restaurantPartnerID are required");
     }
     return await RestaurantDAO.createRestaurant(data);
   }

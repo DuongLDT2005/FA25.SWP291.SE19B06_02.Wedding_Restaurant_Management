@@ -64,6 +64,8 @@ constructor({
     thumbnailURL,
     status,
   }) {*/
+
+    // fixing restaurant
   static async createRestaurant({
     ownerID,
     name,
@@ -161,6 +163,14 @@ constructor({
     );
     return result.affectedRows > 0;
   }
+
+  // After hall creation
+  static async incrementHallCount(restaurantID) {
+    await db.query(
+        'UPDATE Restaurant SET hallCount = hallCount + 1 WHERE restaurantID = ?',
+        [restaurantID]
+    );
+}
 }
 
 export default RestaurantDAO;
