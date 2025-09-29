@@ -45,6 +45,8 @@ class HallDAO {
     }
     static async deleteHall(hallID) {
         const [result] = await db.query('DELETE FROM Hall WHERE hallID = ?', [hallID]);
+        // Decrement hall count in the restaurant
+        await RestaurantDAO.decrementHallCount(hallID);
         return result.affectedRows > 0;
     }
     static async updateHallStatus(hallID, status) {

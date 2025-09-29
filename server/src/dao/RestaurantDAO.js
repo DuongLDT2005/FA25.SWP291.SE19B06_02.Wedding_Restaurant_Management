@@ -170,7 +170,13 @@ constructor({
         'UPDATE Restaurant SET hallCount = hallCount + 1 WHERE restaurantID = ?',
         [restaurantID]
     );
-}
+  }
+  static async decrementHallCount(restaurantID) {
+    await db.query(
+        'UPDATE Restaurant SET hallCount = hallCount - 1 WHERE restaurantID = ? AND hallCount > 0',
+        [restaurantID]
+    );
+  }
 }
 
 export default RestaurantDAO;
