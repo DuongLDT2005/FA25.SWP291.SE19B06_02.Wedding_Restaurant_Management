@@ -9,7 +9,7 @@ CREATE TABLE User (
     fullName VARCHAR(255) NOT NULL,
     phone VARCHAR(15) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role TINYINT NOT NULL, -- 0: CUSTOMER, 1: OWNER, 2: ADMIN
+    role TINYINT NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
@@ -22,13 +22,13 @@ CREATE TABLE Customer (
     FOREIGN KEY (customerID) REFERENCES User(userID) ON DELETE CASCADE
 );
 
--- Table Owner
-CREATE TABLE Owner (
-    ownerID INT PRIMARY KEY,
+-- Table RestaurantPartner
+CREATE TABLE RestaurantPartner (
+    restaurantPartnerID INT PRIMARY KEY,
     licenseUrl VARCHAR(255) NOT NULL,
     status TINYINT NOT NULL DEFAULT 0, -- 0: pending, 1: rejected, 2: negotiating, 3: active, 4: inactive
 	commissionRate DECIMAL(3,2) DEFAULT NULL CHECK (commissionRate >= 0 AND commissionRate <= 1),
-    FOREIGN KEY (ownerID) REFERENCES User(userID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantPartnerID) REFERENCES User(userID) ON DELETE CASCADE
 );
 
 -- Table Address
@@ -43,14 +43,14 @@ CREATE TABLE Address (
 -- Table Restaurant
 CREATE TABLE Restaurant (
     restaurantID INT AUTO_INCREMENT PRIMARY KEY,
-    ownerID INT NOT NULL,
+    restaurantPartnerID INT NOT NULL,
     name VARCHAR(100) NOT NULL,
     description VARCHAR(255),
     hallCount INT DEFAULT 0,
     addressID INT NOT NULL,
     thumbnailURL VARCHAR(255) NOT NULL,
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (ownerID) REFERENCES Owner(ownerID) ON DELETE CASCADE,
+    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON DELETE CASCADE,
     FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE CASCADE
 );
 
@@ -65,13 +65,13 @@ CREATE TABLE RestaurantImage (
 -- Table BankAccount
 CREATE TABLE BankAccount (
     accountID INT AUTO_INCREMENT PRIMARY KEY,
-    ownerID INT NOT NULL,
+    restaurantPartnerID INT NOT NULL,
     bankName VARCHAR(255) NOT NULL,
     accountNumber VARCHAR(255) NOT NULL,
     accountHolder VARCHAR(255) NOT NULL,
     branch VARCHAR(255),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (ownerID) REFERENCES Owner(ownerID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON DELETE CASCADE
 );
 
 -- Table Amenity
@@ -257,7 +257,7 @@ CREATE TABLE Payment (
 CREATE TABLE Payouts (
     payoutId INT AUTO_INCREMENT PRIMARY KEY,
     paymentId INT NOT NULL,
-    ownerId INT NOT NULL,
+    restaurantPartnerId INT NOT NULL,
     grossAmount DECIMAL(15,2) NOT NULL CHECK (grossAmount >= 0),
     commission DECIMAL(15,2) NOT NULL CHECK (commission >= 0),
     netAmount DECIMAL(15,2) NOT NULL CHECK (netAmount >= 0),
@@ -269,8 +269,8 @@ CREATE TABLE Payouts (
     CONSTRAINT fk_payout_payment FOREIGN KEY (paymentId)
         REFERENCES Payment(paymentID)
         ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_payout_owner FOREIGN KEY (ownerId)
-        REFERENCES Owner(ownerID)
+    CONSTRAINT fk_payout_restaurantPartner FOREIGN KEY (restaurantPartnerId)
+        REFERENCES RestaurantPartner(restaurantPartnerID)
         ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_payout_releasedBy FOREIGN KEY (releasedBy)
         REFERENCES User(userID)
@@ -284,7 +284,7 @@ CREATE TABLE Contract (
     bookingID INT NOT NULL UNIQUE,
     content LONGTEXT,
     signedAt DATETIME,
-    ownerSignature VARCHAR(255),
+    restaurantPartnerSignature VARCHAR(255),
     customerSignature VARCHAR(255),
     status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: SIGNED, 2: CANCELLED
     FOREIGN KEY (bookingID) REFERENCES Booking(bookingID) ON DELETE CASCADE
