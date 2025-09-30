@@ -326,3 +326,5 @@ CREATE TABLE Report (
         (targetType = 'REVIEW' AND reasonType IN ('FAKE_REVIEW','SPAM','INAPPROPRIATE','IRRELEVANT','OTHER'))
     )
 );
+
+

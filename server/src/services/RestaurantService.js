@@ -7,8 +7,8 @@ class RestaurantService {
     return await RestaurantDAO.getAll();
   }
 
-  static async getByOwnerID(ownerID) {
-    return await RestaurantDAO.getAllByOwnerID(ownerID);
+  static async getByPartnerID(restaurantPartnerID) {
+    return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
   }
 
   static async getByID(restaurantID) {
@@ -16,8 +16,8 @@ class RestaurantService {
   }
 
   static async create(data) {
-    if (!data.name || !data.ownerID) {
-      throw new Error("Restaurant name and ownerID are required");
+    if (!data.name || !data.restaurantPartnerID) {
+      throw new Error("Restaurant name and restaurantPartnerID are required");
     }
     return await RestaurantDAO.createRestaurant(data);
   }
@@ -36,6 +36,10 @@ class RestaurantService {
 
   static async deleteImage(imageID){
     return await RestaurantImageDAO.deleteImage(imageID);
+  }
+
+  static async search(filter){
+    return await RestaurantDAO.search(filter);
   }
 }
 

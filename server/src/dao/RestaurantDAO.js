@@ -5,7 +5,7 @@ import RestaurantImage from "../models/RestaurantImage.js";
 class RestaurantDAO {
   static async getAll() {
     const [rows] = await db.query(
-      `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
+      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
     FROM Restaurant r
     JOIN Address a ON r.addressID = a.addressID`
     );
@@ -15,13 +15,13 @@ class RestaurantDAO {
     }));
   }
 
-  static async getAllByOwnerID(ownerID) {
+  static async getAllByPartnerID(restaurantPartnerID) {
     const [rows] = await db.query(
-      `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
+      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
       FROM Restaurant r 
       JOIN Address a ON r.addressID = a.addressID
-      WHERE r.ownerID = ?`,
-      [ownerID]
+      WHERE r.restaurantPartnerID = ?`,
+      [restaurantPartnerID]
     );
     return rows.map((r) => ({
       ...new Restaurant(r),
@@ -31,7 +31,7 @@ class RestaurantDAO {
 
   static async getByID(restaurantID) {
     const [rows] = await db.query(
-      `SELECT r.restaurantID, r.ownerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
+      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
       FROM Restaurant r
       JOIN Address a ON r.addressID = a.addressID
       WHERE r.restaurantID = ?`,
@@ -50,13 +50,13 @@ class RestaurantDAO {
     return {
       ...new Restaurant(rows[0]),
       address: rows[0].fullAddress,
-      images: images.map(img => new RestaurantImage(img)),
+      images: images.map((img) => new RestaurantImage(img)),
     };
   }
   /* 
 constructor({
     restaurantID,
-    ownerID,
+    restaurantPartnerID,
     name,
     description,
     hallCount,
@@ -65,7 +65,7 @@ constructor({
     status,
   }) {*/
   static async createRestaurant({
-    ownerID,
+    restaurantPartnerID,
     name,
     description,
     address,
@@ -85,16 +85,23 @@ constructor({
 
       //INSERT RESTAURANT
       const [restaurantResult] = await conn.query(
-        `INSERT INTO Restaurant(ownerID, name, description, addressID, thumbnailURL, status)
+        `INSERT INTO Restaurant(restaurantPartnerID, name, description, addressID, thumbnailURL, status)
         VALUES(?, ?, ?, ?, ?, ?)`,
-        [ownerID, name, description, newAddressID, thumbnailURL, status ?? 1]
+        [
+          restaurantPartnerID,
+          name,
+          description,
+          newAddressID,
+          thumbnailURL,
+          status ?? 1,
+        ]
       );
 
       await conn.commit();
 
       return new Restaurant({
         restaurantID: restaurantResult.insertId,
-        ownerID,
+        restaurantPartnerID,
         name,
         description,
         hallCount: 0,
@@ -112,7 +119,7 @@ constructor({
 
   static async updateRestaurant(
     restaurantID,
-    { ownerID, name, description, address, thumbnailURL }
+    { restaurantPartnerID, name, description, address, thumbnailURL }
   ) {
     const conn = await db.getConnection();
     try {
@@ -136,11 +143,11 @@ constructor({
       await conn.query(
         `
       UPDATE Restaurant
-      SET ownerID = ?, name = ?, description = ?, 
+      SET restaurantPartnerID = ?, name = ?, description = ?, 
           thumbnailURL = ?
       WHERE restaurantID = ?
     `,
-        [ownerID, name, description, thumbnailURL, restaurantID]
+        [restaurantPartnerID, name, description, thumbnailURL, restaurantID]
       );
 
       await conn.commit();
@@ -160,6 +167,48 @@ constructor({
       [restaurantID]
     );
     return result.affectedRows > 0;
+  }
+
+  static async search({ location, capacity, date, minPrice, maxPrice }) {
+    let query = `SELECT DISTINCT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount,
+    r.addressID, r.thumbnailURL, r.status, a.fullAddress, h.hallID, h.name as hallName, h.capacity, h.price
+    FROM Restaurant r
+    JOIN Address a ON r.addressID = a.addressID
+    JOIN Hall h ON r.restaurantID = h.restaurantID
+    WHERE r.status = 1 AND h.status = 1`;
+
+    const params = [];
+
+    if (location) {
+      query += " AND a.fullAddress LIKE ? ";
+      params.push(`%${location}%`);
+    }
+
+    if (capacity) {
+      query += " AND h.capacity >= ?";
+      params.push(capacity);
+    }
+
+    if (minPrice) {
+      query += " AND h.price >= ? ";
+      params.push(minPrice);
+    }
+
+    if (maxPrice) {
+      query += " AND h.price <= ? ";
+      params.push(maxPrice);
+    }
+
+    if(date){
+      query += 
+      `And h.hallID NOT IN (SELECT b.hallID FROM Booking b  WHERE b.eventDate = ? and b.status = 1)`;
+      params.push(date);
+    }
+
+    const [rows] = await db.query(query,params);
+
+    return rows;
+
   }
 }
 

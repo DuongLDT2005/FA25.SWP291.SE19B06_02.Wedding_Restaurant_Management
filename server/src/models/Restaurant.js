@@ -1,7 +1,7 @@
 class Restaurant {
   constructor({
     restaurantID,
-    ownerID,
+    restaurantPartnerID,
     name,
     description,
     hallCount,
@@ -10,7 +10,7 @@ class Restaurant {
     status,
   }) {
     this.restaurantID = restaurantID;
-    this.ownerID = ownerID;
+    this.restaurantPartnerID = restaurantPartnerID;
     this.name = name;
     this.description = description;
     this.hallCount = hallCount;
