@@ -2,8 +2,9 @@ import { useState } from "react";
 import "../../styles/SignUpForCustomerStyles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { signUpCustomer } from "../../services/authService";
 
-export default function SignUpCus() {
+export default function SignUpCustomer() {
   const [form, setForm] = useState({
     fullname: "",
     role: "",
@@ -22,267 +23,170 @@ export default function SignUpCus() {
   const validate = () => {
     let newErrors = {};
 
-    // Họ và tên
-    if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.fullname)) {
-      newErrors.fullname = "Bạn chưa nhập tên của mình";
-    }
+    if (!form.fullname.trim()) newErrors.fullname = "Bạn chưa nhập tên của mình";
+    else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.fullname))
+      newErrors.fullname = "Tên chỉ được nhập chữ";
 
-    // Bạn là?
-    if (!form.role) {
-      newErrors.role = "Vui lòng chọn một lựa chọn";
-    }
+    if (!form.role) newErrors.role = "Vui lòng chọn một lựa chọn";
 
-    // Người đồng hành (bắt buộc nếu là Cô dâu hoặc Chú rể)
     if (form.role === "Cô dâu" || form.role === "Chú rể") {
-      if (!form.partner.trim()) {
-        newErrors.partner = "Vui lòng nhập tên người đồng hành";
-      } else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.partner)) {
+      if (!form.partner.trim()) newErrors.partner = "Vui lòng nhập tên người đồng hành";
+      else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.partner))
         newErrors.partner = "Tên chỉ được nhập chữ";
-      }
-    } else {
-      // Nếu chọn Khác thì reset luôn partner để không lưu rác
-      form.partner = "";
     }
 
-    // SĐT
-    if (!/^[0-9]{9,11}$/.test(form.phone)) {
-      newErrors.phone = "Bạn chưa nhập số điện thoại";
-    }
-
-    // Email
-    if (!form.email.includes("@")) {
-      newErrors.email = "Email không hợp lệ";
-    }
-
-    // Password
-    if (form.password.length < 6) {
-      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự";
-    }
-
-    // Confirm Password
-    if (form.confirmPassword !== form.password) {
+    if (!/^[0-9]{9,11}$/.test(form.phone)) newErrors.phone = "Số điện thoại không hợp lệ";
+    if (!form.email.includes("@")) newErrors.email = "Email không hợp lệ";
+    if (form.password.length < 6) newErrors.password = "Mật khẩu phải ít nhất 6 ký tự";
+    if (form.confirmPassword !== form.password)
       newErrors.confirmPassword = "Mật khẩu nhập lại không khớp";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validate()) {
-      alert("Đăng ký thành công!");
+      try {
+        await signUpCustomer({
+          fullname: form.fullname,
+          weddingRole: form.role,
+          partner: form.partner,
+          phone: form.phone,
+          email: form.email,
+          password: form.password,
+        });
+        alert("Đăng ký thành công!");
+        setForm({
+          fullname: "",
+          role: "",
+          partner: "",
+          phone: "",
+          email: "",
+          address: "",
+          password: "",
+          confirmPassword: "",
+        });
+        setErrors({});
+      } catch (err) {
+        alert(err.message);
+      }
     }
   };
 
   return (
     <div className="signup-container">
       <div className="signup-card">
-        {/* Bên trái */}
         <div className="signup-left">
           <h1>Chào mừng!</h1>
           <p>Hãy đăng ký để trải nghiệm dịch vụ của chúng tôi.</p>
         </div>
-
-        {/* Bên phải */}
         <div className="signup-right">
           <h2>Đăng Ký Khách Hàng</h2>
-
           <form onSubmit={handleSubmit}>
-            {/* Họ và tên */}
             <div className="form-group">
               <input
                 type="text"
+                className={`form-control ${errors.fullname ? "is-invalid" : ""}`}
                 placeholder="Họ và tên"
                 value={form.fullname}
                 onChange={(e) => setForm({ ...form, fullname: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const formEl = e.target.form;
-                    const index = Array.prototype.indexOf.call(formEl, e.target);
-                    formEl.elements[index + 1]?.focus();
-                  }
-                }}
               />
-              {errors.fullname && (
-                <div className="invalid-feedback">{errors.fullname}</div>
-              )}
+              <div className="invalid-feedback">{errors.fullname}</div>
             </div>
 
-            {/* Bạn là */}
             <div className="form-group">
               <select
+                className={`form-control ${errors.role ? "is-invalid" : ""}`}
                 value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const formEl = e.target.form;
-                    const index = Array.prototype.indexOf.call(formEl, e.target);
-                    formEl.elements[index + 1]?.focus();
-                  }
+                onChange={(e) => {
+                  const role = e.target.value;
+                  setForm({ ...form, role, partner: role === "Cô dâu" || role === "Chú rể" ? form.partner : "" });
                 }}
               >
-                <option value="" disabled hidden>
-                  Bạn là?
-                </option>
+                <option value="" disabled hidden> Bạn là? </option>
                 <option value="Cô dâu">Cô dâu</option>
                 <option value="Chú rể">Chú rể</option>
                 <option value="Khác">Khác</option>
               </select>
-              {errors.role && (
-                <div className="invalid-feedback">{errors.role}</div>
-              )}
+              <div className="invalid-feedback">{errors.role}</div>
             </div>
 
-            {/* Người đồng hành */}
-            <div className="form-group">
-              <input
-                type="text"
-                name="partner"
-                value={form.partner}
-                onChange={(e) => setForm({ ...form, partner: e.target.value })}
-                disabled={form.role === "Khác"}
-                placeholder="Nhập tên người đồng hành"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const formEl = e.target.form;
-                    const index = Array.prototype.indexOf.call(formEl, e.target);
-                    formEl.elements[index + 1]?.focus();
-                  }
-                }}
-              />
-              {errors.partner && (
+            {(form.role === "Cô dâu" || form.role === "Chú rể") && (
+              <div className="form-group">
+                <input
+                  type="text"
+                  className={`form-control ${errors.partner ? "is-invalid" : ""}`}
+                  placeholder="Nhập tên người đồng hành"
+                  value={form.partner}
+                  onChange={(e) => setForm({ ...form, partner: e.target.value })}
+                />
                 <div className="invalid-feedback">{errors.partner}</div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Số điện thoại */}
             <div className="form-group">
               <input
                 type="text"
+                className={`form-control ${errors.phone ? "is-invalid" : ""}`}
                 placeholder="Số điện thoại"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const formEl = e.target.form;
-                    const index = Array.prototype.indexOf.call(formEl, e.target);
-                    formEl.elements[index + 1]?.focus();
-                  }
-                }}
               />
-              {errors.phone && (
-                <div className="invalid-feedback">{errors.phone}</div>
-              )}
+              <div className="invalid-feedback">{errors.phone}</div>
             </div>
 
-            {/* Email */}
-            <div className="form-group email-group">
+            <div className="form-group">
               <input
                 type="text"
+                className={`form-control ${errors.email ? "is-invalid" : ""}`}
                 placeholder="Email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const formEl = e.target.form;
-                    const index = Array.prototype.indexOf.call(formEl, e.target);
-                    formEl.elements[index + 1]?.focus();
-                  }
-                }}
               />
-              {errors.email && (
-                <div className="invalid-feedback">{errors.email}</div>
-              )}
+              <div className="invalid-feedback">{errors.email}</div>
             </div>
 
-            {/* Mật khẩu */}
             <div className="form-group">
               <div className="password-wrapper">
                 <input
                   type={showPassword ? "text" : "password"}
+                  className={`form-control ${errors.password ? "is-invalid" : ""}`}
                   placeholder="Mật khẩu"
                   value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const formEl = e.target.form;
-                      const index = Array.prototype.indexOf.call(formEl, e.target);
-                      formEl.elements[index + 1]?.focus();
-                    }
-                  }}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  autoComplete="new-password"
                 />
-                <span
-                  className="toggle-password"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
+                <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                 </span>
               </div>
-              {errors.password && (
-                <div className="invalid-feedback">{errors.password}</div>
-              )}
+              <div className="invalid-feedback">{errors.password}</div>
             </div>
 
-            {/* Nhập lại mật khẩu */}
-            <div className="form-group">
+            <div className="form-group password-wrapper">
               <div className="password-wrapper">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
                   placeholder="Nhập lại mật khẩu"
                   value={form.confirmPassword}
-                  onChange={(e) =>
-                    setForm({ ...form, confirmPassword: e.target.value })
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const formEl = e.target.form;
-                      const index = Array.prototype.indexOf.call(formEl, e.target);
-                      formEl.elements[index + 1]?.focus();
-                    }
-                  }}
+                  onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                  autoComplete="new-password"
                 />
-                <span
-                  className="toggle-password"
-                  onClick={() =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
-                >
-                  <FontAwesomeIcon
-                    icon={showConfirmPassword ? faEyeSlash : faEye}
-                  />
+                <span className="toggle-password" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
                 </span>
               </div>
-              {errors.confirmPassword && (
-                <div className="invalid-feedback">
-                  {errors.confirmPassword}
-                </div>
-              )}
+              <div className="invalid-feedback">{errors.confirmPassword}</div>
             </div>
-
-            {/* Nút đăng ký */}
-            <button type="submit" className="btn-submit">
-              Đăng Ký
-            </button>
+            <button type="submit" className="btn-submit">Đăng Ký</button>
           </form>
 
-          {/* Liên kết dưới */}
           <div className="links">
-            <p>
-              Bạn đã có tài khoản? <a href="#">Đăng nhập</a>
-            </p>
-            <p>
-              Quay lại <a href="#">Trang chủ</a>
-            </p>
+            <p>Bạn đã có tài khoản? <a href="#">Đăng nhập</a></p>
+            <p>Quay lại <a href="#">Trang chủ</a></p>
           </div>
         </div>
       </div>
