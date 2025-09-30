@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+// import mongodb from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -24,3 +25,10 @@ const pool = mysql.createPool({
 })();
 
 export default pool;
+
+// // connect to MongoDB
+// const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/WeddingRestaurantManagement";
+// mongoose.connect(mongoURI, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+// });
