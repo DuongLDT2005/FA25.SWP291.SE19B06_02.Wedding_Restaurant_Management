@@ -7,11 +7,6 @@ function Footer() {
     return (
         <footer className="footer">
             <div className="footer-container">
-                {/* Logo */}
-                <div className="footer-logo">
-                    <img src={"https://via.placeholder.com/120x40?text=Logoipsum"} alt="Logo" />
-                </div>
-
                 {/* Các cột liên kết */}
                 <div className="footer-links">
                     <div className="footer-column">

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from "react";
 import "../styles/HeaderSearchbarStyles.css"
-
+import { Link } from 'react-router-dom'
 // Danh sách địa điểm cố định - di chuyển ra ngoài component
 const LOCATIONS = ["Liên Chiểu", "Ngũ Hành Sơn", "Sơn Trà", "Cẩm Lệ", "Thanh Khê"];
 
@@ -180,11 +180,20 @@ function SearchBar() {
                     <i className="fa-solid fa-dollar-sign"></i>
                     <div>
                         <label htmlFor="costs">Chi phí</label>
-                        <input type="text" id="costs" name="costs" placeholder="Nhập ngân sách" value={formData.costs} onChange={handleInputChange} />
+                        <select type="text" id="costs" name="costs" value={formData.costs} onChange={handleInputChange} >
+                            <option value="">Chọn số lượng</option>
+                            <option value="100-200">100 - 200 người</option>
+                            <option value="200-300">200 - 300 người</option>
+                            <option value="300-400">300 - 400 người</option>
+                            <option value="400-500">400 - 500 người</option>
+                            <option value="500+">Trên 500 người</option>
+                        </select>
                     </div>
                 </div>
                 <div className="option--field">
-                    <button type="submit">Đặt ngay</button>
+                    <Link to="/restaurant/detail" state={{ location: formData.location }}>
+                        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </Link>
                 </div>
             </form >
         </>

@@ -1,4 +1,3 @@
-
 .navbar--header {
     display: flex;
     position: fixed;
@@ -16,7 +15,7 @@
 .navbar--header.scrolled {
     background-color: rgba(168, 77, 89, 0.8);
     backdrop-filter: blur(2px);
-    border-bottom:none;
+    border-bottom: none;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -28,7 +27,7 @@
 }
 
 .navbar--header--left h2 {
-    color: #2D0F14;
+    color: #993344;
     transition: color 0.3s ease;
 }
 
@@ -36,76 +35,40 @@
     color: #fefaf9;
 }
 
-.navbar--header--right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-right: 150px;
-}
-
-.navbar--header--right ul {
-    list-style: none;
-    display: flex;
-    gap: 20px;
-}
-
-.navbar--header--right li a {
-    text-decoration: none;
-    color: #2D0F14;
-    font-size: 16px;
-    font-weight: 500;
-    transition: color 0.3s ease;
-}
-
-.navbar--header.scrolled .navbar--header--right li a {
-    color: #fefaf9;
-}
-
-
 .button--header {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-right: 100px;
 }
 
 .button--header button {
-    padding: 10px 30px;
+    padding: 10px 20px;
     cursor: pointer;
-    border: #993344 1px solid;
+    border: none;
     border-radius: 5px;
     font-weight: 500;
     transition: all 0.3s ease;
+    background: rgba(168, 77, 89, 0.8);
+}
+
+.button--header a {
+    font-weight: 600;
+    text-decoration: none !important;
+    color: #fefaf9;
 }
 
 .button--header button:hover {
     transform: scale(1.05);
 }
 
-.button--header #register {
+.navbar--header.scrolled button {
     background: none;
+    border: #fefaf9 1px solid;
+}
+
+.navbar--header.scrolled button a {
     color: #fefaf9;
-    border-color: #fefaf9;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.navbar--header.scrolled .button--header #register {
-    color: #fefaf9;
-    border-color: #fefaf9;
-}
-
-.button--header #signin {
-    background-color: #fefaf9;
-    color: #2D0F14;
-    border-color: #fefaf9;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.navbar--header.scrolled .button--header #signin {
-    background-color: #fefaf9;
-    color: #993344;
-    border-color: #993344;
 }
 
 /* Header section */
