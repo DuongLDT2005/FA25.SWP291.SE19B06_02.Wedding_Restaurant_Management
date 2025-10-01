@@ -69,5 +69,39 @@ class HallController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+    static async addHallImage(req, res) {
+        try {
+            const { imageURL, hallID } = req.body;
+            if (!imageURL || !hallID) {
+                return res.status(400).json({ error: 'Image URL and Hall ID cannot be null' });
+            }
+            const newImage = await HallServices.addHallImage(hallID, imageURL);
+            res.status(201).json(newImage);
+        } catch (error) {
+            console.error('Error adding hall image:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    static async getHallImages(req, res) {
+        try {
+            const images = await HallServices.getHallImages(req.params.id);
+            res.json(images);
+        } catch (error) {
+            console.error('Error fetching hall images:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    static async deleteHallImage(req, res) {
+        try {
+            const success = await HallServices.deleteHallImage(req.params.imageId);
+            if (!success) {
+                return res.status(404).json({ error: 'Image not found' });
+            }
+            res.json({ success: true });
+        } catch (error) {
+            console.error('Error deleting hall image:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 }
 export default HallController;
