@@ -4,7 +4,7 @@ import Home from "../pages/homePage";
 import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
-
+import Dashboard from "../pages/admin/dashboard/Dashboard";
 
 function AppRoutes() {
   return (
@@ -14,6 +14,8 @@ function AppRoutes() {
         <Route path="/signup/customer" element={<SignUpCustomer />} />
         <Route path="/signup/owner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin" element={<Dashboard />} />
+
         {/* Thêm các route khác tại đây */}
       </Routes>
     </BrowserRouter>

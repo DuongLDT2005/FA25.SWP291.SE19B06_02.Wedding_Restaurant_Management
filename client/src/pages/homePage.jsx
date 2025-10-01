@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/HomePageStyles.css"
+import "../styles/homePageStyles.css"
 import SearchBar from "../components/SearchBar";
 import Header from "../components/Header";
 import Footer from "../components/Footer";

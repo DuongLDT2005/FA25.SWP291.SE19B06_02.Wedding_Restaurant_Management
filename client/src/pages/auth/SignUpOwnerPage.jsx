@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { togglePassword } from "../owner/togglePassword";
+// import { togglePassword } from "../owner/togglePassword";
 import { uploadImageToCloudinary } from "../../services/uploadServices";
 import React, { useState } from "react";
 import "../../styles/signUpForOwnerStyles.css";

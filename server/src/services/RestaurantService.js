@@ -11,6 +11,10 @@ class RestaurantService {
     return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
   }
 
+  static async getAvailable(){
+    return await RestaurantDAO.getAvailable();
+  }
+
   static async getByID(restaurantID) {
     return await RestaurantDAO.getByID(restaurantID);
   }
