@@ -15,4 +15,6 @@ router.delete("/:id",RestaurantController.changeRestaurantStatus);
 router.post("/:id/images", RestaurantController.addImage);
 router.delete("/images/:imageID", RestaurantController.deleteImage);
 
+//address routes
+
 export default router;

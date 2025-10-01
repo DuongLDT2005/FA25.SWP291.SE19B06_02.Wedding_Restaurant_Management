@@ -125,35 +125,61 @@ class UserDAO {
     }
 
     static async createOwner(data) {
-        const { email, fullName, phone, password, licenseUrl } = data;
-        // create user with role owner (1)
-        const [result] = await db.query(
-            'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [email, fullName, phone, password, userRole.owner, Buffer.from([userStatus.active])]
-        );
-        const userID = result.insertId;
-        // create restaurant partner
-        await db.query(
-            'INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate) VALUES (?, ?, ?, ?)',
-            [userID, licenseUrl || '', Buffer.from([negoStatus.pending]), null]
-        );
-        return new RestaurantPartner(userID, email, fullName, phone, password, userRole.owner, userStatus.active, new Date(), licenseUrl, negoStatus.pending, null);
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const { email, fullName, phone, password, licenseUrl } = data;
+            // Insert into User table with role owner (1)
+            const [userResult] = await connection.query(
+                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [email, fullName, phone, password, userRole.owner, Buffer.from([userStatus.active])]
+            );
+            const userID = userResult.insertId;
+
+            // Insert into RestaurantPartner table
+            await connection.query(
+                'INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate) VALUES (?, ?, ?, ?)',
+                [userID, licenseUrl || '', Buffer.from([negoStatus.pending]), null]
+            );
+
+            await connection.commit();
+            return new RestaurantPartner(userID, email, fullName, phone, password, userRole.owner, userStatus.active, new Date(), licenseUrl, negoStatus.pending, null);
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async createCustomer(data) {
-        const { email, fullName, phone, password, partnerName, weddingRole } = data;
-        // create user with role customer (0)
-        const [result] = await db.query(
-            'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [email, fullName, phone, password, userRole.customer, Buffer.from([userStatus.active])]
-        );
-        const userID = result.insertId;
-        // create customer
-        await db.query(
-            'INSERT INTO Customer (customerID, partnerName, weddingRole) VALUES (?, ?, ?)',
-            [userID, partnerName || '', weddingRole || 0]
-        );
-        return new Customer(userID, email, fullName, phone, password, userRole.customer, userStatus.active, new Date(), partnerName, weddingRole);
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const { email, fullName, phone, password, partnerName, weddingRole } = data;
+            // Insert into User table
+            const [userResult] = await connection.query(
+                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [email, fullName, phone, password, userRole.customer, Buffer.from([userStatus.active])]
+            );
+            const userID = userResult.insertId;
+
+            // Insert into Customer table
+            await connection.query(
+                'INSERT INTO Customer (customerID, partnerName, weddingRole) VALUES (?, ?, ?)',
+                [userID, partnerName || '', weddingRole || 0]
+            );
+
+            await connection.commit();
+            return new Customer(userID, email, fullName, phone, password, userRole.customer, userStatus.active, new Date(), partnerName, weddingRole);
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async updateStatusUser(id, status) {
