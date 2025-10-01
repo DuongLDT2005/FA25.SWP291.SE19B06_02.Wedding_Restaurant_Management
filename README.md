@@ -69,3 +69,6 @@ utils/ : Helper functions dùng chung
 App.js : Quản lý routes, phân quyền theo role
 
 index.js : Render React app vào DOM
+
+#Thư viện (nếu bị lỗi, hãy tải nha)
+npm install @fortawesome/fontawesome-free

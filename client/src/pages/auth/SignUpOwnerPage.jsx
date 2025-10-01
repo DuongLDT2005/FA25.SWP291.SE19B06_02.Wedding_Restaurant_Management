@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-// import { togglePassword } from "../owner/togglePassword";
 import { uploadImageToCloudinary } from "../../services/uploadServices";
 import React, { useState } from "react";
 import "../../styles/signUpForOwnerStyles.css";
@@ -11,7 +10,7 @@ function SignUpForOwner() {
   const [file, setFile] = useState(null);
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
+  const [passwordError] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   // Validate form
@@ -33,7 +32,7 @@ function SignUpForOwner() {
     if (!emailRegex.test(email)) {
       newErrors.email = "Email không đúng định dạng.";
     }
-
+    // thêm validate password
     const passwordRegex = /^[A-Za-z0-9]{6,}$/;
     if (!passwordRegex.test(password)) {
       newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ hoặc số.";
@@ -50,38 +49,49 @@ function SignUpForOwner() {
     return newErrors;
   };
 
-  const handleFileChange = (event) => setFile(event.target.files[0]);
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
+    if (selectedFile) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.licenseUrl;
+        return next;
+      });
+    }
+  };
 
- const handleSubmit = async (event) => {
-  event.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-  const name = event.target.name.value;
-  const phoneNumber = event.target.phoneNumber.value;
-  const email = event.target.email.value;
+    const name = event.target.name.value;
+    const phoneNumber = event.target.phoneNumber.value;
+    const email = event.target.email.value;
 
-  // validate bằng state
-  const formErrors = validateForm(name, phoneNumber, email, password, confirmPassword, file);
+    // validate bằng state
+    const formErrors = validateForm(name, phoneNumber, email, password, confirmPassword, file);
 
-  if (Object.keys(formErrors).length > 0) {
-    setErrors(formErrors);
-    return;
-  }
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      return;
+    }
 
-  try {
-    const secureUrl = await uploadImageToCloudinary(file);
-    await signUpOwner({ name, phoneNumber, email, password, licenseUrl: secureUrl });
+    try {
+      const secureUrl = await uploadImageToCloudinary(file);
+      console.log("Cloudinary URL:", secureUrl);
+      await signUpOwner({ name, phoneNumber, email, password, licenseUrl: secureUrl });
 
-    // 👉 Không dùng toast hay alert, chỉ reset form
-    setErrors({});
-    setPassword("");
-    setConfirmPassword("");
-    setFile(null);
-  } catch (err) {
-    console.error(err);
-    // 👉 Có thể gán lỗi chung nếu muốn
-    setErrors({ form: "Có lỗi xảy ra, vui lòng thử lại." });
-  }
-};
+      // 👉 Không dùng toast hay alert, chỉ reset form
+      setErrors({});
+      setPassword("");
+      setConfirmPassword("");
+      setFile(null);
+    } catch (err) {
+      console.error(err);
+      // 👉 Có thể gán lỗi chung nếu muốn
+      setErrors({ form: "Có lỗi xảy ra, vui lòng thử lại." });
+    }
+  };
 
   return (
     <div className="sign--up">
@@ -132,36 +142,43 @@ function SignUpForOwner() {
               name="password"
               type={showPassword ? "text" : "password"}
               value={password}
-              className={`form-control ${passwordError ? "is-invalid" : ""}`}
-              onChange={(e) => setPassword(e.target.value)}
+              className={`form-control ${(passwordError || errors.password) ? "is-invalid" : ""}`}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setPassword(newValue);
+              }}
               placeholder="Mật khẩu"
             />
             <span
               className="toggle-password"
               onClick={() => setShowPassword(!showPassword)}
             >
-              <div className="icon--show"><FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} /></div>
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
             </span>
-            {passwordError && <div className="invalid-feedback">{passwordError}</div>}
           </div>
+          {(passwordError || errors.password) && (
+            <div className="error-message">{passwordError || errors.password}</div>
+          )}
 
           <div className="password-wrapper">
             <input
               name="confirmPassword"
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
-              className={`form-control ${passwordError ? "is-invalid" : ""}`}
-              onChange={(e) => setPassword(e.target.value)}
+              className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Xác nhận mật khẩu"
             />
             <span
               className="toggle-password"
               onClick={() => setShowPassword(!showPassword)}
             >
-               <div className="icon--show"><FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} /></div>
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
             </span>
-            {passwordError && <div className="invalid-feedback">{passwordError}</div>}
           </div>
+          {errors.confirmPassword && (
+            <div className="error-message">{errors.confirmPassword}</div>
+          )}
 
           <div className="file--upload">
             <label htmlFor="licenseUrl" className="file--label">
@@ -184,6 +201,11 @@ function SignUpForOwner() {
           <div className="sign--up--link">
             <p>
               Bạn đã có tài khoản? <Link to="#">Đăng nhập</Link>
+            </p>
+          </div>
+          <div className="sign--up--link">
+            <p>
+              Quay về <Link to="/">trang chủ</Link>
             </p>
           </div>
         </div>
