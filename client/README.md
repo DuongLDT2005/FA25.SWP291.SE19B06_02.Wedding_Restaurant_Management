@@ -75,3 +75,7 @@ npm install bootstrap
 npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fortawesome/fontawesome-svg-core
 ## Install router-dom
 npm install react-router-dom
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs
