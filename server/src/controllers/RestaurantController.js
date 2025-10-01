@@ -21,6 +21,15 @@ class RestaurantController {
     }
   }
 
+  static async getAvailable(req,res){
+    try{
+      const data = await RestaurantService.getAvailable();
+      req.json(data);
+    }catch(err){
+      res.status(500).json({message : "Error fetching restaurant", error : err.message});
+    }
+  }
+
   static async getOne(req, res) {
     try {
       const restaurant = await RestaurantService.getByID(req.params.id);

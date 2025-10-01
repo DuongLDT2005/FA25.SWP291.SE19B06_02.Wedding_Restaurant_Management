@@ -76,6 +76,9 @@ npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fo
 npm install @fortawesome/fontawesome-free
 ## Install router-dom
 npm install react-router-dom
+## Install CoreUI
+npm install @coreui/react @coreui/coreui
+npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-react @coreui/react-chartjs @coreui/utils
 ### Install lucide react
 npm install lucide-react
 ### Install bootstrap icon

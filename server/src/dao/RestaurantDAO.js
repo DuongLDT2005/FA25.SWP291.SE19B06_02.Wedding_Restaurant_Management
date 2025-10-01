@@ -15,6 +15,20 @@ class RestaurantDAO {
     }));
   }
 
+  static async getAvailable(){
+    const [rows] = await db.query(
+      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.fullAddress
+      FROM Restaurant r
+      JOIN Address a ON r.addressID = a.addressID
+      WHERE r.status = 1;
+      `
+    );
+    return rows.map((r) => ({
+      ...new Restaurant(r),
+      address: r.fullAddress,
+    }));
+  }
+
   static async getAllByPartnerID(restaurantPartnerID) {
     const [rows] = await db.query(
       `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
@@ -210,6 +224,7 @@ constructor({
     return rows;
 
   }
+
 }
 
 export default RestaurantDAO;
