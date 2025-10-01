@@ -7,8 +7,12 @@ class RestaurantService {
     return await RestaurantDAO.getAll();
   }
 
-  static async getByOwnerID(ownerID) {
-    return await RestaurantDAO.getAllByOwnerID(ownerID);
+  static async getByPartnerID(restaurantPartnerID) {
+    return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
+  }
+
+  static async getAvailable(){
+    return await RestaurantDAO.getAvailable();
   }
 
   static async getByID(restaurantID) {
@@ -36,6 +40,10 @@ class RestaurantService {
 
   static async deleteImage(imageID){
     return await RestaurantImageDAO.deleteImage(imageID);
+  }
+
+  static async search(filter){
+    return await RestaurantDAO.search(filter);
   }
 }
 
