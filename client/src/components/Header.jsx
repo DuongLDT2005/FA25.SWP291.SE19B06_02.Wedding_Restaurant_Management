@@ -16,25 +16,15 @@ function Header() {
     }, []);
 
     return (
-        <div className="header">
-            <div className={`navbar--header ${isScrolled ? 'scrolled' : ''}`}>
-                <div className="navbar--header--left">
-                    <h2>BRAND LOGO</h2>
-                </div>
-                <div className="navbar--header--right">
-                    <ul>
-                        <li><Link to="/">Trang Chủ</Link></li>
-                        <li><Link to="">Dịch Vụ</Link></li>
-                        <li><Link to="">Đặt Phòng</Link></li>
-                        <li><Link to="">Khám Phá</Link></li>
-                        <li><Link to="">Hội viên</Link></li>
-                        <li><Link to="/signup/owner">Trở Thành Chủ</Link></li>
-                    </ul>
-                    <div className="button--header">
-                        <button id="register">Đăng Ký</button>
-                        <button id="signin">Đăng Nhập</button>
-                    </div>
-                </div>
+
+        <div className={`navbar--header ${isScrolled ? 'scrolled' : ''}`}>
+            <div className="navbar--header--left">
+                <h2>BRAND LOGO</h2>
+            </div>
+            <div className="button--header">
+                <button><Link to="/signup/owner">Bạn Muốn Hợp Tác?</Link></button>
+                <button><Link to="/signup/customer">Đăng Ký</Link></button>
+                <button><Link to="/login">Đăng Nhập</Link></button>
             </div>
         </div>
     );

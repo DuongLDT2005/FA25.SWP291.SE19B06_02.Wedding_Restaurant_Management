@@ -11,6 +11,7 @@ import HallList from "./components/HallList";
 import MenuList from "./components/MenuList";
 import ServiceList from "./components/ServiceList";
 import ReviewList from "./components/ReviewList";
+
 export default function RestaurantDetailsPage() {
   const restaurant = restaurantDetail;
   const resImages = [restaurant.thumbnailURL, ...restaurant.images];

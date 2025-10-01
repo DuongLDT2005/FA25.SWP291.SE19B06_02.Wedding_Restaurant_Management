@@ -6,7 +6,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
 import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
-
+import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -17,6 +17,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         {/* Thêm các route khác tại đây */}
       </Routes>
     </BrowserRouter>
