@@ -91,3 +91,8 @@ npm install bootstrap-icons
 npm install @coreui/react
 ### Install recharts
 npm install recharts
+
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs

@@ -42,6 +42,7 @@ function AppRoutes() {
         <Route path="/partner/notifications" element={<Notifications />} /> */}
         {/* Thêm các route khác tại đây */}
         <Route path="/restaurant/result" element={<RestaurantResult />} />
+        <Route path="/restaurant/result" element={<RestaurantResult />} />
       </Routes>
     </BrowserRouter>
   );
