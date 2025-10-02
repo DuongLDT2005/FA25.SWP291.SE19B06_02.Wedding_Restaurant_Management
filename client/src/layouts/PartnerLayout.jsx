@@ -9,7 +9,7 @@ export default function PartnerLayout({ children }) {
       <Sidebar />
       <div className="flex-fill">
         <TopBar />
-        <Container fluid className="p-4">
+        <Container className="p-4">
           {children}
         </Container>
       </div>

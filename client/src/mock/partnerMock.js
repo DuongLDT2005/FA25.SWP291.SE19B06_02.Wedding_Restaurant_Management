@@ -1,5 +1,5 @@
 const mock = {
-  partner: { id: 4, name: "Golden Palace - Owner: Mr. Hoang" },
+  partner: { id: 4, name: "Nguyen Van A" },
   stats: { upcoming: 3, pendingPayouts: 2, revenueMonth: 125000000 },
   restaurants: [
     { id: 1, name: "Golden Palace", address: "12 Tran Hung Dao, Da Nang", halls: 3 },

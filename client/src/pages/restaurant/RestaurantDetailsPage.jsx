@@ -79,7 +79,7 @@ export default function RestaurantDetailsPage() {
                       className="me-2"
                       style={{ color: "#993344" }}
                     />
-                    <span className="text-dark">{amenity}</span>
+                    <span className="text-dark">{amenity.name}</span>
                   </li>
                 ))}
               </ul>
@@ -135,136 +135,337 @@ export default function RestaurantDetailsPage() {
   );
 }
 
-// Mock data
-// static sample data
 export const restaurantDetail = {
-  id: 1,
+  restaurantID: 1,
+  restaurantPartnerID: 1,
   name: "Nhà Hàng Tiệc Cưới Hoa Sen",
-  description: "Tọa lạc trên mặt tiền đường 3 tháng 2 sầm uất, Capella Gallery Hall là một trong những trung tâm hội nghị tiệc cưới thuộc tập đoàn Capella Holding sở hữu diện tích lên đến 5.000 m2 và ngay trung tâm TP. HCM, thuận tiện cho việc di chuyển giữa các quận nội thành. Nhà hàng Capella Gallery Hall 3/2 là địa điểm cưới nổi bật với phong cách kiến trúc đương đại Đông Tây kết hợp và chất lượng dịch vụ đẳng cấp, tiện ích hiện đại theo tiêu chuẩn quốc tế cùng hệ thống sảnh tiệc đa dạng về quy mô và thiết kế. Việc tự thực hiện tất cả các khâu chuẩn bị cho một đám cưới hoàn chỉnh chưa bao giờ là chuyện dễ dàng đối với những ai đang chuẩn bị bước vào con đường hôn nhân. Chính vì lễ cưới không chỉ là một nghi thức diễn ra theo đúng trình tự, mà còn là cột mốc lưu giữ những kỉ niệm đáng nhớ của cô dâu chú rể trên hành trình yêu và cưới. Nên hầu hết các cặp thường dành nhiều thời gian cho việc tham khảo các địa điểm tổ chức đến tìm đơn vị cung cấp những dịch vụ cưới đi kèm phù hợp với sở thích và ngân sách như: Váy Cưới, Vest Chú Rể, Áo Dài, Makeup Artist,... để ngày trọng đại trọn vẹn nhất có thể.",
-  thumbnailURL: "https://picsum.photos/seed/restaurant/600/400",
+  description:
+    "Tọa lạc trên mặt tiền đường 3 tháng 2 sầm uất, Capella Gallery Hall là một trong những trung tâm hội nghị tiệc cưới thuộc tập đoàn Capella Holding sở hữu diện tích lên đến 5.000 m2 và ngay trung tâm TP. HCM, thuận tiện cho việc di chuyển giữa các quận nội thành. Nhà hàng Capella Gallery Hall 3/2 là địa điểm cưới nổi bật với phong cách kiến trúc đương đại Đông Tây kết hợp và chất lượng dịch vụ đẳng cấp, tiện ích hiện đại theo tiêu chuẩn quốc tế cùng hệ thống sảnh tiệc đa dạng về quy mô và thiết kế. Việc tự thực hiện tất cả các khâu chuẩn bị cho một đám cưới hoàn chỉnh chưa bao giờ là chuyện dễ dàng đối với những ai đang chuẩn bị bước vào con đường hôn nhân. Chính vì lễ cưới không chỉ là một nghi thức diễn ra theo đúng trình tự, mà còn là cột mốc lưu giữ những kỉ niệm đáng nhớ của cô dâu chú rể trên hành trình yêu và cưới. Nên hầu hết các cặp thường dành nhiều thời gian cho việc tham khảo các địa điểm tổ chức đến tìm đơn vị cung cấp những dịch vụ cưới đi kèm phù hợp với sở thích và ngân sách như: Váy Cưới, Vest Chú Rể, Áo Dài, Makeup Artist,... để ngày trọng đại trọn vẹn nhất có thể.",
+  hallCount: 2,
   address: {
+    addressID: 1,
     number: "123",
     street: "Nguyễn Văn Linh",
     ward: "Hải Châu",
-    fullAddress: "123 Nguyễn Văn Linh, Hải Châu"
+    fullAddress: "123 Nguyễn Văn Linh, Hải Châu",
   },
-  hallCount: 2,
+  thumbnailURL: "https://picsum.photos/seed/restaurant/600/400",
+  status: true,
+
   images: [
-    "https://picsum.photos/seed/rs1/800/600",
-    "https://picsum.photos/seed/rs2/800/600"
+    { imageID: 1, imageURL: "https://picsum.photos/seed/rs1/800/600" },
+    { imageID: 2, imageURL: "https://picsum.photos/seed/rs2/800/600" },
   ],
-  amenities: ["Bãi đỗ xe", "Âm thanh ánh sáng", "Máy chiếu màn hình LED"],
+
+  amenities: [
+    { amenityID: 1, name: "Bãi đỗ xe", status: true },
+    { amenityID: 2, name: "Âm thanh ánh sáng", status: true },
+    { amenityID: 3, name: "Máy chiếu màn hình LED", status: true },
+  ],
 
   halls: [
     {
-      id: 1,
+      hallID: 1,
+      restaurantID: 1,
       name: "Sảnh Hoa Hồng",
-      description: "Guests will have a special experience as this villa provides a pool with a view. The air-conditioned villa features 1 bedroom and 1 bathroom with a shower and a hairdryer. Featuring a balcony with pool views, this villa also offers soundproof walls and a flat-screen TV with streaming services. The unit offers 2 beds.",
+      description: "Sảnh lớn với sức chứa 500 khách.",
       capacity: 500,
       area: 600,
       price: 30000000,
-      images: ["https://picsum.photos/seed/hall1/800/600", "https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg"]
+      status: true,
+      images: [
+        { imageID: 1, imageURL: "https://picsum.photos/seed/hall1/800/600" },
+        {
+          imageID: 2,
+          imageURL:
+            "https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg",
+        },
+      ],
     },
     {
-      id: 2,
+      hallID: 2,
+      restaurantID: 1,
       name: "Sảnh Tulip",
-      description: "Sảnh nhỏ 200 khách",
+      description: "Sảnh nhỏ, phù hợp tiệc 200 khách.",
       capacity: 200,
       area: 250,
       price: 15000000,
-      images: ["https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg"]
-    }
+      status: true,
+      images: [
+        {
+          imageID: 3,
+          imageURL:
+            "https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg",
+        },
+      ],
+    },
   ],
 
   menus: [
     {
-      id: 1,
+      menuID: 1,
+      restaurantID: 1,
       name: "Menu Truyền Thống",
       price: 3500000,
+      status: true,
       categories: [
         {
+          categoryID: 1,
           name: "Món khai vị",
           requiredQuantity: 2,
           dishes: [
-            { id: 1, name: "Gỏi ngó sen tôm thịt" },
-            { id: 2, name: "Súp cua gà xé" }
-          ]
+            { dishID: 1, name: "Gỏi ngó sen tôm thịt", status: true },
+            { dishID: 2, name: "Súp cua gà xé", status: true },
+            { dishID: 3, name: "Chả giò hải sản", status: true },
+            { dishID: 4, name: "Salad rau trộn dầu giấm", status: true },
+            { dishID: 5, name: "Bánh phồng tôm", status: true },
+            { dishID: 6, name: "Nem nướng Nha Trang", status: true },
+          ],
         },
         {
+          categoryID: 2,
           name: "Món chính",
           requiredQuantity: 3,
           dishes: [
-            { id: 3, name: "Gà hấp lá chanh" },
-            { id: 4, name: "Bò nướng tiêu đen" }
-          ]
+            { dishID: 7, name: "Gà hấp lá chanh", status: true },
+            { dishID: 8, name: "Bò nướng tiêu đen", status: true },
+            { dishID: 9, name: "Cá chẽm hấp HongKong", status: true },
+            { dishID: 10, name: "Tôm càng nướng muối ớt", status: true },
+            { dishID: 11, name: "Lẩu hải sản", status: true },
+            { dishID: 12, name: "Cơm chiên Dương Châu", status: true },
+          ],
         },
         {
+          categoryID: 3,
           name: "Tráng miệng",
           requiredQuantity: 1,
           dishes: [
-            { id: 5, name: "Chè hạt sen long nhãn" }
-          ]
-        }
-      ]
+            { dishID: 13, name: "Chè hạt sen long nhãn", status: true },
+            { dishID: 14, name: "Rau câu dừa", status: true },
+            { dishID: 15, name: "Trái cây thập cẩm", status: true },
+            { dishID: 16, name: "Bánh flan", status: true },
+            { dishID: 17, name: "Kem vani socola", status: true },
+            { dishID: 18, name: "Chè khúc bạch", status: true },
+          ],
+        },
+      ],
     },
     {
-      id: 2,
-      name: "Menu Truyền Thống",
-      price: 3500000,
+      menuID: 2,
+      restaurantID: 1,
+      name: "Menu Hiện Đại",
+      price: 4500000,
+      status: true,
       categories: [
         {
+          categoryID: 4,
           name: "Món khai vị",
           requiredQuantity: 2,
           dishes: [
-            { id: 1, name: "Gỏi ngó sen tôm thịt" },
-            { id: 2, name: "Súp cua gà xé" }
-          ]
+            { dishID: 19, name: "Salad cá ngừ", status: true },
+            { dishID: 20, name: "Súp hải sản nấm đông cô", status: true },
+            { dishID: 21, name: "Khai vị cuốn tôm bơ", status: true },
+            { dishID: 22, name: "Chả giò tôm cua", status: true },
+            { dishID: 23, name: "Bánh mì bơ tỏi", status: true },
+            { dishID: 24, name: "Salad trứng cá hồi", status: true },
+          ],
         },
         {
+          categoryID: 5,
           name: "Món chính",
           requiredQuantity: 3,
           dishes: [
-            { id: 3, name: "Gà hấp lá chanh" },
-            { id: 4, name: "Bò nướng tiêu đen" }
-          ]
+            { dishID: 25, name: "Bò bít tết sốt vang đỏ", status: true },
+            { dishID: 26, name: "Gà nướng mật ong", status: true },
+            { dishID: 27, name: "Cá hồi áp chảo sốt bơ chanh", status: true },
+            { dishID: 28, name: "Tôm sú hấp bia", status: true },
+            { dishID: 29, name: "Mỳ Ý sốt bò bằm", status: true },
+            { dishID: 30, name: "Lẩu thái hải sản", status: true },
+          ],
         },
         {
+          categoryID: 6,
           name: "Tráng miệng",
           requiredQuantity: 1,
           dishes: [
-            { id: 5, name: "Chè hạt sen long nhãn" }
-          ]
-        }
-      ]
-    }
+            { dishID: 31, name: "Bánh mousse dâu", status: true },
+            { dishID: 32, name: "Panna cotta xoài", status: true },
+            { dishID: 33, name: "Kem dừa non", status: true },
+            { dishID: 34, name: "Bánh ngọt Pháp assorted", status: true },
+            { dishID: 35, name: "Chè thái", status: true },
+            { dishID: 36, name: "Trái cây nhiệt đới", status: true },
+          ],
+        },
+      ],
+    },
+    {
+      menuID: 3,
+      restaurantID: 1,
+      name: "Menu Cao Cấp",
+      price: 6000000,
+      status: true,
+      categories: [
+        {
+          categoryID: 7,
+          name: "Món khai vị",
+          requiredQuantity: 2,
+          dishes: [
+            { dishID: 37, name: "Súp vi cá mập", status: true },
+            { dishID: 38, name: "Tôm hùm sashimi", status: true },
+            { dishID: 39, name: "Salad cá hồi xông khói", status: true },
+            { dishID: 40, name: "Bánh xèo Nhật Bản", status: true },
+            { dishID: 41, name: "Gỏi bò tái chanh", status: true },
+            { dishID: 42, name: "Súp bào ngư", status: true },
+          ],
+        },
+        {
+          categoryID: 8,
+          name: "Món chính",
+          requiredQuantity: 3,
+          dishes: [
+            { dishID: 43, name: "Bò Kobe nướng đá", status: true },
+            { dishID: 44, name: "Tôm hùm nướng phô mai", status: true },
+            { dishID: 45, name: "Cua hoàng đế hấp bia", status: true },
+            { dishID: 46, name: "Vịt quay Bắc Kinh", status: true },
+            { dishID: 47, name: "Cá mú hấp xì dầu", status: true },
+            { dishID: 48, name: "Sườn cừu nướng rosemary", status: true },
+          ],
+        },
+        {
+          categoryID: 9,
+          name: "Tráng miệng",
+          requiredQuantity: 1,
+          dishes: [
+            { dishID: 49, name: "Bánh tiramisu", status: true },
+            { dishID: 50, name: "Kem macaron assorted", status: true },
+            { dishID: 51, name: "Chè tổ yến hạt sen", status: true },
+            { dishID: 52, name: "Bánh chocolate lava", status: true },
+            { dishID: 53, name: "Pudding trà xanh", status: true },
+            { dishID: 54, name: "Trái cây nhập khẩu", status: true },
+          ],
+        },
+      ],
+    },
   ],
-
-  services: [
-    { id: 1, name: "Trang trí hoa tươi", price: 5000000, unit: "gói" },
-    { id: 2, name: "Ban nhạc sống", price: 8000000, unit: "buổi" },
-    { id: 3, name: "MC chuyên nghiệp", price: 4000000, unit: "buổi" }
+  servicePackages: [
+    {
+      packageID: 1,
+      restaurantID: 1,
+      eventTypeID: 1, // Tiệc cưới
+      name: "Gói Tiệc Cưới",
+      status: true,
+      services: [
+        {
+          serviceID: 1,
+          restaurantID: 1,
+          packageID: 1,
+          name: "Trang trí hoa tươi",
+          price: 5000000,
+          unit: "gói",
+          status: true,
+        },
+        {
+          serviceID: 2,
+          restaurantID: 1,
+          packageID: 1,
+          name: "Ban nhạc sống",
+          price: 8000000,
+          unit: "buổi",
+          status: true,
+        },
+        {
+          serviceID: 3,
+          restaurantID: 1,
+          packageID: 1,
+          name: "MC chuyên nghiệp",
+          price: 4000000,
+          unit: "buổi",
+          status: true,
+        },
+      ],
+    },
+    {
+      packageID: 2,
+      restaurantID: 1,
+      eventTypeID: 2, // Sinh nhật
+      name: "Gói Sinh Nhật",
+      status: true,
+      services: [
+        {
+          serviceID: 4,
+          restaurantID: 1,
+          packageID: 2,
+          name: "Trang trí bong bóng",
+          price: 2000000,
+          unit: "gói",
+          status: true,
+        },
+        {
+          serviceID: 5,
+          restaurantID: 1,
+          packageID: 2,
+          name: "Chú hề hoạt náo",
+          price: 1500000,
+          unit: "buổi",
+          status: true,
+        },
+      ],
+    },
+    {
+      packageID: 3,
+      restaurantID: 1,
+      eventTypeID: 3, // Liên hoan
+      name: "Gói Liên Hoan",
+      status: true,
+      services: [
+        {
+          serviceID: 6,
+          restaurantID: 1,
+          packageID: 3,
+          name: "DJ & Âm nhạc",
+          price: 6000000,
+          unit: "buổi",
+          status: true,
+        },
+        {
+          serviceID: 7,
+          restaurantID: 1,
+          packageID: 3,
+          name: "Trang trí sân khấu",
+          price: 3000000,
+          unit: "gói",
+          status: true,
+        },
+      ],
+    },
   ],
 
   promotions: [
     {
-      id: 1,
+      promotionID: 1,
+      restaurantID: 1,
       name: "Giảm 10% cho tiệc từ 30 bàn",
       description: "Ưu đãi mùa cưới",
       minTable: 30,
       discountType: "PERCENT",
       discountValue: 0.1,
       startDate: "2025-09-01",
-      endDate: "2025-12-31"
-    }
+      endDate: "2025-12-31",
+      status: true,
+    },
   ],
 
   reviews: [
     {
-      id: 1,
-      customerName: "Nguyễn Thị A",
+      reviewID: 1,
+      bookingID: 1,
       rating: 4,
       comment: "Nhà hàng đẹp, phục vụ tận tình, món ăn ngon!",
-      createdAt: "2025-09-20 12:30:00"
-    }
-  ]
+      createdAt: "2025-09-20 12:30:00",
+      customer: {
+        customerID: 1,
+        fullName: "Nguyễn Thị A",
+      },
+    },
+  ],
 };

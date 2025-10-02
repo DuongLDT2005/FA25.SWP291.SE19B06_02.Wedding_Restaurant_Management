@@ -9,8 +9,10 @@ import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
 import PartnerDashboard from "../pages/partner/Dashboard";
 // import Commission from "../pages/partner/Commission";
 // import ProfileBusiness from "../pages/partner/ProfileBusiness";
-// import Restaurants from "../pages/partner/Restaurants";
-// import Bookings from "../pages/partner/Bookings";
+import Restaurants from "../pages/partner/RestaurantListPage";
+import Bookings from "../pages/partner/BookingsPage";
+import RestaurantDetail from "../pages/partner/RestaurantDetails";
+import NegotiationPage from "../pages/partner/NegotiationPage";
 // import BookingDetail from "../pages/partner/BookingDetail";
 // import Payments from "../pages/partner/Payments";
 // import Reviews from "../pages/partner/Reviews";
@@ -28,10 +30,12 @@ function AppRoutes() {
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
         <Route path="/partner" element={<PartnerDashboard />} />
         {/* <Route path="/partner/commission" element={<Commission />} />
-        <Route path="/partner/profile" element={<ProfileBusiness />} />
+        <Route path="/partner/profile" element={<ProfileBusiness />} /> */}
+        <Route path="/partner/negotiation" element={<NegotiationPage />} />
         <Route path="/partner/restaurants" element={<Restaurants />} />
         <Route path="/partner/bookings" element={<Bookings />} />
-        <Route path="/partner/bookings/:id" element={<BookingDetail />} />
+        <Route path="/partner/restaurants/:id" element={<RestaurantDetail />} />
+        {/* <Route path="/partner/bookings/:id" element={<BookingDetail />} />
         <Route path="/partner/payments" element={<Payments />} />
         <Route path="/partner/reviews" element={<Reviews />} />
         <Route path="/partner/notifications" element={<Notifications />} /> */}

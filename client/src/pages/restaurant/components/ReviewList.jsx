@@ -43,7 +43,7 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {review.customerName.charAt(0).toUpperCase()}
+                  {review.customer.fullName.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-grow-1">
