@@ -2,6 +2,7 @@ import React from "react";
 import { Container } from "react-bootstrap";
 import Sidebar from "../components/PartnerSideBar";
 import TopBar from "../components/PartnerTopBar";
+import {Outlet} from "react-router-dom";
 
 export default function PartnerLayout({ children }) {
   return (
