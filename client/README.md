@@ -70,12 +70,25 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
 
 ### Install bootstrap
-npm install bootstrap
+npm install bootstrap@5.3.1
 ### Install fontawesome
 npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fortawesome/fontawesome-svg-core
+npm install @fortawesome/fontawesome-free
 ## Install router-dom
 npm install react-router-dom
+<<<<<<< HEAD
 ## Install coreui react
 npm install @coreui/react @coreui/icons-react
 ## Install bootstrap coreui
 npm install bootstrap @coreui/coreui @coreui/chartjs
+=======
+## Install CoreUI
+npm install @coreui/react @coreui/coreui
+npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-react @coreui/react-chartjs @coreui/utils
+### Install lucide react
+npm install lucide-react
+### Install bootstrap icon
+npm install bootstrap-icons
+### Install @coreui/react
+npm install @coreui/react
+>>>>>>> 0f8a1ad4585f1cf45a190ef7d84fee47f312abbf

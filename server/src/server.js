@@ -1,8 +1,8 @@
-import app from "./app.js";
 import dotenv from "dotenv";
-import db from "./config/db.js";
-
 dotenv.config();
+
+import app from "./app.js";
+import db from "./config/db.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -19,5 +19,7 @@ async function startServer() {
     process.exit(1);
   }
 }
-
+app.get('/', (req, res) => {
+  res.send('API is running');
+});
 startServer();

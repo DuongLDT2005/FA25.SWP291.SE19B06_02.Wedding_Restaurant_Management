@@ -1,0 +1,227 @@
+.sign--up {
+    min-height: 100vh;
+}
+
+.sign--up--form {
+    min-height: auto;
+}
+
+.sign--up--container h1 {
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.sign--up {
+    display: flex;
+    border-radius: 20px;
+    margin: 7vh 7vw;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    min-height: 85vh;
+    height: auto;
+}
+
+.sign--up--slogan {
+    display: flex;
+    flex-direction: column;
+    width: 60%;
+    justify-content: center;
+    color: #fefaf9;
+    background: #993344;
+    border-radius: 20px 0 0 20px;
+}
+
+.sign--up--slogan h2,
+.sign--up--slogan p {
+    font-size: 1.5rem;
+    margin: 0 10%;
+    width: 50%;
+}
+
+.sign--up--slogan h2 {
+    font-size: 4rem;
+    margin-bottom: 2%;
+}
+
+.sign--up--container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 30px;
+    justify-content: center;
+}
+
+
+.sign--up--form .file--upload {
+    border: none !important;
+    padding: 0 !important;
+    margin: 10px;
+}
+
+.sign--up--container h1 {
+    margin-bottom: 5%;
+}
+
+.sign--up--container input {
+    margin-bottom: 4px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    width: 100%;
+    max-width: 452px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+}
+
+.sign--up--container span {
+    cursor: pointer;
+}
+
+.file--upload {
+    margin: 15px 0;
+}
+
+.file--upload input[type="file"] {
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+.file--upload input[type="file"]::-webkit-file-upload-button {
+    background: #993344;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file--upload input[type="file"]::-webkit-file-upload-button:hover {
+    background: #7a2835;
+}
+
+.sign--up--container button {
+    width: 100%;
+    max-width: 452px;
+    background: #993344;
+    border: none !important;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border: none;
+    border-radius: 6px;
+    padding: 13px 0;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    max-width: 452px;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 452px;
+    margin-bottom: 4px;
+    height: 40px;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding: 10px 40px 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    height: 40px;
+}
+
+.toggle-password {
+    position: absolute !important;
+    top: 0;
+    bottom: 0;
+    right: 12px;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    cursor: pointer;
+    color: #777;
+    font-size: 18px;
+    line-height: 1;
+    z-index: 3;
+}
+
+.sign--up--container button:hover {
+    transform: translateY(-5px);
+}
+
+.sign--up--message {
+    text-align: center;
+    margin: 5px 0;
+    font-weight: 600;
+    color: #993344;
+}
+
+.error-message {
+    color: #993344;
+    font-size: 0.85rem;
+    margin-top: 2px;
+    margin-bottom: 10px;
+    max-width: 452px;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    display: block;
+    min-height: 18px;
+}
+
+
+/* Remove all error border for file input */
+.file--upload .form-control.is-invalid {
+    outline: none !important;
+    border: none !important;
+}
+
+#licenseURL.form-control.is-invalid {
+    border: none !important;
+    outline: none !important;
+}
+
+.sign--up--link {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.sign--up--link a {
+    position: relative;
+    text-decoration: none;
+    color: #f6a401;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.sign--up--link a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 0;
+    height: 2px;
+    background-color: #f6a401;
+    transition: width 0.3s ease;
+}
+
+.sign--up--link a:hover {
+    font-weight: 700;
+}
+
+.sign--up--link a:hover::after {
+    width: 100%;
+    /* độ dài thanh gạch ngang */
+}

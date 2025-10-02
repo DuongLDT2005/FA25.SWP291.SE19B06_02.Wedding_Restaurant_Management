@@ -1,15 +1,14 @@
 import express from "express";
-import cors from "cors";
-
+import restaurantRoutes from "./routes/restaurantRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import hallRoutes from "./routes/hallRoutes.js";
 const app = express();
 
-// Middleware
-app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
-
+app.use("/api/restaurants",restaurantRoutes);
+app.use("/api/halls", hallRoutes);
+app.use("/api/auth",authRoutes);
+app.use("/api/admin",userRoutes);
 export default app;
