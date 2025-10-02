@@ -1,82 +1,44 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-// Auth
 import Home from "../pages/homePage";
 import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
-import LoginPage from "../pages/auth/LoginPage";
-
-// Admin
 import Dashboard from "../pages/admin/dashboard/Dashboard";
-
-// Restaurant
 import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
-
-// Partner Layout + Pages
-import PartnerLayout from "../layouts/PartnerLayout";
 import PartnerDashboard from "../pages/partner/Dashboard";
 // import Commission from "../pages/partner/Commission";
-// import ProfileBusiness from "../pages/partner/ProfileBusiness";
+import ProfileBusiness from "../pages/partner/Profile";
 import Restaurants from "../pages/partner/RestaurantListPage";
-import Bookings from "../pages/partner/BookingsPage";
 import RestaurantDetail from "../pages/partner/RestaurantDetails";
-import NegotiationPage from "../pages/partner/NegotiationPage";
+import Bookings from "../pages/partner/BookingsPage";
 // import BookingDetail from "../pages/partner/BookingDetail";
 // import Payments from "../pages/partner/Payments";
-// import Reviews from "../pages/partner/Reviews";
+import Reviews from "../pages/partner/ReviewManagement";
 // import Notifications from "../pages/partner/Notifications";
-import RestaurantResult from "../pages/restaurant/RestaurantResult";
-import Profile from "../pages/partner/Profile";
-import ReviewManagement from "../pages/partner/ReviewManagement";
-import Notification from "../pages/partner/Notification";
-
-// Partner Restaurant Management
-import DishManagement from "../pages/partner/Restaurant/DishManagement";
-import MenuManagement from "../pages/partner/Restaurant/MenuManagement";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/signup/customer" element={<SignUpCustomer />} />
         <Route path="/signup/owner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
-
-        {/* Admin routes */}
         <Route path="/admin" element={<Dashboard />} />
-
-        {/* Restaurant routes */}
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
         <Route path="/partner" element={<PartnerDashboard />} />
-        {/* <Route path="/partner/commission" element={<Commission />} />
-        <Route path="/partner/profile" element={<ProfileBusiness />} /> */}
-        <Route path="/partner/negotiation" element={<NegotiationPage />} />
+        {/* <Route path="/partner/commission" element={<Commission />} /> */}
+        {/* <Route path="/partner/profile" element={<ProfileBusiness />} /> */}
         <Route path="/partner/restaurants" element={<Restaurants />} />
+        <Route path="/partner/restaurant/:id" element={<RestaurantDetail />} />
         <Route path="/partner/bookings" element={<Bookings />} />
-        <Route path="/partner/restaurants/:id" element={<RestaurantDetail />} />
-        {/* <Route path="/partner/bookings/:id" element={<BookingDetail />} />
-        <Route path="/partner/payments" element={<Payments />} />
+        <Route path="/partner/profiles" element={<ProfileBusiness />} />
+        {/* <Route path="/partner/bookings/:id" element={<BookingDetail />} /> */}
+        {/* <Route path="/partner/payments" element={<Payments />} /> */}
         <Route path="/partner/reviews" element={<Reviews />} />
-        <Route path="/partner/notifications" element={<Notifications />} /> */}
+        {/* <Route path="/partner/notifications" element={<Notifications />} /> */}
         {/* Thêm các route khác tại đây */}
-        <Route path="/restaurant/result" element={<RestaurantResult />} />
-        <Route path="/restaurant/result" element={<RestaurantResult />} />
-
-        {/* Partner routes with layout */}
-        <Route path="/partner" element={<PartnerLayout />}>
-          <Route index element={<PartnerDashboard />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="reviews" element={<ReviewManagement />} />
-          <Route path="notification" element={<Notification />} />
-
-          {/* Restaurant Management */}
-          <Route path="dish" element={<DishManagement />} />
-          <Route path="menu" element={<MenuManagement />} />
-        </Route>
       </Routes>
     </BrowserRouter>
   );

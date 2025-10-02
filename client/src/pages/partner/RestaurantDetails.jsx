@@ -5,8 +5,8 @@ import AppLayout from "../../layouts/PartnerLayout";
 // Import từng tab component
 import RestaurantProfile from "./RestaurantProfile";
 import RestaurantHalls from "./RestaurantHalls";
-// import RestaurantMenu from "./RestaurantMenu";
-// import RestaurantDishes from "./RestaurantDishes";
+import MenuManagement from "../partner/Restaurant/MenuManagement";
+import DishManagement from "../partner/Restaurant/DishManagement";
 import RestaurantServicePackages from "./RestaurantServicePackages";
 import RestaurantServices from "./RestaurantServices";
 // import RestaurantPayment from "./RestaurantPayment";
@@ -24,12 +24,12 @@ export default function RestaurantDetail() {
         <Tab eventKey="halls" title="Sảnh tiệc">
           <RestaurantHalls />
         </Tab>
-        {/* <Tab eventKey="menu" title="Thực đơn">
-          <RestaurantMenu />
+        <Tab eventKey="menu" title="Thực đơn">
+          <MenuManagement />
         </Tab>
         <Tab eventKey="dishes" title="Món ăn">
-          <RestaurantDishes />
-        </Tab> */}
+          <DishManagement />
+        </Tab>
         <Tab eventKey="packages" title="Gói dịch vụ">
           <RestaurantServicePackages />
         </Tab>

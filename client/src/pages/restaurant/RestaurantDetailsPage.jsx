@@ -337,7 +337,7 @@ export default function RestaurantDetailsPage() {
                       fontSize: "15px",
                       fontWeight: "500"
                     }}>
-                      {amenity}
+                      {/* {amenity} */}
                     </span>
                     <span className="text-dark">{amenity.name}</span>
                   </li>

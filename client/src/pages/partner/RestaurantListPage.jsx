@@ -80,7 +80,7 @@ const RestaurantsPage = () => {
               <Card.Body>
                 <Card.Title
                   style={{ cursor: "pointer", color: "#0d6efd" }}
-                  onClick={() => navigate(`/partner/restaurants/${r.id}`)}
+                  onClick={() => navigate(`/partner/restaurant/${r.id}`)}
                 >{r.name}
                 </Card.Title>
                 <Card.Text>{r.address}</Card.Text>
