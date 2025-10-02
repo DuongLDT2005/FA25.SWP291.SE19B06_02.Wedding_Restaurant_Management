@@ -42,14 +42,15 @@ const MainChart = () => {
               borderColor: getStyle('--cui-info'),
               pointHoverBackgroundColor: getStyle('--cui-info'),
               borderWidth: 2,
+              // Màu xanh lá
               data: [
-                random(50, 200),
-                random(50, 200),
-                random(50, 200),
-                random(50, 200),
-                random(50, 200),
-                random(50, 200),
-                random(50, 200),
+                random(100, 200),
+                random(100, 200),
+                random(100, 200),
+                random(100, 200),
+                random(100, 200),
+                random(100, 200),
+                random(100, 200),
               ],
               fill: true,
             },
@@ -59,6 +60,7 @@ const MainChart = () => {
               borderColor: getStyle('--cui-success'),
               pointHoverBackgroundColor: getStyle('--cui-success'),
               borderWidth: 2,
+              // Màu xanh nước
               data: [
                 random(50, 200),
                 random(50, 200),
@@ -76,6 +78,7 @@ const MainChart = () => {
               pointHoverBackgroundColor: getStyle('--cui-danger'),
               borderWidth: 1,
               borderDash: [8, 5],
+              //Cột trung bình
               data: [65, 65, 65, 65, 65, 65, 65],
             },
           ],

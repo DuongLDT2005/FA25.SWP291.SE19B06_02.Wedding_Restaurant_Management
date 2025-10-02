@@ -85,3 +85,8 @@ npm install lucide-react
 npm install bootstrap-icons
 ### Install @coreui/react
 npm install @coreui/react
+
+### Install React-redux & toolkit
+
+npm install react-redux
+npm install @reduxjs/toolkit react-redux
