@@ -17,6 +17,7 @@ import NegotiationPage from "../pages/partner/NegotiationPage";
 // import Payments from "../pages/partner/Payments";
 // import Reviews from "../pages/partner/Reviews";
 // import Notifications from "../pages/partner/Notifications";
+import RestaurantResult from "../pages/restaurant/RestaurantResult";
 
 function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route path="/partner/reviews" element={<Reviews />} />
         <Route path="/partner/notifications" element={<Notifications />} /> */}
         {/* Thêm các route khác tại đây */}
+        <Route path="/restaurant/result" element={<RestaurantResult />} />
       </Routes>
     </BrowserRouter>
   );
