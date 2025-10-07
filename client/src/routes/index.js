@@ -26,6 +26,11 @@ function AppRoutes() {
         <Route path="/booking/:bookingId" element={<BookingDetailsPage />} />
         <Route path="/booking/:bookingId/contract" element={<BookingDetailsPage />} />
         <Route path="/booking/:bookingId/payments" element={<BookingDetailsPage />} />
+        
+        {/* Booking Details Routes (alias) */}
+        <Route path="/booking-details/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="/booking-details/:bookingId/contract" element={<BookingDetailsPage />} />
+        <Route path="/booking-details/:bookingId/payments" element={<BookingDetailsPage />} />
 
         {/* Payment Routes */}
         <Route path="/payment/:bookingId" element={<PaymentPage />} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation, useSearchParams } from 'react-router-dom';
 import ContractTab from './components/ContractTab';
 import ReportIssueModal from './components/ReportIssueModal';
 import ScrollToTopButton from '../../components/ScrollToTopButton';
@@ -7,18 +7,49 @@ import '../../styles/BookingDetailsStyles.css';
 
 const BookingDetailsPage = () => {
     const { bookingId } = useParams();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('overview');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showReportModal, setShowReportModal] = useState(false);
     const [hasLoaded, setHasLoaded] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingData, setEditingData] = useState({});
+    const [isApproved, setIsApproved] = useState(false);
+    const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     useEffect(() => {
         if (!hasLoaded) {
             fetchBookingDetails();
             setHasLoaded(true);
         }
-    }, [bookingId, hasLoaded]);
+        
+        // Kiểm tra trạng thái thanh toán từ URL parameter
+        const paymentStatus = searchParams.get('payment');
+        if (paymentStatus === '1') {
+            setPaymentCompleted(true);
+            // Thêm dữ liệu thanh toán mock
+            if (booking) {
+                const mockPayment = {
+                    type: 0,
+                    amount: booking.totalAmount * 0.3, // 30% tiền cọc
+                    status: 1, // Đã thanh toán
+                    paymentMethod: 'Thẻ tín dụng',
+                    paymentDate: new Date().toISOString()
+                };
+                setBooking(prev => ({
+                    ...prev,
+                    payments: [mockPayment],
+                    status: 3 // DEPOSITED
+                }));
+            }
+        } else if (paymentStatus === '0') {
+            setPaymentCompleted(false);
+        }
+
+        // Không cần đọc tab parameter nữa, để người dùng tự chọn tab
+    }, [bookingId, hasLoaded, searchParams, booking]);
 
     const fetchBookingDetails = () => {
         try {
@@ -35,117 +66,93 @@ const BookingDetailsPage = () => {
                 return;
             }
 
-            // Nếu không có data từ form, tạo booking từ selectedRestaurant
+            // Nếu không có data từ form, tạo mock booking
             const selectedRestaurant = sessionStorage.getItem('selectedRestaurant');
-
+            let restaurantData = null;
+            
             if (selectedRestaurant) {
-                const restaurant = JSON.parse(selectedRestaurant);
-                const mockBooking = {
-                    bookingID: bookingId,
-                    customer: {
-                        fullName: "Khách hàng",
-                        phone: "0123456789",
-                        email: "customer@email.com"
-                    },
-                    restaurant: {
-                        name: restaurant.restaurantName,
-                        address: restaurant.restaurantAddress
-                    },
-                    hall: restaurant.selectedHall ? {
-                        name: restaurant.selectedHall.hallName,
-                        capacity: restaurant.selectedHall.capacity,
-                        area: restaurant.selectedHall.area
-                    } : {
-                        name: "Sảnh VIP",
-                        capacity: 200,
-                        area: 500.5
-                    },
-                    eventType: "Tiệc cưới",
-                    eventDate: "2024-12-25",
-                    startTime: "18:00",
-                    endTime: "22:00",
-                    tableCount: 20,
-                    specialRequest: "Trang trí hoa hồng đỏ",
-                    status: 0,
-                    originalPrice: 50000000,
-                    discountAmount: 5000000,
-                    VAT: 4500000,
-                    totalAmount: 49500000,
-                    createdAt: new Date().toISOString(),
-                    menu: restaurant.menus && restaurant.menus.length > 0 ? {
-                        name: restaurant.menus[0].name,
-                        price: restaurant.menus[0].price,
-                        categories: restaurant.menus[0].categories || [
-                            {
-                                name: "Món khai vị",
-                                requiredQuantity: 2,
-                                dishes: [
-                                    { id: 1, name: "Gỏi ngó sen tôm thịt" },
-                                    { id: 2, name: "Súp cua gà xé" }
-                                ]
-                            },
-                            {
-                                name: "Món chính",
-                                requiredQuantity: 3,
-                                dishes: [
-                                    { id: 3, name: "Gà hấp lá chanh" },
-                                    { id: 4, name: "Bò nướng tiêu đen" },
-                                    { id: 5, name: "Cá hấp xì dầu" }
-                                ]
-                            },
-                            {
-                                name: "Tráng miệng",
-                                requiredQuantity: 1,
-                                dishes: [
-                                    { id: 6, name: "Chè hạt sen long nhãn" }
-                                ]
-                            }
-                        ]
-                    } : {
-                        name: "Menu cưới cao cấp",
-                        price: 2500000,
-                        categories: [
-                            {
-                                name: "Món khai vị",
-                                requiredQuantity: 2,
-                                dishes: [
-                                    { id: 1, name: "Gỏi ngó sen tôm thịt" },
-                                    { id: 2, name: "Súp cua gà xé" }
-                                ]
-                            },
-                            {
-                                name: "Món chính",
-                                requiredQuantity: 3,
-                                dishes: [
-                                    { id: 3, name: "Gà hấp lá chanh" },
-                                    { id: 4, name: "Bò nướng tiêu đen" },
-                                    { id: 5, name: "Cá hấp xì dầu" }
-                                ]
-                            },
-                            {
-                                name: "Tráng miệng",
-                                requiredQuantity: 1,
-                                dishes: [
-                                    { id: 6, name: "Chè hạt sen long nhãn" }
-                                ]
-                            }
-                        ]
-                    },
-                    services: [],
-                    payments: [],
-                    contract: {
-                        content: "Hợp đồng dịch vụ tiệc cưới...",
-                        status: 0,
-                        signedAt: null
-                    }
-                };
-                setBooking(mockBooking);
-                setLoading(false);
-                setHasLoaded(true);
-                return;
+                restaurantData = JSON.parse(selectedRestaurant);
             }
 
-            setBooking(null);
+            const mockBooking = {
+                bookingID: bookingId,
+                customer: {
+                    fullName: "Nguyễn Văn A",
+                    phone: "0123456789",
+                    email: "customer@email.com"
+                },
+                restaurant: {
+                    name: restaurantData?.restaurantName || "Quảng Đại Gold",
+                    address: restaurantData?.restaurantAddress || "8 30 Tháng 4, Hải Châu, Đà Nẵng"
+                },
+                hall: restaurantData?.selectedHall ? {
+                    name: restaurantData.selectedHall.hallName,
+                    capacity: restaurantData.selectedHall.capacity,
+                    area: restaurantData.selectedHall.area
+                } : {
+                    name: "Sảnh Hoa Hồng",
+                    capacity: 500,
+                    area: 600
+                },
+                eventType: "Tiệc cưới",
+                eventDate: "2024-12-25",
+                startTime: "18:00",
+                endTime: "22:00",
+                tableCount: 20,
+                specialRequest: "Trang trí hoa hồng đỏ",
+                status: 0,
+                originalPrice: 50000000,
+                discountAmount: 5000000,
+                VAT: 4500000,
+                totalAmount: 49500000,
+                createdAt: new Date().toISOString(),
+                menu: {
+                    name: "Menu Truyền Thống",
+                    price: 2500000,
+                    categories: [
+                        {
+                            name: "Món khai vị",
+                            requiredQuantity: 2,
+                            dishes: [
+                                { id: 1, name: "Gỏi ngó sen tôm thịt" },
+                                { id: 2, name: "Súp cua gà xé" }
+                            ]
+                        },
+                        {
+                            name: "Món chính",
+                            requiredQuantity: 3,
+                            dishes: [
+                                { id: 3, name: "Gà hấp lá chanh" },
+                                { id: 4, name: "Bò nướng tiêu đen" },
+                                { id: 5, name: "Cá hấp xì dầu" }
+                            ]
+                        },
+                        {
+                            name: "Tráng miệng",
+                            requiredQuantity: 1,
+                            dishes: [
+                                { id: 6, name: "Chè hạt sen long nhãn" }
+                            ]
+                        }
+                    ]
+                },
+                services: [
+                    { name: "Trang trí hoa tươi", quantity: 1, price: 5000000 },
+                    { name: "Ban nhạc sống", quantity: 1, price: 8000000 }
+                ],
+                payments: [],
+                contract: {
+                    content: "Hợp đồng dịch vụ tiệc cưới...",
+                    status: 0,
+                    signedAt: null,
+                    customerSignature: null,
+                    restaurantSignature: null
+                }
+            };
+            
+            setBooking(mockBooking);
+            setLoading(false);
+            setHasLoaded(true);
 
         } catch (error) {
             console.error('Error loading booking details:', error);
@@ -182,6 +189,60 @@ const BookingDetailsPage = () => {
 
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('vi-VN');
+    };
+
+    const handleEditToggle = () => {
+        if (!isEditing) {
+            setEditingData({
+                customer: { ...booking.customer },
+                eventDetails: {
+                    eventDate: booking.eventDate,
+                    startTime: booking.startTime,
+                    endTime: booking.endTime,
+                    tableCount: booking.tableCount,
+                    specialRequest: booking.specialRequest
+                },
+                menu: { ...booking.menu }
+            });
+        }
+        setIsEditing(!isEditing);
+    };
+
+    const handleSaveChanges = () => {
+        // Cập nhật booking data với dữ liệu đã chỉnh sửa
+        const updatedBooking = {
+            ...booking,
+            customer: editingData.customer,
+            eventDate: editingData.eventDetails.eventDate,
+            startTime: editingData.eventDetails.startTime,
+            endTime: editingData.eventDetails.endTime,
+            tableCount: editingData.eventDetails.tableCount,
+            specialRequest: editingData.eventDetails.specialRequest,
+            menu: editingData.menu
+        };
+        setBooking(updatedBooking);
+        setIsEditing(false);
+        alert('Đã lưu thay đổi thành công!');
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setEditingData({});
+    };
+
+    const handleApprove = () => {
+        if (window.confirm('Bạn có chắc chắn muốn đồng ý với thông tin đặt tiệc này?')) {
+            setIsApproved(true);
+            setActiveTab('contract'); // Chuyển sang tab hợp đồng
+            alert('Đã đồng ý! Bây giờ bạn có thể xem và tải hợp đồng.');
+        }
+    };
+
+    const handleReject = () => {
+        if (window.confirm('Bạn có chắc chắn muốn hủy đặt tiệc này?')) {
+            alert('Đã hủy đặt tiệc thành công!');
+            // Có thể thêm logic hủy booking ở đây
+        }
     };
 
     if (loading) {
@@ -242,50 +303,6 @@ const BookingDetailsPage = () => {
                             >
                                 {statusInfo.text}
                             </span>
-                            <div className="mt-3">
-                                {booking.status === 0 && (
-                                    <>
-                                        <Link
-                                            to="/payment/new"
-                                            className="btn me-2"
-                                            style={{
-                                                backgroundColor: '#28a745',
-                                                color: '#fefaf9',
-                                                borderColor: '#28a745',
-                                                border: '2px solid #28a745',
-                                                padding: '8px 16px',
-                                                borderRadius: '20px',
-                                                fontSize: '14px',
-                                                fontWeight: 'bold',
-                                                textDecoration: 'none'
-                                            }}
-                                        >
-                                            <i className="fas fa-credit-card me-2"></i> Thanh toán
-                                        </Link>
-                                        <button
-                                            className="btn"
-                                            onClick={() => {
-                                                if (window.confirm('Bạn có chắc chắn muốn hủy đặt tiệc này?')) {
-                                                    alert('Đã hủy đặt tiệc thành công!');
-                                                    // Có thể thêm logic hủy booking ở đây
-                                                }
-                                            }}
-                                            style={{
-                                                backgroundColor: '#993344',
-                                                color: '#fefaf9',
-                                                borderColor: '#993344',
-                                                border: '2px solid #993344',
-                                                padding: '8px 16px',
-                                                borderRadius: '20px',
-                                                fontSize: '14px',
-                                                fontWeight: 'bold'
-                                            }}
-                                        >
-                                            <i className="fas fa-times me-2"></i> Hủy đặt tiệc
-                                        </button>
-                                    </>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -303,28 +320,32 @@ const BookingDetailsPage = () => {
                         >
                             <i className="fas fa-info-circle"></i> Tổng quan
                         </button>
-                        <button
-                            className={`nav-link ${activeTab === 'contract' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('contract')}
-                            style={{
-                                backgroundColor: '#fefaf9',
-                                color: '#993344',
-                                borderColor: '#993344'
-                            }}
-                        >
-                            <i className="fas fa-file-contract"></i> Hợp đồng
-                        </button>
-                        <button
-                            className={`nav-link ${activeTab === 'payments' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('payments')}
-                            style={{
-                                backgroundColor: '#fefaf9',
-                                color: '#993344',
-                                borderColor: '#993344'
-                            }}
-                        >
-                            <i className="fas fa-credit-card"></i> Thanh toán
-                        </button>
+                        {(isApproved || paymentCompleted) && (
+                            <button
+                                className={`nav-link ${activeTab === 'contract' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('contract')}
+                                style={{
+                                    backgroundColor: '#fefaf9',
+                                    color: '#993344',
+                                    borderColor: '#993344'
+                                }}
+                            >
+                                <i className="fas fa-file-contract"></i> Hợp đồng
+                            </button>
+                        )}
+                        {(isApproved || paymentCompleted) && (
+                            <button
+                                className={`nav-link ${activeTab === 'payments' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('payments')}
+                                style={{
+                                    backgroundColor: '#fefaf9',
+                                    color: '#993344',
+                                    borderColor: '#993344'
+                                }}
+                            >
+                                <i className="fas fa-credit-card"></i> Lịch sử thanh toán
+                            </button>
+                        )}
                     </div>
                 </nav>
 
@@ -336,25 +357,69 @@ const BookingDetailsPage = () => {
                                 {/* Booking Information */}
                                 <div className="col-lg-8">
                                     <div className="card booking-info-card">
-                                        <div className="card-header">
+                                        <div className="card-header d-flex justify-content-between align-items-center">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-calendar-alt"></i> Thông tin đặt tiệc
                                             </h5>
+                                            {!isApproved && (
+                                                <button 
+                                                    className="btn btn-sm btn-outline-light"
+                                                    onClick={handleEditToggle}
+                                                >
+                                                    <i className="fas fa-edit"></i> {isEditing ? 'Hủy' : 'Chỉnh sửa'}
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="card-body">
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <div className="info-item">
                                                         <label>Khách hàng:</label>
-                                                        <span>{booking.customer.fullName}</span>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="text" 
+                                                                className="form-control"
+                                                                value={editingData.customer?.fullName || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    customer: { ...editingData.customer, fullName: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.customer.fullName}</span>
+                                                        )}
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Số điện thoại:</label>
-                                                        <span>{booking.customer.phone}</span>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="text" 
+                                                                className="form-control"
+                                                                value={editingData.customer?.phone || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    customer: { ...editingData.customer, phone: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.customer.phone}</span>
+                                                        )}
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Email:</label>
-                                                        <span>{booking.customer.email}</span>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="email" 
+                                                                className="form-control"
+                                                                value={editingData.customer?.email || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    customer: { ...editingData.customer, email: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.customer.email}</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
@@ -372,6 +437,22 @@ const BookingDetailsPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                            {isEditing && (
+                                                <div className="mt-3 text-end">
+                                                    <button 
+                                                        className="btn btn-success me-2"
+                                                        onClick={handleSaveChanges}
+                                                    >
+                                                        <i className="fas fa-save"></i> Lưu thay đổi
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-secondary"
+                                                        onClick={handleCancelEdit}
+                                                    >
+                                                        <i className="fas fa-times"></i> Hủy
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -386,15 +467,67 @@ const BookingDetailsPage = () => {
                                                 <div className="col-md-6">
                                                     <div className="info-item">
                                                         <label>Ngày tổ chức:</label>
-                                                        <span>{formatDate(booking.eventDate)}</span>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="date" 
+                                                                className="form-control"
+                                                                value={editingData.eventDetails?.eventDate || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    eventDetails: { ...editingData.eventDetails, eventDate: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{formatDate(booking.eventDate)}</span>
+                                                        )}
                                                     </div>
                                                     <div className="info-item">
-                                                        <label>Thời gian:</label>
-                                                        <span>{booking.startTime} - {booking.endTime}</span>
+                                                        <label>Thời gian bắt đầu:</label>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="time" 
+                                                                className="form-control"
+                                                                value={editingData.eventDetails?.startTime || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    eventDetails: { ...editingData.eventDetails, startTime: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.startTime}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="info-item">
+                                                        <label>Thời gian kết thúc:</label>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="time" 
+                                                                className="form-control"
+                                                                value={editingData.eventDetails?.endTime || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    eventDetails: { ...editingData.eventDetails, endTime: e.target.value }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.endTime}</span>
+                                                        )}
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Số bàn:</label>
-                                                        <span>{booking.tableCount} bàn</span>
+                                                        {isEditing ? (
+                                                            <input 
+                                                                type="number" 
+                                                                className="form-control"
+                                                                value={editingData.eventDetails?.tableCount || ''}
+                                                                onChange={(e) => setEditingData({
+                                                                    ...editingData,
+                                                                    eventDetails: { ...editingData.eventDetails, tableCount: parseInt(e.target.value) }
+                                                                })}
+                                                            />
+                                                        ) : (
+                                                            <span>{booking.tableCount} bàn</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
@@ -412,12 +545,23 @@ const BookingDetailsPage = () => {
                                                     </div>
                                                 </div>
                                             </div>
-                                            {booking.specialRequest && (
-                                                <div className="info-item mt-3">
-                                                    <label>Yêu cầu đặc biệt:</label>
-                                                    <span>{booking.specialRequest}</span>
-                                                </div>
-                                            )}
+                                            <div className="info-item mt-3">
+                                                <label>Yêu cầu đặc biệt:</label>
+                                                {isEditing ? (
+                                                    <textarea 
+                                                        className="form-control"
+                                                        rows="3"
+                                                        value={editingData.eventDetails?.specialRequest || ''}
+                                                        onChange={(e) => setEditingData({
+                                                            ...editingData,
+                                                            eventDetails: { ...editingData.eventDetails, specialRequest: e.target.value }
+                                                        })}
+                                                        placeholder="Nhập yêu cầu đặc biệt..."
+                                                    />
+                                                ) : (
+                                                    <span>{booking.specialRequest || 'Không có'}</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -430,25 +574,57 @@ const BookingDetailsPage = () => {
                                         <div className="card-body">
                                             <div className="menu-section">
                                                 <h6>Menu đã chọn:</h6>
-                                                <div className="menu-item">
-                                                    <span className="menu-name">{booking.menu.name} </span>
-                                                    <span className="menu-price">{booking.menu.price.toLocaleString()} VNĐ/bàn</span>
-                                                </div>
-                                                
+                                                {isEditing ? (
+                                                    <div className="mb-3">
+                                                        <input 
+                                                            type="text" 
+                                                            className="form-control mb-2"
+                                                            value={editingData.menu?.name || ''}
+                                                            onChange={(e) => setEditingData({
+                                                                ...editingData,
+                                                                menu: { ...editingData.menu, name: e.target.value }
+                                                            })}
+                                                            placeholder="Tên menu"
+                                                        />
+                                                        <input 
+                                                            type="number" 
+                                                            className="form-control"
+                                                            value={editingData.menu?.price || ''}
+                                                            onChange={(e) => setEditingData({
+                                                                ...editingData,
+                                                                menu: { ...editingData.menu, price: parseInt(e.target.value) }
+                                                            })}
+                                                            placeholder="Giá menu (VNĐ/bàn)"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="menu-item">
+                                                        <span className="menu-name">{booking.menu.name} </span>
+                                                        <span className="menu-price">{booking.menu.price.toLocaleString()} VNĐ/bàn</span>
+                                                    </div>
+                                                )}
+
                                                 {/* Hiển thị danh sách món đã chọn */}
                                                 {booking.menu.categories && (
                                                     <div className="selected-dishes-list mt-3">
                                                         <h6>Món đã chọn:</h6>
-                                                        <ul className="dishes-list">
-                                                            {booking.menu.categories.map((category, catIdx) => 
-                                                                category.dishes.map((dish) => (
-                                                                    <li key={dish.id} className="selected-dish-item">
-                                                                        <span className="dish-name">{dish.name}</span>
-                                                                        <span className="dish-category">({category.name})</span>
-                                                                    </li>
-                                                                ))
-                                                            )}
-                                                        </ul>
+                                                        {isEditing ? (
+                                                            <div className="alert alert-info">
+                                                                <i className="fas fa-info-circle me-2"></i>
+                                                                Danh sách món ăn sẽ được cập nhật sau khi lưu thay đổi menu.
+                                                            </div>
+                                                        ) : (
+                                                            <ul className="dishes-list">
+                                                                {booking.menu.categories.map((category, catIdx) =>
+                                                                    category.dishes.map((dish) => (
+                                                                        <li key={dish.id} className="selected-dish-item">
+                                                                            <span className="dish-name">{dish.name}</span>
+                                                                            <span className="dish-category">({category.name})</span>
+                                                                        </li>
+                                                                    ))
+                                                                )}
+                                                            </ul>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -456,13 +632,20 @@ const BookingDetailsPage = () => {
                                             {booking.services && booking.services.length > 0 && (
                                                 <div className="services-section mt-3">
                                                     <h6>Dịch vụ bổ sung:</h6>
-                                                    {booking.services.map((service, index) => (
-                                                        <div key={index} className="service-item">
-                                                            <span className="service-name">{service.name} </span>
-                                                            <span className="service-quantity">x{service.quantity}</span>
-                                                            <span className="service-price">{(service.price * service.quantity).toLocaleString()} VNĐ</span>
+                                                    {isEditing ? (
+                                                        <div className="alert alert-info">
+                                                            <i className="fas fa-info-circle me-2"></i>
+                                                            Dịch vụ bổ sung sẽ được cập nhật sau khi lưu thay đổi.
                                                         </div>
-                                                    ))}
+                                                    ) : (
+                                                        booking.services.map((service, index) => (
+                                                            <div key={index} className="service-item">
+                                                                <span className="service-name">{service.name} </span>
+                                                                <span className="service-quantity">x{service.quantity}</span>
+                                                                <span className="service-price">{(service.price * service.quantity).toLocaleString()} VNĐ</span>
+                                                            </div>
+                                                        ))
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -495,6 +678,29 @@ const BookingDetailsPage = () => {
                                                 <span>Tổng cộng:</span>
                                                 <span>{booking.totalAmount.toLocaleString()} VNĐ</span>
                                             </div>
+                                            <div className="mt-3">
+                                {booking.status === 0 && (
+                                    <>
+                                        <Link
+                                            to="/payment/new"
+                                            className="btn me-1 w-100"
+                                            style={{
+                                                backgroundColor: '#28a745',
+                                                color: '#fefaf9',
+                                                borderColor: '#28a745',
+                                                border: '2px solid #28a745',
+                                                padding: '8px 16px',
+                                                borderRadius: '20px',
+                                                fontSize: '14px',
+                                                fontWeight: 'bold',
+                                                textDecoration: 'none'
+                                            }}
+                                        >
+                                            <i className="fas fa-credit-card me-2"></i> Thanh toán
+                                        </Link>
+                                    </>
+                                )}
+                            </div>
                                         </div>
                                     </div>
 
@@ -538,6 +744,34 @@ const BookingDetailsPage = () => {
                                             )}
                                         </div>
                                     </div>
+                                    {!isApproved && !paymentCompleted && (
+                                        <div className="deny-accept">
+                                            <div className="accept" onClick={handleApprove} style={{ cursor: 'pointer' }}>
+                                                <h5 className="mb-0">
+                                                    <i className="fa-solid fa-check"></i> Đồng ý
+                                                </h5>
+                                            </div>
+                                            <div className="deny" onClick={handleReject} style={{ cursor: 'pointer' }}>
+                                                <h5 className="mb-0">
+                                                    <i className="fa-solid fa-x"></i> Hủy
+                                                </h5>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isApproved && !paymentCompleted && (
+                                        <div className="alert alert-success text-center">
+                                            <i className="fas fa-check-circle me-2"></i>
+                                            <strong>Đã đồng ý!</strong><br/>
+                                            <small>Bạn có thể xem hợp đồng và thanh toán</small>
+                                        </div>
+                                    )}
+                                    {paymentCompleted && (
+                                        <div className="alert alert-info text-center">
+                                            <i className="fas fa-credit-card me-2"></i>
+                                            <strong>Đã thanh toán cọc!</strong><br/>
+                                            <small>Bạn có thể xem hợp đồng và lịch sử thanh toán</small>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -552,45 +786,53 @@ const BookingDetailsPage = () => {
                             <div className="card">
                                 <div className="card-header">
                                     <h5 className="card-title mb-0">
-                                        <i className="fas fa-credit-card"></i> Chi tiết thanh toán
+                                        <i className="fas fa-credit-card"></i> Lịch sử thanh toán
                                     </h5>
                                 </div>
                                 <div className="card-body">
-                                    <div className="table-responsive">
-                                        <table className="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Loại thanh toán</th>
-                                                    <th>Số tiền</th>
-                                                    <th>Trạng thái</th>
-                                                    <th>Ngày thanh toán</th>
-                                                    <th>Phương thức</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {booking.payments.map((payment, index) => {
-                                                    const paymentStatus = getPaymentStatusText(payment.status);
-                                                    return (
-                                                        <tr key={index}>
-                                                            <td>
-                                                                {payment.type === 0 ? 'Tiền cọc' : 'Thanh toán còn lại'}
-                                                            </td>
-                                                            <td>{payment.amount.toLocaleString()} VNĐ</td>
-                                                            <td>
-                                                                <span className={`badge ${paymentStatus.class}`}>
-                                                                    {paymentStatus.text}
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                {payment.paymentDate ? formatDate(payment.paymentDate) : '-'}
-                                                            </td>
-                                                            <td>{payment.paymentMethod || '-'}</td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    {booking.payments && booking.payments.length > 0 ? (
+                                        <div className="table-responsive">
+                                            <table className="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Loại thanh toán</th>
+                                                        <th>Số tiền</th>
+                                                        <th>Trạng thái</th>
+                                                        <th>Ngày thanh toán</th>
+                                                        <th>Phương thức</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {booking.payments.map((payment, index) => {
+                                                        const paymentStatus = getPaymentStatusText(payment.status);
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    {payment.type === 0 ? 'Tiền cọc (30%)' : 'Thanh toán còn lại (70%)'}
+                                                                </td>
+                                                                <td>{payment.amount.toLocaleString()} VNĐ</td>
+                                                                <td>
+                                                                    <span className={`badge ${paymentStatus.class}`}>
+                                                                        {paymentStatus.text}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    {payment.paymentDate ? formatDate(payment.paymentDate) : '-'}
+                                                                </td>
+                                                                <td>{payment.paymentMethod || '-'}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-5">
+                                            <i className="fas fa-credit-card text-muted" style={{ fontSize: '3rem' }}></i>
+                                            <h5 className="mt-3 text-muted">Chưa có lịch sử thanh toán</h5>
+                                            <p className="text-muted">Lịch sử thanh toán sẽ hiển thị sau khi bạn hoàn thành thanh toán.</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

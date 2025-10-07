@@ -268,6 +268,24 @@
     color: #6c757d;
 }
 
+.accept {
+    text-align: center;
+    padding: 10px;
+    color: #fefaf9;
+    background-color: #28a745;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.deny {
+    text-align: center;
+    padding: 10px;
+    color: #fefaf9;
+    background-color: #993344;
+    border-radius: 10px;
+
+}
+
 /* Contract Styles */
 .contract-card {
     background: white;
@@ -482,6 +500,89 @@
 /* Contract Actions */
 .contract-actions-card {
     background: #993344;
+}
+
+/* PDF Viewer Styles */
+.pdf-viewer-container {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.pdf-viewer {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.contract-preview {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+}
+
+.contract-summary {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.contract-summary h6 {
+    color: #993344;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #993344;
+    padding-bottom: 5px;
+}
+
+.contract-summary p {
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+/* Contract Signature Card */
+.contract-signature-card {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+}
+
+.contract-signature-card .card-header {
+    background: #6c757d;
+    color: white;
+}
+
+.signed-status {
+    padding: 20px;
+    text-align: center;
+}
+
+.signature-section .alert {
+    border-radius: 8px;
+    border: none;
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.signature-section .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.signature-section .form-control {
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    padding: 12px 15px;
+    transition: border-color 0.3s ease;
+}
+
+.signature-section .form-control:focus {
+    border-color: #993344;
+    box-shadow: 0 0 0 0.2rem rgba(153, 51, 68, 0.25);
 }
 
 .action-buttons .btn {

@@ -87,3 +87,7 @@ npm install bootstrap-icons
 npm install @coreui/react
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
+### Test
+Đường link vào view details(chưa thanh toán): http://localhost:3000/booking-details/201130?payment=0
+Đường link vào view details(đã thanh toán): http://localhost:3000/booking-details/201130?payment=1
+Đường link thanh toán: http://localhost:3000/payment/new
