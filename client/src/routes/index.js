@@ -20,14 +20,11 @@ function AppRoutes() {
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
         <Route path="/restaurant/detail" element={<ListingRestaurants />} />
+        {/* <Route path="/customer/bookings" element={<BookingListPage />} />
+        <Route path="/bookingForm" element={<BookingForm />} />
+        <Route path="/customer/profile" element={<Profile />} /> */}
 
-
-        {/* Booking Routes */}
-        <Route path="/booking/:bookingId" element={<BookingDetailsPage />} />
-        <Route path="/booking/:bookingId/contract" element={<BookingDetailsPage />} />
-        <Route path="/booking/:bookingId/payments" element={<BookingDetailsPage />} />
-        
-        {/* Booking Details Routes (alias) */}
+        {/* Booking Details Routes */}
         <Route path="/booking-details/:bookingId" element={<BookingDetailsPage />} />
         <Route path="/booking-details/:bookingId/contract" element={<BookingDetailsPage />} />
         <Route path="/booking-details/:bookingId/payments" element={<BookingDetailsPage />} />

@@ -1,27 +1,49 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
-
 export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
-  const handleBookingClick = (hall) => {
-    // Lưu thông tin nhà hàng và sảnh đã chọn vào sessionStorage
-    sessionStorage.setItem('selectedRestaurant', JSON.stringify({
-      restaurantId: restaurant.id,
-      restaurantName: restaurant.name,
-      restaurantAddress: restaurant.address.fullAddress,
-      halls: restaurant.halls,
-      menus: restaurant.menus,
-      services: restaurant.services,
-      selectedHall: {
-        hallId: hall.id,
-        hallName: hall.name,
-        capacity: hall.capacity,
-        area: hall.area,
-        price: hall.price,
-        images: hall.images,
-        description: hall.description
+  // NEW: map tên category -> code BookingForm dùng
+  const CATEGORY_NAME_MAP = {
+    "Món khai vị": "APPETIZER",
+    "Khai vị": "APPETIZER",
+    "Món chính": "MAIN",
+    "Tráng miệng": "DESSERT"
+  };
+
+  // NEW: chuyển menus có cấu trúc categories -> menus.dishes phẳng
+  function normalizeMenus(menus = []) {
+    return menus.map(m => {
+      if (m.categories && Array.isArray(m.categories)) {
+        const dishes = m.categories.flatMap(cat =>
+          (cat.dishes || []).map(d => ({
+            id: String(d.id),
+            name: d.name,
+            category: CATEGORY_NAME_MAP[cat.name] || "MAIN"
+          }))
+        );
+        return {
+          id: m.id,
+          name: m.name,
+          price: m.price,
+          dishes
+        };
       }
-    }));
+      // đã đúng định dạng
+      return m;
+    });
+  }
+
+  const handleBookingClick = (hall) => {
+    const fullData = {
+      ...restaurant,
+      selectedHall: hall,
+      // giữ both: menus gốc + menusNormalized để BookingForm dùng
+      menusOriginal: restaurant.menus,
+      menus: normalizeMenus(restaurant.menus),
+      addressString: restaurant.address?.fullAddress || restaurant.address
+    };
+    sessionStorage.setItem("selectedRestaurant", JSON.stringify(fullData));
+    sessionStorage.setItem("selectedHallId", String(hall.id));
   };
 
   return (
@@ -57,8 +79,9 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
 
               <div className="card-footer bg-transparent border-0 text-end">
                 {role === "CUSTOMER" && (
-                  <Link 
-                    to="/restaurant/booking"
+
+                  <Link
+                    to="/bookingForm"
                     className="requestBtn"
                     onClick={() => handleBookingClick(hall)}
                     style={{
