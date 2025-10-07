@@ -1,5 +1,9 @@
 const mock = {
-  partner: { id: 4, name: "Nguyen Van A" },
+  partner: { 
+    id: 4, 
+    name: "Nguyen Van A",
+    phone: "0905 123 456",
+    address: "123 Lê Lợi, Đà Nẵng" },
   stats: { upcoming: 3, pendingPayouts: 2, revenueMonth: 125000000 },
   restaurants: [
     {
