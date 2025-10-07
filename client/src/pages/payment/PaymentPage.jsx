@@ -4,7 +4,7 @@ import '../../styles/PaymentPage.css';
 
 const PaymentPage = () => {
     const { bookingId } = useParams();
-    const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút
+    const [timeLeft, setTimeLeft] = useState(5 * 60); // 15 phút
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
     const [booking, setBooking] = useState(null);
