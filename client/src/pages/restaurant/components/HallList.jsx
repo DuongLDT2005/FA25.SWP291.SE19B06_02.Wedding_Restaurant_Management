@@ -1,6 +1,6 @@
 import React from "react";
 import ImageCarousel from "../../../components/ImageCarousel";
-
+import { Link } from "react-router-dom";
 export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
   return (
     <div>
@@ -35,7 +35,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
 
               <div className="card-footer bg-transparent border-0 text-end">
                 {role === "CUSTOMER" && (
-                  <button className="requestBtn">Gửi yêu cầu đặt chỗ</button>
+                  <button className="requestBtn"><Link to="/bookingForm" className="requestBtn">Gửi yêu cầu đặt chỗ</Link></button>
                 )}
                 {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
                   <div className="d-flex justify-content-end gap-2">
