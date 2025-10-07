@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import '../../styles/PaymentPage.css';
 
 const PaymentPage = () => {
     const { bookingId } = useParams();
-    const navigate = useNavigate();
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
     const [booking, setBooking] = useState(null);
     const [hasLoaded, setHasLoaded] = useState(false);
+    const [paymentCompleted, setPaymentCompleted] = useState(false);
 
     // Load booking data
     useEffect(() => {
@@ -85,7 +85,7 @@ const PaymentPage = () => {
                         signedAt: null
                     }
                 };
-                
+
                 setBooking(mockBooking);
                 setHasLoaded(true);
             };
@@ -95,15 +95,14 @@ const PaymentPage = () => {
 
     // Countdown timer
     useEffect(() => {
-        if (!hasLoaded) return; // Chỉ chạy timer khi đã load xong data
-        
+        if (!hasLoaded || paymentCompleted) return; // Chỉ chạy timer khi đã load xong data và chưa thanh toán
+
         const timer = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
                     clearInterval(timer);
-                    // Time expired - redirect back
+                    // Time expired - show alert
                     alert('Thời gian thanh toán đã hết hạn!');
-                    navigate(-1);
                     return 0;
                 }
                 return prevTime - 1;
@@ -111,7 +110,7 @@ const PaymentPage = () => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [navigate, hasLoaded]);
+    }, [hasLoaded, paymentCompleted]);
 
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
@@ -125,9 +124,6 @@ const PaymentPage = () => {
         try {
             // Simulate payment processing - loading 2 giây
             await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Mock successful payment
-            alert('Thanh toán thành công!');
 
             // Update booking status
             if (booking) {
@@ -149,8 +145,8 @@ const PaymentPage = () => {
                 sessionStorage.setItem('newBookingData', JSON.stringify(updatedBooking));
             }
 
-            // Navigate to booking details
-            navigate(`/booking/${bookingId || '201130'}`);
+            // Set payment completed to show success message
+            setPaymentCompleted(true);
 
         } catch (error) {
             console.error('Payment error:', error);
@@ -175,6 +171,51 @@ const PaymentPage = () => {
                                     <span className="visually-hidden">Loading...</span>
                                 </div>
                                 <p className="mt-3">Đang tải thông tin thanh toán...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show payment success message
+    if (paymentCompleted) {
+        return (
+            <div className="payment-page">
+                <div className="container mt-4">
+                    <div className="row justify-content-center">
+                        <div className="col-lg-8">
+                            <div className="card payment-success-card">
+                                <div className="card-body text-center">
+                                    <div className="success-icon mb-4">
+                                        <i className="fas fa-check-circle"></i>
+                                    </div>
+                                    <h2 className="card-title text-success">Thanh toán thành công!</h2>
+                                    <p className="card-text">
+                                        Giao dịch của bạn đã được xử lý thành công. Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.
+                                    </p>
+                                    <div className="d-grid gap-2 mt-4">
+                                        <Link
+                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            className="btn btn-primary btn-lg"
+                                        >
+                                            <i className="fas fa-file-contract me-2"></i> Xem hợp đồng
+                                        </Link>
+                                        <Link
+                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            className="btn btn-success btn-lg"
+                                        >
+                                            <i className="fas fa-history me-2"></i> Lịch sử thanh toán
+                                        </Link>
+                                        <Link
+                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            className="btn btn-outline-primary btn-lg"
+                                        >
+                                            <i className="fas fa-arrow-left me-2"></i> Quay lại đặt tiệc
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -287,7 +328,7 @@ const PaymentPage = () => {
                                                     onChange={(e) => setPaymentMethod(e.target.value)}
                                                 />
                                                 <label className="form-check-label" htmlFor="momo">
-                                                <i class="fa-solid fa-money-check me-2"></i>
+                                                    <i class="fa-solid fa-money-check me-2"></i>
                                                     Ví MoMo
                                                 </label>
                                             </div>
@@ -332,7 +373,7 @@ const PaymentPage = () => {
                                         {/* Back Button */}
                                         <div className="text-center mt-3">
                                             <Link
-                                                to="/booking/new"
+                                                to={`/booking-details/${bookingId || '201130'}?payment=0`}
                                                 className="btn btn-outline-secondary"
                                                 style={{ textDecoration: 'none' }}
                                             >

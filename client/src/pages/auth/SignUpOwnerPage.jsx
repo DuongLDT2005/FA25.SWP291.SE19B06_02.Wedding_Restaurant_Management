@@ -35,7 +35,7 @@ function SignUpForOwner() {
     // thêm validate password
     const passwordRegex = /^[A-Za-z0-9@!_]{6,}$/;
     if (!passwordRegex.test(password)) {
-      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ,số và ký tự (@;!;_).";
+      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ, số và ký tự (@;!;_).";
     }
 
     if (password !== confirmPassword) {
