@@ -262,7 +262,7 @@ const ContractTab = ({ booking }) => {
                                             <strong>Chưa thanh toán:</strong> Bạn cần thanh toán trước khi có thể ký hợp đồng.
                                             <div className="mt-2">
                                                 <Link
-                                                    to="/payment/new"
+                                                    to={`/payment/${booking.bookingID}`}
                                                     className="btn btn-warning btn-sm"
                                                 >
                                                     <i className="fas fa-credit-card me-2"></i>
@@ -348,7 +348,7 @@ const ContractTab = ({ booking }) => {
                                     Hủy
                                 </button>
                                 <Link
-                                    to="/payment/new"
+                                    to={`/payment/${booking.bookingID}`}
                                     className="btn btn-primary"
                                     onClick={handleCloseModal}
                                 >

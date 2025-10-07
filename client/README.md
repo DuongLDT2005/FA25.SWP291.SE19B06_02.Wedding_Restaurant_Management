@@ -87,7 +87,11 @@ npm install bootstrap-icons
 npm install @coreui/react
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
+<<<<<<< HEAD
 ### Install jspdf
+=======
+### Install npm install jspdf
+>>>>>>> a5b68ef87c05d293d61db64152d0908ffc786420
 npm install jspdf
 ### Test
 Đường link vào view details(chưa thanh toán): http://localhost:3000/booking-details/201130?payment=0

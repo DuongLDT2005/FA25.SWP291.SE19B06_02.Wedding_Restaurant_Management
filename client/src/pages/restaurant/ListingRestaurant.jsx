@@ -7,7 +7,7 @@ import ScrollToTopButton from "../../components/ScrollToTopButton";
 import "../../styles/ListingRestaurant.css";
 import { Link } from 'react-router-dom';
 import RatingStars from "../../components/RatingStars";
-import { restaurantDetail } from "./RestaurantDetailsPage";
+import { restaurantDetail } from "./share/RestaurantValue";
 function ListingRestaurant() {
     const { state } = useLocation();
     const [priceFilter, setPriceFilter] = useState("");

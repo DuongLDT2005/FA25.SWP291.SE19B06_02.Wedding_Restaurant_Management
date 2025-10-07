@@ -23,9 +23,9 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
         );
         return {
           id: m.id,
-          name: m.name,
-          price: m.price,
-          dishes
+            name: m.name,
+            price: m.price,
+            dishes
         };
       }
       // đã đúng định dạng

@@ -46,27 +46,27 @@ function Header() {
     const [showNotiPanel, setShowNotiPanel] = useState(false);
 
     useEffect(() => {
-        if (location.pathname === '/') {
-            const handleScroll = () => {
-                const scrollTop = window.scrollY;
-                setIsScrolled(scrollTop > 150);
-            };
-
-            window.addEventListener('scroll', handleScroll);
-            return () => window.removeEventListener('scroll', handleScroll);
-        } else {
-            setIsScrolled(true);
-        }
-    }, [location.pathname]);
+            if (location.pathname === '/') {
+                const handleScroll = () => {
+                    const scrollTop = window.scrollY;
+                    setIsScrolled(scrollTop > 150);
+                };
+    
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            } else {
+                setIsScrolled(true);
+            }
+        }, [location.pathname]);
     const dropdownRef = useRef(null);
     const notiRef = useRef(null); // NEW
 
     // Update unread count whenever notifications change
     useEffect(() => {
         setNotificationCount(
-            Array.isArray(notifications)
-                ? notifications.filter(n => n.unread).length
-                : 0
+          Array.isArray(notifications)
+            ? notifications.filter(n => n.unread).length
+            : 0
         );
     }, [notifications]);
 
@@ -86,7 +86,7 @@ function Header() {
 
     function markAllRead() {
         setNotifications(ns =>
-            Array.isArray(ns) ? ns.map(n => ({ ...n, unread: false })) : ns
+          Array.isArray(ns) ? ns.map(n => ({ ...n, unread: false })) : ns
         );
     }
     function toggleNoti() {
@@ -94,9 +94,9 @@ function Header() {
     }
     function openItem(n) {
         setNotifications(ns =>
-            Array.isArray(ns)
-                ? ns.map(x => x.id === n.id ? { ...x, unread: false } : x)
-                : ns
+          Array.isArray(ns)
+            ? ns.map(x => x.id === n.id ? { ...x, unread: false } : x)
+            : ns
         );
     }
 
@@ -177,7 +177,7 @@ function Header() {
                             )}
                         </div>
 
-                        {/* PROFILE DROPDOWN */}
+                        {/* PROFILE DROPDOWN */}                        
                         <div
                             className="profile--rectangle"
                             ref={dropdownRef}

@@ -168,21 +168,15 @@
 
 .btn-edit {
     background-color: transparent !important;
-    /* nền trong suốt */
     color: white !important;
-    /* chữ trắng */
     border: 1px solid white !important;
-    /* viền trắng */
     transition: all 0.3s ease !important;
 }
 
 .btn-edit:hover {
     background-color: white !important;
-    /* nền trắng khi hover */
     color: #993344 !important;
-    /* chữ đỏ khi hover */
     border-color: white !important;
-    /* viền trắng giữ nguyên */
 }
 
 /* Payment Summary */

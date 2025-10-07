@@ -8,7 +8,7 @@ import '../../styles/BookingDetailsStyles.css';
 const BookingDetailsPage = () => {
     const { bookingId } = useParams();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('overview');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -21,6 +21,29 @@ const BookingDetailsPage = () => {
 
     useEffect(() => {
         if (!hasLoaded) {
+            // 1. Kiểm tra sessionStorage trước (đồng bộ với PaymentPage)
+            const storedBooking = sessionStorage.getItem("currentBooking");
+            if (storedBooking) {
+                try {
+                    const bookingData = JSON.parse(storedBooking);
+                    setBooking(bookingData);
+                    setLoading(false);
+                    setHasLoaded(true);
+                    return;
+                } catch (e) {
+                    console.error("Error parsing stored booking:", e);
+                }
+            }
+            
+            // 2. state từ Link
+            if (location.state?.booking) {
+                setBooking(location.state.booking);
+                setLoading(false);
+                setHasLoaded(true);
+                return;
+            }
+            
+            // 3. fallback logic cũ
             fetchBookingDetails();
             setHasLoaded(true);
         }
@@ -29,23 +52,24 @@ const BookingDetailsPage = () => {
         const paymentStatus = searchParams.get('payment');
         if (paymentStatus === '1') {
             setPaymentCompleted(true);
-            // Thêm dữ liệu thanh toán mock
-            if (booking) {
-                const mockPayment = {
-                    type: 0,
-                    amount: booking.totalAmount * 0.3, // 30% tiền cọc
-                    status: 1, // Đã thanh toán
-                    paymentMethod: 'Thẻ tín dụng',
-                    paymentDate: new Date().toISOString()
-                };
-                setBooking(prev => ({
-                    ...prev,
-                    payments: [mockPayment],
-                    status: 3 // DEPOSITED
-                }));
-            }
+            // Không tạo dữ liệu mock nữa, sử dụng dữ liệu từ sessionStorage
         } else if (paymentStatus === '0') {
+            // Có param payment=0 -> trạng thái chờ thanh toán
             setPaymentCompleted(false);
+        } else {
+            // Không có param payment hoặc giá trị khác: nếu booking chưa thanh toán thì ép thêm payment=0 vào URL
+            if (booking && (!booking.payments || booking.payments.length === 0) && !paymentCompleted) {
+                // Bảo toàn các params khác nếu có
+                const paramsObj = {};
+                for (const [k, v] of searchParams.entries()) {
+                    paramsObj[k] = v;
+                }
+                // Chỉ set nếu hiện chưa có payment
+                if (!paramsObj.payment) {
+                    paramsObj.payment = '0';
+                    setSearchParams(paramsObj, { replace: true });
+                }
+            }
         }
 
         // Không cần đọc tab parameter nữa, để người dùng tự chọn tab
@@ -268,6 +292,15 @@ const BookingDetailsPage = () => {
         );
     }
 
+    // (Nếu muốn tránh lỗi khi thiếu customer / restaurant)
+    if (booking) {
+        booking.customer = booking.customer || { fullName: "Khách hàng", phone: "N/A", email: "N/A" };
+        booking.restaurant = booking.restaurant || { name: "Nhà hàng", address: "Đang cập nhật" };
+        booking.hall = booking.hall || { name: "Sảnh", capacity: 0, area: 0 };
+        booking.menu = booking.menu || { name: "Menu", price: 0, categories: [] };
+        booking.payments = Array.isArray(booking.payments) ? booking.payments : [];
+    }
+
     const statusInfo = getStatusText(booking.status);
 
     return (
@@ -425,11 +458,11 @@ const BookingDetailsPage = () => {
                                                 <div className="col-md-6">
                                                     <div className="info-item">
                                                         <label>Nhà hàng:</label>
-                                                        <span>{booking.restaurant.name}</span>
+                                                        <span>{booking.restaurant?.name}</span>
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Địa chỉ:</label>
-                                                        <span>{booking.restaurant.address}</span>
+                                                        <span>{booking.restaurant?.address}</span>
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Loại sự kiện:</label>
@@ -441,15 +474,9 @@ const BookingDetailsPage = () => {
                                                 <div className="mt-3 text-end">
                                                     <button
                                                         className="btn btn-success me-2"
-                                                        onClick={handleSaveChanges}
+                                                        onClick={handleSaveChanges} style={{ color: 'white' }}
                                                     >
                                                         <i className="fas fa-save"></i> Lưu thay đổi
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-secondary"
-                                                        onClick={handleCancelEdit}
-                                                    >
-                                                        <i className="fas fa-times"></i> Hủy
                                                     </button>
                                                 </div>
                                             )}
@@ -533,15 +560,15 @@ const BookingDetailsPage = () => {
                                                 <div className="col-md-6">
                                                     <div className="info-item">
                                                         <label>Sảnh:</label>
-                                                        <span>{booking.hall.name}</span>
+                                                        <span>{booking.hall?.name}</span>
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Sức chứa:</label>
-                                                        <span>{booking.hall.capacity} khách</span>
+                                                        <span>{booking.hall?.capacity} khách</span>
                                                     </div>
                                                     <div className="info-item">
                                                         <label>Diện tích:</label>
-                                                        <span>{booking.hall.area} m²</span>
+                                                        <span>{booking.hall?.area} m²</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -605,7 +632,7 @@ const BookingDetailsPage = () => {
                                                 )}
 
                                                 {/* Hiển thị danh sách món đã chọn */}
-                                                {booking.menu.categories && (
+                                                {booking.menu?.categories && (
                                                     <div className="selected-dishes-list mt-3">
                                                         <h6>Món đã chọn:</h6>
                                                         {isEditing ? (
