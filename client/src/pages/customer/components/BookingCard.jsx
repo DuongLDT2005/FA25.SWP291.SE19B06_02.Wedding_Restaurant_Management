@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 // import "../../styles/BookingCardStyle.css";
-
 const statusColor = {
   0: "#e67e22",
   1: "#27ae60",
@@ -84,6 +84,60 @@ export default function BookingCard({
     setShowReview(false);
   }
 
+  function buildDetailPayload(b) {
+    const tokenRaw = localStorage.getItem("token");
+    let user = {};
+    try { user = tokenRaw ? JSON.parse(tokenRaw) : {}; } catch {}
+    return {
+      bookingID: b.bookingID,
+      status: b.status ?? 0,
+      eventType: b.eventType || "Tiệc cưới",
+      eventDate: b.eventDate,
+      startTime: b.startTime || "18:00",
+      endTime: b.endTime || "22:00",
+      tableCount: b.tableCount || b.tables || 0,
+      specialRequest: b.specialRequest || b.note || "",
+      createdAt: b.createdAt || new Date().toISOString(),
+      customer: {
+        fullName: user.fullName || b.customer?.fullName || "Khách hàng",
+        phone: user.phone || b.customer?.phone || "N/A",
+        email: user.email || b.customer?.email || "N/A"
+      },
+      restaurant: {
+        name: b.restaurant?.name || "Nhà hàng",
+        address: b.restaurant?.address || b.restaurant?.fullAddress || "Đang cập nhật",
+        thumbnailURL: b.restaurant?.thumbnailURL || ""
+      },
+      hall: b.hall || {
+        name: b.hallName || "Sảnh",
+        capacity: b.tableCount ? b.tableCount * 10 : 0,
+        area: b.hallArea || 0
+      },
+      menu: b.menu || {
+        name: b.menuName || "Menu đã chọn",
+        price: b.pricePerTable || 0,
+        categories: b.menu?.categories || []
+      },
+      services: b.services || [],
+      payments: b.payments || [],
+      contract: b.contract || {
+        content: "Hợp đồng dịch vụ...",
+        status: 0,
+        signedAt: null
+      },
+      originalPrice: b.originalPrice || b.price || 0,
+      discountAmount: b.discountAmount || 0,
+      VAT: b.VAT || 0,
+      totalAmount: b.totalAmount || b.total || b.price || 0
+    };
+  }
+
+  function prepareAndStore() {
+    const payload = buildDetailPayload(b);
+    sessionStorage.setItem("currentBooking", JSON.stringify(payload));
+    return payload;
+  }
+
   return (
     <div className="booking--item booking-item-root">
       <img
@@ -120,12 +174,24 @@ export default function BookingCard({
         {b.status === 1 && (
           <div className="booking--actions">
             <button className="booking--btn" onClick={() => onTransfer?.(b)}>Đặt cọc</button>
-            <button className="booking--btn secondary" onClick={() => onOpenContract?.(b)}>Xem hợp đồng</button>
+            <Link
+              to={`/booking/${b.bookingID}`}
+              className="booking--btn secondary"
+              state={{ booking: prepareAndStore() }}
+            >
+              Xem hợp đồng
+            </Link>
           </div>
         )}
         {b.status === 3 && (
           <div className="booking--actions">
-            <button className="booking--btn secondary" onClick={() => onViewContract?.(b)}>Xem hợp đồng</button>
+            <Link
+              to={`/booking/${b.bookingID}`}
+              className="booking--btn secondary"
+              state={{ booking: prepareAndStore() }}
+            >
+              Xem hợp đồng
+            </Link>
           </div>
         )}
         {b.status === 4 && (
@@ -302,4 +368,3 @@ export default function BookingCard({
     </div>
   );
 }
-//                    

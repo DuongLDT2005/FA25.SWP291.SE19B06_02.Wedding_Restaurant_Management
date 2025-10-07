@@ -120,9 +120,7 @@
   align-items: center;
   padding: 10px 14px;
   border-radius: 8px;
-  background: linear-gradient(180deg,
-      rgba(153, 51, 68, 0.08),
-      rgba(153, 51, 68, 0.04));
+  background: #993344;
   min-width: 120px;
 }
 

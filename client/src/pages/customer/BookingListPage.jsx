@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "../../styles/BookingListStyle.css";
-import { bookings } from "./ValueStore";
+import { bookings as mockBookings } from "./ValueStore";
 import BookingCard from "./components/BookingCard";
+import { useNavigate } from "react-router-dom";
 
 const statusMap = {
   0: "Pending",
@@ -31,11 +32,8 @@ const STATUS_BANNERS = {
   4: { text: "ĐÃ HOÀN THÀNH", color: statusColor[4] }
 };
 
-// NEW action handlers (placeholders)
-function handleConfirm(b) { console.log("Confirm booking", b.bookingID); }
-function handleCancel(b) { console.log("Cancel booking", b.bookingID); }
+// Placeholders (real logic implemented inside component)
 function handleTransfer(b) { console.log("Transfer deposit for booking", b.bookingID); }
-function handleOpenContract(b) { console.log("Open contract form for booking", b.bookingID); }
 function handleReview(b) { console.log("Review booking", b.bookingID); }
 // NEW: open contract detail in new tab
 function handleViewContract(b) {
@@ -50,20 +48,70 @@ function formatPrice(v) {
 }
 
 function BookingListPage() {
+  const navigate = useNavigate();
+  // Load persisted bookings from sessionStorage and merge with mock (avoid duplicates by bookingID)
+  let persisted = [];
+  try {
+    persisted = JSON.parse(sessionStorage.getItem("customerBookings") || "[]");
+  } catch {}
+
+  const mergedBookings = [...persisted, ...mockBookings.filter(m => !persisted.some(p => p.bookingID === m.bookingID))];
+
+  // Local state to reflect status updates (confirm / cancel)
+  const [bookingsData, setBookingsData] = useState(mergedBookings);
+
+  function persist(updated) {
+    try {
+      // Lưu toàn bộ danh sách (bao gồm cả mock đã chỉnh sửa) để không mất trạng thái sau reload
+      sessionStorage.setItem("customerBookings", JSON.stringify(updated));
+    } catch (e) { console.warn("Persist bookings failed", e); }
+  }
+
+  function handleConfirm(b, note) {
+    setBookingsData(prev => {
+      const updated = prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 1, confirmNote: note || "" } : it);
+      persist(updated);
+      return updated;
+    });
+  }
+
+  function handleCancel(b, note) {
+    setBookingsData(prev => {
+      const updated = prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 2, cancelReason: note || "" } : it);
+      persist(updated);
+      return updated;
+    });
+  }
+
+  function handleTransferWrapper(b) { handleTransfer(b); }
+  function handleReviewWrapper(b, payload) { handleReview(b, payload); }
+
+  function handleOpenContract(b) {
+    // Lưu toàn bộ dữ liệu booking để trang chi tiết dùng
+    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b));
+    navigate(`/booking/${b.bookingID}`);
+  }
+
+  // (Nếu muốn cả nút xem hợp đồng sau khi đặt cọc dùng chung:)
+  function handleViewContract(b) {
+    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b));
+    navigate(`/booking/${b.bookingID}`);
+  }
+
   return (
     <>
       <Header />
       <div className="booking--list">
         <h2>Danh sách đặt nhà hàng</h2>
-        {bookings.map(b => (
+        {bookingsData.map(b => (
           <BookingCard
             key={b.bookingID}
             booking={b}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
-            onTransfer={handleTransfer}
+            onTransfer={handleTransferWrapper}
             onOpenContract={handleOpenContract}
-            onReview={handleReview}
+            onReview={handleReviewWrapper}
             onViewContract={handleViewContract}
           />
         ))}

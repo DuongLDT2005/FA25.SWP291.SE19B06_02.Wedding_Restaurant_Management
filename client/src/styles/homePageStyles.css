@@ -2,12 +2,111 @@
     margin: 50px 130px;
 }
 
+/* Offers & Discount */
+.content--section {
+    margin-top: 30px;
+}
 
+.offers-section h2 {
+    color: #993344;
+    margin-bottom: 10px;
+    position: relative;
+    display: inline-block;
+    font-weight: 600;
+}
+
+.offers-section h2::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 0;
+    height: 3px;
+    background-color: #993344;
+    transition: width 0.3s ease;
+}
+
+.offers-section h2:hover {
+    font-weight: 700;
+}
+
+.offers-section h2:hover::after {
+    width: 80%;
+    /* độ dài thanh gạch ngang */
+}
+
+.btn-primary {
+    background-color: #993344 !important;
+    border-color: #993344 !important;
+}
+
+.btn-primary:hover {
+    background-color: #772233 !important;
+    border-color: #772233 !important;
+}
+
+.offers-section h6 {
+    margin-top: 4px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.offers-section p {
+    color: #fff;
+    margin-bottom: 20px;
+}
+
+.offers-list {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.offer-card {
+    flex: 1;
+    min-width: 300px;
+    height: 200px;
+    border-radius: 10px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    color: white;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    box-shadow: rgba(0, 0, 0, 0.25) 1.95px 1.95px 2.6px;
+}
+
+.offer-content {
+    padding: 20px;
+    width: 100%;
+}
+
+.offer-tag {
+    font-size: 14px;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.offer-content h3 {
+    margin: 5px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.offer-content p {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+}
+
+/* Restaurant */
 .content--list {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 30px;
     margin-bottom: 10px;
+    min-height: max-content;
 }
 
 .content--list a {
@@ -17,9 +116,11 @@
 
 .content--section h2 {
     color: #993344;
+    margin-top: 10px;
     margin-bottom: 30px;
     position: relative;
     display: inline-block;
+    font-weight: 600;
 }
 
 .content--section h2::after {
@@ -52,13 +153,17 @@
 }
 
 .content--image img {
-    width: 200px;
+    width: 100%;
+    max-width: 250px;
     height: 150px;
     border-radius: 10px;
     object-fit: cover;
 }
 
 .content--price {
+    margin: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
     display: flex;
     color: #D2B981;
 }
@@ -67,7 +172,16 @@
     margin: 0;
 }
 
-.content--info p,
-h3 {
-    margin: 0;
+.content--info p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+    min-height: 36px;
+}
+
+.content--info h3 {
+    margin: 5px 0;
+    font-size: 20px;
+    font-weight: 700;
+    min-height: 40px;
 }

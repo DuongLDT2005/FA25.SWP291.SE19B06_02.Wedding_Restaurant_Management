@@ -72,7 +72,7 @@ function Footer() {
                 <div className="footer-socials">
                     <Link to="#" className="twitter"><i className="fa-brands fa-x-twitter"></i></Link>
                     <Link to="#" className="linkedin"><i className="fa-brands fa-linkedin-in"></i></Link>
-                    <Link to="#" className="facebook"><i class="fa-brands fa-facebook-f"></i></Link>
+                    <Link to="#" className="facebook"><i className="fa-brands fa-facebook-f"></i></Link>
                 </div>
             </div>
         </footer>

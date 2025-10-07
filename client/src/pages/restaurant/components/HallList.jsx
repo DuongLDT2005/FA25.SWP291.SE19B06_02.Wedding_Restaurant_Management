@@ -1,7 +1,51 @@
 import React from "react";
-import ImageCarousel from "../../../components/ImageCarousel";
 import { Link } from "react-router-dom";
+import ImageCarousel from "../../../components/ImageCarousel";
 export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
+  // NEW: map tên category -> code BookingForm dùng
+  const CATEGORY_NAME_MAP = {
+    "Món khai vị": "APPETIZER",
+    "Khai vị": "APPETIZER",
+    "Món chính": "MAIN",
+    "Tráng miệng": "DESSERT"
+  };
+
+  // NEW: chuyển menus có cấu trúc categories -> menus.dishes phẳng
+  function normalizeMenus(menus = []) {
+    return menus.map(m => {
+      if (m.categories && Array.isArray(m.categories)) {
+        const dishes = m.categories.flatMap(cat =>
+          (cat.dishes || []).map(d => ({
+            id: String(d.id),
+            name: d.name,
+            category: CATEGORY_NAME_MAP[cat.name] || "MAIN"
+          }))
+        );
+        return {
+          id: m.id,
+            name: m.name,
+            price: m.price,
+            dishes
+        };
+      }
+      // đã đúng định dạng
+      return m;
+    });
+  }
+
+  const handleBookingClick = (hall) => {
+    const fullData = {
+      ...restaurant,
+      selectedHall: hall,
+      // giữ both: menus gốc + menusNormalized để BookingForm dùng
+      menusOriginal: restaurant.menus,
+      menus: normalizeMenus(restaurant.menus),
+      addressString: restaurant.address?.fullAddress || restaurant.address
+    };
+    sessionStorage.setItem("selectedRestaurant", JSON.stringify(fullData));
+    sessionStorage.setItem("selectedHallId", String(hall.id));
+  };
+
   return (
     <div>
       <h4 className="section-title">Danh sách sảnh</h4>
@@ -35,7 +79,32 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
 
               <div className="card-footer bg-transparent border-0 text-end">
                 {role === "CUSTOMER" && (
-                  <button className="requestBtn"><Link to="/bookingForm" className="requestBtn">Gửi yêu cầu đặt chỗ</Link></button>
+
+                  <Link
+                    to="/bookingForm"
+                    className="requestBtn"
+                    onClick={() => handleBookingClick(hall)}
+                    style={{
+                      backgroundColor: '#993344',
+                      color: '#fefaf9',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      display: 'inline-block',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#7a2a2a';
+                      e.target.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = '#993344';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    Gửi yêu cầu đặt chỗ
+                  </Link>
                 )}
                 {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
                   <div className="d-flex justify-content-end gap-2">

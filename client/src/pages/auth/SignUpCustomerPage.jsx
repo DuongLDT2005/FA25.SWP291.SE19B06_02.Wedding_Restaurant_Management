@@ -185,8 +185,8 @@ export default function SignUpCustomer() {
           </form>
 
           <div className="links">
-            <p>Bạn đã có tài khoản? <a href="#">Đăng nhập</a></p>
-            <p>Quay lại <a href="#">Trang chủ</a></p>
+            <p>Bạn đã có tài khoản? <a href="/login">Đăng nhập</a></p>
+            <p>Quay lại <a href="/">Trang chủ</a></p>
           </div>
         </div>
       </div>

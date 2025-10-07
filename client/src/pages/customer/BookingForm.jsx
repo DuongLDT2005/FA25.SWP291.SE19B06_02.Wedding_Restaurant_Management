@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../styles/ContractForm.css";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
@@ -26,13 +27,59 @@ function getSessionUser() {
   };
 }
 
+// NEW helper: chuẩn hoá menus nếu còn dạng categories
+function normalizeMenusIfNeeded(menus = []) {
+  return menus.map(m => {
+    if (m.categories && Array.isArray(m.categories)) {
+      const dishes = m.categories.flatMap(cat =>
+        (cat.dishes || []).map(d => ({
+          id: String(d.id),
+          name: d.name,
+          // map tên -> code
+          category: (() => {
+            const map = {
+              "Món khai vị": "APPETIZER",
+              "Khai vị": "APPETIZER",
+              "Món chính": "MAIN",
+              "Tráng miệng": "DESSERT"
+            };
+            return map[cat.name] || "MAIN";
+          })()
+        }))
+      );
+      return {
+        id: m.id,
+        name: m.name,
+        price: m.price,
+        dishes
+      };
+    }
+    return m;
+  });
+}
+
 function getSelectedRestaurant() {
-  // Expect JSON string under key: selectedRestaurant
   const raw = sessionStorage.getItem("selectedRestaurant");
   if (raw) {
-    try { return JSON.parse(raw); } catch {}
+    try {
+      const parsed = JSON.parse(raw);
+      // address có thể là object
+      const addr =
+        parsed.addressString ||
+        parsed.address?.fullAddress ||
+        parsed.address?.street ||
+        parsed.address ||
+        "";
+      return {
+        ...parsed,
+        address: addr,
+        menus: normalizeMenusIfNeeded(parsed.menus || []),
+        halls: parsed.halls || [],
+        services: parsed.services || []
+      };
+    } catch {}
   }
-  // Fallback demo data
+  // Fallback demo data (giữ nguyên)
   return {
     id: 101,
     name: "Golden Palace",
@@ -125,6 +172,7 @@ const EVENT_TIME_OPTIONS = [
 ];
 
 function BookingForm({ restaurant: propRestaurant }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState(getSessionUser());
   const [restaurant, setRestaurant] = useState(propRestaurant || getSelectedRestaurant());
   const [form, setForm] = useState({
@@ -292,6 +340,69 @@ function BookingForm({ restaurant: propRestaurant }) {
     console.log("SUBMIT CONTRACT PAYLOAD:", payload);
     setSubmitted(true);
     // TODO: call API
+
+    // --- Build lightweight booking object for list page ---
+    try {
+      const selectedMenus = (restaurant.menus || []).filter(m =>
+        form.menuIds.includes(String(m.id))
+      );
+        const pricePerTable = selectedMenus.reduce((sum, m) => sum + (m.price || 0), 0);
+      const totalPrice = pricePerTable * Number(form.tables || 0);
+
+      // Build categories with selected dishes for details page
+      const categoryCodes = Object.keys(REQUIRED_DISH_QUANTITY); // ['APPETIZER','MAIN','DESSERT']
+      const selectedDishes = availableDishes.filter(d => form.dishIds.includes(d.id));
+      const categories = categoryCodes
+        .map(code => {
+          const dishesForCat = selectedDishes
+            .filter(d => d.category === code)
+            .map(d => ({ id: d.id, name: d.name }));
+          if (!dishesForCat.length) return null; // skip empty category
+            return {
+              name: CATEGORY_LABELS[code] || code,
+              requiredQuantity: REQUIRED_DISH_QUANTITY[code] || dishesForCat.length,
+              dishes: dishesForCat
+            };
+        })
+        .filter(Boolean);
+      const bookingRecord = {
+        bookingID: Date.now(), // temp ID
+        status: 0, // Pending
+        eventDate: form.eventDate,
+        startTime: null,
+        endTime: null,
+        tableCount: Number(form.tables || 0),
+        price: totalPrice,
+        specialRequest: form.note,
+        restaurant: {
+          name: restaurant.name,
+          address: restaurant.address,
+          thumbnailURL: restaurant.thumbnailURL || ""
+        },
+        hall: restaurant.halls?.find(h => h.id === form.hallId) || null,
+        menu: selectedMenus.length ? {
+          name: selectedMenus.map(m => m.name).join(", "),
+          price: pricePerTable,
+          categories
+        } : null,
+        services: restaurant.services?.filter(s => form.serviceCodes.includes(s.code)) || [],
+        createdAt: new Date().toISOString()
+      };
+
+      // Persist to sessionStorage list
+      const key = "customerBookings";
+      const existing = JSON.parse(sessionStorage.getItem(key) || "[]");
+      existing.push(bookingRecord);
+      sessionStorage.setItem(key, JSON.stringify(existing));
+
+      // Optionally keep a pointer to the latest created booking
+      sessionStorage.setItem("lastCreatedBookingID", String(bookingRecord.bookingID));
+
+      // Navigate to booking list page (adjust path if different in your router)
+  navigate("/customer/bookings", { state: { justCreated: bookingRecord.bookingID } });
+    } catch (err) {
+      console.error("Failed to persist booking for list page", err);
+    }
   }
 
   return (
