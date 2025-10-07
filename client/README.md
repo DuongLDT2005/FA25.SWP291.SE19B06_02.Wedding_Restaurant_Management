@@ -85,3 +85,5 @@ npm install lucide-react
 npm install bootstrap-icons
 ### Install @coreui/react
 npm install @coreui/react
+### Install @mui/x-date-pickers
+npm install @emotion/react @emotion/styled

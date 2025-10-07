@@ -4,23 +4,22 @@ import ImageCarousel from "../../components/ImageCarousel";
 import "../../styles/RestaurantDetailsStyles.css";
 import RatingStars from "../../components/RatingStars";
 import CapacityRange from "../../components/CapacityRange";
-import NavBar from "../../components/NavBar";
+import NavBar from "./components/NavBar";
 import { faBuildingColumns, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import HallList from "./components/HallList";
 import MenuList from "./components/MenuList";
 import ServiceList from "./components/ServiceList";
 import ReviewList from "./components/ReviewList";
+import ScrollToTopButton from "../../components/ScrollToTopButton"; // nút scroll khi người dùng kéo xuống
 
 export default function RestaurantDetailsPage() {
   const restaurant = restaurantDetail;
   const resImages = [restaurant.thumbnailURL, ...restaurant.images];
   const [expanded, setExpanded] = useState(false);
   const [selectedHall, setSelectedHall] = useState(null);
-
   const totalReviews = restaurant.reviews.length;
   const avgRating = restaurant.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
-
   const maxLength = 250;
   const isLong = restaurant.description.length > maxLength;
   const displayText = expanded
@@ -34,8 +33,8 @@ export default function RestaurantDetailsPage() {
       {/* Tên & Địa chỉ */}
       <div className="d-flex justify-content-between align-items-start mb-3">
         <div>
-          <h1 style={{ color: "#993344", fontWeight: "bold" }}>{restaurant.name}</h1>
-          <p className="text-muted mb-1">
+          <h1 style={{ color: "#993344", fontWeight: "bold" }} id="overview">{restaurant.name}</h1>
+          <p className="text-muted mb-1 ">
             <MapPin size={16} /> {restaurant.address.fullAddress}
           </p>
           <p className="text-warning mb-1">
@@ -53,8 +52,8 @@ export default function RestaurantDetailsPage() {
             </span>
           </p>
         </div>
-        <button className="btn btn-outline-danger">
-          <Heart size={18} className="me-1" />
+        <button className="btn btn-outline-danger" style={{ transition: "0.3s" }} onMouseOver={(e) => (e.currentTarget.style.color = "white")} onMouseOut={(e) => (e.currentTarget.style.color = "")}>
+          <Heart size={18} className="me-1 mb-1" />
           Lưu vào danh sách
         </button>
       </div>
@@ -102,7 +101,6 @@ export default function RestaurantDetailsPage() {
         </div>
       </div>
 
-
       {/* Nội dung chính */}
       <div className="row mt-4">
         {/* Thông tin */}
@@ -119,19 +117,20 @@ export default function RestaurantDetailsPage() {
             </button>
           )}
         </div>
-        <hr className="mt-4" />
+        <hr className="mt-4" id="hallist" />
         <HallList
           restaurant={{ ...restaurant, selectedHall }}
           onSelectHall={setSelectedHall}
         />
 
-        <hr className="mt-4" />
+        <hr className="mt-4" id="menu" />
         <MenuList restaurant={restaurant} />
-        <hr className="mt-4" />
+        <hr className="mt-4" id="services" />
         <ServiceList restaurant={restaurant} />
-        <hr className="mt-4" />
+        <hr className="mt-4" id="reviews" />
         <ReviewList reviews={restaurant.reviews} />
       </div>
+      <ScrollToTopButton />
     </div>
   );
 }
@@ -140,19 +139,19 @@ export default function RestaurantDetailsPage() {
 // static sample data
 export const restaurantDetail = {
   id: 1,
-  name: "Nhà Hàng Tiệc Cưới Hoa Sen",
-  description: "Tọa lạc trên mặt tiền đường 3 tháng 2 sầm uất, Capella Gallery Hall là một trong những trung tâm hội nghị tiệc cưới thuộc tập đoàn Capella Holding sở hữu diện tích lên đến 5.000 m2 và ngay trung tâm TP. HCM, thuận tiện cho việc di chuyển giữa các quận nội thành. Nhà hàng Capella Gallery Hall 3/2 là địa điểm cưới nổi bật với phong cách kiến trúc đương đại Đông Tây kết hợp và chất lượng dịch vụ đẳng cấp, tiện ích hiện đại theo tiêu chuẩn quốc tế cùng hệ thống sảnh tiệc đa dạng về quy mô và thiết kế. Việc tự thực hiện tất cả các khâu chuẩn bị cho một đám cưới hoàn chỉnh chưa bao giờ là chuyện dễ dàng đối với những ai đang chuẩn bị bước vào con đường hôn nhân. Chính vì lễ cưới không chỉ là một nghi thức diễn ra theo đúng trình tự, mà còn là cột mốc lưu giữ những kỉ niệm đáng nhớ của cô dâu chú rể trên hành trình yêu và cưới. Nên hầu hết các cặp thường dành nhiều thời gian cho việc tham khảo các địa điểm tổ chức đến tìm đơn vị cung cấp những dịch vụ cưới đi kèm phù hợp với sở thích và ngân sách như: Váy Cưới, Vest Chú Rể, Áo Dài, Makeup Artist,... để ngày trọng đại trọn vẹn nhất có thể.",
-  thumbnailURL: "https://picsum.photos/seed/restaurant/600/400",
+  name: "Quảng Đại Gold",
+  description: "Quảng Đại Gold là một địa điểm ấn tượng tọa lạc tại Lô 25-27, đường 30/4, phường Hòa Cường Bắc, quận Hải Châu, Đà Nẵng . Với vị trí đắc địa, Quảng Đại Gold vừa thuận tiện cho việc tiếp cận vừa nổi bật giữa trung tâm thành phố. Là một nhà hàng – trung tâm tiệc cưới cao cấp, Quảng Đại Gold mang đến cho thực khách không gian sang trọng, hiện đại nhưng vẫn ấm cúng, phù hợp cho các dịp lễ trọng đại hoặc những buổi gặp gỡ trang trọng. Khách đến đây sẽ cảm nhận được sự tinh tế trong thiết kế: tông màu vàng ánh kim chủ đạo hài hoà với ánh sáng ấm, kết hợp cùng vật liệu cao cấp, chi tiết decor nhẹ nhàng nhưng tinh xảo.",
+  thumbnailURL: "https://phongsucuoidanang.com/wp-content/uploads/2024/10/voan-che-dau-danh-cho-co-dau-mum-mim.webp",
   address: {
-    number: "123",
-    street: "Nguyễn Văn Linh",
+    number: "8",
+    street: "30 Tháng 4",
     ward: "Hải Châu",
-    fullAddress: "123 Nguyễn Văn Linh, Hải Châu"
+    fullAddress: "8 30 Tháng 4, Hải Châu"
   },
   hallCount: 2,
   images: [
-    "https://picsum.photos/seed/rs1/800/600",
-    "https://picsum.photos/seed/rs2/800/600"
+    "https://phongsucuoidanang.com/wp-content/uploads/2024/09/nha-hang-tiec-cuoi-da-nang-minh-chau-viet.webp",
+    "https://phongsucuoidanang.com/wp-content/uploads/2024/09/nha-hang-tiec-cuoi-da-nang-quang-dai-gold-anh-3.webp"
   ],
   amenities: ["Bãi đỗ xe", "Âm thanh ánh sáng", "Máy chiếu màn hình LED"],
 
@@ -160,11 +159,11 @@ export const restaurantDetail = {
     {
       id: 1,
       name: "Sảnh Hoa Hồng",
-      description: "Guests will have a special experience as this villa provides a pool with a view. The air-conditioned villa features 1 bedroom and 1 bathroom with a shower and a hairdryer. Featuring a balcony with pool views, this villa also offers soundproof walls and a flat-screen TV with streaming services. The unit offers 2 beds.",
+      description: "Gs a pool with a view. The air-conditioned villa features 1 bedroom and 1 bathroom with a shower and a hairdryer. Featuring a balcony with pool views, this villa also offers soundproof walls and a flat-screen TV with streaming services. The unit offers 2 beds.",
       capacity: 500,
       area: 600,
       price: 30000000,
-      images: ["https://picsum.photos/seed/hall1/800/600", "https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg"]
+      images: ["https://phongsucuoidanang.com/wp-content/uploads/2024/09/nha-hang-tiec-cuoi-da-nang-quang-dai-gold.webp", "https://phongsucuoidanang.com/wp-content/uploads/2024/10/voan-che-dau-danh-cho-co-dau-mum-mim.webp"]
     },
     {
       id: 2,
@@ -173,7 +172,7 @@ export const restaurantDetail = {
       capacity: 200,
       area: 250,
       price: 15000000,
-      images: ["https://citgroup.vn/wp-content/uploads/2021/08/vendor-la-gi-1.jpg"]
+      images: ["https://phongsucuoidanang.com/wp-content/uploads/2024/10/tiec-cuoi-hanh-phuc-ben-nguoi-than-gp-wedding.webp"]
     }
   ],
 
@@ -210,7 +209,7 @@ export const restaurantDetail = {
     },
     {
       id: 2,
-      name: "Menu Truyền Thống",
+      name: "Menu Chay",
       price: 3500000,
       categories: [
         {
@@ -262,10 +261,24 @@ export const restaurantDetail = {
   reviews: [
     {
       id: 1,
-      customerName: "Nguyễn Thị A",
+      customerName: "Nguyễn Thị Thắm",
       rating: 4,
       comment: "Nhà hàng đẹp, phục vụ tận tình, món ăn ngon!",
       createdAt: "2025-09-20 12:30:00"
+    },
+    {
+      id: 2,
+      customerName: "Nguyễn Văn Tài",
+      rating: 5,
+      comment: "Thật sự là nhà hàng này quá ngon, rất tuyệt vời!",
+      createdAt: "2025-09-21 12:30:00"
+    },
+    {
+      id: 3,
+      customerName: "Anh Mộ Xum Xuê",
+      rating: 3,
+      comment: "Alo Quảng Đại à, phải Quảng Đại đó không?",
+      createdAt: "2025-09-30 12:30:00"
     }
   ]
 };

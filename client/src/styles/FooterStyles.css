@@ -25,6 +25,12 @@
     flex: 1;
     flex-wrap: wrap;
     gap: 30px;
+    justify-content: space-between;
+}
+
+.footer-column {
+    flex: 1;
+    min-width: 180px;
 }
 
 .footer-column h4 {

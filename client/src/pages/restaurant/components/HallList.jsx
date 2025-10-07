@@ -1,7 +1,29 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
 
 export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
+  const handleBookingClick = (hall) => {
+    // Lưu thông tin nhà hàng và sảnh đã chọn vào sessionStorage
+    sessionStorage.setItem('selectedRestaurant', JSON.stringify({
+      restaurantId: restaurant.id,
+      restaurantName: restaurant.name,
+      restaurantAddress: restaurant.address.fullAddress,
+      halls: restaurant.halls,
+      menus: restaurant.menus,
+      services: restaurant.services,
+      selectedHall: {
+        hallId: hall.id,
+        hallName: hall.name,
+        capacity: hall.capacity,
+        area: hall.area,
+        price: hall.price,
+        images: hall.images,
+        description: hall.description
+      }
+    }));
+  };
+
   return (
     <div>
       <h4 className="section-title">Danh sách sảnh</h4>
@@ -35,7 +57,31 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
 
               <div className="card-footer bg-transparent border-0 text-end">
                 {role === "CUSTOMER" && (
-                  <button className="requestBtn">Gửi yêu cầu đặt chỗ</button>
+                  <Link 
+                    to="/restaurant/booking"
+                    className="requestBtn"
+                    onClick={() => handleBookingClick(hall)}
+                    style={{
+                      backgroundColor: '#993344',
+                      color: '#fefaf9',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      display: 'inline-block',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.backgroundColor = '#7a2a2a';
+                      e.target.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.backgroundColor = '#993344';
+                      e.target.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    Gửi yêu cầu đặt chỗ
+                  </Link>
                 )}
                 {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
                   <div className="d-flex justify-content-end gap-2">
