@@ -13,3 +13,4 @@ export * from './BookingDetailsUtils';
 
 // Styles
 import './BookingDetailsStyles.css';
+
