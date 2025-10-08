@@ -8,7 +8,8 @@ import '../../styles/BookingDetailsStyles.css';
 const BookingDetailsPage = () => {
     const { bookingId } = useParams();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    // search params: need setter to enforce payment=0 when pending
+    const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('overview');
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -63,7 +64,22 @@ const BookingDetailsPage = () => {
                 }));
             }
         } else if (paymentStatus === '0') {
+            // Có param payment=0 -> trạng thái chờ thanh toán
             setPaymentCompleted(false);
+        } else {
+            // Không có param payment hoặc giá trị khác: nếu booking chưa thanh toán thì ép thêm payment=0 vào URL
+            if (booking && (!booking.payments || booking.payments.length === 0) && !paymentCompleted) {
+                // Bảo toàn các params khác nếu có
+                const paramsObj = {};
+                for (const [k, v] of searchParams.entries()) {
+                    paramsObj[k] = v;
+                }
+                // Chỉ set nếu hiện chưa có payment
+                if (!paramsObj.payment) {
+                    paramsObj.payment = '0';
+                    setSearchParams(paramsObj, { replace: true });
+                }
+            }
         }
 
         // Không cần đọc tab parameter nữa, để người dùng tự chọn tab

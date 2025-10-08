@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../styles/ContractForm.css";
+import "../../styles/ContractForm.css"; // now only contains dish modal / minor helpers
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
@@ -164,6 +164,14 @@ const USAGE_TYPES = [
   { value: "EVENT", label: "Sự kiện" }
 ];
 
+// Map mục đích sử dụng -> các service code được phép (có thể chỉnh sau theo nghiệp vụ thực tế)
+const USAGE_SERVICE_CODES = {
+  WEDDING: ["DECOR_BASIC","DECOR_PREMIUM","MC","SOUND_LIGHT","PHOTO_VIDEO"],
+  COMPANY: ["DECOR_BASIC","MC","SOUND_LIGHT","PHOTO_VIDEO"],
+  CONFERENCE: ["DECOR_BASIC","SOUND_LIGHT","PHOTO_VIDEO"],
+  EVENT: ["DECOR_BASIC","DECOR_PREMIUM","MC","SOUND_LIGHT","PHOTO_VIDEO"]
+};
+
 // NEW: predefined time sessions
 const EVENT_TIME_OPTIONS = [
   { value: "NOON", label: "Buổi trưa (11:00 - 13:00)" },
@@ -232,6 +240,34 @@ function BookingForm({ restaurant: propRestaurant }) {
       }
     }
   }
+
+  // Checkbox toggle cho dịch vụ (thay vì multi-select)
+  function handleServiceToggle(code) {
+    setForm(f => {
+      const set = new Set(f.serviceCodes);
+      if (set.has(code)) set.delete(code); else set.add(code);
+      return { ...f, serviceCodes: Array.from(set) };
+    });
+  }
+
+  // Danh sách dịch vụ lọc theo usageType
+  const filteredServices = useMemo(() => {
+    if (!restaurant.services) return [];
+    if (!form.usageType) return [];
+    const allowed = USAGE_SERVICE_CODES[form.usageType] || [];
+    return restaurant.services.filter(s => allowed.includes(s.code));
+  }, [restaurant.services, form.usageType]);
+
+  // Khi đổi usageType loại bỏ service không còn hợp lệ
+  useEffect(() => {
+    setForm(f => {
+      if (!f.usageType) return { ...f, serviceCodes: [] }; // reset nếu bỏ chọn
+      const allowed = new Set(USAGE_SERVICE_CODES[f.usageType] || []);
+      const filtered = f.serviceCodes.filter(c => allowed.has(c));
+      if (filtered.length === f.serviceCodes.length) return f;
+      return { ...f, serviceCodes: filtered };
+    });
+  }, [form.usageType]);
 
   const availableDishes = useMemo(() => {
     if (!form.menuIds.length) return [];
@@ -408,102 +444,124 @@ function BookingForm({ restaurant: propRestaurant }) {
   return (
     <>
     <Header />
-    <div className="contract-form-wrapper">
-      <h2 className="cf-title">Đặt Tiệc / Tạo Hợp Đồng</h2>
+    <div className="container mb-5" style={{marginTop: '6rem'}}>
+      <h2 className="h3 fw-semibold mb-4 theme-text-primary">Đặt Tiệc / Tạo Hợp Đồng</h2>
 
-      <form className="contract-form" onSubmit={handleSubmit} noValidate>
+      <form className="card shadow-sm border-0" onSubmit={handleSubmit} noValidate>
+        <div className="card-body">
         {/* User Info */}
-        <div className="cf-section">
-          <div className="cf-section-header">Thông tin khách hàng</div>
-          <div className="cf-grid">
-            <div className="cf-field">
-              <label>Họ và tên</label>
-              <input name="fullName" value={user.fullName} onChange={handleUserChange} />
+        <div className="mb-4">
+          <div className="border-start border-3 ps-2 mb-3 fw-semibold small text-uppercase" style={{borderColor:'#993344!important',color:'#993344'}}>Thông tin khách hàng</div>
+          <div className="row g-3">
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Họ và tên</label>
+              <input className="form-control" name="fullName" value={user.fullName} onChange={handleUserChange} />
             </div>
-            <div className="cf-field">
-              <label>Số điện thoại</label>
-              <input name="phone" value={user.phone} onChange={handleUserChange} />
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Số điện thoại</label>
+              <input className="form-control" name="phone" value={user.phone} onChange={handleUserChange} />
             </div>
-            <div className="cf-field">
-              <label>Email</label>
-              <input name="email" value={user.email} onChange={handleUserChange} />
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Email</label>
+              <input className="form-control" name="email" value={user.email} onChange={handleUserChange} />
             </div>
           </div>
-          <div className="cf-small-note">
-            Bạn có thể chỉnh sửa thông tin trước khi gửi.
-          </div>
+          <div className="form-text mt-1">Bạn có thể chỉnh sửa thông tin trước khi gửi.</div>
         </div>
 
         {/* Restaurant */}
-        <div className="cf-section">
-          <div className="cf-section-header">Nhà hàng đã chọn</div>
-          <div className="cf-restaurant-card">
-            <div className="cf-restaurant-name">{restaurant.name}</div>
-            <div className="cf-restaurant-address">{restaurant.address}</div>
-            <div className="cf-tag-row">
-              {form.hallId && (
-                <span className="cf-tag">
-                  Sảnh: {
-                    restaurant.halls?.find(h => h.id === form.hallId)?.name
-                  } (≤ {
-                    restaurant.halls?.find(h => h.id === form.hallId)?.capacity
-                  } khách)
-                </span>
-              )}
+        <div className="mb-4">
+          <div className="border-start border-3 ps-2 mb-3 fw-semibold small text-uppercase theme-text-primary" style={{borderColor:'#993344'}}>Nhà hàng đã chọn</div>
+          <div className="p-3 rounded border bg-light">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-2">
+              <div>
+                <div className="fw-semibold">{restaurant.name}</div>
+                <div className="text-muted small">{restaurant.address}</div>
+                {form.hallId && (
+                  <span className="badge rounded-pill theme-badge mt-2">
+                    Sảnh: {restaurant.halls?.find(h => h.id === form.hallId)?.name} (≤ {restaurant.halls?.find(h => h.id === form.hallId)?.capacity} khách)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Usage & Menus */}
-        <div className="cf-section">
-          <div className="cf-section-header">Thông tin dịch vụ</div>
-          <div className="cf-grid">
-            <div className="cf-field">
-              <label>Mục đích sử dụng<span className="cf-required">*</span></label>
+        <div className="mb-4">
+          <div className="border-start border-3 ps-2 mb-3 fw-semibold small text-uppercase theme-text-primary" style={{borderColor:'#993344'}}>Thông tin dịch vụ</div>
+          <div className="row g-3">
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Mục đích sử dụng<span className="text-danger">*</span></label>
               <select
                 name="usageType"
                 value={form.usageType}
                 onChange={handleChange}
-                className={errors.usageType ? "cf-invalid" : ""}
+                className={`form-select ${errors.usageType ? 'is-invalid' : ''}`}
               >
                 <option value="">-- Chọn --</option>
                 {USAGE_TYPES.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
-              {errors.usageType && <div className="cf-error">{errors.usageType}</div>}
+              {errors.usageType && <div className="invalid-feedback d-block">{errors.usageType}</div>}
             </div>
-
-            <div className="cf-field">
-              <label>Chọn menu (đa chọn)<span className="cf-required">*</span></label>
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Chọn menu (đa chọn)<span className="text-danger">*</span></label>
               <select
                 multiple
                 value={form.menuIds}
-                onChange={(e) => handleMultiSelect(e, "menuIds")}
-                className={errors.menuIds ? "cf-invalid" : ""}
+                onChange={(e) => handleMultiSelect(e, 'menuIds')}
+                className={`form-select ${errors.menuIds ? 'is-invalid' : ''}`}
+                size={Math.min(6, (restaurant.menus||[]).length || 3)}
               >
                 {restaurant.menus?.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} - {m.price.toLocaleString()}đ
-                  </option>
+                  <option key={m.id} value={m.id}>{m.name} - {m.price.toLocaleString()}đ</option>
                 ))}
               </select>
-              {errors.menuIds && <div className="cf-error">{errors.menuIds}</div>}
-              <div className="cf-hint">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều.</div>
+              {errors.menuIds && <div className="invalid-feedback d-block">{errors.menuIds}</div>}
+              <div className="form-text">Giữ Ctrl (Windows) hoặc Cmd (Mac) để chọn nhiều.</div>
             </div>
-
-            <div className="cf-field cf-field-full">
-              <label>Món ăn theo danh mục</label>
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold d-block">Dịch vụ thêm</label>
+              {!form.usageType && (
+                <div className="text-muted small fst-italic mb-1">Chọn mục đích sử dụng để hiển thị dịch vụ.</div>
+              )}
+              {form.usageType && filteredServices.length === 0 && (
+                <div className="text-muted small fst-italic mb-1">Không có dịch vụ cho mục đích này.</div>
+              )}
+              <div className="border rounded p-2" style={{maxHeight:'230px', overflowY:'auto', background:'#fff'}}>
+                {filteredServices.map(s => {
+                  const checked = form.serviceCodes.includes(s.code);
+                  return (
+                    <div key={s.code} className="form-check small mb-1">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`svc_${s.code}`}
+                        checked={checked}
+                        onChange={() => handleServiceToggle(s.code)}
+                      />
+                      <label className="form-check-label" htmlFor={`svc_${s.code}`}>
+                        {s.label}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="form-text">Tích để chọn (không bắt buộc).</div>
+              {form.serviceCodes.length > 0 && (
+                <div className="mt-1 small"><strong>Đã chọn:</strong> {form.serviceCodes.length}</div>
+              )}
+            </div>
+            <div className="col-12">
+              <label className="form-label small text-uppercase fw-semibold">Món ăn theo danh mục</label>
               {!form.menuIds.length && (
-                <div className="cf-hint">Chọn menu trước để chọn món.</div>
+                <div className="form-text">Chọn menu trước để chọn món.</div>
               )}
               {!!form.menuIds.length && (
-                <div className="cf-dish-edit-row">
-                  <button
-                    type="button"
-                    onClick={() => setShowDishPicker(true)}
-                    className="cf-dish-open-btn"
-                  >
+                <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
+                  <button type="button" onClick={() => setShowDishPicker(true)} className="btn btn-sm theme-btn-primary">
                     Chọn / Sửa món
                   </button>
                   {Object.keys(CATEGORY_LABELS).map(cat => {
@@ -513,12 +571,9 @@ function BookingForm({ restaurant: propRestaurant }) {
                       const d = availableDishes.find(x => x.id === id);
                       return d?.category === cat;
                     }).length;
-                    const badgeCls = selectedCount === required ? "ok" : "warn";
+                    const badgeCls = selectedCount === required ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning';
                     return (
-                      <span
-                        key={cat}
-                        className={`cf-dish-summary-badge ${badgeCls}`}
-                      >
+                      <span key={cat} className={`badge rounded-pill ${badgeCls.includes('success')? 'theme-badge' : 'bg-warning-subtle text-warning'}`}>
                         {CATEGORY_LABELS[cat]} {selectedCount}/{required}
                       </span>
                     );
@@ -527,91 +582,48 @@ function BookingForm({ restaurant: propRestaurant }) {
               )}
               {Object.keys(REQUIRED_DISH_QUANTITY).map(cat =>
                 errors[`dish_${cat}`] ? (
-                  <div key={cat} className="cf-error cf-error-mt4">
+                  <div key={cat} className="text-danger small fw-semibold">
                     {errors[`dish_${cat}`]}
                   </div>
                 ) : null
               )}
-              <div className="cf-hint">
-                Nhấn "Chọn / Sửa món" để chọn đủ số lượng mỗi danh mục.
-              </div>
-            </div>
-
-            <div className="cf-field">
-              <label>Dịch vụ thêm</label>
-              <select
-                multiple
-                value={form.serviceCodes}
-                onChange={(e) => handleMultiSelect(e, "serviceCodes")}
-              >
-                {restaurant.services?.map(s => (
-                  <option key={s.code} value={s.code}>{s.label}</option>
-                ))}
-              </select>
-              <div className="cf-hint">Không bắt buộc.</div>
+              <div className="form-text mb-0">Nhấn "Chọn / Sửa món" để chọn đủ số lượng mỗi danh mục.</div>
             </div>
           </div>
         </div>
 
         {/* Event Details */}
-        <div className="cf-section">
-          <div className="cf-section-header">Chi tiết buổi tiệc</div>
-          <div className="cf-grid">
-            <div className="cf-field">
-              <label>Ngày tổ chức<span className="cf-required">*</span></label>
-              <input
-                type="date"
-                name="eventDate"
-                value={form.eventDate}
-                onChange={handleChange}
-                className={errors.eventDate ? "cf-invalid" : ""}
-              />
-              {errors.eventDate && <div className="cf-error">{errors.eventDate}</div>}
+        <div className="mb-4">
+          <div className="border-start border-3 ps-2 mb-3 fw-semibold small text-uppercase theme-text-primary" style={{borderColor:'#993344'}}>Chi tiết buổi tiệc</div>
+          <div className="row g-3">
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Ngày tổ chức<span className="text-danger">*</span></label>
+              <input type="date" name="eventDate" value={form.eventDate} onChange={handleChange} className={`form-control ${errors.eventDate ? 'is-invalid' : ''}`} />
+              {errors.eventDate && <div className="invalid-feedback d-block">{errors.eventDate}</div>}
             </div>
-            <div className="cf-field">
-              <label>Giờ tổ chức<span className="cf-required">*</span></label>
-              <select
-                name="eventTime"
-                value={form.eventTime}
-                onChange={handleChange}
-                className={errors.eventTime ? "cf-invalid" : ""}
-              >
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Giờ tổ chức<span className="text-danger">*</span></label>
+              <select name="eventTime" value={form.eventTime} onChange={handleChange} className={`form-select ${errors.eventTime ? 'is-invalid' : ''}`}>
                 <option value="">-- Chọn buổi --</option>
-                {EVENT_TIME_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
+                {EVENT_TIME_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
-              {errors.eventTime && <div className="cf-error">{errors.eventTime}</div>}
+              {errors.eventTime && <div className="invalid-feedback d-block">{errors.eventTime}</div>}
             </div>
-            <div className="cf-field">
-              <label>Số bàn dự kiến<span className="cf-required">*</span></label>
-              <input
-                type="number"
-                name="tables"
-                min="1"
-                value={form.tables}
-                onChange={handleChange}
-                className={errors.tables ? "cf-invalid" : ""}
-                placeholder="VD: 30"
-              />
-              {errors.tables && <div className="cf-error">{errors.tables}</div>}
+            <div className="col-md-4">
+              <label className="form-label small text-uppercase fw-semibold">Số bàn dự kiến<span className="text-danger">*</span></label>
+              <input type="number" name="tables" min="1" value={form.tables} onChange={handleChange} placeholder="VD: 30" className={`form-control ${errors.tables ? 'is-invalid' : ''}`} />
+              {errors.tables && <div className="invalid-feedback d-block">{errors.tables}</div>}
             </div>
-            <div className="cf-field cf-field-full">
-              <label>Lời nhắn / Yêu cầu</label>
-              <textarea
-                name="note"
-                rows={4}
-                value={form.note}
-                onChange={handleChange}
-                placeholder="Ví dụ: Yêu cầu trang trí tone trắng - vàng, bố trí sân khấu LED..."
-              />
+            <div className="col-12">
+              <label className="form-label small text-uppercase fw-semibold">Lời nhắn / Yêu cầu</label>
+              <textarea name="note" rows={4} value={form.note} onChange={handleChange} placeholder="Ví dụ: Yêu cầu trang trí tone trắng - vàng, bố trí sân khấu LED..." className="form-control" />
             </div>
           </div>
         </div>
 
         {/* Summary */}
-        <div className="cf-section">
-          <div className="cf-summary">
+        <div className="mb-4">
+          <div className="p-3 rounded small theme-bg-soft border theme-border">
             <div>
               <strong>Sảnh:</strong>{" "}
               {form.hallId
@@ -646,7 +658,7 @@ function BookingForm({ restaurant: propRestaurant }) {
               <strong>Dịch vụ thêm:</strong>{" "}
               {form.serviceCodes.length
                 ? form.serviceCodes
-                    .map(code => restaurant.services.find(s => s.code === code)?.label)
+                    .map(code => filteredServices.find(s => s.code === code)?.label || restaurant.services.find(s => s.code === code)?.label)
                     .filter(Boolean)
                     .join(", ")
                 : "Không"}
@@ -663,11 +675,11 @@ function BookingForm({ restaurant: propRestaurant }) {
           </div>
         </div>
 
-        <div className="cf-actions">
-          <button type="submit" className="cf-btn cf-btn-primary">Gửi yêu cầu</button>
+        <div className="d-flex flex-wrap gap-2 mb-3">
+          <button type="submit" className="btn theme-btn-primary">Gửi yêu cầu</button>
           <button
             type="button"
-            className="cf-btn cf-btn-secondary"
+            className="btn btn-outline-secondary"
             onClick={() => {
               setForm({
                 usageType: "",
@@ -687,10 +699,13 @@ function BookingForm({ restaurant: propRestaurant }) {
             Làm lại
           </button>
         </div>
-
         {submitted && !Object.keys(errors).length && (
-          <div className="cf-success">Yêu cầu đã được gửi! Vui lòng chờ xác nhận.</div>
+          <div className="alert alert-success d-flex align-items-center gap-2 mb-0">
+            <i className="bi bi-check-circle-fill"></i>
+            <span>Yêu cầu đã được gửi! Vui lòng chờ xác nhận.</span>
+          </div>
         )}
+        </div>
       </form>
       </div>
 

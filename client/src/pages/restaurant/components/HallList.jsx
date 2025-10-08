@@ -82,29 +82,9 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
 
                   <Link
                     to="/bookingForm"
-                    className="requestBtn"
+                    className="btn btn-primary theme-btn-primary px-3 py-2 fw-semibold"
                     onClick={() => handleBookingClick(hall)}
-                    style={{
-                      backgroundColor: '#993344',
-                      color: '#fefaf9',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      display: 'inline-block',
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseOver={(e) => {
-                      e.target.style.backgroundColor = '#7a2a2a';
-                      e.target.style.transform = 'translateY(-2px)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.target.style.backgroundColor = '#993344';
-                      e.target.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    Gửi yêu cầu đặt chỗ
-                  </Link>
+                  >Gửi yêu cầu đặt chỗ</Link>
                 )}
                 {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
                   <div className="d-flex justify-content-end gap-2">
