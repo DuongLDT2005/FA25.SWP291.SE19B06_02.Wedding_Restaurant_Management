@@ -163,7 +163,7 @@
 .menu-card:hover .overlay {
   transform: translateY(0%) !important;
 }
-.nav-link:hover {
+/* .nav-link:hover {
   background-color: #f8d7da;
   color: #b80926;
-}
+} */

@@ -42,7 +42,7 @@ function AppRoutes() {
         <Route path="/partner/halls/new" element={<HallCreate />} />
         <Route path="/partner/hall-schedule" element={<HallSchedulePage />} />
         <Route path="/partner/bookings" element={<PartnerBookingPage />} />
-        <Route path="/partner/profiles" element={<ProfileBusiness />} />
+        <Route path="/partner/profile" element={<ProfileBusiness />} />
         <Route path="/partner/bookings/:id" element={<BookingDetailPage />} />
         <Route path="/partner/bookings/:id/contract" element={<ContractPage />} />
         <Route path="/partner/payments" element={<PartnerPaymentPage />} />

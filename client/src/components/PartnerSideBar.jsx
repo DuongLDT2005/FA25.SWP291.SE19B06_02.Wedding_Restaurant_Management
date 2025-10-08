@@ -18,7 +18,7 @@ export default function Sidebar() {
 
   return (
     <div
-      className="bg-white border-end vh-100 d-flex flex-column"
+      className="sticky-sidebar bg-white border-end vh-100 d-flex flex-column top-0"
       style={{
         width: collapsed ? 70 : 220,
         transition: "width 0.3s",
