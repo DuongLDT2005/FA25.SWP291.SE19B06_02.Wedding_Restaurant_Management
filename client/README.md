@@ -85,6 +85,11 @@ npm install lucide-react
 npm install bootstrap-icons
 ### Install @coreui/react
 npm install @coreui/react
+
+### Install React-redux & toolkit
+
+npm install react-redux
+npm install @reduxjs/toolkit react-redux
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
 ### Install npm install jspdf

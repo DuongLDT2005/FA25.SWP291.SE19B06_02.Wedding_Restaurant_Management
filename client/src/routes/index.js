@@ -4,8 +4,10 @@ import Home from "../pages/homePage";
 import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
-import Dashboard from "../pages/admin/dashboard/Dashboard";
 import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
+import DefaultLayout from "../pages/admin/layout/DefaultLayout";
+import Dashboard from "../pages/admin/dashboard/Dashboard";
+
 import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 import BookingListPage from "../pages/customer/BookingListPage";
 import BookingForm from "../pages/customer/BookingForm";
@@ -20,8 +22,12 @@ function AppRoutes() {
         <Route path="/signup/customer" element={<SignUpCustomer />} />
         <Route path="/signup/owner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin" element={<Dashboard />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+
+        <Route path="/admin" element={<DefaultLayout />}>
+          <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
+          <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
+        </Route>
         <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />
         <Route path="/bookingForm" element={<BookingForm />} />
