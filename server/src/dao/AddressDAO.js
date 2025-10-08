@@ -8,6 +8,12 @@ class AddressDAO{
         );
         return rows.length > 0 ? rows[0] : null;
     }
+    static async getAllAddress(addressData){
+        const [rows] = await db.query(
+            `SELECT * FROM Address`
+        );
+        return rows;
+    }
 }
 
 export default AddressDAO;

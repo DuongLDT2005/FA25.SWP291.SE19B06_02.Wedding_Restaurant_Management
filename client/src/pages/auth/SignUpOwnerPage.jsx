@@ -33,9 +33,9 @@ function SignUpForOwner() {
       newErrors.email = "Email không đúng định dạng.";
     }
     // thêm validate password
-    const passwordRegex = /^[A-Za-z0-9]{6,}$/;
+    const passwordRegex = /^[A-Za-z0-9@!_]{6,}$/;
     if (!passwordRegex.test(password)) {
-      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ hoặc số.";
+      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ, số và ký tự (@;!;_).";
     }
 
     if (password !== confirmPassword) {
@@ -200,7 +200,7 @@ function SignUpForOwner() {
         <div className="sign--up--footer">
           <div className="sign--up--link">
             <p>
-              Bạn đã có tài khoản? <Link to="#">Đăng nhập</Link>
+              Bạn đã có tài khoản? <Link to="/login">Đăng nhập</Link>
             </p>
           </div>
           <div className="sign--up--link">

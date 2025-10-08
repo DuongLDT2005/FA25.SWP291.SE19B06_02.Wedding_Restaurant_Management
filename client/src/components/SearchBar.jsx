@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useCallback } from "react";
 import "../styles/HeaderSearchbarStyles.css"
-
+import { Link, useLocation } from 'react-router-dom'
 // Danh sách địa điểm cố định - di chuyển ra ngoài component
-const LOCATIONS = ["Liên Chiểu", "Ngũ Hành Sơn", "Sơn Trà", "Cẩm Lệ", "Thanh Khê"];
+const LOCATIONS = ["Liên Chiểu", "Ngũ Hành Sơn", "Sơn Trà", "Cẩm Lệ", "Thanh Khê", "Hải Châu"];
 
 function SearchBar() {
+    const location = useLocation();
     const [show, setShow] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [formData, setFormData] = useState({
@@ -91,14 +92,16 @@ function SearchBar() {
     }, []);
     return (
         <>
-            <div>
-                <div className="header--image"><img src="/assets/img/wedding_main.jpg" alt="wedding" /></div>
-                <div className="header--text">
-                    <h1>Chase elegance. Reserve your dream stay now.</h1>
-                    <p>Discover the finest ... from all over the world.</p>
+            {location.pathname === "/" && (
+                <div>
+                    <div className="header--image"><img src="https://static.vecteezy.com/system/resources/previews/047/274/684/non_2x/beautiful-indoor-wedding-aisle-with-elegant-floral-decorations-in-soft-pastel-colors-creating-a-romantic-and-enchanting-atmosphere-photo.jpg" alt="wedding" /></div>
+                    <div className="header--text">
+                        <h1>Chạm đến sự tinh tế – Đặt chỗ cho kỳ nghỉ mơ ước ngay hôm nay.</h1>
+                        <p>Khám phá những trải nghiệm tuyệt vời và dịch vụ đẳng cấp hàng đầu từ khắp nơi trên thế giới.</p>
+                    </div>
                 </div>
-            </div>
-            <form className="header--searchbar" onSubmit={handleSubmit}>
+            )}
+            <form className={`header--searchbar ${location.pathname !== "/" ? "searchbar--compact" : ""}`} onSubmit={handleSubmit}>
                 <div className="option--field">
                     <i className="fa-solid fa-location-dot"></i>
                     <div>
@@ -180,11 +183,20 @@ function SearchBar() {
                     <i className="fa-solid fa-dollar-sign"></i>
                     <div>
                         <label htmlFor="costs">Chi phí</label>
-                        <input type="text" id="costs" name="costs" placeholder="Nhập ngân sách" value={formData.costs} onChange={handleInputChange} />
+                        <select type="text" id="costs" name="costs" value={formData.costs} onChange={handleInputChange} >
+                            <option value="">Chọn số lượng</option>
+                            <option value="100-200">100 - 200 người</option>
+                            <option value="200-300">200 - 300 người</option>
+                            <option value="300-400">300 - 400 người</option>
+                            <option value="400-500">400 - 500 người</option>
+                            <option value="500+">Trên 500 người</option>
+                        </select>
                     </div>
                 </div>
                 <div className="option--field">
-                    <button type="submit">Đặt ngay</button>
+                    <Link to="/restaurant/detail" state={{ location: formData.location }}>
+                        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </Link>
                 </div>
             </form >
         </>
