@@ -88,17 +88,17 @@
 }
 
 .file--upload input[type="file"]::-webkit-file-upload-button {
-    background: #993344;
+    background: #993344 !important;
     color: #fff;
     border: none;
-    border-radius: 20px;
-    padding: 8px 14px;
+    border-radius: 20px !important;
+    padding: 8px 14px !important;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .file--upload input[type="file"]::-webkit-file-upload-button:hover {
-    background: #7a2835;
+    background: #7a2835 !important;
 }
 
 .sign--up--container button {
@@ -165,7 +165,7 @@
     text-align: center;
     margin: 5px 0;
     font-weight: 600;
-    color: #993344;
+    color: #993344 !important;
 }
 
 .error-message {

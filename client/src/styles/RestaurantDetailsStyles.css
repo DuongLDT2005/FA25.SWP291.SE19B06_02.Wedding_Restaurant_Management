@@ -1,8 +1,12 @@
 .carousel-item img {
-  width: 100%;            /* cho full chiều ngang */
-  aspect-ratio: 4 / 3;   /* ép ảnh thành tỉ lệ 16:9 */
-  object-fit: cover;      /* giữ tỉ lệ, cắt thừa nếu cần */
-  border-radius: 8px;     /* tuỳ chọn, bo góc */
+  width: 100%;
+  /* cho full chiều ngang */
+  aspect-ratio: 4 / 3;
+  /* ép ảnh thành tỉ lệ 16:9 */
+  object-fit: cover;
+  /* giữ tỉ lệ, cắt thừa nếu cần */
+  border-radius: 8px;
+  /* tuỳ chọn, bo góc */
 }
 
 .carousel-control-prev,
@@ -13,18 +17,19 @@
   width: 35px !important;
   height: 35px !important;
   padding: 10px !important;
-  background-color: rgba(0, 0, 0, 0.4) !important;
+  /* background-color: rgba(0, 0, 0, 0.4) !important; */
   border-radius: 50% !important;
   opacity: 1 !important;
 }
 
 .carousel-control-prev {
-    left: 12px !important;
+  left: 12px !important;
 }
 
 .carousel-control-next {
-    right: 12px !important;
+  right: 12px !important;
 }
+
 .section-title {
   color: #993344;
   font-weight: bold;
@@ -49,6 +54,7 @@
 .btn-toggle:hover {
   text-decoration: underline;
 }
+
 .requestBtn {
   background-color: #993344;
   color: white;
@@ -58,35 +64,50 @@
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
+  text-decoration: none;
 }
+
 .requestBtn:hover {
   background-color: #772635;
 }
+
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1050; /* Sit on top */
-    left: 0;
-    top: 0;
-    max-width: 100% !important; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+  display: none;
+  /* Hidden by default */
+  position: fixed;
+  /* Stay in place */
+  z-index: 1050;
+  /* Sit on top */
+  left: 0;
+  top: 0;
+  max-width: 100% !important;
+  /* Full width */
+  height: 100%;
+  /* Full height */
+  overflow: auto;
+  /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.5);
+  /* Black w/ opacity */
 }
+
 /* Card hover: sáng lên khi di chuột */
-.menu{
+.menu {
   transition: all 0.2s ease-in-out;
 }
+
 .menu:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  background-color: #aa3b4d !important; /* đỏ sáng hơn khi hover */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background-color: #aa3b4d !important;
+  /* đỏ sáng hơn khi hover */
 }
 
 /* Modal table */
-.table th, .table td {
+.table th,
+.table td {
   vertical-align: middle;
 }
+
 .reviews-section .section-title {
   color: #993344;
   margin-bottom: 1rem;
@@ -99,11 +120,7 @@
   align-items: center;
   padding: 10px 14px;
   border-radius: 8px;
-  background: linear-gradient(
-    180deg,
-    rgba(153, 51, 68, 0.08),
-    rgba(153, 51, 68, 0.04)
-  );
+  background: #993344;
   min-width: 120px;
 }
 
@@ -141,4 +158,3 @@
   color: #333;
   margin-bottom: 0;
 }
-

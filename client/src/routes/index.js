@@ -6,7 +6,12 @@ import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
 import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
-
+import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
+import BookingListPage from "../pages/customer/BookingListPage";
+import BookingForm from "../pages/customer/BookingForm";
+import Profile from "../pages/customer/Profile";
+import PaymentPage from "../pages/payment/PaymentPage";
+import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -17,6 +22,20 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/restaurant/detail" element={<ListingRestaurants />} />
+        <Route path="/customer/bookings" element={<BookingListPage />} />
+        <Route path="/bookingForm" element={<BookingForm />} />
+        <Route path="/customer/profile" element={<Profile />} />
+
+        {/* Booking Routes */}
+        <Route path="/booking/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="/booking/:bookingId/contract" element={<BookingDetailsPage />} />
+        <Route path="/booking/:bookingId/payments" element={<BookingDetailsPage />} />
+
+        {/* Payment Routes */}
+        <Route path="/payment/:bookingId" element={<PaymentPage />} />
+        <Route path="/payment/new" element={<PaymentPage />} />
+
         {/* Thêm các route khác tại đây */}
       </Routes>
     </BrowserRouter>

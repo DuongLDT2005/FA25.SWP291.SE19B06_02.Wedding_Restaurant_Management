@@ -1,6 +1,7 @@
 import Hall from "../models/Hall.js";
 import db from "../config/db.js";
 import { hallStatus } from "../models/Hall.js";
+import RestaurantDAO from "./RestaurantDAO.js";
 class HallDAO {
     static async createHall(hall) {
         const { restaurantID, name, description, capacity, area, price, status } = hall;
@@ -9,6 +10,9 @@ class HallDAO {
             [restaurantID, name, description, capacity, area, price, status]
         );
         hall.hallID = result.insertId;
+        
+        // Increment hall count in the restaurant
+
         return hall;
     }
     static async getHallById(hallID) {
@@ -40,6 +44,7 @@ class HallDAO {
     }
     static async deleteHall(hallID) {
         const [result] = await db.query('DELETE FROM Hall WHERE hallID = ?', [hallID]);
+        // Decrement hall count in the restaurant
         return result.affectedRows > 0;
     }
     static async updateHallStatus(hallID, status) {
@@ -49,6 +54,7 @@ class HallDAO {
         );
         return result.affectedRows > 0;
     }
+
 }
 
 export default HallDAO;
