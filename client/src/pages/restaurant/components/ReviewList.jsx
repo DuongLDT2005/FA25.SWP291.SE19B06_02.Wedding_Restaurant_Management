@@ -1,4 +1,3 @@
-// File: ReviewList.jsx
 import React, { useState } from "react";
 import Pagination from "../../../components/Pagination";
 import RatingStars from "../../../components/RatingStars";
@@ -43,7 +42,7 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {review.customer.fullName.charAt(0).toUpperCase()}
+                  {review.customerName.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-grow-1">

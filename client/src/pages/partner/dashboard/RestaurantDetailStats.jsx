@@ -1,7 +1,6 @@
-"use client"
-
 import { useState } from "react"
-import { Card, Row, Col, Table, Badge, ButtonGroup, Button } from "react-bootstrap"
+import { Card, Row, Col, Table, Badge, Button } from "react-bootstrap"
+import { ArrowLeft } from "react-bootstrap-icons";
 import {
   CartesianGrid,
   XAxis,
@@ -19,12 +18,22 @@ import {
   RadialBarChart,
   RadialBar,
 } from "recharts"
-import PartnerLayout from "../../layouts/PartnerLayout"
-const Dashboard = () => {
+import KPICard from "./KPICard"
+import TimePeriodSelector from "./TimePeriodSelector"
+import { formatCompactCurrency } from "../../../utils/formatCurrency";
+
+export default function RestaurantDetail({ restaurantId, onBack, onDrillDown }) {
   const [timePeriod, setTimePeriod] = useState("month")
 
+  const restaurantNames = {
+    1: "The Rose Hall",
+    2: "Golden Lotus",
+    3: "Diamond Palace",
+    4: "Royal Garden",
+  }
+
   const stats = {
-    totalRevenue: 500000000,
+    totalRevenue: 1250000000,
     pendingBookings: 5,
     confirmedBookings: 12,
     completedBookings: 28,
@@ -35,27 +44,27 @@ const Dashboard = () => {
   const bookings = [
     {
       id: 101,
-      customerName: "Trần Thị B",
-      eventDate: "15/12/2023",
+      customerName: "Nguyễn Văn A",
+      eventDate: "15/12/2025",
       guests: 200,
       status: "confirmed",
-      total: 130000000,
+      total: 185000000,
     },
     {
       id: 102,
-      customerName: "Lê Văn C",
-      eventDate: "20/12/2023",
+      customerName: "Phạm Thị B",
+      eventDate: "20/12/2025",
       guests: 150,
       status: "pending",
       total: 150000000,
     },
     {
       id: 103,
-      customerName: "Hoàng Văn E",
-      eventDate: "25/12/2023",
+      customerName: "Hoàng Văn C",
+      eventDate: "25/8/2025",
       guests: 180,
       status: "completed",
-      total: 130000000,
+      total: 170000000,
     },
   ]
 
@@ -85,7 +94,6 @@ const Dashboard = () => {
         { period: "2023", revenue: 4460000000, bookings: 231 },
       ]
     }
-    // Default: month
     return [
       { period: "T1", revenue: 200000000, bookings: 12 },
       { period: "T2", revenue: 350000000, bookings: 18 },
@@ -98,8 +106,8 @@ const Dashboard = () => {
 
   const bookingStatusData = [
     { name: "Chờ xác nhận", value: stats.pendingBookings, color: "#f59e0b" },
-    { name: "Đã xác nhận", value: stats.confirmedBookings, color: "#8b5cf6" },
-    { name: "Hoàn thành", value: stats.completedBookings, color: "#10b981" },
+    { name: "Đã xác nhận", value: stats.confirmedBookings, color: "#10b981" },
+    { name: "Đã hoàn thành", value: stats.completedBookings, color: "#8b5cf6" },
   ]
 
   const hallPerformanceData = [
@@ -109,15 +117,7 @@ const Dashboard = () => {
     { hall: "Sảnh VIP", bookings: 18, revenue: 680000000, fill: "#7c3aed" },
   ]
 
-  const satisfactionData = [
-    { category: "Chất lượng món ăn", score: 4.9 },
-    { category: "Dịch vụ", score: 4.7 },
-    { category: "Không gian", score: 4.8 },
-    { category: "Giá cả", score: 4.5 },
-    { category: "Tổng thể", score: 4.8 },
-  ]
-
-  const statusVariant = (status: string) => {
+  const statusVariant = (status) => {
     switch (status) {
       case "confirmed":
         return "success"
@@ -131,145 +131,88 @@ const Dashboard = () => {
   }
 
   return (
-    <PartnerLayout>
-    <div style={{ minHeight: "100vh" }}>
+    <div>
       <div style={{ marginBottom: "32px" }}>
-        <h2 style={{ marginBottom: "8px", color: "#1f2937", fontWeight: "600" }}>Tổng Quan Dashboard</h2>
-        <p style={{ color: "#6b7280", marginBottom: "24px" }}>Theo dõi hiệu suất kinh doanh của nhà hàng</p>
+        <Row className="align-items-center">
+          <Col>
+            <Button
+              variant="link"
+              onClick={onBack}
+              className="p-0 mb-2 text-decoration-none"
+              style={{
+                color: "#8b5cf6",
+                fontSize: "0.875rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              <ArrowLeft size={16} /> Quay lại
+            </Button>
+
+            <h2
+              style={{
+                marginBottom: "8px",
+                color: "#1f2937",
+                fontWeight: "600",
+              }}
+            >
+              {restaurantNames[restaurantId] || "Chi Tiết Nhà Hàng"}
+            </h2>
+
+            <p style={{ color: "#6b7280", marginBottom: "0" }}>
+              Theo dõi hiệu suất kinh doanh của nhà hàng
+            </p>
+          </Col>
+
+          <Col xs="auto" className="text-end">
+            <p
+              className="text-muted fst-italic mb-0"
+              style={{ fontSize: "14px" }}
+            >
+              Cập nhật lần cuối: {new Date().toLocaleString("vi-VN")}
+            </p>
+          </Col>
+        </Row>
       </div>
 
       <Row className="mb-4" style={{ gap: "0" }}>
         <Col md={3} className="mb-3">
-          <Card
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              background: "white",
-            }}
-          >
-            <Card.Body>
-              <div style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>Doanh thu tháng</div>
-              <div style={{ fontSize: "1.75rem", fontWeight: "600", color: "#8b5cf6" }}>
-                {(stats.totalRevenue.toLocaleString())} ₫
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#10b981", marginTop: "8px" }}>↑ 12% so với tháng trước</div>
-            </Card.Body>
-          </Card>
+          <KPICard
+            title="Doanh thu tháng"
+            value={formatCompactCurrency(stats.totalRevenue)}
+            trend="↑ 12% so với tháng trước"
+          />
         </Col>
         <Col md={3} className="mb-3">
-          <Card
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              background: "white",
-            }}
-          >
-            <Card.Body>
-              <div style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>Tổng đơn đặt</div>
-              <div style={{ fontSize: "1.75rem", fontWeight: "600", color: "#8b5cf6" }}>
-                {stats.pendingBookings + stats.confirmedBookings + stats.completedBookings}
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#10b981", marginTop: "8px" }}>↑ 8% so với tháng trước</div>
-            </Card.Body>
-          </Card>
+          <KPICard
+            title="Tổng đơn đặt"
+            value={stats.pendingBookings + stats.confirmedBookings + stats.completedBookings}
+            trend="↑ 8% so với tháng trước"
+          />
         </Col>
         <Col md={3} className="mb-3">
-          <Card
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              background: "white",
-            }}
-          >
-            <Card.Body>
-              <div style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>Đánh giá trung bình</div>
-              <div style={{ fontSize: "1.75rem", fontWeight: "600", color: "#8b5cf6" }}>{stats.averageRating} ⭐</div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "8px" }}>
-                Từ {stats.totalCustomers} đánh giá
-              </div>
-            </Card.Body>
-          </Card>
+          <KPICard
+            title="Đánh giá trung bình"
+            value={`${stats.averageRating} ⭐`}
+            subtitle={`Từ ${stats.totalCustomers} đánh giá`}
+          />
         </Col>
         <Col md={3} className="mb-3">
-          <Card
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-              background: "white",
-            }}
-          >
-            <Card.Body>
-              <div style={{ fontSize: "0.875rem", color: "#6b7280", marginBottom: "8px" }}>Chờ xác nhận</div>
-              <div style={{ fontSize: "1.75rem", fontWeight: "600", color: "#f59e0b" }}>{stats.pendingBookings}</div>
-              <div style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "8px" }}>Cần xử lý ngay</div>
-            </Card.Body>
-          </Card>
+          <KPICard title="Chờ xác nhận" value={stats.pendingBookings} subtitle="Cần xử lý ngay" />
         </Col>
       </Row>
 
       <div style={{ marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h4 style={{ margin: 0, color: "#1f2937", fontWeight: "600" }}>Phân tích doanh thu</h4>
-        <ButtonGroup>
-          <Button
-            variant={timePeriod === "week" ? "primary" : "outline-secondary"}
-            onClick={() => setTimePeriod("week")}
-            style={{
-              fontSize: "0.875rem",
-              backgroundColor: timePeriod === "week" ? "#8b5cf6" : "transparent",
-              borderColor: "#d1d5db",
-              color: timePeriod === "week" ? "white" : "#6b7280",
-            }}
-          >
-            Tuần
-          </Button>
-          <Button
-            variant={timePeriod === "month" ? "primary" : "outline-secondary"}
-            onClick={() => setTimePeriod("month")}
-            style={{
-              fontSize: "0.875rem",
-              backgroundColor: timePeriod === "month" ? "#8b5cf6" : "transparent",
-              borderColor: "#d1d5db",
-              color: timePeriod === "month" ? "white" : "#6b7280",
-            }}
-          >
-            Tháng
-          </Button>
-          <Button
-            variant={timePeriod === "quarter" ? "primary" : "outline-secondary"}
-            onClick={() => setTimePeriod("quarter")}
-            style={{
-              fontSize: "0.875rem",
-              backgroundColor: timePeriod === "quarter" ? "#8b5cf6" : "transparent",
-              borderColor: "#d1d5db",
-              color: timePeriod === "quarter" ? "white" : "#6b7280",
-            }}
-          >
-            Quý
-          </Button>
-          <Button
-            variant={timePeriod === "year" ? "primary" : "outline-secondary"}
-            onClick={() => setTimePeriod("year")}
-            style={{
-              fontSize: "0.875rem",
-              backgroundColor: timePeriod === "year" ? "#8b5cf6" : "transparent",
-              borderColor: "#d1d5db",
-              color: timePeriod === "year" ? "white" : "#6b7280",
-            }}
-          >
-            Năm
-          </Button>
-        </ButtonGroup>
+        <TimePeriodSelector value={timePeriod} onChange={setTimePeriod} />
       </div>
 
       <Row className="mb-4">
         <Col md={8} className="mb-3">
           <Card style={{ border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
             <Card.Body>
-              <Card.Title style={{ fontSize: "1.1rem", fontWeight: "600", marginBottom: "20px", color: "#1f2937" }}>
+              <Card.Title style={{ fontSize: "1.125rem", fontWeight: "600", marginBottom: "20px", color: "#1f2937" }}>
                 Doanh thu & Số lượng đơn
               </Card.Title>
               <ResponsiveContainer width="100%" height={320}>
@@ -281,31 +224,33 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="period" stroke="#9ca3af" style={{ fontSize: "0.6rem" }} />
-                  <YAxis yAxisId="left" stroke="#9ca3af" style={{ fontSize: "0.6rem" }} />
-                  <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" style={{ fontSize: "0.8rem" }} />
+                  <XAxis dataKey="period" stroke="#9ca3af" style={{ fontSize: "0.875rem" }} />
+                  <YAxis yAxisId="left" stroke="#9ca3af" style={{ fontSize: "0.75rem" }} tickFormatter={formatCompactCurrency} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" style={{ fontSize: "0.875rem" }} />
                   <Tooltip
                     contentStyle={{
                       borderRadius: "8px",
                       border: "1px solid #e5e7eb",
                       boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                     }}
-                    formatter={(value: any, name: string) => {
-                      if (name === "revenue") return [`${(value)} ₫`, "Doanh thu"]
+                    formatter={(value, name) => {
+                      if (name === "Doanh thu") return [formatCompactCurrency(value), "Doanh thu"]
                       return [value, "Số đơn"]
                     }}
                   />
                   <Legend />
+                  <Bar yAxisId="right" dataKey="bookings" fill="#a78bfa" name="Số đơn" radius={[8, 8, 0, 0]} />
                   <Area
                     yAxisId="left"
                     type="monotone"
                     dataKey="revenue"
                     fill="url(#colorRevenue)"
-                    stroke="#8b5cf6"
+                    stroke="#7c3aed"
                     strokeWidth={2}
+                    dot={{ r: 4, fill: "#7c3aed", stroke: "#fff", strokeWidth: 1.5 }}
+                    activeDot={{ r: 6, fill: "#4f0bedff", stroke: "#fff", strokeWidth: 2 }}
                     name="Doanh thu"
                   />
-                  <Bar yAxisId="right" dataKey="bookings" fill="#a78bfa" name="Số đơn" radius={[8, 8, 0, 0]} />
                 </ComposedChart>
               </ResponsiveContainer>
             </Card.Body>
@@ -334,13 +279,82 @@ const Dashboard = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value, name, props) => {
+                      const total = bookingStatusData.reduce((sum, item) => sum + item.value, 0);
+                      const percentValue = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                      return [`${value} đơn (${percentValue}%)`, name];
+                    }}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid #e5e7eb",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Legend
+                    layout="vertical"
+                    verticalAlign="bottom"
+                    align="center"
+                    iconType="circle"
+                    wrapperStyle={{ marginTop: 20 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </Card.Body>
           </Card>
         </Col>
       </Row>
+
+      <Card className="mb-5" style={{ border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <Card.Body>
+          <div
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}
+          >
+            <Card.Title style={{ fontSize: "1.125rem", fontWeight: "600", margin: 0, color: "#1f2937" }}>
+              Hiệu suất theo sảnh
+            </Card.Title>
+            <button
+              onClick={() => onDrillDown("hall", "all")}
+              style={{
+                background: "none",
+                border: "1px solid #8b5cf6",
+                color: "#8b5cf6",
+                fontSize: "0.75rem",
+                padding: "4px 12px",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Xem chi tiết
+            </button>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={hallPerformanceData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis type="number" stroke="#9ca3af" style={{ fontSize: "0.875rem" }} />
+              <YAxis dataKey="hall" type="category" stroke="#9ca3af" style={{ fontSize: "0.875rem" }} />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                }}
+                formatter={(value, name) => {
+                  if (name === "revenue") return [`${(value / 1000000).toFixed(0)}M ₫`, "Doanh thu"]
+                  return [value, "Số đơn"]
+                }}
+              />
+              <Legend />
+              <Bar dataKey="bookings" name="Số đơn" radius={[0, 8, 8, 0]}>
+                {hallPerformanceData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Card.Body>
+      </Card>
+
       <Card style={{ border: "1px solid #e5e7eb", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <Card.Body>
           <h4 style={{ marginBottom: "20px", color: "#1f2937", fontWeight: "600" }}>Đơn đặt tiệc gần đây</h4>
@@ -373,7 +387,7 @@ const Dashboard = () => {
                   <td style={{ verticalAlign: "middle", color: "#374151" }}>{b.eventDate}</td>
                   <td style={{ verticalAlign: "middle", color: "#374151" }}>{b.guests}</td>
                   <td style={{ verticalAlign: "middle", fontWeight: "600", color: "#374151" }}>
-                    {(b.total.toLocaleString())}₫
+                    {(b.total / 1000000).toFixed(0)}M ₫
                   </td>
                   <td style={{ verticalAlign: "middle" }}>
                     <Badge
@@ -394,8 +408,5 @@ const Dashboard = () => {
         </Card.Body>
       </Card>
     </div>
-    </PartnerLayout>
   )
 }
-
-export default Dashboard;

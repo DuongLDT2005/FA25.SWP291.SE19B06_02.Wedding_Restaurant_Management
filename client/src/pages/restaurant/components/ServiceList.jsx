@@ -1,108 +1,111 @@
 import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react"; // Lucide icons
 
-// Component hiển thị danh sách service trong package
-const ServiceTable = ({ services, role }) => {
-  if (!services || services.length === 0) {
-    return <p className="text-muted">Chưa có dịch vụ trong gói này</p>;
-  }
-
-  return (
-    <table className="table table-bordered table-striped align-middle">
-      <thead style={{ backgroundColor: "#993344", color: "white" }}>
-        <tr>
-          <th>Tên dịch vụ</th>
-          <th>Giá</th>
-          <th>Đơn vị</th>
-          {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && <th>Hành động</th>}
-        </tr>
-      </thead>
-      <tbody>
-        {services.map((service) => (
-          <tr key={service.serviceID}>
-            <td>{service.name}</td>
-            <td>{parseFloat(service.price).toLocaleString()} VND</td>
-            <td>{service.unit ?? "-"}</td>
-            {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-              <td>
-                <button className="btn btn-sm btn-outline-primary me-2">Sửa</button>
-                <button className="btn btn-sm btn-outline-danger">Xóa</button>
-              </td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+const eventTypeNames = {
+  1: "Tiệc cưới",
+  2: "Hội nghị",
+  3: "Sinh nhật",
 };
 
-// Component chính
-const ServiceList = ({ restaurant, role = "CUSTOMER" }) => {
-  const [selectedPackage, setSelectedPackage] = useState(null);
+const ServiceList = ({ restaurant }) => {
+  const groupedServices = restaurant.services?.reduce((acc, service) => {
+    if (!acc[service.eventTypeID]) acc[service.eventTypeID] = [];
+    acc[service.eventTypeID].push(service);
+    return acc;
+  }, {}) || {};
+
+  const [openGroups, setOpenGroups] = useState({});
+
+  const toggleGroup = (eventTypeID) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [eventTypeID]: !prev[eventTypeID],
+    }));
+  };
 
   return (
     <div>
-      <h4 className="section-title mb-3">Gói dịch vụ</h4>
+      <h4
+        className="section-title mb-3"
+        style={{ color: "#993344", fontWeight: "bold", fontSize: "1.6rem" }}
+      >
+        Dịch vụ
+      </h4>
 
-      {/* Nếu chưa chọn package thì hiện list */}
-      {!selectedPackage && (
-        <div className="row">
-          {restaurant.servicePackages?.map((pkg) => (
+      {Object.entries(groupedServices).map(([eventTypeID, services]) => (
+        <div key={eventTypeID} className="mb-3">
+          {/* Header Accordion */}
+          <button
+            className="w-100 d-flex justify-content-between align-items-center"
+            onClick={() => toggleGroup(eventTypeID)}
+            style={{
+              border: "none",
+              borderRadius: "10px",
+              padding: "0.75rem 1rem",
+              backgroundColor: "#f8eef2",
+              color: "#993344",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              boxShadow: "0 3px 6px rgba(0,0,0,0.08)",
+              cursor: "pointer",
+              transition: "background 0.3s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3dce1")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#f8eef2")}
+          >
+            <span>
+              {eventTypeNames[eventTypeID] || `EventType ${eventTypeID}`} ({services.length})
+            </span>
+            {openGroups[eventTypeID] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {/* Content Accordion */}
+          {openGroups[eventTypeID] && (
             <div
-              key={pkg.packageID}
-              className="col-md-3 mb-3"
-              onClick={() => setSelectedPackage(pkg)}
-              style={{ cursor: "pointer" }}
+              className="mt-2 p-3"
+              style={{
+                maxHeight: "300px",
+                overflowY: "auto",
+                borderRadius: "10px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.05)",
+                backgroundColor: "#fff",
+              }}
             >
-              <div
-                className="card text-white h-100"
-                style={{
-                  backgroundColor: "#993344",
-                  borderRadius: "12px",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <div className="card-body text-center p-3">
-                  <h6 className="fw-bold mb-2">{pkg.name}</h6>
+              {services.map((service, idx) => (
+                <div
+                  key={service.id || service.serviceID}
+                  className="d-flex justify-content-between align-items-center mb-2 p-3"
+                  style={{
+                    borderRadius: "8px",
+                    border: "1px solid #f0c6d1",
+                    background: "#fff",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
+                  }}
+                >
+                  <span style={{ color: "#993344", fontWeight: "500" }}>
+                    {idx + 1}. {service.name}
+                  </span>
+                  <span style={{ fontWeight: "bold", color: "#993344" }}>
+                    {parseFloat(service.price).toLocaleString()} VND / {service.unit ?? "-"}
+                  </span>
                 </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Nút thêm package mới */}
-          {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-            <div className="col-md-4 mb-3">
-              <button className="btn btn-lg btn-success w-100 h-100">
-                + Thêm gói mới
-              </button>
+              ))}
+              {services.length === 0 && (
+                <div className="text-center text-muted">Không có dịch vụ nào</div>
+              )}
             </div>
           )}
         </div>
-      )}
-
-      {/* Khi đã chọn package */}
-      {selectedPackage && (
-        <div>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="fw-bold" style={{ color: "#993344" }}>
-              {selectedPackage.name}
-            </h5>
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              onClick={() => setSelectedPackage(null)}
-            >
-              ← Quay lại danh sách gói
-            </button>
-          </div>
-
-          {/* Bảng dịch vụ */}
-          <ServiceTable services={selectedPackage.services} role={role} />
-
-          {/* Nút thêm dịch vụ mới */}
-          {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-            <button className="btn btn-success mt-2">+ Thêm dịch vụ mới</button>
-          )}
-        </div>
-      )}
+      ))}
     </div>
   );
 };
