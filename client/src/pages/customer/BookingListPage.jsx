@@ -6,7 +6,7 @@ import "../../styles/BookingListStyle.css";
 import { bookings as mockBookings } from "./ValueStore";
 import BookingCard from "./components/BookingCard";
 import { useNavigate } from "react-router-dom";
-
+import ScrollToTopButton from "../../components/ScrollToTopButton";
 const statusMap = {
   0: "Pending",
   1: "Confirmed",
@@ -53,7 +53,7 @@ function BookingListPage() {
   let persisted = [];
   try {
     persisted = JSON.parse(sessionStorage.getItem("customerBookings") || "[]");
-  } catch {}
+  } catch { }
 
   const mergedBookings = [...persisted, ...mockBookings.filter(m => !persisted.some(p => p.bookingID === m.bookingID))];
 
@@ -116,6 +116,7 @@ function BookingListPage() {
           />
         ))}
       </div>
+      <ScrollToTopButton />
       <Footer />
     </>
   );

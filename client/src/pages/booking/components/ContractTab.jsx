@@ -10,7 +10,7 @@ const ContractTab = ({ booking }) => {
     const handleDownloadPDF = () => {
         // Tạo PDF sử dụng jsPDF
         const doc = generateContractPDF(booking.bookingID);
-        
+
         // Tải xuống file PDF
         doc.save(`HopDong_${booking.bookingID}.pdf`);
     };
@@ -18,21 +18,21 @@ const ContractTab = ({ booking }) => {
 
     const generateContractPDF = (bookingID) => {
         const doc = new jsPDF();
-        
+
         // Thêm font tiếng Việt (sử dụng font mặc định hỗ trợ Unicode)
         doc.setFont("helvetica");
-        
+
         // Header
         doc.setFontSize(16);
         doc.setFont("helvetica", 'bold');
         doc.text("HOP DONG DICH VU TIEC CUOI", 20, 20);
-        
+
         // Contract info
         doc.setFontSize(12);
         doc.setFont("helvetica", 'normal');
         doc.text(`So hop dong: HD-${bookingID}`, 20, 35);
         doc.text(`Ngay: ${new Date().toLocaleDateString('vi-VN')}`, 20, 45);
-        
+
         // Customer info
         doc.setFont("helvetica", 'bold');
         doc.text("THONG TIN KHACH HANG:", 20, 60);
@@ -40,14 +40,14 @@ const ContractTab = ({ booking }) => {
         doc.text(`- Ho ten: ${booking.customer.fullName}`, 20, 70);
         doc.text(`- So dien thoai: ${booking.customer.phone}`, 20, 80);
         doc.text(`- Email: ${booking.customer.email}`, 20, 90);
-        
+
         // Restaurant info
         doc.setFont("helvetica", 'bold');
         doc.text("THONG TIN NHA HANG:", 20, 105);
         doc.setFont("helvetica", 'normal');
         doc.text(`- Ten nha hang: ${booking.restaurant.name}`, 20, 115);
         doc.text(`- Dia chi: ${booking.restaurant.address}`, 20, 125);
-        
+
         // Event details
         doc.setFont("helvetica", 'bold');
         doc.text("CHI TIET SU KIEN:", 20, 140);
@@ -58,11 +58,11 @@ const ContractTab = ({ booking }) => {
         doc.text(`- Sanh: ${booking.hall.name}`, 20, 180);
         doc.text(`- So ban: ${booking.tableCount} ban`, 20, 190);
         doc.text(`- Menu: ${booking.menu.name}`, 20, 200);
-        
+
         // Total cost
         doc.setFont("helvetica", 'bold');
         doc.text(`TONG CHI PHI: ${booking.totalAmount.toLocaleString()} VND`, 20, 215);
-        
+
         // Contract terms
         doc.setFont("helvetica", 'bold');
         doc.text("DIEU KHOA HOP DONG:", 20, 230);
@@ -70,12 +70,12 @@ const ContractTab = ({ booking }) => {
         doc.text("1. Khach hang cam ket thanh toan dung han theo thoa thuan.", 20, 240);
         doc.text("2. Nha hang cam ket cung cap dich vu dung chat luong da thoa thuan.", 20, 250);
         doc.text("3. Trong truong hop huy tiec, khach hang se bi phat theo quy dinh.", 20, 260);
-        
+
         // Signatures
         doc.setFont("helvetica", 'bold');
         doc.text("Chu ky khach hang: _________________", 20, 280);
         doc.text("Chu ky nha hang: ___________________", 20, 290);
-        
+
         return doc;
     };
 
@@ -158,45 +158,45 @@ const ContractTab = ({ booking }) => {
                         </div>
                         <div className="card-body">
                             <div className="contract-preview">
-                                    <div className="text-center mb-4">
-                                        <i className="fas fa-file-pdf" style={{ fontSize: '4rem', color: '#dc3545' }}></i>
-                                        <h4 className="mt-3">Hợp đồng dịch vụ tiệc cưới</h4>
-                                        <p className="text-muted">
-                                            Số hợp đồng: HD-{booking.bookingID} | Ngày: {new Date().toLocaleDateString('vi-VN')}
-                                        </p>
+                                <div className="text-center mb-4">
+                                    <i className="fas fa-file-pdf" style={{ fontSize: '4rem', color: '#dc3545' }}></i>
+                                    <h4 className="mt-3">Hợp đồng dịch vụ tiệc cưới</h4>
+                                    <p className="text-muted">
+                                        Số hợp đồng: HD-{booking.bookingID} | Ngày: {new Date().toLocaleDateString('vi-VN')}
+                                    </p>
+                                </div>
+
+                                <div className="contract-summary">
+                                    <div className="row">
+                                        <div className="col-md-6">
+                                            <h6>Thông tin khách hàng:</h6>
+                                            <p><strong>Họ tên:</strong> {booking.customer.fullName}</p>
+                                            <p><strong>Số điện thoại:</strong> {booking.customer.phone}</p>
+                                            <p><strong>Email:</strong> {booking.customer.email}</p>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <h6>Thông tin nhà hàng:</h6>
+                                            <p><strong>Tên nhà hàng:</strong> {booking.restaurant.name}</p>
+                                            <p><strong>Địa chỉ:</strong> {booking.restaurant.address}</p>
+                                        </div>
                                     </div>
 
-                                    <div className="contract-summary">
-                                        <div className="row">
-                                            <div className="col-md-6">
-                                                <h6>Thông tin khách hàng:</h6>
-                                                <p><strong>Họ tên:</strong> {booking.customer.fullName}</p>
-                                                <p><strong>Số điện thoại:</strong> {booking.customer.phone}</p>
-                                                <p><strong>Email:</strong> {booking.customer.email}</p>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <h6>Thông tin nhà hàng:</h6>
-                                                <p><strong>Tên nhà hàng:</strong> {booking.restaurant.name}</p>
-                                                <p><strong>Địa chỉ:</strong> {booking.restaurant.address}</p>
-                                            </div>
-                                        </div>
+                                    <div className="mt-3">
+                                        <h6>Chi tiết sự kiện:</h6>
+                                        <p><strong>Loại sự kiện:</strong> {booking.eventType}</p>
+                                        <p><strong>Ngày tổ chức:</strong> {new Date(booking.eventDate).toLocaleDateString('vi-VN')}</p>
+                                        <p><strong>Thời gian:</strong> {booking.startTime} - {booking.endTime}</p>
+                                        <p><strong>Sảnh:</strong> {booking.hall.name}</p>
+                                        <p><strong>Số bàn:</strong> {booking.tableCount} bàn</p>
+                                        <p><strong>Menu:</strong> {booking.menu.name}</p>
+                                    </div>
 
-                                        <div className="mt-3">
-                                            <h6>Chi tiết sự kiện:</h6>
-                                            <p><strong>Loại sự kiện:</strong> {booking.eventType}</p>
-                                            <p><strong>Ngày tổ chức:</strong> {new Date(booking.eventDate).toLocaleDateString('vi-VN')}</p>
-                                            <p><strong>Thời gian:</strong> {booking.startTime} - {booking.endTime}</p>
-                                            <p><strong>Sảnh:</strong> {booking.hall.name}</p>
-                                            <p><strong>Số bàn:</strong> {booking.tableCount} bàn</p>
-                                            <p><strong>Menu:</strong> {booking.menu.name}</p>
-                                        </div>
-
-                                        <div className="mt-3">
-                                            <h6>Tổng chi phí:</h6>
-                                            <p className="h5 text-primary">{booking.totalAmount.toLocaleString()} VNĐ</p>
-                                        </div>
+                                    <div className="mt-3">
+                                        <h6>Tổng chi phí:</h6>
+                                        <p className="h5 text-primary">{booking.totalAmount.toLocaleString()} VNĐ</p>
                                     </div>
                                 </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -225,10 +225,10 @@ const ContractTab = ({ booking }) => {
                                 <button
                                     className="btn w-100 mb-2"
                                     style={{
-                                        backgroundColor: '#6c757d',
+                                        backgroundColor: '#993344',
                                         color: '#fefaf9',
-                                        borderColor: '#6c757d',
-                                        border: '2px solid #6c757d'
+                                        borderColor: '#993344',
+                                        border: '2px solid #993344'
                                     }}
                                 >
                                     <i className="fas fa-print"></i> In hợp đồng
@@ -261,8 +261,8 @@ const ContractTab = ({ booking }) => {
                                             <i className="fas fa-exclamation-triangle me-2"></i>
                                             <strong>Chưa thanh toán:</strong> Bạn cần thanh toán trước khi có thể ký hợp đồng.
                                             <div className="mt-2">
-                                                <Link 
-                                                    to="/payment/new"
+                                                <Link
+                                                    to={`/payment/${booking.bookingID}`}
                                                     className="btn btn-warning btn-sm"
                                                 >
                                                     <i className="fas fa-credit-card me-2"></i>
@@ -323,9 +323,9 @@ const ContractTab = ({ booking }) => {
                                     <i className="fas fa-exclamation-triangle text-warning me-2"></i>
                                     Cần thanh toán trước
                                 </h5>
-                                <button 
-                                    type="button" 
-                                    className="btn-close" 
+                                <button
+                                    type="button"
+                                    className="btn-close"
                                     onClick={handleCloseModal}
                                 ></button>
                             </div>
@@ -334,21 +334,21 @@ const ContractTab = ({ booking }) => {
                                     <i className="fas fa-credit-card text-warning" style={{ fontSize: '3rem' }}></i>
                                     <h5 className="mt-3">Bạn cần thanh toán trước khi ký hợp đồng</h5>
                                     <p className="text-muted">
-                                        Để ký hợp đồng, bạn phải hoàn thành thanh toán trước. 
+                                        Để ký hợp đồng, bạn phải hoàn thành thanh toán trước.
                                         Sau khi thanh toán thành công, bạn sẽ có thể ký hợp đồng và xem lịch sử thanh toán.
                                     </p>
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                <button 
-                                    type="button" 
-                                    className="btn btn-secondary" 
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
                                     onClick={handleCloseModal}
                                 >
                                     Hủy
                                 </button>
-                                <Link 
-                                    to="/payment/new"
+                                <Link
+                                    to={`/payment/${booking.bookingID}`}
                                     className="btn btn-primary"
                                     onClick={handleCloseModal}
                                 >
