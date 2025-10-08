@@ -1,6 +1,6 @@
 import React from "react";
 import classNames from "classnames";
-
+import { Table } from 'react-bootstrap';
 import {
   CAvatar,
   CButton,
@@ -12,10 +12,7 @@ import {
   CCol,
   CProgress,
   CRow,
-  CTable,
-  CTableBody,
   CTableDataCell,
-  CTableHead,
   CTableHeaderCell,
   CTableRow,
 } from "@coreui/react";
@@ -337,8 +334,8 @@ const Dashboard = () => {
 
               <br />
 
-              <CTable align="middle" className="mb-0 border" hover responsive>
-                <CTableHead className="text-nowrap">
+              <Table align="middle" className="mb-0 border" hover responsive>
+                <thead className="text-nowrap">
                   <CTableRow>
                     <CTableHeaderCell className="bg-body-tertiary text-center">
                       <CIcon icon={cilPeople} />
@@ -356,8 +353,8 @@ const Dashboard = () => {
                       Activity
                     </CTableHeaderCell>
                   </CTableRow>
-                </CTableHead>
-                <CTableBody>
+                </thead>
+                <tbody>
                   {UserMetrics.map((item, index) => (
                     <CTableRow v-for="item in tableItems" key={index}>
                       <CTableDataCell className="text-center">
@@ -402,8 +399,8 @@ const Dashboard = () => {
                       </CTableDataCell>
                     </CTableRow>
                   ))}
-                </CTableBody>
-              </CTable>
+                </tbody>
+              </Table>
             </CCardBody>
           </CCard>
         </CCol>
