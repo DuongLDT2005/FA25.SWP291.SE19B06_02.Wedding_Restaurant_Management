@@ -35,7 +35,7 @@ const Payouts = React.lazy(() => import("../pages/admin/operations/payments/Payo
 const Reviews = React.lazy(() => import("../pages/admin/feedback/ReviewsReportsPage"));
 
 //Promotions
-const PromotionsPage = React.lazy(() => import ("../pages/admin/promotions/PromotionsPage"));
+const PromotionsPage = React.lazy(() => import("../pages/admin/promotions/PromotionsPage"));
 
 // Analytics
 const RevenueAnalytics = React.lazy(() => import("../pages/admin/analytics/RevenueStatsPage"));
@@ -51,7 +51,7 @@ const Logs = React.lazy(() => import("../pages/admin/systems/LogsAuditTrailPage"
 const routes = [
   { path: "/", exact: true, name: "Home" },
   { path: "/dashboard", name: "Dashboard", element: Dashboard },
-  
+
   // Management
   { path: "/users", name: "User Management", element: Users },
   { path: "/partners", name: "Partner Management", element: Partners },
@@ -68,12 +68,12 @@ const routes = [
   { path: "/bookings/:id", name: "Booking Detail", element: BookingDetail },
   { path: "/payments", name: "Payments", element: PaymentList },
   { path: "/payouts", name: "Payouts", element: Payouts },
-  
+
   // Reviews
   { path: "/reviews", name: "Reviews", element: Reviews },
 
   // Promotions
-  {path: "/promotions", name: "Promotions", element : PromotionsPage},
+  { path: "/promotions", name: "Promotions", element: PromotionsPage },
 
   // Analytics
   { path: "/analytics/revenue", name: "Revenue Analytics", element: RevenueAnalytics },

@@ -46,10 +46,17 @@ export default function PropertyTypeCarousel() {
     // Dynamic card width based on screen size
 
     return (
-        <div className="property-carousel-container">
-            <h2 className="property-carousel-title">Thể Loại Nhà Hàng</h2>
-            <h6>Chọn từ các loại không gian phù hợp mọi sở thích.</h6>
-            <div className="property-carousel-wrapper">
+        <div className="property-carousel-container-fluid">
+            <div className="container-fluid">
+                <div className="row">
+                    <div className="col-12 mb-4">
+                        <h2 className="property-carousel-title">Loại sự kiện</h2>
+                        <h6>Ngoài đám cưới, chúng tôi còn có các sự kiện khác dựa vào sự yêu thích.</h6>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col-12">
+                        <div className="property-carousel-wrapper">
                 {/* Left Navigation Button */}
                 {/* <button
                     className={`property-carousel-nav property-carousel-nav-left ${index === 0 ? "disabled" : ""}`}
@@ -114,19 +121,22 @@ export default function PropertyTypeCarousel() {
                         <polyline points="9 18 15 12 9 6"></polyline>
                     </svg>
                 </button> */}
-            </div>
+                        </div>
+                    </div>
+                </div>
 
-            {/* Progress Indicators
-            <div className="property-carousel-indicators">
-                {Array.from({ length: maxIndex + 1 }).map((_, i) => (
-                    <button
-                        key={i}
-                        className={`property-carousel-indicator ${i === index ? "active" : ""}`}
-                        onClick={() => setIndex(i)}
-                        aria-label={`Go to slide ${i + 1}`}
-                    />
-                ))}
-            </div> */}
+                {/* Progress Indicators
+                <div className="property-carousel-indicators">
+                    {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+                        <button
+                            key={i}
+                            className={`property-carousel-indicator ${i === index ? "active" : ""}`}
+                            onClick={() => setIndex(i)}
+                            aria-label={`Go to slide ${i + 1}`}
+                        />
+                    ))}
+                </div> */}
+            </div>
         </div>
     );
 }

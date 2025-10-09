@@ -1,13 +1,13 @@
+
 import React from "react";
 import "../styles/FooterStyles.css";
 import { Link } from "react-router-dom";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-
+import 'bootstrap/dist/css/bootstrap.min.css';
 function Footer() {
     return (
         <footer className="footer">
             <div className="footer-container">
-                {/* Các cột liên kết */}
                 <div className="footer-links">
                     <div className="footer-column">
                         <h4>Về Chúng Tôi</h4>
@@ -66,13 +66,23 @@ function Footer() {
 
             <hr />
 
-            {/* Phần cuối */}
-            <div className="footer-bottom">
-                <p>© 2024 Ascenda. Bản quyền đã được bảo lưu.</p>
-                <div className="footer-socials">
-                    <Link to="#" className="twitter"><i className="fa-brands fa-x-twitter"></i></Link>
-                    <Link to="#" className="linkedin"><i className="fa-brands fa-linkedin-in"></i></Link>
-                    <Link to="#" className="facebook"><i className="fa-brands fa-facebook-f"></i></Link>
+            {/* Phần cuối được chia nhỏ bằng Bootstrap Grid System */}
+            {/* Sử dụng container-fluid để tận dụng chiều rộng, d-flex và justify-content-between để căn chỉnh */}
+            <div className="container-fluid">
+                <div className="row footer-bottom align-items-center">
+                    {/* Cột bản quyền, chiếm 6 cột trên màn hình nhỏ trở lên (col-sm-6) */}
+                    <div className="col-12 col-sm-6 text-center text-sm-start mb-2 mb-sm-0">
+                        <p className="mb-0">© 2024 Ascenda. Bản quyền đã được bảo lưu.</p>
+                    </div>
+
+                    {/* Cột mạng xã hội, chiếm 6 cột và căn giữa/căn phải */}
+                    <div className="col-12 col-sm-6 text-center text-sm-end">
+                        <div className="footer-socials">
+                            <Link to="#" className="twitter"><i className="fa-brands fa-x-twitter"></i></Link>
+                            <Link to="#" className="linkedin"><i className="fa-brands fa-linkedin-in"></i></Link>
+                            <Link to="#" className="facebook"><i className="fa-brands fa-facebook-f"></i></Link>
+                        </div>
+                    </div>
                 </div>
             </div>
         </footer>

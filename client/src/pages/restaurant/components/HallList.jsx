@@ -27,7 +27,7 @@ export default function HallList({ restaurant, onSelectHall }) {
               <div className="card-body py-0">
                 <h5
                   className="card-title"
-                  style={{ color: "#993344", fontWeight: "bold", cursor: "pointer" }}
+                  style={{ color: "#934", fontWeight: "bold", cursor: "pointer" }}
                   data-bs-toggle="modal"
                   data-bs-target="#hallModal"
                   onClick={() => onSelectHall(hall)}
@@ -57,8 +57,8 @@ export default function HallList({ restaurant, onSelectHall }) {
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="hallModalLabel">
+            <div className="modal-header" style={{ color: "#fafef9" }}>
+              <h5 className="modal-title" id="hallModalLabel" style={{ color: "#fafef9" }}>
                 {restaurant.selectedHall?.name}
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
