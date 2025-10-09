@@ -7,11 +7,6 @@ function Footer() {
     return (
         <footer className="footer">
             <div className="footer-container">
-                {/* Logo */}
-                <div className="footer-logo">
-                    <img src={"https://via.placeholder.com/120x40?text=Logoipsum"} alt="Logo" />
-                </div>
-
                 {/* Các cột liên kết */}
                 <div className="footer-links">
                     <div className="footer-column">
@@ -77,7 +72,7 @@ function Footer() {
                 <div className="footer-socials">
                     <Link to="#" className="twitter"><i className="fa-brands fa-x-twitter"></i></Link>
                     <Link to="#" className="linkedin"><i className="fa-brands fa-linkedin-in"></i></Link>
-                    <Link to="#" className="facebook"><i class="fa-brands fa-facebook-f"></i></Link>
+                    <Link to="#" className="facebook"><i className="fa-brands fa-facebook-f"></i></Link>
                 </div>
             </div>
         </footer>

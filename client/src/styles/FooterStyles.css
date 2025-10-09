@@ -1,5 +1,5 @@
 .footer {
-    background-color: #993344;
+    background-color: #993344 !important;
     color: #fff;
     padding: 40px 80px 20px;
     font-family: Arial, sans-serif;
@@ -9,6 +9,7 @@
 .footer-container {
     display: flex;
     justify-content: space-between;
+    width: 100%;
     flex-wrap: wrap;
     gap: 40px;
 }
@@ -22,9 +23,14 @@
 .footer-links {
     display: flex;
     flex: 1;
-    justify-content: space-between;
     flex-wrap: wrap;
     gap: 30px;
+    justify-content: space-between;
+}
+
+.footer-column {
+    flex: 1;
+    min-width: 180px;
 }
 
 .footer-column h4 {
