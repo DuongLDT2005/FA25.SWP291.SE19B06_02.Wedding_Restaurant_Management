@@ -113,7 +113,7 @@ export default function BookingCard({ booking, onConfirm, onCancel, onTransfer, 
             <div className="small mb-1"><strong>Giá:</strong> {formatPrice(b.price)}</div>
             <div className="small"><strong>Ghi chú:</strong> {b.specialRequest || "None"}</div>
           </div>
-          <div className="d-flex flex-column align-items-start align-items-md-end justify-content-between">
+          <div className="d-flex flex-column align-items-start align-items-md-end justify-content-between" style={{marginTop:"15px"}}>
             <div className="d-flex flex-wrap gap-2">
               {b.status === 0 && <>
                 <button className="btn btn-sm btn-success" onClick={() => setPendingAction("confirm")}>Xác nhận</button>
