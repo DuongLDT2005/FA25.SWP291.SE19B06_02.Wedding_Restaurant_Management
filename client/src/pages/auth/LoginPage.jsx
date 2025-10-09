@@ -182,7 +182,7 @@ export default function LoginPage() {
               Bạn mới đặt tiệc lần đầu? <a href="/signup/customer">Tham gia ngay</a>
             </p>
             <p className="signup-links">
-              Bạn là đối tác nhà hàng mới muốn hợp tác?{" "}
+              Bạn là chủ nhà hàng mới muốn hợp tác?{" "}
               <a href="/signup/owner">Đăng ký ngay</a>
             </p>
           </div>

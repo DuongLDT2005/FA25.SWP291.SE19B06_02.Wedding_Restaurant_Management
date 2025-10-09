@@ -100,7 +100,7 @@ function SignUpForOwner() {
         <p>Câu chuyện tình cảm của bạn xứng đáng được ghi khắc lại.</p>
       </div>
       <div className="sign--up--container">
-        <h1>Đăng Ký Đối Tác Nhà Hàng</h1>
+        <h1>Đăng Ký Chủ Nhà Hàng</h1>
         <form className="sign--up--form" onSubmit={handleSubmit}>
           <div>
             <input

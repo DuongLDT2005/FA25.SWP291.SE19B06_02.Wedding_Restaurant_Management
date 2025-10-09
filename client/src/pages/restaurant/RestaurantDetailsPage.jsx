@@ -237,7 +237,7 @@ export const restaurantDetail = {
     ward: "Hải Châu",
     fullAddress: "123 Nguyễn Văn Linh, Hải Châu"
   },
-  thumbnailURL: "https://scontent.fdad1-4.fna.fbcdn.net/v/t39.30808-6/463825213_1023607009564051_740775010435508594_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeHuPANdVSq7fR-8N3LTrYLQJJ8Ov0H9l4kknw6_Qf2Xid6r0nfMA_OWkZpBYRpQt-bQPF6eDMNJ1t2j9Rkvebxa&_nc_ohc=dIvPHPrbQiIQ7kNvwGg-TMG&_nc_oc=AdnlfPDW5QfU3wVUVrXBT27EGbASb_jJi__nAlKyXjiV8hx2A4xG9fwkoAQpQniuIyE36taFXMfdUmJ1CY6KBcwm&_nc_zt=23&_nc_ht=scontent.fdad1-4.fna&_nc_gid=53fOIGuKKzTK8_h1UEfo0g&oh=00_AffH_VKPJkJdKLVCGrPgxultCz0ai5vQJcw0hHEVT7vGKQ&oe=68EC3700",
+  thumbnailURL: "http://thietkehaidang.com//source/image/biet%20thu%203%20tang/anh%20lam%20-%20quat%20lam/z2358526452206_4b68e507c0c7580aaab7d10718c11b6d.jpg",
   avgRating: 4.5,
   totalReviews: 10,
   status: 1, // ACTIVE

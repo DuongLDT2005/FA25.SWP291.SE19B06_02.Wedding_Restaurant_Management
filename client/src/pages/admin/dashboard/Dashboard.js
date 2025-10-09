@@ -1,18 +1,17 @@
-// src/pages/admin/DashboardPage.js
-import React, { useState, useMemo } from "react";
+import React from "react";
+import classNames from "classnames";
+
 import {
   CCard,
   CCardBody,
   CCardHeader,
-  CRow,
   CCol,
-  CFormSelect,
-  CFormInput,
-  CButton,
-  CBadge,
+  CProgress,
+  CRow,
   CTable,
   CTableBody,
   CTableDataCell,
+  CTableHead,
   CTableHeaderCell,
   CTableRow,
 } from "@coreui/react";
@@ -244,62 +243,124 @@ const DashboardPage = () => {
           <CCard>
             <CCardHeader>🏆 Top Partners</CCardHeader>
             <CCardBody>
-              <CTable striped>
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Đối tác</CTableHeaderCell>
-                    <CTableHeaderCell>Doanh thu</CTableHeaderCell>
-                    <CTableHeaderCell>Bookings</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {mockPartnerStats
-                    .sort((a, b) => b.totalRevenue - a.totalRevenue)
-                    .map((p, i) => (
-                      <CTableRow key={i}>
-                        <CTableDataCell>{i + 1}</CTableDataCell>
-                        <CTableDataCell>{p.partnerName}</CTableDataCell>
-                        <CTableDataCell>
-                          {p.totalRevenue.toLocaleString()}
-                        </CTableDataCell>
-                        <CTableDataCell>{p.totalBookings}</CTableDataCell>
-                      </CTableRow>
-                    ))}
-                </CTableBody>
-              </CTable>
-            </CCardBody>
-          </CCard>
-        </CCol>
+              <CRow>
+                <CCol xs={12} md={6} xl={6}>
+                  <CRow>
+                    <CCol xs={6}>
+                      <div className="border-start border-start-4 border-start-info py-1 px-3">
+                        <div className="text-body-secondary text-truncate small">
+                          New Clients
+                        </div>
+                        <div className="fs-5 fw-semibold">9,123</div>
+                      </div>
+                    </CCol>
+                    <CCol xs={6}>
+                      <div className="border-start border-start-4 border-start-danger py-1 px-3 mb-3">
+                        <div className="text-body-secondary text-truncate small">
+                          Recurring Clients
+                        </div>
+                        <div className="fs-5 fw-semibold">22,643</div>
+                      </div>
+                    </CCol>
+                  </CRow>
+                  <hr className="mt-0" />
 
-        <CCol md={6}>
-          <CCard>
-            <CCardHeader>👤 Khách hàng gần đây</CCardHeader>
-            <CCardBody>
-              <CTable striped>
-                <CTableHead>
+                  {timeSeriesMetrics.map((item, index) => (
+                    <div className="progress-group mb-4" key={index}>
+                      <div className="progress-group-prepend">
+                        <span className="text-body-secondary small">
+                          {item.title}
+                        </span>
+                      </div>
+                      <div className="progress-group-bars">
+                        <CProgress thin color="info" value={item.value1} />
+                        <CProgress thin color="danger" value={item.value2} />
+                      </div>
+                    </div>
+                  ))}
+                </CCol>
+                <CCol xs={12} md={6} xl={6}>
+                  <CRow>
+                    <CCol xs={6}>
+                      <div className="border-start border-start-4 border-start-warning py-1 px-3 mb-3">
+                        <div className="text-body-secondary text-truncate small">
+                          Pageviews
+                        </div>
+                        <div className="fs-5 fw-semibold">78,623</div>
+                      </div>
+                    </CCol>
+                    <CCol xs={6}>
+                      <div className="border-start border-start-4 border-start-success py-1 px-3 mb-3">
+                        <div className="text-body-secondary text-truncate small">
+                          Organic
+                        </div>
+                        <div className="fs-5 fw-semibold">49,123</div>
+                      </div>
+                    </CCol>
+                  </CRow>
+
+                  <hr className="mt-0" />
+
+                  {genderMetrics.map((item, index) => (
+                    <div className="progress-group mb-4" key={index}>
+                      <div className="progress-group-header">
+                        <CIcon className="me-2" icon={item.icon} size="lg" />
+                        <span>{item.title}</span>
+                        <span className="ms-auto fw-semibold">
+                          {item.value}%
+                        </span>
+                      </div>
+                      <div className="progress-group-bars">
+                        <CProgress thin color="warning" value={item.value} />
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mb-5"></div>
+
+                  
+                </CCol>
+              </CRow>
+
+              <br />
+
+              <CTable align="middle" className="mb-0 border" hover responsive>
+                <CTableHead className="text-nowrap">
                   <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Tên</CTableHeaderCell>
-                    <CTableHeaderCell>Email</CTableHeaderCell>
-                    <CTableHeaderCell>Lần đặt gần nhất</CTableHeaderCell>
-                    <CTableHeaderCell>Tổng Booking</CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">
+                      <CIcon icon={cilPeople} />
+                    </CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">
+                      User
+                    </CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">
+                      Usage
+                    </CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary text-center">
+                      Payment Method
+                    </CTableHeaderCell>
+                    <CTableHeaderCell className="bg-body-tertiary">
+                      Activity
+                    </CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  {mockRecentCustomers.map((c, i) => (
-                    <CTableRow key={i}>
-                      <CTableDataCell>{i + 1}</CTableDataCell>
-                      <CTableDataCell>{c.name}</CTableDataCell>
-                      <CTableDataCell>{c.email}</CTableDataCell>
-                      <CTableDataCell>{c.lastBooking}</CTableDataCell>
+                  {UserMetrics.map((item, index) => (
+                    <CTableRow v-for="item in tableItems" key={index}>
+                      <CTableDataCell className="text-center">
+                        <CAvatar
+                          size="md"
+                          src={item.avatar.src}
+                          status={item.avatar.status}
+                        />
+                      </CTableDataCell>
                       <CTableDataCell>
                         <CBadge color="info">{c.totalBookings}</CBadge>
                       </CTableDataCell>
                     </CTableRow>
                   ))}
-                </tbody>
-              </Table>
+                </CTableBody>
+              </CTable>
             </CCardBody>
           </CCard>
         </CCol>
