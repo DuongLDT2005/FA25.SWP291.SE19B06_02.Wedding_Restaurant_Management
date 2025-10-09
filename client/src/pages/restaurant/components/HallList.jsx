@@ -128,8 +128,8 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="hallModalLabel">
+            <div className="modal-header" style={{ color: "#934" }}>
+              <h5 className="modal-title" id="hallModalLabel" style={{ color: "#934" }}>
                 {restaurant.selectedHall?.name}
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
