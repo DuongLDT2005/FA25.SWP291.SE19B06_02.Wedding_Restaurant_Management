@@ -8,6 +8,7 @@ import '../../styles/BookingDetailsStyles.css';
 const BookingDetailsPage = () => {
     const { bookingId } = useParams();
     const location = useLocation();
+    // search params: need setter to enforce payment=0 when pending
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('overview');
     const [booking, setBooking] = useState(null);

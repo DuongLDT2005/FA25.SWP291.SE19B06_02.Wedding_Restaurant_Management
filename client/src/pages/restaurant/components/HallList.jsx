@@ -2,8 +2,59 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
 
-export default function HallList({ restaurant, onSelectHall }) {
-  const navigate = useNavigate();
+  // NEW: chuyển menus có cấu trúc categories -> menus.dishes phẳng
+  function normalizeMenus(menus = []) {
+    return menus.map(m => {
+      if (m.categories && Array.isArray(m.categories)) {
+        const dishes = m.categories.flatMap(cat =>
+          (cat.dishes || []).map(d => ({
+            id: String(d.id),
+            name: d.name,
+            category: CATEGORY_NAME_MAP[cat.name] || "MAIN"
+          }))
+        );
+        return {
+          id: m.id,
+            name: m.name,
+            price: m.price,
+            dishes
+        };
+      }
+      // đã đúng định dạng
+      return m;
+    });
+  }
+
+  // NEW: chuẩn hoá services từ DB (serviceID,eventTypeID,name,price,unit,status)
+  function normalizeServices(services = []) {
+    return services
+      .filter(s => s && (s.status === 1 || s.status === true || s.status === undefined)) // chỉ lấy ACTIVE (status=1) hoặc nếu không có status thì giữ
+      .map(s => ({
+        // BookingForm hiện dùng field 'code' & 'label' để hiển thị và lưu; vẫn giữ thêm thông tin khác
+        code: String(s.serviceID ?? s.id ?? s.code),
+        label: s.name || s.label || 'Dịch vụ',
+        price: s.price ?? 0,
+        unit: s.unit || '',
+        eventTypeID: s.eventTypeID ?? null,
+        rawStatus: s.status,
+        _original: s
+      }));
+  }
+
+  const handleBookingClick = (hall) => {
+    const fullData = {
+      ...restaurant,
+      selectedHall: hall,
+      // giữ both: menus gốc + menusNormalized để BookingForm dùng
+      menusOriginal: restaurant.menus,
+      menus: normalizeMenus(restaurant.menus),
+      servicesOriginal: restaurant.services || [],
+      services: normalizeServices(restaurant.services || []),
+      addressString: restaurant.address?.fullAddress || restaurant.address
+    };
+    sessionStorage.setItem("selectedRestaurant", JSON.stringify(fullData));
+    sessionStorage.setItem("selectedHallId", String(hall.id));
+  };
 
   const handleClick = () => {
     navigate('/bookingForm');
