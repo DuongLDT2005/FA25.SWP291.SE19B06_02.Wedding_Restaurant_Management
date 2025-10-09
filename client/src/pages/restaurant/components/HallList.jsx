@@ -33,6 +33,22 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
     });
   }
 
+  // NEW: chuẩn hoá services từ DB (serviceID,eventTypeID,name,price,unit,status)
+  function normalizeServices(services = []) {
+    return services
+      .filter(s => s && (s.status === 1 || s.status === true || s.status === undefined)) // chỉ lấy ACTIVE (status=1) hoặc nếu không có status thì giữ
+      .map(s => ({
+        // BookingForm hiện dùng field 'code' & 'label' để hiển thị và lưu; vẫn giữ thêm thông tin khác
+        code: String(s.serviceID ?? s.id ?? s.code),
+        label: s.name || s.label || 'Dịch vụ',
+        price: s.price ?? 0,
+        unit: s.unit || '',
+        eventTypeID: s.eventTypeID ?? null,
+        rawStatus: s.status,
+        _original: s
+      }));
+  }
+
   const handleBookingClick = (hall) => {
     const fullData = {
       ...restaurant,
@@ -40,6 +56,8 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
       // giữ both: menus gốc + menusNormalized để BookingForm dùng
       menusOriginal: restaurant.menus,
       menus: normalizeMenus(restaurant.menus),
+      servicesOriginal: restaurant.services || [],
+      services: normalizeServices(restaurant.services || []),
       addressString: restaurant.address?.fullAddress || restaurant.address
     };
     sessionStorage.setItem("selectedRestaurant", JSON.stringify(fullData));

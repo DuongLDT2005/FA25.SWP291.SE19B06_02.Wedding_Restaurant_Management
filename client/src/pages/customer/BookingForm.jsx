@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/ContractForm.css"; // now only contains dish modal / minor helpers
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+// Import EVENT_TYPE_MAP to map usageType -> eventTypeID for filtering services
+import { EVENT_TYPE_MAP } from "../restaurant/share/RestaurantValue";
 
 // Mock helpers (replace with real session/auth & navigation selection)
 function getSessionUser() {
@@ -164,13 +166,9 @@ const USAGE_TYPES = [
   { value: "EVENT", label: "Sự kiện" }
 ];
 
-// Map mục đích sử dụng -> các service code được phép (có thể chỉnh sau theo nghiệp vụ thực tế)
-const USAGE_SERVICE_CODES = {
-  WEDDING: ["DECOR_BASIC","DECOR_PREMIUM","MC","SOUND_LIGHT","PHOTO_VIDEO"],
-  COMPANY: ["DECOR_BASIC","MC","SOUND_LIGHT","PHOTO_VIDEO"],
-  CONFERENCE: ["DECOR_BASIC","SOUND_LIGHT","PHOTO_VIDEO"],
-  EVENT: ["DECOR_BASIC","DECOR_PREMIUM","MC","SOUND_LIGHT","PHOTO_VIDEO"]
-};
+// (Legacy) USAGE_SERVICE_CODES no longer used; dynamic filtering is now based on eventTypeID in service objects.
+// Keeping constant commented for reference; can remove later after stabilization.
+// const USAGE_SERVICE_CODES = { ... };
 
 // NEW: predefined time sessions
 const EVENT_TIME_OPTIONS = [
@@ -197,6 +195,8 @@ function BookingForm({ restaurant: propRestaurant }) {
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [showDishPicker, setShowDishPicker] = useState(false); // NEW
+  // Format tiền
+  const formatPrice = (v) => (v == null || isNaN(v) ? '0đ' : Number(v).toLocaleString('vi-VN') + 'đ');
 
   useEffect(() => {
     // Sync if props change
@@ -250,24 +250,50 @@ function BookingForm({ restaurant: propRestaurant }) {
     });
   }
 
-  // Danh sách dịch vụ lọc theo usageType
-  const filteredServices = useMemo(() => {
-    if (!restaurant.services) return [];
-    if (!form.usageType) return [];
-    const allowed = USAGE_SERVICE_CODES[form.usageType] || [];
-    return restaurant.services.filter(s => allowed.includes(s.code));
-  }, [restaurant.services, form.usageType]);
+  // Tất cả dịch vụ ACTIVE đã normalize (HallList đảm bảo status inactive đã loại bỏ)
+  const allServices = useMemo(() => restaurant.services || [], [restaurant.services]);
 
-  // Khi đổi usageType loại bỏ service không còn hợp lệ
-  useEffect(() => {
-    setForm(f => {
-      if (!f.usageType) return { ...f, serviceCodes: [] }; // reset nếu bỏ chọn
-      const allowed = new Set(USAGE_SERVICE_CODES[f.usageType] || []);
-      const filtered = f.serviceCodes.filter(c => allowed.has(c));
-      if (filtered.length === f.serviceCodes.length) return f;
-      return { ...f, serviceCodes: filtered };
-    });
+  // Map usageType (WEDDING, COMPANY, ...) -> eventTypeID using EVENT_TYPE_MAP
+  const currentEventTypeId = useMemo(() => {
+    if (!form.usageType) return null; // chưa chọn => hiển thị hướng dẫn
+    return EVENT_TYPE_MAP[form.usageType] ?? null;
   }, [form.usageType]);
+
+  // Filter services: show only those whose eventTypeID matches the selected usageType OR eventTypeID === EVENT_TYPE_MAP.ALL (0)
+  const filteredServices = useMemo(() => {
+    if (!currentEventTypeId) return []; // chưa chọn mục đích => chưa hiển thị danh sách
+    return allServices.filter(s => {
+      // some normalized services may not carry eventTypeID (legacy) => treat as ALL
+      const et = s.eventTypeID == null ? EVENT_TYPE_MAP.ALL : s.eventTypeID;
+      return et === EVENT_TYPE_MAP.ALL || et === currentEventTypeId;
+    });
+  }, [allServices, currentEventTypeId]);
+
+  // Whenever usageType changes, prune any selected serviceCodes no longer allowed under new filtered set
+  useEffect(() => {
+    if (!form.usageType) return; // nothing selected yet
+    setForm(f => {
+      const allowedCodes = new Set(filteredServices.map(s => String(s.code)));
+      const pruned = f.serviceCodes.filter(c => allowedCodes.has(String(c)));
+      return pruned.length === f.serviceCodes.length ? f : { ...f, serviceCodes: pruned };
+    });
+  }, [form.usageType, filteredServices]);
+
+  const selectedServices = useMemo(
+    () => filteredServices.filter(s => form.serviceCodes.includes(String(s.code))),
+    [filteredServices, form.serviceCodes]
+  );
+  // Tổng tiền dịch vụ (giá dịch vụ tính theo gói, không nhân số bàn)
+  const serviceTotal = selectedServices.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+  // Tổng tiền menu (giá menu * số bàn)
+  const menuTotalPerTable = useMemo(() => {
+    return (restaurant.menus || [])
+      .filter(m => form.menuIds.includes(String(m.id)))
+      .reduce((sum, m) => sum + (Number(m.price) || 0), 0);
+  }, [restaurant.menus, form.menuIds]);
+  const tablesNum = Number(form.tables || 0) || 0;
+  const menuTotal = menuTotalPerTable * tablesNum;
+  const grandTotal = menuTotal + serviceTotal; // Chưa gồm VAT / giảm giá
 
   const availableDishes = useMemo(() => {
     if (!form.menuIds.length) return [];
@@ -524,34 +550,37 @@ function BookingForm({ restaurant: propRestaurant }) {
             </div>
             <div className="col-md-4">
               <label className="form-label small text-uppercase fw-semibold d-block">Dịch vụ thêm</label>
-              {!form.usageType && (
-                <div className="text-muted small fst-italic mb-1">Chọn mục đích sử dụng để hiển thị dịch vụ.</div>
-              )}
-              {form.usageType && filteredServices.length === 0 && (
-                <div className="text-muted small fst-italic mb-1">Không có dịch vụ cho mục đích này.</div>
-              )}
               <div className="border rounded p-2" style={{maxHeight:'230px', overflowY:'auto', background:'#fff'}}>
-                {filteredServices.map(s => {
-                  const checked = form.serviceCodes.includes(s.code);
+                {!form.usageType && (
+                  <div className="text-muted small fst-italic">Chọn mục đích sử dụng để xem dịch vụ phù hợp.</div>
+                )}
+                {form.usageType && filteredServices.length === 0 && (
+                  <div className="text-muted small fst-italic">Không có dịch vụ phù hợp.</div>
+                )}
+                {form.usageType && filteredServices.map(s => {
+                  const checked = form.serviceCodes.includes(String(s.code));
                   return (
-                    <div key={s.code} className="form-check small mb-1">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id={`svc_${s.code}`}
-                        checked={checked}
-                        onChange={() => handleServiceToggle(s.code)}
-                      />
-                      <label className="form-check-label" htmlFor={`svc_${s.code}`}>
-                        {s.label}
-                      </label>
+                    <div key={s.code} className="form-check small mb-1 d-flex align-items-start justify-content-between gap-2">
+                      <div>
+                        <input
+                          className="form-check-input me-1"
+                          type="checkbox"
+                          id={`svc_${s.code}`}
+                          checked={checked}
+                          onChange={() => handleServiceToggle(String(s.code))}
+                        />
+                        <label className="form-check-label" htmlFor={`svc_${s.code}`}>
+                          {s.label}{s.unit && <span className="text-muted"> ({s.unit})</span>}
+                        </label>
+                      </div>
+                      <span className="text-nowrap small fw-semibold" style={{color:'#993344'}}>{formatPrice(s.price)}</span>
                     </div>
                   );
                 })}
               </div>
-              <div className="form-text">Tích để chọn (không bắt buộc).</div>
+              <div className="form-text">Tích để chọn (không bắt buộc). Chỉ hiển thị dịch vụ phù hợp với mục đích đã chọn.</div>
               {form.serviceCodes.length > 0 && (
-                <div className="mt-1 small"><strong>Đã chọn:</strong> {form.serviceCodes.length}</div>
+                <div className="mt-1 small"><strong>Đã chọn:</strong> {form.serviceCodes.length} | Tổng dịch vụ: {formatPrice(serviceTotal)}</div>
               )}
             </div>
             <div className="col-12">
@@ -656,13 +685,13 @@ function BookingForm({ restaurant: propRestaurant }) {
             </div>
             <div>
               <strong>Dịch vụ thêm:</strong>{" "}
-              {form.serviceCodes.length
-                ? form.serviceCodes
-                    .map(code => filteredServices.find(s => s.code === code)?.label || restaurant.services.find(s => s.code === code)?.label)
-                    .filter(Boolean)
-                    .join(", ")
-                : "Không"}
+              {selectedServices.length
+                ? selectedServices.map(s => `${s.label}${s.price ? ` (${formatPrice(s.price)}` + (s.unit?`/${s.unit}`:'') + ')' : ''}`).join(', ')
+                : 'Không'}
             </div>
+            <div><strong>Tạm tính menu:</strong> {menuTotalPerTable ? `${formatPrice(menuTotalPerTable)} / bàn x ${tablesNum} = ${formatPrice(menuTotal)}` : '0đ'}</div>
+            <div><strong>Tổng dịch vụ:</strong> {formatPrice(serviceTotal)}</div>
+            <div className="mt-1 border-top pt-1"><strong>Tổng cộng:</strong> <span style={{color:'#993344'}}>{formatPrice(grandTotal)}</span> <span className="text-muted small">(chưa gồm VAT / khuyến mãi)</span></div>
             <div>
               <strong>Thời gian:</strong>{" "}
               {form.eventDate || form.eventTime
