@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import "../../styles/BookingListStyle.css";
+import "../../styles/BookingListStyle.css"; // now only keeps bespoke overlay/rating styles
 import { bookings as mockBookings } from "./ValueStore";
 import BookingCard from "./components/BookingCard";
 import { useNavigate } from "react-router-dom";
@@ -101,22 +101,26 @@ function BookingListPage() {
   return (
     <>
       <Header />
-      <div className="booking--list">
-        <h2>Danh sách đặt nhà hàng</h2>
-        {bookingsData.map(b => (
-          <BookingCard
-            key={b.bookingID}
-            booking={b}
-            onConfirm={handleConfirm}
-            onCancel={handleCancel}
-            onTransfer={handleTransferWrapper}
-            onOpenContract={handleOpenContract}
-            onReview={handleReviewWrapper}
-            onViewContract={handleViewContract}
-          />
-        ))}
-      </div>
-      <ScrollToTopButton />
+      <main className="container py-4 py-md-5" style={{marginTop: '3rem'}}>
+        <div className="d-flex align-items-center justify-content-between mb-4">
+          <h2 className="h4 mb-0 theme-text-primary">Danh sách đặt nhà hàng</h2>
+        </div>
+        <div className="row g-4">
+          {bookingsData.map(b => (
+            <div key={b.bookingID} className="col-12">
+              <BookingCard
+                booking={b}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+                onTransfer={handleTransferWrapper}
+                onOpenContract={handleOpenContract}
+                onReview={handleReviewWrapper}
+                onViewContract={handleViewContract}
+              />
+            </div>
+          ))}
+        </div>
+      </main>
       <Footer />
     </>
   );

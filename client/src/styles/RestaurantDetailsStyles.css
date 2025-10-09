@@ -1,6 +1,5 @@
 .carousel-item img {
   width: 100%;
-  /* cho full chiều ngang */
   aspect-ratio: 4 / 3;
   /* ép ảnh thành tỉ lệ 16:9 */
   object-fit: cover;
@@ -146,6 +145,10 @@
   color: #ffcc00;
 }
 
+.text-dark span {
+  color: #333 !important;
+}
+
 /* Card review */
 .review-card {
   border-radius: 10px;
@@ -160,12 +163,3 @@
   color: #333;
   margin-bottom: 0;
 }
-
-.menu-card:hover .overlay {
-  transform: translateY(0%) !important;
-}
-
-/* .nav-link:hover {
-  background-color: #f8d7da;
-  color: #b80926;
-} */
