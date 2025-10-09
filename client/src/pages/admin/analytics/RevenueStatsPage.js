@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { formatCompactCurrency, formatFullCurrency } from "../../../utils/formatter"; 
 import {
   CCard,
   CCardBody,
@@ -25,7 +26,8 @@ import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 dayjs.extend(weekOfYear);
 
-// 🧪 Mock data — có thể thay bằng API sau này
+
+// 🧪 Mock data
 const mockRevenue = Array.from({ length: 90 }, (_, i) => {
   const date = dayjs().subtract(i, "day");
   return {
@@ -34,30 +36,12 @@ const mockRevenue = Array.from({ length: 90 }, (_, i) => {
   };
 }).reverse();
 
-// 🔢 Hàm định dạng số ngắn gọn trên trục Y
-const formatCurrency = (value) => {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
-  } else if (value >= 1000) {
-    return `${(value / 1000).toFixed(0)}K`;
-  }
-  return value;
-};
-
-// 💬 Hàm định dạng tooltip
-const formatTooltip = (value) => {
-  return value.toLocaleString("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  });
-};
-
 const RevenueAnalyticsPage = () => {
-  const [viewMode, setViewMode] = useState("month"); // "day" | "week" | "month"
+  const [viewMode, setViewMode] = useState("month");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 1️⃣ Lọc dữ liệu theo khoảng thời gian
+  // 1️⃣ Lọc dữ liệu
   const filteredData = useMemo(() => {
     return mockRevenue.filter((d) => {
       const date = dayjs(d.date);
@@ -67,7 +51,7 @@ const RevenueAnalyticsPage = () => {
     });
   }, [startDate, endDate]);
 
-  // 2️⃣ Gom nhóm theo chế độ xem
+  // 2️⃣ Gom nhóm
   const groupedData = useMemo(() => {
     const map = {};
 
@@ -94,7 +78,7 @@ const RevenueAnalyticsPage = () => {
     return Object.values(map);
   }, [filteredData, viewMode]);
 
-  // 3️⃣ Tính tổng doanh thu
+  // 3️⃣ Tổng doanh thu
   const totalRevenue = groupedData.reduce((sum, d) => sum + d.revenue, 0);
 
   return (
@@ -159,7 +143,7 @@ const RevenueAnalyticsPage = () => {
       {/* Tổng quan */}
       <CCard className="mb-4">
         <CCardBody>
-          <h5>Tổng doanh thu: {totalRevenue.toLocaleString()} VND</h5>
+          <h5>Tổng doanh thu: {formatFullCurrency(totalRevenue)}</h5>
           <p style={{ color: "#666" }}>
             Tổng số bản ghi: {groupedData.length}
           </p>
@@ -177,8 +161,8 @@ const RevenueAnalyticsPage = () => {
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="label" />
-              <YAxis tickFormatter={formatCurrency} />
-              <Tooltip formatter={(value) => formatTooltip(value)} />
+              <YAxis tickFormatter={formatCompactCurrency} />
+              <Tooltip formatter={(value) => formatFullCurrency(value)} />
               <Legend />
               <Bar dataKey="revenue" name="Doanh thu (VND)" fill="#8884d8" />
               <Line

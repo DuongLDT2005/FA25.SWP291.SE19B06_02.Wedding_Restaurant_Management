@@ -23,6 +23,8 @@ import PartnerReviewPage from "../pages/partner/review/PartnerReviewPage";
 import NegotiationPage from "../pages/partner/NegotiationPage";
 import DefaultLayout from "../pages/admin/layout/DefaultLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
+import NotificationsPage from "../pages/admin/notifications/NotificationsPage"
+
 
 import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 import BookingListPage from "../pages/customer/BookingListPage";
@@ -60,6 +62,7 @@ function AppRoutes() {
         <Route path="/admin/*" element={<DefaultLayout />}>
           <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
           <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
         <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />

@@ -1,4 +1,5 @@
 import React from "react";
+import NotificationsPage from "../pages/admin/notifications/NotificationsPage";
 
 const Dashboard = React.lazy(() =>
   import("../pages/admin/dashboard/Dashboard")
@@ -15,9 +16,14 @@ const WidgetsBrand = React.lazy(() =>
 
 
 // Management
-const Users = React.lazy(() => import("../pages/admin/management/users/UserListPage"));
+const Users = React.lazy(() => import("../pages/admin/management/users/UserList"));
+
+
+
 const Partners = React.lazy(() => import("../pages/admin/management/partners/PartnerListPage"));
 const PartnerLicense = React.lazy(() => import("../pages/admin/management/partners/LicenseCommissionPage"));
+
+
 
 // Restaurants
 const RestaurantList = React.lazy(() => import("../pages/admin/restaurants/RestaurantListPage"));
@@ -30,6 +36,10 @@ const BookingList = React.lazy(() => import("../pages/admin/operations/bookings/
 const BookingDetail = React.lazy(() => import("../pages/admin/operations/bookings/BookingDetailPage"));
 const PaymentList = React.lazy(() => import("../pages/admin/operations/payments/PaymentListPage"));
 const Payouts = React.lazy(() => import("../pages/admin/operations/payments/PayoutsPage"));
+
+//Notifications
+
+const Notifications = React.lazy(() => import("../pages/admin/notifications/NotificationsPage")); 
 
 // Reviews
 const Reviews = React.lazy(() => import("../pages/admin/feedback/ReviewsReportsPage"));
@@ -69,6 +79,10 @@ const routes = [
   { path: "/payments", name: "Payments", element: PaymentList },
   { path: "/payouts", name: "Payouts", element: Payouts },
   
+  //Notifications
+
+  {path: "/notifications", name : "Notification", element: Notifications},
+
   // Reviews
   { path: "/reviews", name: "Reviews", element: Reviews },
 
