@@ -13,7 +13,6 @@ import {
   CTable,
   CTableBody,
   CTableDataCell,
-  CTableHead,
   CTableHeaderCell,
   CTableRow,
 } from "@coreui/react";
@@ -299,8 +298,8 @@ const DashboardPage = () => {
                       </CTableDataCell>
                     </CTableRow>
                   ))}
-                </CTableBody>
-              </CTable>
+                </tbody>
+              </Table>
             </CCardBody>
           </CCard>
         </CCol>

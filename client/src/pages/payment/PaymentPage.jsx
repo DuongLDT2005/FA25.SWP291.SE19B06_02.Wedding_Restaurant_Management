@@ -4,12 +4,13 @@ import '../../styles/PaymentPage.css';
 
 const PaymentPage = () => {
     const { bookingId } = useParams();
-    const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 phút
+    const [timeLeft, setTimeLeft] = useState(5 * 60); // 15 phút
     const [isProcessing, setIsProcessing] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
     const [booking, setBooking] = useState(null);
     const [hasLoaded, setHasLoaded] = useState(false);
     const [paymentCompleted, setPaymentCompleted] = useState(false);
+    const [actualBookingId, setActualBookingId] = useState(bookingId || Date.now().toString());
 
     // Load booking data
     useEffect(() => {
@@ -17,7 +18,7 @@ const PaymentPage = () => {
             const loadBookingData = () => {
                 // Tạo dữ liệu ảo giống như trong BookingDetailsPage
                 const mockBooking = {
-                    bookingID: bookingId || '201130',
+                    bookingID: actualBookingId,
                     customer: {
                         fullName: "Nguyễn Văn A",
                         phone: "0123456789",
@@ -87,6 +88,8 @@ const PaymentPage = () => {
                 };
 
                 setBooking(mockBooking);
+                // Lưu vào sessionStorage để đồng bộ với BookingDetailsPage
+                sessionStorage.setItem("currentBooking", JSON.stringify(mockBooking));
                 setHasLoaded(true);
             };
             loadBookingData();
@@ -141,8 +144,9 @@ const PaymentPage = () => {
                     ]
                 };
 
-                // Save updated booking
+                // Save updated booking to both keys for compatibility
                 sessionStorage.setItem('newBookingData', JSON.stringify(updatedBooking));
+                sessionStorage.setItem('currentBooking', JSON.stringify(updatedBooking));
             }
 
             // Set payment completed to show success message
@@ -197,19 +201,19 @@ const PaymentPage = () => {
                                     </p>
                                     <div className="d-grid gap-2 mt-4">
                                         <Link
-                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            to={`/booking/${actualBookingId}?payment=1`}
                                             className="btn btn-primary btn-lg"
                                         >
                                             <i className="fas fa-file-contract me-2"></i> Xem hợp đồng
                                         </Link>
                                         <Link
-                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            to={`/booking/${actualBookingId}?payment=1`}
                                             className="btn btn-success btn-lg"
                                         >
                                             <i className="fas fa-history me-2"></i> Lịch sử thanh toán
                                         </Link>
                                         <Link
-                                            to={`/booking-details/${bookingId || '201130'}?payment=1`}
+                                            to={`/booking/${actualBookingId}?payment=1`}
                                             className="btn btn-outline-primary btn-lg"
                                         >
                                             <i className="fas fa-arrow-left me-2"></i> Quay lại đặt tiệc
@@ -373,7 +377,7 @@ const PaymentPage = () => {
                                         {/* Back Button */}
                                         <div className="text-center mt-3">
                                             <Link
-                                                to={`/booking-details/${bookingId || '201130'}?payment=0`}
+                                                to={`/booking/${actualBookingId}?payment=0`}
                                                 className="btn btn-outline-secondary"
                                                 style={{ textDecoration: 'none' }}
                                             >

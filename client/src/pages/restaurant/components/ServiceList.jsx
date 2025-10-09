@@ -1,53 +1,111 @@
-// File: ServiceList.jsx
-import React from "react";
+import React, { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react"; // Lucide icons
 
-const ServiceList = ({ restaurant, role = "CUSTOMER" }) => {
+const eventTypeNames = {
+  1: "Tiệc cưới",
+  2: "Hội nghị",
+  3: "Sinh nhật",
+};
+
+const ServiceList = ({ restaurant }) => {
+  const groupedServices = restaurant.services?.reduce((acc, service) => {
+    if (!acc[service.eventTypeID]) acc[service.eventTypeID] = [];
+    acc[service.eventTypeID].push(service);
+    return acc;
+  }, {}) || {};
+
+  const [openGroups, setOpenGroups] = useState({});
+
+  const toggleGroup = (eventTypeID) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [eventTypeID]: !prev[eventTypeID],
+    }));
+  };
+
   return (
     <div>
-      <h4 className="section-title mb-3">Dịch vụ</h4>
-      <div className="row">
-        {restaurant.services?.map((service) => (
-          <div key={service.serviceID} className="col-md-3 mb-3">
+      <h4
+        className="section-title mb-3"
+        style={{ color: "#993344", fontWeight: "bold", fontSize: "1.6rem" }}
+      >
+        Dịch vụ
+      </h4>
+
+      {Object.entries(groupedServices).map(([eventTypeID, services]) => (
+        <div key={eventTypeID} className="mb-3">
+          {/* Header Accordion */}
+          <button
+            className="w-100 d-flex justify-content-between align-items-center"
+            onClick={() => toggleGroup(eventTypeID)}
+            style={{
+              border: "none",
+              borderRadius: "10px",
+              padding: "0.75rem 1rem",
+              backgroundColor: "#f8eef2",
+              color: "#993344",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              boxShadow: "0 3px 6px rgba(0,0,0,0.08)",
+              cursor: "pointer",
+              transition: "background 0.3s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#f3dce1")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#f8eef2")}
+          >
+            <span>
+              {eventTypeNames[eventTypeID] || `EventType ${eventTypeID}`} ({services.length})
+            </span>
+            {openGroups[eventTypeID] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {/* Content Accordion */}
+          {openGroups[eventTypeID] && (
             <div
-              className="card text-white h-100"
+              className="mt-2 p-3"
               style={{
-                backgroundColor: "#993344",
-                borderRadius: "12px",
-                position: "relative",
+                maxHeight: "300px",
+                overflowY: "auto",
+                borderRadius: "10px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.05)",
+                backgroundColor: "#fff",
               }}
             >
-              <div className="card-body text-center p-3">
-                <h6 className="card-title fw-bold mb-3">{service.name}</h6>
-                <p className="mb-0">
-                  <small>
-                    Giá: <strong>{parseFloat(service.price).toLocaleString()} VND/ {service.unit ?? "-"}</strong>
-                  </small>
-                </p>
-              </div>
-
-              {/* Owner/Admin controls */}
-              {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-                <div className="card-footer bg-transparent border-0 d-flex justify-content-center gap-2">
-                  <button className="btn btn-sm btn-outline-primary">Sửa</button>
-                  <button className="btn btn-sm btn-outline-danger">Xóa</button>
+              {services.map((service, idx) => (
+                <div
+                  key={service.id || service.serviceID}
+                  className="d-flex justify-content-between align-items-center mb-2 p-3"
+                  style={{
+                    borderRadius: "8px",
+                    border: "1px solid #f0c6d1",
+                    background: "#fff",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.03)",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
+                  }}
+                >
+                  <span style={{ color: "#993344", fontWeight: "500" }}>
+                    {idx + 1}. {service.name}
+                  </span>
+                  <span style={{ fontWeight: "bold", color: "#993344" }}>
+                    {parseFloat(service.price).toLocaleString()} VND / {service.unit ?? "-"}
+                  </span>
                 </div>
+              ))}
+              {services.length === 0 && (
+                <div className="text-center text-muted">Không có dịch vụ nào</div>
               )}
             </div>
-          </div>
-        ))}
-
-        {/* Nút thêm dịch vụ mới */}
-        {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-          <div className="col-md-3 mb-3">
-            <button
-              className="btn btn-lg btn-success w-100 h-100"
-              // bạn có thể gắn data-bs-toggle/modal ở đây nếu muốn modal thêm mới
-            >
-              + Thêm dịch vụ mới
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };

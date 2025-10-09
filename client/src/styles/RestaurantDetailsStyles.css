@@ -120,7 +120,9 @@
   align-items: center;
   padding: 10px 14px;
   border-radius: 8px;
-  background: #993344;
+  background: linear-gradient(180deg,
+      rgba(153, 51, 68, 0.08),
+      rgba(153, 51, 68, 0.04));
   min-width: 120px;
 }
 
@@ -158,3 +160,11 @@
   color: #333;
   margin-bottom: 0;
 }
+
+.menu-card:hover .overlay {
+  transform: translateY(0%) !important;
+}
+/* .nav-link:hover {
+  background-color: #f8d7da;
+  color: #b80926;
+} */

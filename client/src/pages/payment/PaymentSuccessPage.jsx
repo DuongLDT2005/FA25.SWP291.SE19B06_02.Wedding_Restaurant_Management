@@ -9,16 +9,21 @@ const PaymentSuccessPage = () => {
     const [bookingData, setBookingData] = useState(null);
 
     useEffect(() => {
-        // Lấy dữ liệu thanh toán từ location state hoặc sessionStorage
-        const paymentInfo = location.state?.paymentData || JSON.parse(sessionStorage.getItem('paymentSuccessData') || '{}');
-        const bookingInfo = location.state?.bookingData || JSON.parse(sessionStorage.getItem('bookingData') || '{}');
-        
-        setPaymentData(paymentInfo);
+        // Lấy dữ liệu booking từ sessionStorage (đồng bộ với PaymentPage)
+        const bookingInfo = JSON.parse(sessionStorage.getItem('currentBooking') || '{}');
         setBookingData(bookingInfo);
-
-        // Xóa dữ liệu tạm thời sau khi lấy
-        sessionStorage.removeItem('paymentSuccessData');
-    }, [location.state]);
+        
+        // Tạo dữ liệu thanh toán từ booking info
+        if (bookingInfo && bookingInfo.payments && bookingInfo.payments.length > 0) {
+            const latestPayment = bookingInfo.payments[bookingInfo.payments.length - 1];
+            setPaymentData({
+                transactionId: 'TXN-' + Date.now(),
+                amount: latestPayment.amount,
+                paymentMethod: latestPayment.paymentMethod,
+                paymentDate: latestPayment.paymentDate
+            });
+        }
+    }, []);
 
     // Không cần các hàm này nữa vì sẽ dùng Link
 
@@ -139,8 +144,8 @@ const PaymentSuccessPage = () => {
                         <div className="action-buttons">
                             <div className="row">
                                 <div className="col-md-4 mb-3">
-                                    <Link 
-                                        to={`/booking-details/${bookingData?.bookingID || '201130'}?payment=1`}
+                                    <Link
+                                        to={`/booking/${bookingData?.bookingID || Date.now().toString()}?payment=1`}
                                         className="btn btn-primary w-100"
                                     >
                                         <i className="fas fa-file-contract me-2"></i>
@@ -149,7 +154,7 @@ const PaymentSuccessPage = () => {
                                 </div>
                                 <div className="col-md-4 mb-3">
                                     <Link 
-                                        to={`/booking-details/${bookingData?.bookingID || '201130'}?payment=1`}
+                                        to={`/booking/${bookingData?.bookingID || Date.now().toString()}?payment=1`}
                                         className="btn btn-success w-100"
                                     >
                                         <i className="fas fa-history me-2"></i>
@@ -158,7 +163,7 @@ const PaymentSuccessPage = () => {
                                 </div>
                                 <div className="col-md-4 mb-3">
                                     <Link 
-                                        to={`/booking-details/${bookingData?.bookingID || '201130'}?payment=1`}
+                                        to={`/booking/${bookingData?.bookingID || Date.now().toString()}?payment=1`}
                                         className="btn btn-outline-primary w-100"
                                     >
                                         <i className="fas fa-arrow-left me-2"></i>

@@ -1,4 +1,3 @@
-// File: ReviewList.jsx
 import React, { useState } from "react";
 import Pagination from "../../../components/Pagination";
 import RatingStars from "../../../components/RatingStars";

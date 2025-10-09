@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import ScrollToTopButton from "../../../components/ScrollToTopButton";
 // import "../../styles/BookingCardStyle.css";
 const statusColor = {
   0: "#e67e22",
@@ -87,7 +88,7 @@ export default function BookingCard({
   function buildDetailPayload(b) {
     const tokenRaw = localStorage.getItem("token");
     let user = {};
-    try { user = tokenRaw ? JSON.parse(tokenRaw) : {}; } catch {}
+    try { user = tokenRaw ? JSON.parse(tokenRaw) : {}; } catch { }
     return {
       bookingID: b.bookingID,
       status: b.status ?? 0,
@@ -260,7 +261,7 @@ export default function BookingCard({
                 Chọn số sao (cho phép 0.5)<span className="required">*</span>
               </div>
               <div className="rating-stars">
-                {[1,2,3,4,5].map(i => {
+                {[1, 2, 3, 4, 5].map(i => {
                   const display = hoverRating || rating;
                   const fill = display >= i ? 1 : display >= (i - 0.5) ? 0.5 : 0;
                   return (
@@ -313,13 +314,13 @@ export default function BookingCard({
               accept="image/*"
               multiple
               onChange={e => {
-                const files = Array.from(e.target.files || []).slice(0,6);
+                const files = Array.from(e.target.files || []).slice(0, 6);
                 handleImages({ target: { files } });
               }}
             />
             {!!imagePreviews.length && (
               <div className="review-image-grid">
-                {imagePreviews.map((src,i) => (
+                {imagePreviews.map((src, i) => (
                   <div key={i} className="review-img-wrapper">
                     <img src={src} alt={`preview-${i}`} className="review-img" />
                     <button
@@ -327,11 +328,11 @@ export default function BookingCard({
                       className="review-img-remove"
                       onClick={() => {
                         const newImgs = [...images];
-                        newImgs.splice(i,1);
+                        newImgs.splice(i, 1);
                         images[i] && URL.revokeObjectURL(imagePreviews[i]);
                         setImages(newImgs);
                         const newPrev = [...imagePreviews];
-                        newPrev.splice(i,1);
+                        newPrev.splice(i, 1);
                         setImagePreviews(newPrev);
                       }}
                       aria-label="Xóa ảnh"
@@ -365,6 +366,9 @@ export default function BookingCard({
           </div>
         </div>
       )}
+
     </div>
+
   );
+  <ScrollToTopButton />
 }
