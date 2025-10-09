@@ -1,5 +1,9 @@
-// src/pages/admin/DashboardPage.js
 import React, { useState, useMemo } from "react";
+import {
+  formatCompactCurrency,
+  formatFullCurrency,
+} from "../../../utils/formatter";
+
 import {
   CCard,
   CCardBody,
@@ -17,6 +21,7 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from "@coreui/react";
+
 import {
   BarChart,
   Bar,
@@ -28,9 +33,19 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 dayjs.extend(weekOfYear);
+
+// 📨 Mock Notifications
+const mockNotifications = Array.from({ length: 37 }).map((_, i) => ({
+  id: i + 1,
+  title: `Thông báo ${i + 1}`,
+  message: `Đây là nội dung thông báo số ${i + 1}.`,
+  date: dayjs().subtract(i, "hour").format("DD/MM/YYYY HH:mm"),
+  type: i % 2 === 0 ? "success" : "warning",
+}));
 
 // 🧪 Mock Data
 const mockData = Array.from({ length: 90 }, (_, i) => {
@@ -62,6 +77,22 @@ const mockRecentCustomers = Array.from({ length: 8 }).map((_, i) => ({
 }));
 
 const DashboardPage = () => {
+  // 🔔 Notification pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(mockNotifications.length / itemsPerPage);
+  const currentNotifications = mockNotifications.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // 📅 Dashboard filter state
   const [viewMode, setViewMode] = useState("month");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -113,31 +144,88 @@ const DashboardPage = () => {
   // Tính tổng
   const totalRevenue = groupedData.reduce((s, d) => s + d.revenue, 0);
   const totalBookings = groupedData.reduce((s, d) => s + d.bookings, 0);
-  const totalCancellations = groupedData.reduce(
-    (s, d) => s + d.cancellations,
-    0
-  );
+  const totalCancellations = groupedData.reduce((s, d) => s + d.cancellations, 0);
   const totalSuccessful = groupedData.reduce((s, d) => s + d.successful, 0);
   const totalCustomers = groupedData.reduce((s, d) => s + d.newCustomers, 0);
-  const cancelRate = totalBookings
-    ? (totalCancellations / totalBookings) * 100
-    : 0;
-  const successRate = totalBookings
-    ? (totalSuccessful / totalBookings) * 100
-    : 0;
+  const cancelRate = totalBookings ? (totalCancellations / totalBookings) * 100 : 0;
+  const successRate = totalBookings ? (totalSuccessful / totalBookings) * 100 : 0;
 
   return (
     <div>
-      {/* Bộ lọc */}
+      {/* 🔔 Notifications */}
+      <CCard className="mb-4">
+        <CCardHeader>🔔 Thông báo gần đây</CCardHeader>
+        <CCardBody>
+          {currentNotifications.length > 0 ? (
+            <>
+              {currentNotifications.map((n) => (
+                <div
+                  key={n.id}
+                  className="mb-3 p-2 border rounded d-flex justify-content-between align-items-start"
+                >
+                  <div>
+                    <strong>{n.title}</strong>
+                    <div>{n.message}</div>
+                    <small className="text-muted">{n.date}</small>
+                  </div>
+                  <CBadge color={n.type === "success" ? "success" : "warning"}>
+                    {n.type.toUpperCase()}
+                  </CBadge>
+                </div>
+              ))}
+
+              {/* 📄 Pagination */}
+              <div className="d-flex justify-content-center mt-3">
+                <nav>
+                  <ul className="pagination mb-0">
+                    <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                      <button
+                        className="page-link"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                      >
+                        «
+                      </button>
+                    </li>
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <li
+                        key={i}
+                        className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(i + 1)}
+                        >
+                          {i + 1}
+                        </button>
+                      </li>
+                    ))}
+                    <li
+                      className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}
+                    >
+                      <button
+                        className="page-link"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                      >
+                        »
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
+            </>
+          ) : (
+            <p className="text-center text-muted mb-0">Không có thông báo nào</p>
+          )}
+        </CCardBody>
+      </CCard>
+
+      {/* 📅 Bộ lọc */}
       <CCard className="mb-4">
         <CCardHeader>Bộ lọc thời gian</CCardHeader>
         <CCardBody>
           <CRow className="g-3 align-items-end">
             <CCol md={3}>
-              <CFormSelect
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value)}
-              >
+              <CFormSelect value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
                 <option value="day">Theo ngày</option>
                 <option value="week">Theo tuần</option>
                 <option value="month">Theo tháng</option>
@@ -175,7 +263,7 @@ const DashboardPage = () => {
         </CCardBody>
       </CCard>
 
-      {/*Widgets */}
+      {/* Widgets */}
       <CRow className="mb-4">
         {[
           { title: "Doanh thu", value: `${totalRevenue.toLocaleString()} VND` },
@@ -209,29 +297,30 @@ const DashboardPage = () => {
               margin={{ top: 20, right: 30, left: 0, bottom: 50 }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="label"
-                interval={0}
-                angle={-15}
-                textAnchor="end"
-                height={70}
-              />
-              <YAxis yAxisId="left" orientation="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip formatter={(val) => val.toLocaleString()} />
-              <Legend />
-              <Bar
+              <XAxis dataKey="label" interval={0} angle={-15} textAnchor="end" height={70} />
+              <YAxis
                 yAxisId="left"
-                dataKey="revenue"
-                name="Doanh thu"
-                fill="#8884d8"
+                orientation="left"
+                tickFormatter={(value) => formatCompactCurrency(value)}
               />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip
+                formatter={(val, name) => {
+                  if (name === "Doanh thu") {
+                    return [formatFullCurrency(val), name];
+                  }
+                  return [val.toLocaleString(), name];
+                }}
+              />
+              <Legend />
+              <Bar yAxisId="left" dataKey="revenue" name="Doanh thu" fill="#8884d8" />
               <Line
                 yAxisId="right"
                 type="monotone"
                 dataKey="bookings"
                 name="Bookings"
                 stroke="#82ca9d"
+                strokeWidth={5}
                 dot={false}
               />
             </BarChart>
