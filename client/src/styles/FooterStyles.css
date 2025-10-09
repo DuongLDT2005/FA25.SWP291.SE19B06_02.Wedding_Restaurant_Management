@@ -34,9 +34,10 @@
 }
 
 .footer-column h4 {
-    font-size: 16px;
-    margin-bottom: 12px;
+    font-size: 20px;
+    margin: 12px auto;
     font-weight: bold;
+    color: #fefaf9;
 }
 
 .footer-column ul {

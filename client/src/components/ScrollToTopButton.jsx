@@ -28,7 +28,7 @@ function ScrollToTopButton() {
         <>
             {isVisible && (
                 <button className="scroll-to-top" onClick={scrollToTop}>
-                    ^
+                    ↑
                 </button>
             )}
         </>

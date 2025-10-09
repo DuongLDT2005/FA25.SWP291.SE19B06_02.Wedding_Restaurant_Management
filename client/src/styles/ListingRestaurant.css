@@ -25,13 +25,16 @@
     padding: 20px;
     height: fit-content;
 }
+
 .listing-sidebar h3,
 .listing-sidebar label {
     color: #993344;
 }
-.listing-sidebar select{
+
+.listing-sidebar select {
     margin-bottom: 5px;
 }
+
 .filter-group {
     margin-bottom: 20px;
     display: flex;
@@ -69,16 +72,62 @@
     box-shadow: 0 0 0 2px rgba(153, 51, 68, 0.1);
 }
 
+/* Checkbox styling */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+.checkbox-item:hover {
+    color: #993344;
+}
+
+.checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #993344;
+    cursor: pointer;
+}
+
+.checkbox-item span {
+    font-size: 14px;
+    color: #495057;
+    user-select: none;
+}
+
+.checkbox-item:hover span {
+    color: #993344;
+}
+
+/* Filter divider */
+.filter-divider {
+    border: none;
+    height: 1px;
+    background-color: #993344;
+    margin: 20px 0;
+    opacity: 0.6;
+}
+
 /* Kết quả danh sách */
 .listing-results {
     flex: 1;
 }
 
 .restaurant-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 20px;
-    align-items: stretch;
 }
 
 .restaurant-card {
@@ -88,35 +137,74 @@
     background: #fff;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     display: flex;
-    flex-direction: column;
-    height: 100%;
+    flex-direction: row;
+    height: 250px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 
 .restaurant-card img {
-    width: 100%;
-    height: 180px;
+    width: 300px;
+    height: 100%;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .restaurant-info {
-    padding: 15px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    justify-content: space-between;
+}
+
+.restaurant-info h4 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.restaurant-info p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.restaurant-info p strong {
+    color: #993344;
+    font-weight: 600;
+}
+
+.capacity-info {
+    margin: 5px 0;
+}
+
+.capacity-info span {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .btn-detail {
-    margin-top: auto;
-    padding: 6px 10px;
+    margin-top: 15px;
+    padding: 10px 20px;
     background: #993344;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: 500;
     align-self: flex-end;
     width: fit-content;
+    transition: background-color 0.2s ease;
 }
 
 .btn-detail a {
@@ -126,6 +214,7 @@
 
 .btn-detail:hover {
     background: #a4142c;
+    transform: translateY(-1px);
 }
 
 /* Menu preview styles */
@@ -261,4 +350,31 @@
 .selected-item span:last-child {
     color: #28a745;
     font-weight: bold;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .listing-body {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .listing-sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .restaurant-card {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .restaurant-card img {
+        width: 100%;
+        height: 250px;
+    }
+
+    .restaurant-info {
+        padding: 15px;
+    }
 }

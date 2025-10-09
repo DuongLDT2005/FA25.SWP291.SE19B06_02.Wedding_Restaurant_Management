@@ -102,100 +102,122 @@ function SignUpForOwner() {
       <div className="sign--up--container">
         <h1>Đăng Ký Chủ Nhà Hàng</h1>
         <form className="sign--up--form" onSubmit={handleSubmit}>
-          <div>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              placeholder="Tên"
-              className={`form-control ${errors.name ? "is-invalid" : ""}`}
-            />
-            {errors.name && <div className="error-message">{errors.name}</div>}
-          </div>
+          <div className="row">
+            <div className="col-12">
+              <input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="Tên"
+                className={`form-control ${errors.name ? "is-invalid" : ""}`}
+              />
+              {errors.name && <div className="error-message">{errors.name}</div>}
+            </div>
 
-          <div>
-            <input
-              type="text"
-              id="phoneNumber"
-              name="phoneNumber"
-              placeholder="Số điện thoại"
-              maxLength={10}
-              onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
-              className={`form-control ${errors.phoneNumber ? "is-invalid" : ""}`}
-            />
-            {errors.phoneNumber && <div className="error-message">{errors.phoneNumber}</div>}
-          </div>
+            <div className="col-12">
+              <input
+                type="text"
+                id="phoneNumber"
+                name="phoneNumber"
+                placeholder="Số điện thoại"
+                maxLength={10}
+                onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
+                className={`form-control ${errors.phoneNumber ? "is-invalid" : ""}`}
+              />
+              {errors.phoneNumber && <div className="error-message">{errors.phoneNumber}</div>}
+            </div>
 
-          <div>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Email"
-              className={`form-control ${errors.email ? "is-invalid" : ""}`}
-            />
-            {errors.email && <div className="error-message">{errors.email}</div>}
-          </div>
+            <div className="col-12">
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Email"
+                className={`form-control ${errors.email ? "is-invalid" : ""}`}
+              />
+              {errors.email && <div className="error-message">{errors.email}</div>}
+            </div>
 
-          <div className="password-wrapper">
-            <input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              className={`form-control ${(passwordError || errors.password) ? "is-invalid" : ""}`}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                setPassword(newValue);
-              }}
-              placeholder="Mật khẩu"
-            />
-            <span
-              className="toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-            </span>
-          </div>
-          {(passwordError || errors.password) && (
-            <div className="error-message">{passwordError || errors.password}</div>
-          )}
+            <div className="col-12">
+              <div className="password-wrapper">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  className={`form-control ${(passwordError || errors.password) ? "is-invalid" : ""}`}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setPassword(newValue);
+                  }}
+                  placeholder="Mật khẩu"
+                />
+                <span
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </span>
+              </div>
+              {(passwordError || errors.password) && (
+                <div className="error-message">{passwordError || errors.password}</div>
+              )}
+            </div>
 
-          <div className="password-wrapper">
-            <input
-              name="confirmPassword"
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Xác nhận mật khẩu"
-            />
-            <span
-              className="toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-            </span>
-          </div>
-          {errors.confirmPassword && (
-            <div className="error-message">{errors.confirmPassword}</div>
-          )}
+            <div className="col-12">
+              <div className="password-wrapper">
+                <input
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Xác nhận mật khẩu"
+                />
+                <span
+                  className="toggle-password"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                </span>
+              </div>
+              {errors.confirmPassword && (
+                <div className="error-message">{errors.confirmPassword}</div>
+              )}
+            </div>
 
-          <div className="file--upload">
-            <label htmlFor="licenseUrl" className="file--label">
-              <p>Upload giấy phép cá nhân</p>
-            </label>
-            <input
-              type="file"
-              id="licenseUrl"
-              name="licenseUrl"
-              className={`form-control ${errors.licenseUrl ? "is-invalid" : ""}`}
-              onChange={handleFileChange}
-              accept="image/*"
-            />
-            {errors.licenseUrl && <div className="error-message">{errors.licenseUrl}</div>}
-          </div>
+            <div className="form-group-custom col-12">
+              <div className="file--upload">
+                <p style={{ marginBottom: '5px', fontWeight: '600', color: '#555' }}>Upload giấy phép cá nhân:</p>
 
-          <button type="submit">Đăng ký</button>
+                <div className="file--upload-input-group">
+                  {/* Nút Label đóng vai trò là nút "Choose File" đã được style */}
+                  <label htmlFor="licenseUrl" className="file--label-button">
+                    Chọn File
+                  </label>
+
+                  {/* Hiển thị tên file đã chọn, hoặc thông báo nếu chưa chọn */}
+                  <span className="file--name">
+                    {file ? file.name : 'Chưa có file nào được chọn'}
+                  </span>
+                </div>
+
+                {/* Input type="file" thực tế, được ẩn */}
+                <input
+                  type="file"
+                  id="licenseUrl"
+                  name="licenseUrl"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                // Chúng ta không cần className is-invalid ở đây vì nó được ẩn
+                />
+                {errors.licenseUrl && <div className="error-message">{errors.licenseUrl}</div>}
+              </div>
+            </div>
+
+            <div className="col-12">
+              <button type="submit">Đăng ký</button>
+            </div>
+          </div>
         </form>
         <div className="sign--up--footer">
           <div className="sign--up--link">
