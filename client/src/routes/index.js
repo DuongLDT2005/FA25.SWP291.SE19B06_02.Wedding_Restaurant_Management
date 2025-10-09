@@ -57,7 +57,7 @@ function AppRoutes() {
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
 
-        <Route path="/admin" element={<DefaultLayout />}>
+        <Route path="/admin/*" element={<DefaultLayout />}>
           <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
           <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
         </Route>

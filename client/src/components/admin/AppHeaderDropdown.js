@@ -23,7 +23,7 @@ import {
 
 import CIcon from "@coreui/icons-react";
 
-const avatar8 = "demo.png"
+const avatar8 = "https://static0.gamerantimages.com/wordpress/wp-content/uploads/2022/12/mrbeast-gray-background.jpg"
 
 const AppHeaderDropdown = () => {
   return (

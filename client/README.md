@@ -87,6 +87,8 @@ npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-
 npm install lucide-react
 ### Install bootstrap icon
 npm install bootstrap-icons
+
+## Phần admin Cần tải : 
 ### Install @coreui/react
 npm install @coreui/react
 ### Install recharts
@@ -101,6 +103,12 @@ npm install bootstrap @coreui/coreui @coreui/chartjs
 
 npm install react-redux
 npm install @reduxjs/toolkit react-redux
+
+npm install simplebar-react
+npm install sass --save-dev
+
+npm install dayjs
+npm install recharts
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
 ### Install jspdf

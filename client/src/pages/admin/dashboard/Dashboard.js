@@ -1,401 +1,300 @@
-import React from "react";
-import classNames from "classnames";
-import { Table } from 'react-bootstrap';
+// src/pages/admin/DashboardPage.js
+import React, { useState, useMemo } from "react";
 import {
-  CAvatar,
-  CButton,
-  CButtonGroup,
   CCard,
   CCardBody,
-  CCardFooter,
   CCardHeader,
-  CCol,
-  CProgress,
   CRow,
+  CCol,
+  CFormSelect,
+  CFormInput,
+  CButton,
+  CBadge,
+  CTable,
+  CTableBody,
   CTableDataCell,
   CTableHeaderCell,
   CTableRow,
 } from "@coreui/react";
-import CIcon from "@coreui/icons-react";
 import {
-  cibCcAmex,
-  cibCcApplePay,
-  cibCcMastercard,
-  cibCcPaypal,
-  cibCcStripe,
-  cibCcVisa,
-  cifBr,
-  cifEs,
-  cifFr,
-  cifIn,
-  cifPl,
-  cifUs,
-  cilCloudDownload,
-  cilPeople,
-  cilUser,
-  cilUserFemale,
-} from "@coreui/icons";
+  BarChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import dayjs from "dayjs";
+import weekOfYear from "dayjs/plugin/weekOfYear";
+dayjs.extend(weekOfYear);
 
-import WidgetsBrand from "../widgets/WidgetsBrand";
-import WidgetsDropdown from "../widgets/WidgetsDropdown";
-import MainChart from "./MainChart";
+// 🧪 Mock Data
+const mockData = Array.from({ length: 90 }, (_, i) => {
+  const date = dayjs().subtract(i, "day");
+  return {
+    date: date.format("YYYY-MM-DD"),
+    revenue: Math.floor(Math.random() * 15000000) + 3000000,
+    bookings: Math.floor(Math.random() * 30) + 5,
+    cancellations: Math.floor(Math.random() * 10),
+    successful: Math.floor(Math.random() * 30) + 5,
+    newCustomers: Math.floor(Math.random() * 15),
+  };
+}).reverse();
 
-const avatar1 = "https://i.pravatar.cc/150?img=1";
-const avatar2 = "https://i.pravatar.cc/150?img=2";
-const avatar3 = "https://i.pravatar.cc/150?img=3";
-const avatar4 = "https://i.pravatar.cc/150?img=4";
-const avatar5 = "https://i.pravatar.cc/150?img=5";
-const avatar6 = "https://i.pravatar.cc/150?img=6";
+const mockPartners = ["Royal Palace", "Diamond Hall", "Paradise", "Hoa Sen"];
+const mockPartnerStats = mockPartners.map((p) => ({
+  partnerName: p,
+  totalRevenue: Math.floor(Math.random() * 300000000) + 50000000,
+  totalBookings: Math.floor(Math.random() * 800) + 200,
+}));
 
-const Dashboard = () => {
-  const digitalAnalytics = [
-    { title: "Visits", value: "29.703 Users", percent: 40, color: "success" },
-    { title: "Unique", value: "24.093 Users", percent: 20, color: "info" },
-    {
-      title: "Pageviews",
-      value: "78.706 Views",
-      percent: 60,
-      color: "warning",
-    },
-    { title: "New Users", value: "22.123 Users", percent: 80, color: "danger" },
-    {
-      title: "Bounce Rate",
-      value: "Average Rate",
-      percent: 40.15,
-      color: "primary",
-    },
-  ];
+const mockRecentCustomers = Array.from({ length: 8 }).map((_, i) => ({
+  name: `Customer ${i + 1}`,
+  email: `customer${i + 1}@mail.com`,
+  lastBooking: dayjs()
+    .subtract(Math.floor(Math.random() * 15), "day")
+    .format("DD/MM/YYYY"),
+  totalBookings: Math.floor(Math.random() * 10) + 1,
+}));
 
-  const timeSeriesMetrics = [
-    { title: "Monday", value1: 34, value2: 78 },
-    { title: "Tuesday", value1: 56, value2: 94 },
-    { title: "Wednesday", value1: 12, value2: 67 },
-    { title: "Thursday", value1: 43, value2: 91 },
-    { title: "Friday", value1: 22, value2: 73 },
-    { title: "Saturday", value1: 53, value2: 82 },
-    { title: "Sunday", value1: 9, value2: 69 },
-  ];
+const DashboardPage = () => {
+  const [viewMode, setViewMode] = useState("month");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const genderMetrics = [
-    { title: "Male", icon: cilUser, value: 53 },
-    { title: "Female", icon: cilUserFemale, value: 43 },
-  ];
+  // Lọc dữ liệu
+  const filteredData = useMemo(() => {
+    return mockData.filter((d) => {
+      const date = dayjs(d.date);
+      if (startDate && date.isBefore(dayjs(startDate))) return false;
+      if (endDate && date.isAfter(dayjs(endDate))) return false;
+      return true;
+    });
+  }, [startDate, endDate]);
 
+  // Gom nhóm
+  const groupedData = useMemo(() => {
+    const map = {};
+    filteredData.forEach((d) => {
+      let key = "";
+      if (viewMode === "day") key = dayjs(d.date).format("DD/MM/YYYY");
+      else if (viewMode === "week") {
+        const week = dayjs(d.date).week();
+        const month = dayjs(d.date).format("MM");
+        const year = dayjs(d.date).format("YYYY");
+        key = `Tuần ${week} (${month}/${year})`;
+      } else key = dayjs(d.date).format("MM/YYYY");
 
-  const UserMetrics = [
-    {
-      avatar: { src: avatar1, status: "success" },
-      user: {
-        name: "Yiorgos Avraamu",
-        new: true,
-        registered: "Jan 1, 2023",
-      },
-      country: { name: "USA", flag: cifUs },
-      usage: {
-        value: 50,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "success",
-      },
-      payment: { name: "Mastercard", icon: cibCcMastercard },
-      activity: "10 sec ago",
-    },
-    {
-      avatar: { src: avatar2, status: "danger" },
-      user: {
-        name: "Avram Tarasios",
-        new: false,
-        registered: "Jan 1, 2023",
-      },
-      country: { name: "Brazil", flag: cifBr },
-      usage: {
-        value: 22,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "info",
-      },
-      payment: { name: "Visa", icon: cibCcVisa },
-      activity: "5 minutes ago",
-    },
-    {
-      avatar: { src: avatar3, status: "warning" },
-      user: { name: "Quintin Ed", new: true, registered: "Jan 1, 2023" },
-      country: { name: "India", flag: cifIn },
-      usage: {
-        value: 74,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "warning",
-      },
-      payment: { name: "Stripe", icon: cibCcStripe },
-      activity: "1 hour ago",
-    },
-    {
-      avatar: { src: avatar4, status: "secondary" },
-      user: { name: "Enéas Kwadwo", new: true, registered: "Jan 1, 2023" },
-      country: { name: "France", flag: cifFr },
-      usage: {
-        value: 98,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "danger",
-      },
-      payment: { name: "PayPal", icon: cibCcPaypal },
-      activity: "Last month",
-    },
-    {
-      avatar: { src: avatar5, status: "success" },
-      user: {
-        name: "Agapetus Tadeáš",
-        new: true,
-        registered: "Jan 1, 2023",
-      },
-      country: { name: "Spain", flag: cifEs },
-      usage: {
-        value: 22,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "primary",
-      },
-      payment: { name: "Google Wallet", icon: cibCcApplePay },
-      activity: "Last week",
-    },
-    {
-      avatar: { src: avatar6, status: "danger" },
-      user: {
-        name: "Friderik Dávid",
-        new: true,
-        registered: "Jan 1, 2023",
-      },
-      country: { name: "Poland", flag: cifPl },
-      usage: {
-        value: 43,
-        period: "Jun 11, 2023 - Jul 10, 2023",
-        color: "success",
-      },
-      payment: { name: "Amex", icon: cibCcAmex },
-      activity: "Last week",
-    },
-  ];
+      if (!map[key]) {
+        map[key] = {
+          label: key,
+          revenue: 0,
+          bookings: 0,
+          cancellations: 0,
+          successful: 0,
+          newCustomers: 0,
+          count: 0,
+        };
+      }
+      map[key].revenue += d.revenue;
+      map[key].bookings += d.bookings;
+      map[key].cancellations += d.cancellations;
+      map[key].successful += d.successful;
+      map[key].newCustomers += d.newCustomers;
+      map[key].count++;
+    });
+    return Object.values(map);
+  }, [filteredData, viewMode]);
+
+  // Tính tổng
+  const totalRevenue = groupedData.reduce((s, d) => s + d.revenue, 0);
+  const totalBookings = groupedData.reduce((s, d) => s + d.bookings, 0);
+  const totalCancellations = groupedData.reduce(
+    (s, d) => s + d.cancellations,
+    0
+  );
+  const totalSuccessful = groupedData.reduce((s, d) => s + d.successful, 0);
+  const totalCustomers = groupedData.reduce((s, d) => s + d.newCustomers, 0);
+  const cancelRate = totalBookings
+    ? (totalCancellations / totalBookings) * 100
+    : 0;
+  const successRate = totalBookings
+    ? (totalSuccessful / totalBookings) * 100
+    : 0;
 
   return (
-    <>
-      {/* 
-        Cấu trúc sẽ đi theo như sau :
-        Header 
-        WidgetsDropDown -> Traffic (Start ---> End)
-        ->digitalAnalytics (Thông số kiểu Visit, Unique, Pageviews,...) -> WidgetsBrand -> Traffic & Sales 
-        -> timeSeriesMetrics (T2 --> CN) -> genderMetrics (giới tính) -> Social Media (Mạng xã hội)
-        -> UserMetrics(Thông tin users login gần nhất) 
-      */}
-
-
-      <WidgetsDropdown className="mb-4" />
+    <div>
+      {/* Bộ lọc */}
       <CCard className="mb-4">
+        <CCardHeader>Bộ lọc thời gian</CCardHeader>
         <CCardBody>
-          <CRow>
-            <CCol sm={5}>
-              <h4 id="traffic" className="card-title mb-0">
-                Traffic
-              </h4>
-              <div className="small text-body-secondary">
-                January - July 2023
-              </div>
-            </CCol>
-            <CCol sm={7} className="d-none d-md-block">
-              <CButton color="primary" className="float-end">
-                <CIcon icon={cilCloudDownload} />
-              </CButton>
-              <CButtonGroup className="float-end me-3">
-                {["Day", "Month", "Year"].map((value) => (
-                  <CButton
-                    color="outline-secondary"
-                    key={value}
-                    className="mx-0"
-                    active={value === "Month"}
-                  >
-                    {value}
-                  </CButton>
-                ))}
-              </CButtonGroup>
-            </CCol>
-          </CRow>
-          <MainChart />
-        </CCardBody>
-        <CCardFooter>
-          <CRow
-            xs={{ cols: 1, gutter: 4 }}
-            sm={{ cols: 2 }}
-            lg={{ cols: 4 }}
-            xl={{ cols: 5 }}
-            className="mb-2 text-center"
-          >
-            {digitalAnalytics.map((item, index, items) => (
-              <CCol
-                className={classNames({
-                  "d-none d-xl-block": index + 1 === items.length,
-                })}
-                key={index}
+          <CRow className="g-3 align-items-end">
+            <CCol md={3}>
+              <CFormSelect
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value)}
               >
-                <div className="text-body-secondary">{item.title}</div>
-                <div className="fw-semibold text-truncate">
-                  {item.value} ({item.percent}%)
-                </div>
-                <CProgress
-                  thin
-                  className="mt-2"
-                  color={item.color}
-                  value={item.percent}
-                />
-              </CCol>
-            ))}
+                <option value="day">Theo ngày</option>
+                <option value="week">Theo tuần</option>
+                <option value="month">Theo tháng</option>
+              </CFormSelect>
+            </CCol>
+            <CCol md={3}>
+              <CFormInput
+                type="date"
+                label="Từ ngày"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </CCol>
+            <CCol md={3}>
+              <CFormInput
+                type="date"
+                label="Đến ngày"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </CCol>
+            <CCol md={3}>
+              <CButton
+                color="secondary"
+                variant="outline"
+                onClick={() => {
+                  setStartDate("");
+                  setEndDate("");
+                }}
+              >
+                Reset
+              </CButton>
+            </CCol>
           </CRow>
-        </CCardFooter>
+        </CCardBody>
       </CCard>
-      <WidgetsBrand className="mb-4" withCharts />
+
+      {/*Widgets */}
+      <CRow className="mb-4">
+        {[
+          { title: "Doanh thu", value: `${totalRevenue.toLocaleString()} VND` },
+          { title: "Bookings", value: totalBookings },
+          { title: "Partner", value: mockPartnerStats.length },
+          { title: "Khách hàng mới", value: totalCustomers },
+          { title: "Tỉ lệ huỷ", value: `${cancelRate.toFixed(1)}%` },
+          { title: "Tỉ lệ thành công", value: `${successRate.toFixed(1)}%` },
+        ].map((item, i) => (
+          <CCol md={2} key={i} className="d-flex">
+            <CCard className="flex-fill">
+              <CCardBody
+                className="text-center d-flex flex-column justify-content-center"
+                style={{ minHeight: "120px" }}
+              >
+                <h6>{item.title}</h6>
+                <h4 style={{ fontWeight: "bold" }}>{item.value}</h4>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        ))}
+      </CRow>
+
+      {/* Biểu đồ */}
+      <CCard className="mb-4">
+        <CCardHeader>📈 Doanh thu & Booking</CCardHeader>
+        <CCardBody>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart
+              data={groupedData}
+              margin={{ top: 20, right: 30, left: 0, bottom: 50 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                interval={0}
+                angle={-15}
+                textAnchor="end"
+                height={70}
+              />
+              <YAxis yAxisId="left" orientation="left" />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip formatter={(val) => val.toLocaleString()} />
+              <Legend />
+              <Bar
+                yAxisId="left"
+                dataKey="revenue"
+                name="Doanh thu"
+                fill="#8884d8"
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="bookings"
+                name="Bookings"
+                stroke="#82ca9d"
+                dot={false}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </CCardBody>
+      </CCard>
+
+      {/* Bảng dưới */}
       <CRow>
-        <CCol xs>
-          <CCard className="mb-4">
-            <CCardHeader>Traffic {" & "} Sales</CCardHeader>
+        <CCol md={6}>
+          <CCard>
+            <CCardHeader>🏆 Top Partners</CCardHeader>
             <CCardBody>
-              <CRow>
-                <CCol xs={12} md={6} xl={6}>
-                  <CRow>
-                    <CCol xs={6}>
-                      <div className="border-start border-start-4 border-start-info py-1 px-3">
-                        <div className="text-body-secondary text-truncate small">
-                          New Clients
-                        </div>
-                        <div className="fs-5 fw-semibold">9,123</div>
-                      </div>
-                    </CCol>
-                    <CCol xs={6}>
-                      <div className="border-start border-start-4 border-start-danger py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">
-                          Recurring Clients
-                        </div>
-                        <div className="fs-5 fw-semibold">22,643</div>
-                      </div>
-                    </CCol>
-                  </CRow>
-                  <hr className="mt-0" />
-
-                  {timeSeriesMetrics.map((item, index) => (
-                    <div className="progress-group mb-4" key={index}>
-                      <div className="progress-group-prepend">
-                        <span className="text-body-secondary small">
-                          {item.title}
-                        </span>
-                      </div>
-                      <div className="progress-group-bars">
-                        <CProgress thin color="info" value={item.value1} />
-                        <CProgress thin color="danger" value={item.value2} />
-                      </div>
-                    </div>
-                  ))}
-                </CCol>
-                <CCol xs={12} md={6} xl={6}>
-                  <CRow>
-                    <CCol xs={6}>
-                      <div className="border-start border-start-4 border-start-warning py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">
-                          Pageviews
-                        </div>
-                        <div className="fs-5 fw-semibold">78,623</div>
-                      </div>
-                    </CCol>
-                    <CCol xs={6}>
-                      <div className="border-start border-start-4 border-start-success py-1 px-3 mb-3">
-                        <div className="text-body-secondary text-truncate small">
-                          Organic
-                        </div>
-                        <div className="fs-5 fw-semibold">49,123</div>
-                      </div>
-                    </CCol>
-                  </CRow>
-
-                  <hr className="mt-0" />
-
-                  {genderMetrics.map((item, index) => (
-                    <div className="progress-group mb-4" key={index}>
-                      <div className="progress-group-header">
-                        <CIcon className="me-2" icon={item.icon} size="lg" />
-                        <span>{item.title}</span>
-                        <span className="ms-auto fw-semibold">
-                          {item.value}%
-                        </span>
-                      </div>
-                      <div className="progress-group-bars">
-                        <CProgress thin color="warning" value={item.value} />
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="mb-5"></div>
-
-                  
-                </CCol>
-              </CRow>
-
-              <br />
-
-              <Table align="middle" className="mb-0 border" hover responsive>
-                <thead className="text-nowrap">
+              <CTable striped>
+                <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      <CIcon icon={cilPeople} />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">
-                      User
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">
-                      Usage
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary text-center">
-                      Payment Method
-                    </CTableHeaderCell>
-                    <CTableHeaderCell className="bg-body-tertiary">
-                      Activity
-                    </CTableHeaderCell>
+                    <CTableHeaderCell>#</CTableHeaderCell>
+                    <CTableHeaderCell>Đối tác</CTableHeaderCell>
+                    <CTableHeaderCell>Doanh thu</CTableHeaderCell>
+                    <CTableHeaderCell>Bookings</CTableHeaderCell>
                   </CTableRow>
-                </thead>
-                <tbody>
-                  {UserMetrics.map((item, index) => (
-                    <CTableRow v-for="item in tableItems" key={index}>
-                      <CTableDataCell className="text-center">
-                        <CAvatar
-                          size="md"
-                          src={item.avatar.src}
-                          status={item.avatar.status}
-                        />
-                      </CTableDataCell>
+                </CTableHead>
+                <CTableBody>
+                  {mockPartnerStats
+                    .sort((a, b) => b.totalRevenue - a.totalRevenue)
+                    .map((p, i) => (
+                      <CTableRow key={i}>
+                        <CTableDataCell>{i + 1}</CTableDataCell>
+                        <CTableDataCell>{p.partnerName}</CTableDataCell>
+                        <CTableDataCell>
+                          {p.totalRevenue.toLocaleString()}
+                        </CTableDataCell>
+                        <CTableDataCell>{p.totalBookings}</CTableDataCell>
+                      </CTableRow>
+                    ))}
+                </CTableBody>
+              </CTable>
+            </CCardBody>
+          </CCard>
+        </CCol>
+
+        <CCol md={6}>
+          <CCard>
+            <CCardHeader>👤 Khách hàng gần đây</CCardHeader>
+            <CCardBody>
+              <CTable striped>
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell>#</CTableHeaderCell>
+                    <CTableHeaderCell>Tên</CTableHeaderCell>
+                    <CTableHeaderCell>Email</CTableHeaderCell>
+                    <CTableHeaderCell>Lần đặt gần nhất</CTableHeaderCell>
+                    <CTableHeaderCell>Tổng Booking</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  {mockRecentCustomers.map((c, i) => (
+                    <CTableRow key={i}>
+                      <CTableDataCell>{i + 1}</CTableDataCell>
+                      <CTableDataCell>{c.name}</CTableDataCell>
+                      <CTableDataCell>{c.email}</CTableDataCell>
+                      <CTableDataCell>{c.lastBooking}</CTableDataCell>
                       <CTableDataCell>
-                        <div>{item.user.name}</div>
-                        <div className="small text-body-secondary text-nowrap">
-                          <span>{item.user.new ? "New" : "Recurring"}</span> |
-                          Registered: {item.user.registered}
-                        </div>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="d-flex justify-content-between text-nowrap">
-                          <div className="fw-semibold">{item.usage.value}%</div>
-                          <div className="ms-3">
-                            <small className="text-body-secondary">
-                              {item.usage.period}
-                            </small>
-                          </div>
-                        </div>
-                        <CProgress
-                          thin
-                          color={item.usage.color}
-                          value={item.usage.value}
-                        />
-                      </CTableDataCell>
-                      <CTableDataCell className="text-center">
-                        <CIcon size="xl" icon={item.payment.icon} />
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <div className="small text-body-secondary text-nowrap">
-                          Last login
-                        </div>
-                        <div className="fw-semibold text-nowrap">
-                          {item.activity}
-                        </div>
+                        <CBadge color="info">{c.totalBookings}</CBadge>
                       </CTableDataCell>
                     </CTableRow>
                   ))}
@@ -405,8 +304,8 @@ const Dashboard = () => {
           </CCard>
         </CCol>
       </CRow>
-    </>
+    </div>
   );
 };
 
-export default Dashboard;
+export default DashboardPage;
