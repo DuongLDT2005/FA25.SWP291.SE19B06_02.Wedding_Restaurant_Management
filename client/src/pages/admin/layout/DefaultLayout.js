@@ -1,4 +1,6 @@
-import {AppContent, AppSidebar, AppFooter, AppHeader} from '../header/index'
+import {AppContent, AppSidebar, AppHeader} from '../../../components/admin/index'
+
+
 
 const DefaultLayout = () => {
     return (
@@ -9,10 +11,10 @@ const DefaultLayout = () => {
                 <div className='body flex-grow-1'>
                     <AppContent/>
                 </div>
-                <AppFooter/>
             </div>
         </div>
     )
 }
 
 export default DefaultLayout
+

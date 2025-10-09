@@ -22,12 +22,15 @@
     "bootstrap": "^5.3.1",
     "bootstrap-icons": "^1.13.1",
     "classnames": "^2.5.1",
+    "dayjs": "^1.11.18",
     "lucide-react": "^0.544.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.1",
     "react-scripts": "^5.0.1",
+    "recharts": "^3.2.1",
+    "simplebar-react": "^3.3.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -53,5 +56,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "sass": "^1.93.2"
   }
 }

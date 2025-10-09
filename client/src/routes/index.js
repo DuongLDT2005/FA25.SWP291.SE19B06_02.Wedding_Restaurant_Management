@@ -18,7 +18,7 @@ function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
 
-        <Route path="/admin" element={<DefaultLayout />}>
+        <Route path="/admin/*" element={<DefaultLayout />}>
           <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
           <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
         </Route>
