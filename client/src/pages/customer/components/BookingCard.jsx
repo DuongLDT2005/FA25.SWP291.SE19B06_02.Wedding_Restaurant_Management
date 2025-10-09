@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import ScrollToTopButton from "../../../components/ScrollToTopButton";
 const statusColor = { 0: "#e67e22", 1: "#27ae60", 2: "#c0392b", 3: "#2980b9", 4: "#2ecc71" };
 const STATUS_BANNERS = {
   0: { text: "ĐANG CHỜ", color: statusColor[0] },
