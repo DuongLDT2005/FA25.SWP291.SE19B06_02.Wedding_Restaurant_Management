@@ -1,2 +1,49 @@
 Sửa lại phần address sẽ thành 1 object ( Tức là sẽ có thể nhập vào theo - số nhà, đường, phường),
 khi show ra thì in ra adress với các thuộc tính đó.
+
+
+
+Format tiền lại ở dashboard
+
+Tạo thêm 1 trang thông báo, chèn trước cái biểu đồ ( Cứ có thông báo sẽ gửi về đó trước )
+
+Các management phải có thanh search Bar, phải có cột Created At
+
+Filter lọc ra thằng nào cus thằng nào part
+
+UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User,
+
+License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng)
+
+License tách ra thành 2 tab, 1 phần approve partner, 1 phần approve Commission 
+
+Restaurant Thiếu sảnh, menu, dish,v.v  ( Details phải rõ hơn )
+
+Dish sẽ có category 
+
+Thiếu create ở Event Type với Amanities
+
+Cải thiện booking, Trong booking Details phải thấy được payment.
+
+Payment List bỏ action
+
+Payment phải có xem chi tiết
+
+Payment đừng để tạo payout, nào đến payout thì sẽ hiện bên payment list complete thì mới hiện action " Đánh dấu đã trả " ( List hiện để remind tới ngày phải payout)
+
+Vậy là 2 bảng, 1 cọc 1 remaining
+
+Payment phải có status ( release - Đã payout hay chưa)
+
+Review không có status, Report phải xem chi tiết
+
+Report có 2 loại, 1 loại report nhà hàng, 1 loại report reviews
+
+Reviews, reports không có xoá, chỉ có ẩn (xoá mềm), 
+
+Analytics có xuất file 
+
+Booking Detail phải có hợp đồng ( Tuỳ status )
+
+Check lại database ( Bảng System setting ở dưới cùng có dữ liệu mẫu )
+

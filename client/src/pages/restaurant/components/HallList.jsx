@@ -1,14 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
-export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
-  // NEW: map tên category -> code BookingForm dùng
-  const CATEGORY_NAME_MAP = {
-    "Món khai vị": "APPETIZER",
-    "Khai vị": "APPETIZER",
-    "Món chính": "MAIN",
-    "Tráng miệng": "DESSERT"
-  };
 
   // NEW: chuyển menus có cấu trúc categories -> menus.dishes phẳng
   function normalizeMenus(menus = []) {
@@ -64,16 +56,24 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
     sessionStorage.setItem("selectedHallId", String(hall.id));
   };
 
+  const handleClick = () => {
+    navigate('/bookingForm');
+  }
   return (
     <div>
       <h4 className="section-title">Danh sách sảnh</h4>
 
       {restaurant.halls.map((hall) => (
-        <div key={hall.id} className="card mb-4 shadow-sm">
+        <div key={hall.id} className="card mb-4"
+          style={{
+            boxShadow: "0 4px 6px rgba(0,0,0,0.25)",
+            border: "none"
+          }}
+        >
           <div className="row g-0 p-3">
             <div className="col-md-3 d-flex align-items-center">
               <img
-                src={hall.images[0]}
+                src={hall.images[0]?.imageURL}
                 alt={hall.name}
                 className="img-fluid rounded w-100"
                 style={{ height: "180px", objectFit: "cover" }}
@@ -96,20 +96,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
               </div>
 
               <div className="card-footer bg-transparent border-0 text-end">
-                {role === "CUSTOMER" && (
-
-                  <Link
-                    to="/bookingForm"
-                    className="btn btn-primary theme-btn-primary px-3 py-2 fw-semibold"
-                    onClick={() => handleBookingClick(hall)}
-                  >Gửi yêu cầu đặt chỗ</Link>
-                )}
-                {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-                  <div className="d-flex justify-content-end gap-2">
-                    <button className="btn btn-outline-primary">Sửa sảnh</button>
-                    <button className="btn btn-outline-danger">Xóa sảnh</button>
-                  </div>
-                )}
+                <button className="requestBtn" onClick={handleClick} >Gửi yêu cầu đặt chỗ</button>
               </div>
             </div>
           </div>
@@ -138,7 +125,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
                   <div className="col-md-6">
                     <ImageCarousel
                       id={`hallCarousel-${restaurant.selectedHall.id}`}
-                      images={restaurant.selectedHall.images}
+                      images={restaurant.selectedHall.images.map(img => img.imageURL)}
                     />
                   </div>
                   <div className="col-md-6">

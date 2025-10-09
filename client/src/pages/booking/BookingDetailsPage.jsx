@@ -22,47 +22,38 @@ const BookingDetailsPage = () => {
 
     useEffect(() => {
         if (!hasLoaded) {
-            // 1. state từ Link
+            // 1. Kiểm tra sessionStorage trước (đồng bộ với PaymentPage)
+            const storedBooking = sessionStorage.getItem("currentBooking");
+            if (storedBooking) {
+                try {
+                    const bookingData = JSON.parse(storedBooking);
+                    setBooking(bookingData);
+                    setLoading(false);
+                    setHasLoaded(true);
+                    return;
+                } catch (e) {
+                    console.error("Error parsing stored booking:", e);
+                }
+            }
+            
+            // 2. state từ Link
             if (location.state?.booking) {
                 setBooking(location.state.booking);
                 setLoading(false);
                 setHasLoaded(true);
                 return;
             }
-            // 2. sessionStorage key chung
-            const stored = sessionStorage.getItem("currentBooking");
-            if (stored) {
-                try {
-                    setBooking(JSON.parse(stored));
-                    setLoading(false);
-                    setHasLoaded(true);
-                    return;
-                } catch {}
-            }
+            
             // 3. fallback logic cũ
             fetchBookingDetails();
             setHasLoaded(true);
         }
-        
+
         // Kiểm tra trạng thái thanh toán từ URL parameter
         const paymentStatus = searchParams.get('payment');
         if (paymentStatus === '1') {
             setPaymentCompleted(true);
-            // Thêm dữ liệu thanh toán mock
-            if (booking) {
-                const mockPayment = {
-                    type: 0,
-                    amount: booking.totalAmount * 0.3, // 30% tiền cọc
-                    status: 1, // Đã thanh toán
-                    paymentMethod: 'Thẻ tín dụng',
-                    paymentDate: new Date().toISOString()
-                };
-                setBooking(prev => ({
-                    ...prev,
-                    payments: [mockPayment],
-                    status: 3 // DEPOSITED
-                }));
-            }
+            // Không tạo dữ liệu mock nữa, sử dụng dữ liệu từ sessionStorage
         } else if (paymentStatus === '0') {
             // Có param payment=0 -> trạng thái chờ thanh toán
             setPaymentCompleted(false);
@@ -103,7 +94,7 @@ const BookingDetailsPage = () => {
             // Nếu không có data từ form, tạo mock booking
             const selectedRestaurant = sessionStorage.getItem('selectedRestaurant');
             let restaurantData = null;
-            
+
             if (selectedRestaurant) {
                 restaurantData = JSON.parse(selectedRestaurant);
             }
@@ -183,7 +174,7 @@ const BookingDetailsPage = () => {
                     restaurantSignature: null
                 }
             };
-            
+
             setBooking(mockBooking);
             setLoading(false);
             setHasLoaded(true);
@@ -405,8 +396,8 @@ const BookingDetailsPage = () => {
                                                 <i className="fas fa-calendar-alt"></i> Thông tin đặt tiệc
                                             </h5>
                                             {!isApproved && (
-                                                <button 
-                                                    className="btn btn-sm btn-outline-light"
+                                                <button
+                                                    className="btn btn-sm btn-edit"
                                                     onClick={handleEditToggle}
                                                 >
                                                     <i className="fas fa-edit"></i> {isEditing ? 'Hủy' : 'Chỉnh sửa'}
@@ -419,8 +410,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Khách hàng:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="text" 
+                                                            <input
+                                                                type="text"
                                                                 className="form-control"
                                                                 value={editingData.customer?.fullName || ''}
                                                                 onChange={(e) => setEditingData({
@@ -435,8 +426,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Số điện thoại:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="text" 
+                                                            <input
+                                                                type="text"
                                                                 className="form-control"
                                                                 value={editingData.customer?.phone || ''}
                                                                 onChange={(e) => setEditingData({
@@ -451,8 +442,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Email:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="email" 
+                                                            <input
+                                                                type="email"
                                                                 className="form-control"
                                                                 value={editingData.customer?.email || ''}
                                                                 onChange={(e) => setEditingData({
@@ -482,17 +473,11 @@ const BookingDetailsPage = () => {
                                             </div>
                                             {isEditing && (
                                                 <div className="mt-3 text-end">
-                                                    <button 
+                                                    <button
                                                         className="btn btn-success me-2"
-                                                        onClick={handleSaveChanges}
+                                                        onClick={handleSaveChanges} style={{ color: 'white' }}
                                                     >
                                                         <i className="fas fa-save"></i> Lưu thay đổi
-                                                    </button>
-                                                    <button 
-                                                        className="btn btn-secondary"
-                                                        onClick={handleCancelEdit}
-                                                    >
-                                                        <i className="fas fa-times"></i> Hủy
                                                     </button>
                                                 </div>
                                             )}
@@ -511,8 +496,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Ngày tổ chức:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="date" 
+                                                            <input
+                                                                type="date"
                                                                 className="form-control"
                                                                 value={editingData.eventDetails?.eventDate || ''}
                                                                 onChange={(e) => setEditingData({
@@ -527,8 +512,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Thời gian bắt đầu:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="time" 
+                                                            <input
+                                                                type="time"
                                                                 className="form-control"
                                                                 value={editingData.eventDetails?.startTime || ''}
                                                                 onChange={(e) => setEditingData({
@@ -543,8 +528,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Thời gian kết thúc:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="time" 
+                                                            <input
+                                                                type="time"
                                                                 className="form-control"
                                                                 value={editingData.eventDetails?.endTime || ''}
                                                                 onChange={(e) => setEditingData({
@@ -559,8 +544,8 @@ const BookingDetailsPage = () => {
                                                     <div className="info-item">
                                                         <label>Số bàn:</label>
                                                         {isEditing ? (
-                                                            <input 
-                                                                type="number" 
+                                                            <input
+                                                                type="number"
                                                                 className="form-control"
                                                                 value={editingData.eventDetails?.tableCount || ''}
                                                                 onChange={(e) => setEditingData({
@@ -591,7 +576,7 @@ const BookingDetailsPage = () => {
                                             <div className="info-item mt-3">
                                                 <label>Yêu cầu đặc biệt:</label>
                                                 {isEditing ? (
-                                                    <textarea 
+                                                    <textarea
                                                         className="form-control"
                                                         rows="3"
                                                         value={editingData.eventDetails?.specialRequest || ''}
@@ -619,8 +604,8 @@ const BookingDetailsPage = () => {
                                                 <h6>Menu đã chọn:</h6>
                                                 {isEditing ? (
                                                     <div className="mb-3">
-                                                        <input 
-                                                            type="text" 
+                                                        <input
+                                                            type="text"
                                                             className="form-control mb-2"
                                                             value={editingData.menu?.name || ''}
                                                             onChange={(e) => setEditingData({
@@ -629,8 +614,8 @@ const BookingDetailsPage = () => {
                                                             })}
                                                             placeholder="Tên menu"
                                                         />
-                                                        <input 
-                                                            type="number" 
+                                                        <input
+                                                            type="number"
                                                             className="form-control"
                                                             value={editingData.menu?.price || ''}
                                                             onChange={(e) => setEditingData({
@@ -722,28 +707,28 @@ const BookingDetailsPage = () => {
                                                 <span>{booking.totalAmount.toLocaleString()} VNĐ</span>
                                             </div>
                                             <div className="mt-3">
-                                {booking.status === 0 && (
-                                    <>
-                                        <Link
-                                            to="/payment/new"
-                                            className="btn me-1 w-100"
-                                            style={{
-                                                backgroundColor: '#28a745',
-                                                color: '#fefaf9',
-                                                borderColor: '#28a745',
-                                                border: '2px solid #28a745',
-                                                padding: '8px 16px',
-                                                borderRadius: '20px',
-                                                fontSize: '14px',
-                                                fontWeight: 'bold',
-                                                textDecoration: 'none'
-                                            }}
-                                        >
-                                            <i className="fas fa-credit-card me-2"></i> Thanh toán
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
+                                                {booking.status === 0 && (
+                                                    <>
+                                                        <Link
+                                                            to="/payment/new"
+                                                            className="btn me-1 w-100"
+                                                            style={{
+                                                                backgroundColor: '#28a745',
+                                                                color: '#fefaf9',
+                                                                borderColor: '#28a745',
+                                                                border: '2px solid #28a745',
+                                                                padding: '8px 16px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '14px',
+                                                                fontWeight: 'bold',
+                                                                textDecoration: 'none'
+                                                            }}
+                                                        >
+                                                            <i className="fas fa-credit-card me-2"></i> Thanh toán
+                                                        </Link>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -804,14 +789,14 @@ const BookingDetailsPage = () => {
                                     {isApproved && !paymentCompleted && (
                                         <div className="alert alert-success text-center">
                                             <i className="fas fa-check-circle me-2"></i>
-                                            <strong>Đã đồng ý!</strong><br/>
+                                            <strong>Đã đồng ý!</strong><br />
                                             <small>Bạn có thể xem hợp đồng và thanh toán</small>
                                         </div>
                                     )}
                                     {paymentCompleted && (
                                         <div className="alert alert-info text-center">
                                             <i className="fas fa-credit-card me-2"></i>
-                                            <strong>Đã thanh toán cọc!</strong><br/>
+                                            <strong>Đã thanh toán cọc!</strong><br />
                                             <small>Bạn có thể xem hợp đồng và lịch sử thanh toán</small>
                                         </div>
                                     )}

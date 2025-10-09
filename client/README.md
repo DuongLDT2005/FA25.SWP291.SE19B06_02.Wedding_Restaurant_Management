@@ -76,6 +76,10 @@ npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fo
 npm install @fortawesome/fontawesome-free
 ## Install router-dom
 npm install react-router-dom
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs
 ## Install CoreUI
 npm install @coreui/react @coreui/coreui
 npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-react @coreui/react-chartjs @coreui/utils
@@ -83,10 +87,31 @@ npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-
 npm install lucide-react
 ### Install bootstrap icon
 npm install bootstrap-icons
+
+## Phần admin Cần tải : 
 ### Install @coreui/react
 npm install @coreui/react
+### Install recharts
+npm install recharts
+
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs
+
+### Install React-redux & toolkit
+
+npm install react-redux
+npm install @reduxjs/toolkit react-redux
+
+npm install simplebar-react
+npm install sass --save-dev
+
+npm install dayjs
+npm install recharts
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
+### Install jspdf
 ### Install npm install jspdf
 npm install jspdf
 ### Test

@@ -20,7 +20,7 @@ function getSessionUser() {
         token: parsed.token || parsed.accessToken || "testtoken"
       };
     }
-  } catch {}
+  } catch { }
   return {
     fullName: "Nguyễn Văn A",
     phone: "0901234567",
@@ -79,7 +79,7 @@ function getSelectedRestaurant() {
         halls: parsed.halls || [],
         services: parsed.services || []
       };
-    } catch {}
+    } catch { }
   }
   // Fallback demo data (giữ nguyên)
   return {
@@ -229,11 +229,13 @@ function BookingForm({ restaurant: propRestaurant }) {
     if (key === "menuIds") {
       if (opts.length) {
         // reset món không hợp lệ & mở popup
-        setForm(f => ({ ...f, dishIds: f.dishIds.filter(id => {
-          return restaurant.menus
-            .filter(m => opts.includes(String(m.id)))
-            .some(m => (m.dishes || []).some(d => d.id === id));
-        }) }));
+        setForm(f => ({
+          ...f, dishIds: f.dishIds.filter(id => {
+            return restaurant.menus
+              .filter(m => opts.includes(String(m.id)))
+              .some(m => (m.dishes || []).some(d => d.id === id));
+          })
+        }));
         setShowDishPicker(true);
       } else {
         setForm(f => ({ ...f, dishIds: [] }));
@@ -301,7 +303,7 @@ function BookingForm({ restaurant: propRestaurant }) {
       ?.filter(m => form.menuIds.includes(String(m.id)))
       .flatMap(m => m.dishes || []);
   }, [restaurant.menus, form.menuIds]);
-   // NEW: Selected menu names for popup header
+  // NEW: Selected menu names for popup header
   const selectedMenuNames = useMemo(() => {
     return form.menuIds
       .map(id =>
@@ -398,7 +400,7 @@ function BookingForm({ restaurant: propRestaurant }) {
           token: existing.token || user.token || "testtoken"
         })
       );
-    } catch {}
+    } catch { }
     console.log("SUBMIT CONTRACT PAYLOAD:", payload);
     setSubmitted(true);
     // TODO: call API
@@ -408,7 +410,7 @@ function BookingForm({ restaurant: propRestaurant }) {
       const selectedMenus = (restaurant.menus || []).filter(m =>
         form.menuIds.includes(String(m.id))
       );
-        const pricePerTable = selectedMenus.reduce((sum, m) => sum + (m.price || 0), 0);
+      const pricePerTable = selectedMenus.reduce((sum, m) => sum + (m.price || 0), 0);
       const totalPrice = pricePerTable * Number(form.tables || 0);
 
       // Build categories with selected dishes for details page
@@ -420,15 +422,15 @@ function BookingForm({ restaurant: propRestaurant }) {
             .filter(d => d.category === code)
             .map(d => ({ id: d.id, name: d.name }));
           if (!dishesForCat.length) return null; // skip empty category
-            return {
-              name: CATEGORY_LABELS[code] || code,
-              requiredQuantity: REQUIRED_DISH_QUANTITY[code] || dishesForCat.length,
-              dishes: dishesForCat
-            };
+          return {
+            name: CATEGORY_LABELS[code] || code,
+            requiredQuantity: REQUIRED_DISH_QUANTITY[code] || dishesForCat.length,
+            dishes: dishesForCat
+          };
         })
         .filter(Boolean);
       const bookingRecord = {
-        bookingID: Date.now(), // temp ID
+        bookingID: 201130, // temp ID
         status: 0, // Pending
         eventDate: form.eventDate,
         startTime: null,
@@ -461,7 +463,7 @@ function BookingForm({ restaurant: propRestaurant }) {
       sessionStorage.setItem("lastCreatedBookingID", String(bookingRecord.bookingID));
 
       // Navigate to booking list page (adjust path if different in your router)
-  navigate("/customer/bookings", { state: { justCreated: bookingRecord.bookingID } });
+      navigate("/customer/bookings", { state: { justCreated: bookingRecord.bookingID } });
     } catch (err) {
       console.error("Failed to persist booking for list page", err);
     }
@@ -511,7 +513,6 @@ function BookingForm({ restaurant: propRestaurant }) {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Usage & Menus */}
         <div className="mb-4">
@@ -619,7 +620,6 @@ function BookingForm({ restaurant: propRestaurant }) {
               <div className="form-text mb-0">Nhấn "Chọn / Sửa món" để chọn đủ số lượng mỗi danh mục.</div>
             </div>
           </div>
-        </div>
 
         {/* Event Details */}
         <div className="mb-4">
@@ -648,7 +648,6 @@ function BookingForm({ restaurant: propRestaurant }) {
               <textarea name="note" rows={4} value={form.note} onChange={handleChange} placeholder="Ví dụ: Yêu cầu trang trí tone trắng - vàng, bố trí sân khấu LED..." className="form-control" />
             </div>
           </div>
-        </div>
 
         {/* Summary */}
         <div className="mb-4">
@@ -666,12 +665,12 @@ function BookingForm({ restaurant: propRestaurant }) {
                     .map(id => restaurant.menus.find(m => String(m.id) === String(id))?.name)
                     .filter(Boolean)
                     .join(", ")
-                : "Chưa chọn"}
-            </div>
-            <div>
-              <strong>Món đã chọn:</strong>{" "}
-              {form.dishIds.length
-                ? Object.keys(CATEGORY_LABELS).map(cat => {
+                  : "Chưa chọn"}
+              </div>
+              <div>
+                <strong>Món đã chọn:</strong>{" "}
+                {form.dishIds.length
+                  ? Object.keys(CATEGORY_LABELS).map(cat => {
                     const names = form.dishIds
                       .map(id => {
                         const d = availableDishes.find(x => x.id === id && x.category === cat);
@@ -699,10 +698,10 @@ function BookingForm({ restaurant: propRestaurant }) {
                     form.eventDate,
                     EVENT_TIME_OPTIONS.find(o => o.value === form.eventTime)?.label
                   ].filter(Boolean).join(" - ")
-                : "Chưa chọn"}
+                  : "Chưa chọn"}
+              </div>
             </div>
           </div>
-        </div>
 
         <div className="d-flex flex-wrap gap-2 mb-3">
           <button type="submit" className="btn theme-btn-primary">Gửi yêu cầu</button>
