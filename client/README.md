@@ -111,3 +111,6 @@ npm install dayjs
 npm install recharts
 
 npm install sweetalert2
+### Phần nàyd dể xuất excel
+npm install xlsx file-saver
+npm install xlsx

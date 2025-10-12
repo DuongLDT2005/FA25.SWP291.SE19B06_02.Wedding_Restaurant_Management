@@ -1,6 +1,4 @@
 import React from "react";
-import NotificationsPage from "../pages/admin/notifications/NotificationsPage";
-
 const Dashboard = React.lazy(() =>
   import("../pages/admin/dashboard/Dashboard")
 );
@@ -17,17 +15,12 @@ const WidgetsBrand = React.lazy(() =>
 
 // Management
 const Users = React.lazy(() => import("../pages/admin/management/users/UserList"));
-
-
-
-const Partners = React.lazy(() => import("../pages/admin/management/partners/PartnerListPage"));
-const PartnerLicense = React.lazy(() => import("../pages/admin/management/partners/LicenseCommissionPage"));
+const PartnerLicense = React.lazy(() => import("../pages/admin/license/LicenseCommissionPage"));
 
 
 
 // Restaurants
 const RestaurantList = React.lazy(() => import("../pages/admin/restaurants/RestaurantListPage"));
-const RestaurantDetails = React.lazy(() => import("../pages/admin/restaurants/RestaurantDetails"));
 const EventTypes = React.lazy(() => import("../pages/admin/restaurants/EventTypesPage"));
 const Amenities = React.lazy(() => import("../pages/admin/restaurants/AmenitiesPage"));
 
@@ -35,6 +28,7 @@ const Amenities = React.lazy(() => import("../pages/admin/restaurants/AmenitiesP
 const BookingList = React.lazy(() => import("../pages/admin/operations/bookings/BookingListPage"));
 const BookingDetail = React.lazy(() => import("../pages/admin/operations/bookings/BookingDetailPage"));
 const PaymentList = React.lazy(() => import("../pages/admin/operations/payments/PaymentListPage"));
+const PaymentDetail = React.lazy(() => import("../pages/admin/operations/payments/PaymentDetailPage"));
 const Payouts = React.lazy(() => import("../pages/admin/operations/payments/PayoutsPage"));
 
 //Notifications
@@ -64,12 +58,10 @@ const routes = [
   
   // Management
   { path: "/users", name: "User Management", element: Users },
-  { path: "/partners", name: "Partner Management", element: Partners },
   { path: "/partner-license", name: "License Verification", element: PartnerLicense },
 
   // Restaurants
   { path: "/restaurants", name: "Restaurant List", element: RestaurantList },
-  { path: "/restaurants/:id", name: "Restaurant Details", element: RestaurantDetails },
   { path: "/event-types", name: "Event Types", element: EventTypes },
   { path: "/amenities", name: "Amenities", element: Amenities },
 
@@ -77,6 +69,7 @@ const routes = [
   { path: "/bookings", name: "Bookings", element: BookingList },
   { path: "/bookings/:id", name: "Booking Detail", element: BookingDetail },
   { path: "/payments", name: "Payments", element: PaymentList },
+  { path: "/payments/:id", name: "Payment Detail", element: PaymentDetail },
   { path: "/payouts", name: "Payouts", element: Payouts },
   
   //Notifications

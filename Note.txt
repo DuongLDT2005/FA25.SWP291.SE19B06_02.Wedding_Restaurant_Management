@@ -7,24 +7,25 @@ Dashboard cho cái đường dày hơn -> Done
 
 Tạo thêm 1 trang thông báo, chèn trước cái biểu đồ ( Cứ có thông báo sẽ gửi về đó trước ) -> Done
 
-Các management phải có thanh search Bar, phải có cột Created At
+Các management phải có thanh search Bar, phải có cột Created At -> Done
 
-Filter lọc ra thằng nào cus thằng nào part
+Filter lọc ra thằng nào cus thằng nào part -> Done
 
-UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User,
+UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User, -> Done
 
-Partner phải có thông tin tài khoản ngân hàng
+Partner phải có thông tin tài khoản ngân hàng  -> Done
 
-License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng)
+License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng) -> Done
 
-License tách ra thành 2 tab, 1 phần approve partner, 1 phần approve Commission 
+License tách ra thành 2 tab, 1 phần approve partner, 1 phần approve Commission -> Done
 
-Restaurant Thiếu sảnh, menu, dish,v.v  ( Details phải rõ hơn )
+Restaurant Thiếu sảnh, menu, dish,v.v  ( Details phải rõ hơn ) -> Done
 
-Dish sẽ có category 
+Dish sẽ có category -> Done
 
-Thiếu create ở Event Type với Amanities
+Thiếu create ở Event Type với Amanities -> Done
 
+[
 Cải thiện booking, Trong booking Details phải thấy được payment.
 
 Payment List bỏ action
@@ -36,14 +37,15 @@ Payment đừng để tạo payout, nào đến payout thì sẽ hiện bên pay
 Vậy là 2 bảng, 1 cọc 1 remaining
 
 Payment phải có status ( release - Đã payout hay chưa)
+] -> Tạm thời
 
-Review không có status, Report phải xem chi tiết
+Review không có status, Report phải xem chi tiết -> Done
 
-Report có 2 loại, 1 loại report nhà hàng, 1 loại report reviews
+Report có 2 loại, 1 loại report nhà hàng, 1 loại report reviews -> Done
 
-Reviews, reports không có xoá, chỉ có ẩn (xoá mềm), 
+Reviews, reports không có xoá, chỉ có ẩn (xoá mềm) -> Done
 
-Analytics có xuất file 
+Analytics có xuất file -> Done
 
 Booking Detail phải có hợp đồng ( Tuỳ status )
 

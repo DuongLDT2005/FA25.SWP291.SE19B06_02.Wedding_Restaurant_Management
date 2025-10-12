@@ -11,7 +11,6 @@ import {
   CButton,
 } from "@coreui/react";
 import {
-  BarChart,
   Bar,
   Line,
   XAxis,
@@ -24,8 +23,9 @@ import {
 } from "recharts";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
-dayjs.extend(weekOfYear);
+import exportToExcel from "../../../utils/exportToExcel";
 
+dayjs.extend(weekOfYear);
 
 // 🧪 Mock data
 const mockRevenue = Array.from({ length: 90 }, (_, i) => {
@@ -51,7 +51,7 @@ const RevenueAnalyticsPage = () => {
     });
   }, [startDate, endDate]);
 
-  // 2️⃣ Gom nhóm
+  // 2️⃣ Gom nhóm theo viewMode
   const groupedData = useMemo(() => {
     const map = {};
 
@@ -81,14 +81,30 @@ const RevenueAnalyticsPage = () => {
   // 3️⃣ Tổng doanh thu
   const totalRevenue = groupedData.reduce((sum, d) => sum + d.revenue, 0);
 
+  // 📤 Hàm xuất Excel
+  const handleExportExcel = () => {
+    const excelData = groupedData.map((item) => ({
+      "Khoảng thời gian": item.label,
+      "Tổng doanh thu (VND)": item.revenue,
+      "Số lượng giao dịch": item.count,
+    }));
+
+    exportToExcel(excelData, "Revenue_Analytics");
+  };
+
   return (
     <div>
-      <CRow className="mb-4">
+      <CRow className="mb-4 align-items-center">
         <CCol>
           <h4>📊 Revenue Analytics</h4>
           <p style={{ color: "#666" }}>
             Phân tích doanh thu theo ngày / tuần / tháng
           </p>
+        </CCol>
+        <CCol className="text-end">
+          <CButton color="success" onClick={handleExportExcel}>
+            📤 Xuất Excel
+          </CButton>
         </CCol>
       </CRow>
 
@@ -145,7 +161,7 @@ const RevenueAnalyticsPage = () => {
         <CCardBody>
           <h5>Tổng doanh thu: {formatFullCurrency(totalRevenue)}</h5>
           <p style={{ color: "#666" }}>
-            Tổng số bản ghi: {groupedData.length}
+            Tổng số khoảng thời gian: {groupedData.length}
           </p>
         </CCardBody>
       </CCard>

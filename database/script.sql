@@ -9,6 +9,7 @@ CREATE TABLE User (
     fullName VARCHAR(255) NOT NULL,
     phone VARCHAR(15) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    avatarURL VARCHAR(255) DEFAULT NULL,
     role TINYINT NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
@@ -19,16 +20,16 @@ CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
     weddingRole TINYINT NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     partnerName VARCHAR(255),
-    FOREIGN KEY (customerID) REFERENCES User(userID) ON DELETE CASCADE
+    FOREIGN KEY (customerID) REFERENCES User(userID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table RestaurantPartner
 CREATE TABLE RestaurantPartner (
     restaurantPartnerID INT PRIMARY KEY,
     licenseUrl VARCHAR(255) NOT NULL,
-    status TINYINT NOT NULL DEFAULT 0, -- 0: pending, 1: rejected, 2: negotiating, 3: active, 4: inactive
+    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: REJECTED, 2: NEGOTIATING, 3: ACTIVE, 4: INACTIVE
 	commissionRate DECIMAL(3,2) DEFAULT NULL CHECK (commissionRate >= 0 AND commissionRate <= 1),
-    FOREIGN KEY (restaurantPartnerID) REFERENCES User(userID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantPartnerID) REFERENCES User(userID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Address
@@ -49,9 +50,11 @@ CREATE TABLE Restaurant (
     hallCount INT DEFAULT 0,
     addressID INT NOT NULL,
     thumbnailURL VARCHAR(255) NOT NULL,
+    avgRating DECIMAL(2,1) DEFAULT 0,
+    totalReviews INT DEFAULT 0,
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON DELETE CASCADE,
-    FOREIGN KEY (addressID) REFERENCES Address(addressID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (addressID) REFERENCES Address(addressID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table RestaurantImage
@@ -59,7 +62,7 @@ CREATE TABLE RestaurantImage (
     imageID INT AUTO_INCREMENT PRIMARY KEY,
     restaurantID INT NOT NULL,
     imageURL VARCHAR(255) NOT NULL,
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table BankAccount
@@ -71,13 +74,13 @@ CREATE TABLE BankAccount (
     accountHolder VARCHAR(255) NOT NULL,
     branch VARCHAR(255),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantPartnerID) REFERENCES RestaurantPartner(restaurantPartnerID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Amenity
 CREATE TABLE Amenity (
     amenityID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL UNIQUE,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
 
@@ -100,7 +103,7 @@ CREATE TABLE Hall (
     area DECIMAL(7,2) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table HallImage
@@ -108,7 +111,7 @@ CREATE TABLE HallImage (
     imageID INT AUTO_INCREMENT PRIMARY KEY,
     hallID INT NOT NULL,
     imageURL VARCHAR(255) NOT NULL,
-    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON DELETE CASCADE
+    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Menu
@@ -117,18 +120,17 @@ CREATE TABLE Menu (
     restaurantID INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
+    imageURL VARCHAR(255),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table DishCategory
 CREATE TABLE DishCategory (
     categoryID INT AUTO_INCREMENT PRIMARY KEY,
-    restaurantID INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(50) NOT NULL UNIQUE,
     requiredQuantity INT DEFAULT 1 CHECK(requiredQuantity > 0),
-    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE ON UPDATE CASCADE
+    status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
 
 -- Table Dish
@@ -137,9 +139,10 @@ CREATE TABLE Dish (
     restaurantID INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     categoryID INT NOT NULL,
+    imageURL VARCHAR(255),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (categoryID) REFERENCES DishCategory(categoryID) ON DELETE CASCADE,
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    FOREIGN KEY (categoryID) REFERENCES DishCategory(categoryID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table DishMenu (many-to-many)
@@ -147,19 +150,43 @@ CREATE TABLE DishMenu (
     menuID INT NOT NULL,
     dishID INT NOT NULL,
     PRIMARY KEY (menuID, dishID),
-    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON DELETE CASCADE,
-    FOREIGN KEY (dishID) REFERENCES Dish(dishID) ON DELETE CASCADE
+    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (dishID) REFERENCES Dish(dishID) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+-- Table EventType
+CREATE TABLE EventType (
+    eventTypeID INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    status BIT NOT NULL DEFAULT 1
+);
+
+-- Table RestaurantEventType (many-to-many)
+CREATE TABLE RestaurantEventType (
+    restaurantID INT NOT NULL,
+    eventTypeID INT NOT NULL,
+    PRIMARY KEY (restaurantID, eventTypeID),
+
+    CONSTRAINT FK_RestaurantEventType_Restaurant
+        FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+
+    CONSTRAINT FK_RestaurantEventType_EventType
+        FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID)
+        ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Service
 CREATE TABLE Service (
     serviceID INT AUTO_INCREMENT PRIMARY KEY,
     restaurantID INT NOT NULL,
+    eventTypeID INT NOT NULL,
     name VARCHAR(100) NOT NULL,
     price DECIMAL(15,2) NOT NULL,
     unit VARCHAR(50),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Promotion
@@ -175,7 +202,7 @@ CREATE TABLE Promotion (
     endDate DATE NOT NULL,
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON DELETE CASCADE,
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE,
     CHECK (startDate <= endDate)
 );
 
@@ -184,14 +211,15 @@ CREATE TABLE PromotionService (
     promotionID INT NOT NULL,
     serviceID INT NOT NULL,
     PRIMARY KEY (promotionID, serviceID),
-    FOREIGN KEY (promotionID) REFERENCES Promotion(promotionID) ON DELETE CASCADE,
-    FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON DELETE CASCADE
+    FOREIGN KEY (promotionID) REFERENCES Promotion(promotionID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (serviceID) REFERENCES Service(serviceID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Booking
 CREATE TABLE Booking (
     bookingID INT AUTO_INCREMENT PRIMARY KEY,
     customerID INT NOT NULL,
+    eventTypeID INT NOT NULL,
     hallID INT NOT NULL,
     menuID INT NOT NULL,
     eventDate DATE NOT NULL,
@@ -199,15 +227,17 @@ CREATE TABLE Booking (
     endTime TIME NOT NULL,
     tableCount INT DEFAULT 1 CHECK(tableCount > 0),
     specialRequest VARCHAR(255),
-    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: CANCELLED, 3: DEPOSITED, 4: COMPLEDTED
-    totalAmount DECIMAL(15,2) NOT NULL,
+    status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: CANCELLED, 3: DEPOSITED, 4: COMPLEDTED, 5: REJECTED
+    originalPrice DECIMAL(15,2) NOT NULL,
     discountAmount DECIMAL(15,2) DEFAULT 0,
-    finalPrice DECIMAL(15,2) NOT NULL,
+    VAT DECIMAL(15,2) NOT NULL,
+    totalAmount DECIMAL(15,2) NOT NULL,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     checked BIT DEFAULT 0, -- 0: CHECKED, 1: UNCHECKED
-    FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON DELETE CASCADE,
-    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON DELETE CASCADE,
-    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON DELETE CASCADE
+    FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table BookingDish
@@ -309,8 +339,8 @@ CREATE TABLE Report (
     userID INT NOT NULL,
     restaurantID INT NOT NULL,
     reviewID INT,
-    targetType VARCHAR(20) NOT NULL,   
-    reasonType VARCHAR(30) NOT NULL,  
+    targetType VARCHAR(50) NOT NULL,   
+    reasonType VARCHAR(50) NOT NULL,  
     content VARCHAR(255),
     status TINYINT NOT NULL DEFAULT 0, -- 0: PENDING, 1: CONFIRMED, 2: REJECTED
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -327,4 +357,19 @@ CREATE TABLE Report (
     )
 );
 
+-- Table SystemSetting
+CREATE TABLE SystemSetting (
+    settingKey VARCHAR(100) PRIMARY KEY,
+    settingValue VARCHAR(255) NOT NULL,
+    category VARCHAR(50),
+    description VARCHAR(255),
+    updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Insert SystemSetting
+INSERT INTO SystemSetting (settingKey, settingValue, category, description)
+VALUES
+('VAT_RATE', '0.10', 'Finance', 'Thuế giá trị gia tăng mặc định 10%'),
+('BOOKING_DEPOSIT_PERCENTAGE', '0.30', 'Booking', 'Tỷ lệ tiền cọc khi khách đặt tiệc');
+-- ('SUPPORT_EMAIL', 'support@weddingvenue.vn', 'System', 'Email liên hệ hiển thị trong hệ thống', 1);
 
