@@ -27,7 +27,7 @@ import exportToExcel from "../../../utils/exportToExcel";
 
 dayjs.extend(weekOfYear);
 
-// 🧪 Mock data
+// 🧪 Mock data — có thể thay bằng API sau này
 const mockRevenue = Array.from({ length: 90 }, (_, i) => {
   const date = dayjs().subtract(i, "day");
   return {
@@ -51,7 +51,7 @@ const RevenueAnalyticsPage = () => {
     });
   }, [startDate, endDate]);
 
-  // 2️⃣ Gom nhóm theo viewMode
+  // 2️⃣ Gom nhóm theo chế độ xem
   const groupedData = useMemo(() => {
     const map = {};
 
@@ -78,6 +78,7 @@ const RevenueAnalyticsPage = () => {
     return Object.values(map);
   }, [filteredData, viewMode]);
 
+  // 3️⃣ Tổng doanh thu
   // 3️⃣ Tổng doanh thu
   const totalRevenue = groupedData.reduce((sum, d) => sum + d.revenue, 0);
 

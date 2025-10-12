@@ -11,9 +11,7 @@ Các management phải có thanh search Bar, phải có cột Created At -> Done
 
 Filter lọc ra thằng nào cus thằng nào part -> Done
 
-UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User, -> Done
-
-Partner phải có thông tin tài khoản ngân hàng  -> Done
+UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User,
 
 License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng) -> Done
 

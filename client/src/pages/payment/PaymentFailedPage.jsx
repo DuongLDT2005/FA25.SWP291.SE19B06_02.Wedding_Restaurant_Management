@@ -9,16 +9,19 @@ const PaymentFailedPage = () => {
     const [bookingData, setBookingData] = useState(null);
 
     useEffect(() => {
-        // Lấy dữ liệu thanh toán từ location state hoặc sessionStorage
-        const paymentInfo = location.state?.paymentData || JSON.parse(sessionStorage.getItem('paymentFailedData') || '{}');
-        const bookingInfo = location.state?.bookingData || JSON.parse(sessionStorage.getItem('bookingData') || '{}');
-        
-        setPaymentData(paymentInfo);
+        // Lấy dữ liệu booking từ sessionStorage (đồng bộ với PaymentPage)
+        const bookingInfo = JSON.parse(sessionStorage.getItem('currentBooking') || '{}');
         setBookingData(bookingInfo);
-
-        // Xóa dữ liệu tạm thời sau khi lấy
-        sessionStorage.removeItem('paymentFailedData');
-    }, [location.state]);
+        
+        // Tạo dữ liệu thanh toán thất bại
+        setPaymentData({
+            transactionId: 'TXN-' + Date.now(),
+            amount: bookingInfo.totalAmount * 0.3,
+            paymentMethod: 'Thẻ tín dụng',
+            paymentDate: new Date().toISOString(),
+            errorMessage: 'Giao dịch bị từ chối'
+        });
+    }, []);
 
     // Không cần các hàm này nữa vì sẽ dùng Link
 
@@ -143,7 +146,7 @@ const PaymentFailedPage = () => {
                                 </div>
                                 <div className="col-md-4 mb-3">
                                     <Link 
-                                        to={`/booking-details/${bookingData?.bookingID || '201130'}?payment=0`}
+                                        to={`/booking/${bookingData?.bookingID || Date.now().toString()}?payment=0`}
                                         className="btn btn-outline-primary w-100"
                                     >
                                         <i className="fas fa-arrow-left me-2"></i>

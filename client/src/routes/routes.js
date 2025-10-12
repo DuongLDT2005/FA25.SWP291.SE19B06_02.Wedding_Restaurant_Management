@@ -14,10 +14,9 @@ const WidgetsBrand = React.lazy(() =>
 
 
 // Management
-const Users = React.lazy(() => import("../pages/admin/management/users/UserList"));
-const PartnerLicense = React.lazy(() => import("../pages/admin/license/LicenseCommissionPage"));
-
-
+const Users = React.lazy(() => import("../pages/admin/management/users/UserListPage"));
+const Partners = React.lazy(() => import("../pages/admin/management/partners/PartnerListPage"));
+const PartnerLicense = React.lazy(() => import("../pages/admin/management/partners/LicenseCommissionPage"));
 
 // Restaurants
 const RestaurantList = React.lazy(() => import("../pages/admin/restaurants/RestaurantListPage"));
