@@ -373,3 +373,4 @@ VALUES
 ('BOOKING_DEPOSIT_PERCENTAGE', '0.30', 'Booking', 'Tỷ lệ tiền cọc khi khách đặt tiệc');
 -- ('SUPPORT_EMAIL', 'support@weddingvenue.vn', 'System', 'Email liên hệ hiển thị trong hệ thống', 1);
 
+
