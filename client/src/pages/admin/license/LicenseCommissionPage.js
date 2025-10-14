@@ -96,7 +96,7 @@ const LicenseCommissionPage = () => {
 
   const renderPartnerTable = () => (
     <CTable hover responsive>
-      <CTableHead color="light">
+      <CTableHead color="black">
         <CTableRow>
           <CTableHeaderCell>#</CTableHeaderCell>
           <CTableHeaderCell>Partner Name</CTableHeaderCell>
