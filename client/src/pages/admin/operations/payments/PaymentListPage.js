@@ -1,109 +1,102 @@
 import React, { useState } from "react";
 import {
-  CCard, CCardBody, CCardHeader,
-  CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
-  CButton, CModal, CModalHeader, CModalBody, CModalFooter, CFormInput, CToaster, CToast, CToastHeader, CToastBody
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
+  CButton,
+  CBadge,
 } from "@coreui/react";
+import { useNavigate } from "react-router-dom";
+
+const formatCurrency = (value) => value.toLocaleString("vi-VN") + " VND";
+
+const getStatusBadge = (status) => {
+  switch (status) {
+    case "Completed":
+      return <CBadge color="success">Hoàn thành</CBadge>;
+    case "Pending":
+      return <CBadge color="warning">Đang xử lý</CBadge>;
+    case "Failed":
+      return <CBadge color="danger">Thất bại</CBadge>;
+    default:
+      return <CBadge color="secondary">{status}</CBadge>;
+  }
+};
 
 const PaymentListPage = () => {
+  const navigate = useNavigate();
   const [payments] = useState([
-    { id: 1, customer: "Nguyễn Văn A", amount: 10000000, date: "2025-10-07", method: "Credit Card", status: "Completed", partner: "Sunflower Catering" },
-    { id: 2, customer: "Trần Thị B", amount: 8000000, date: "2025-10-06", method: "Bank Transfer", status: "Pending", partner: "Ocean Blue Events" },
+    {
+      id: 1,
+      customer: "Nguyễn Văn A",
+      partner: "Sunflower Catering",
+      amount: 10000000,
+      date: "2025-10-07",
+      method: "Credit Card",
+      status: "Completed",
+    },
+    {
+      id: 2,
+      customer: "Trần Thị B",
+      partner: "Ocean Blue Events",
+      amount: 8000000,
+      date: "2025-10-06",
+      method: "Bank Transfer",
+      status: "Pending",
+    },
   ]);
 
-  const [visible, setVisible] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState(null);
-  const [payoutAmount, setPayoutAmount] = useState("");
-  const [toast, setToast] = useState(null);
-
-  const showToast = (message, color = "success") => {
-    setToast(
-      <CToast color={color} autohide visible>
-        <CToastHeader closeButton>System</CToastHeader>
-        <CToastBody>{message}</CToastBody>
-      </CToast>
-    );
-  };
-
-  const handleCreatePayout = (payment) => {
-    setSelectedPayment(payment);
-    setPayoutAmount(payment.amount * 0.9); // ví dụ chi 90%
-    setVisible(true);
-  };
-
-  const handleConfirmPayout = () => {
-    // Ở đây ta có thể call API tạo payout tương ứng
-    showToast(`Payout created for ${selectedPayment.partner}: ${payoutAmount.toLocaleString()} VND`);
-    setVisible(false);
-    setSelectedPayment(null);
-  };
-
   return (
-    <>
-      <CToaster placement="top-end">{toast}</CToaster>
-
-      <CCard className="mb-4">
-        <CCardHeader>
-          <strong>Payment List</strong>
-        </CCardHeader>
-        <CCardBody>
-          <CTable hover responsive>
-            <CTableHead>
-              <CTableRow>
-                <CTableHeaderCell>#</CTableHeaderCell>
-                <CTableHeaderCell>Customer</CTableHeaderCell>
-                <CTableHeaderCell>Partner</CTableHeaderCell>
-                <CTableHeaderCell>Amount</CTableHeaderCell>
-                <CTableHeaderCell>Date</CTableHeaderCell>
-                <CTableHeaderCell>Method</CTableHeaderCell>
-                <CTableHeaderCell>Status</CTableHeaderCell>
-                <CTableHeaderCell>Action</CTableHeaderCell>
+    <CCard className="mb-4 shadow-sm">
+      <CCardHeader>
+        <strong>Payment List</strong>
+      </CCardHeader>
+      <CCardBody>
+        <CTable hover responsive>
+          <CTableHead color="dark">
+            <CTableRow>
+              <CTableHeaderCell>#</CTableHeaderCell>
+              <CTableHeaderCell>Khách hàng</CTableHeaderCell>
+              <CTableHeaderCell>Đối tác</CTableHeaderCell>
+              <CTableHeaderCell>Số tiền</CTableHeaderCell>
+              <CTableHeaderCell>Ngày</CTableHeaderCell>
+              <CTableHeaderCell>Phương thức</CTableHeaderCell>
+              <CTableHeaderCell>Trạng thái</CTableHeaderCell>
+              <CTableHeaderCell>Hành động</CTableHeaderCell>
+            </CTableRow>
+          </CTableHead>
+          <CTableBody>
+            {payments.map((p) => (
+              <CTableRow key={p.id}>
+                <CTableHeaderCell>{p.id}</CTableHeaderCell>
+                <CTableDataCell>{p.customer}</CTableDataCell>
+                <CTableDataCell>{p.partner}</CTableDataCell>
+                <CTableDataCell>{formatCurrency(p.amount)}</CTableDataCell>
+                <CTableDataCell>{p.date}</CTableDataCell>
+                <CTableDataCell>{p.method}</CTableDataCell>
+                <CTableDataCell>{getStatusBadge(p.status)}</CTableDataCell>
+                <CTableDataCell>
+                  <CButton
+                    size="sm"
+                    color="info"
+                    variant="outline"
+                    onClick={() => navigate(`/admin/payments/${p.id}`)}
+                  >
+                    Xem chi tiết
+                  </CButton>
+                </CTableDataCell>
               </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {payments.map((p) => (
-                <CTableRow key={p.id}>
-                  <CTableHeaderCell>{p.id}</CTableHeaderCell>
-                  <CTableDataCell>{p.customer}</CTableDataCell>
-                  <CTableDataCell>{p.partner}</CTableDataCell>
-                  <CTableDataCell>{p.amount.toLocaleString()} VND</CTableDataCell>
-                  <CTableDataCell>{p.date}</CTableDataCell>
-                  <CTableDataCell>{p.method}</CTableDataCell>
-                  <CTableDataCell>{p.status}</CTableDataCell>
-                  <CTableDataCell>
-                    <CButton color="success" size="sm" onClick={() => handleCreatePayout(p)}>
-                      Tạo Payout
-                    </CButton>
-                  </CTableDataCell>
-                </CTableRow>
-              ))}
-            </CTableBody>
-          </CTable>
-        </CCardBody>
-      </CCard>
-
-      <CModal visible={visible} onClose={() => setVisible(false)}>
-        <CModalHeader>
-          <strong>Tạo Payout cho {selectedPayment?.partner}</strong>
-        </CModalHeader>
-        <CModalBody>
-          <CFormInput
-            type="number"
-            label="Payout Amount"
-            value={payoutAmount}
-            onChange={(e) => setPayoutAmount(Number(e.target.value))}
-          />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" onClick={() => setVisible(false)}>
-            Hủy
-          </CButton>
-          <CButton color="primary" onClick={handleConfirmPayout}>
-            Xác nhận
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </>
+            ))}
+          </CTableBody>
+        </CTable>
+      </CCardBody>
+    </CCard>
   );
 };
 
