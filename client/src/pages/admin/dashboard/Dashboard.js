@@ -36,6 +36,8 @@ import {
 
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
+import "./Dashboard.css"; // 👈 Thêm dòng này
+
 dayjs.extend(weekOfYear);
 
 // 📨 Mock Notifications
@@ -144,14 +146,17 @@ const DashboardPage = () => {
   // Tính tổng
   const totalRevenue = groupedData.reduce((s, d) => s + d.revenue, 0);
   const totalBookings = groupedData.reduce((s, d) => s + d.bookings, 0);
-  const totalCancellations = groupedData.reduce((s, d) => s + d.cancellations, 0);
+  const totalCancellations = groupedData.reduce(
+    (s, d) => s + d.cancellations,
+    0
+  );
   const totalSuccessful = groupedData.reduce((s, d) => s + d.successful, 0);
   const totalCustomers = groupedData.reduce((s, d) => s + d.newCustomers, 0);
   const cancelRate = totalBookings ? (totalCancellations / totalBookings) * 100 : 0;
   const successRate = totalBookings ? (totalSuccessful / totalBookings) * 100 : 0;
 
   return (
-    <div>
+    <div className="dashboard-page">
       {/* 🔔 Notifications */}
       <CCard className="mb-4">
         <CCardHeader>🔔 Thông báo gần đây</CCardHeader>
