@@ -94,7 +94,9 @@ const BookingListPage = () => {
                     <CFormSelect
                       size="sm"
                       value={b.status}
-                      onChange={(e) => handleStatusChange(b.id, e.target.value)}
+                      onChange={(e) =>
+                        handleStatusChange(b.id, e.target.value)
+                      }
                     >
                       <option value="Pending">Pending</option>
                       <option value="Confirmed">Confirmed</option>

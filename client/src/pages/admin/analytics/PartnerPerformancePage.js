@@ -24,10 +24,18 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import * as XLSX from "xlsx"; // ✅ thêm dòng này
 import dayjs from "dayjs";
 
-// 📌 Mock partner performance data
-const partners = ["Nhà hàng Hoa Sen", "Royal Palace", "Diamond Hall", "Paradise", "Sunshine", "Golden Lotus"];
+const partners = [
+  "Nhà hàng Hoa Sen",
+  "Royal Palace",
+  "Diamond Hall",
+  "Paradise",
+  "Sunshine",
+  "Golden Lotus",
+];
+
 const mockPartnerData = Array.from({ length: 120 }, (_, i) => {
   const date = dayjs().subtract(i, "day").format("YYYY-MM-DD");
   return partners.map((p, idx) => ({
@@ -39,7 +47,6 @@ const mockPartnerData = Array.from({ length: 120 }, (_, i) => {
   }));
 }).flat();
 
-// 👉 Hàm format số ngắn gọn (K / M)
 const formatNumber = (num) => {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
   if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
@@ -50,7 +57,6 @@ const PartnerPerformancePage = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 🧠 Lọc dữ liệu theo khoảng thời gian
   const filteredData = useMemo(() => {
     return mockPartnerData.filter((d) => {
       const date = dayjs(d.date);
@@ -60,7 +66,6 @@ const PartnerPerformancePage = () => {
     });
   }, [startDate, endDate]);
 
-  // 📊 Tóm tắt theo partner
   const partnerSummary = useMemo(() => {
     const summary = filteredData.reduce((acc, d) => {
       if (!acc[d.partnerId]) {
@@ -78,13 +83,26 @@ const PartnerPerformancePage = () => {
     return Object.values(summary);
   }, [filteredData]);
 
-  const totalRevenue = partnerSummary.reduce((sum, p) => sum + p.totalRevenue, 0);
-  const totalBookings = partnerSummary.reduce((sum, p) => sum + p.totalBookings, 0);
+  const totalRevenue = partnerSummary.reduce(
+    (sum, p) => sum + p.totalRevenue,
+    0
+  );
+  const totalBookings = partnerSummary.reduce(
+    (sum, p) => sum + p.totalBookings,
+    0
+  );
 
-  // 🏆 Top 5 đối tác theo doanh thu
   const topPartners = [...partnerSummary]
     .sort((a, b) => b.totalRevenue - a.totalRevenue)
     .slice(0, 5);
+
+  // ✅ Hàm xuất Excel
+  const handleExportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(partnerSummary);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Partner Stats");
+    XLSX.writeFile(workbook, "partner_performance.xlsx");
+  };
 
   return (
     <div>
@@ -138,7 +156,8 @@ const PartnerPerformancePage = () => {
       <CCard className="mb-4">
         <CCardBody>
           <h5>
-            Tổng doanh thu: {totalRevenue.toLocaleString()} VND | Tổng bookings: {totalBookings}
+            Tổng doanh thu: {totalRevenue.toLocaleString()} VND | Tổng bookings:{" "}
+            {totalBookings}
           </h5>
           <p style={{ color: "#666" }}>
             Tổng số đối tác được thống kê: {partnerSummary.length}
@@ -163,18 +182,9 @@ const PartnerPerformancePage = () => {
                 textAnchor="end"
                 height={80}
               />
-              <YAxis
-                yAxisId="left"
-                orientation="left"
-                tickFormatter={formatNumber}
-              />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-              />
-              <Tooltip
-                formatter={(val) => val.toLocaleString()}
-              />
+              <YAxis yAxisId="left" orientation="left" tickFormatter={formatNumber} />
+              <YAxis yAxisId="right" orientation="right" />
+              <Tooltip formatter={(val) => val.toLocaleString()} />
               <Legend />
               <Bar
                 yAxisId="left"
@@ -193,9 +203,14 @@ const PartnerPerformancePage = () => {
         </CCardBody>
       </CCard>
 
-      {/* 🏆 Bảng xếp hạng top đối tác */}
+      {/* 🏆 Bảng top 5 + Nút Export */}
       <CCard>
-        <CCardHeader>🏆 Top 5 đối tác theo doanh thu</CCardHeader>
+        <CCardHeader className="d-flex justify-content-between align-items-center">
+          <span>🏆 Top 5 đối tác theo doanh thu</span>
+          <CButton color="success" onClick={handleExportExcel}>
+            📊 Xuất Excel
+          </CButton>
+        </CCardHeader>
         <CCardBody>
           <CTable hover responsive>
             <CTableHead>
@@ -211,7 +226,9 @@ const PartnerPerformancePage = () => {
                 <CTableRow key={p.partnerId}>
                   <CTableHeaderCell scope="row">{index + 1}</CTableHeaderCell>
                   <CTableDataCell>{p.partnerName}</CTableDataCell>
-                  <CTableDataCell>{p.totalRevenue.toLocaleString()} VND</CTableDataCell>
+                  <CTableDataCell>
+                    {p.totalRevenue.toLocaleString()} VND
+                  </CTableDataCell>
                   <CTableDataCell>{p.totalBookings}</CTableDataCell>
                 </CTableRow>
               ))}

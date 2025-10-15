@@ -2,43 +2,43 @@ import React, { useState } from "react";
 import {
   CCard, CCardBody, CCardHeader,
   CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
-  CFormSelect, CButton, CBadge,
+  CButton, CBadge,
   CToaster, CToast, CToastHeader, CToastBody,
-  CNav, CNavItem, CNavLink, CTabContent, CTabPane
+  CNav, CNavItem, CNavLink, CTabContent, CTabPane,
+  CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter
 } from "@coreui/react";
 
 const ReviewsReportsPage = () => {
   // ================= REVIEWS ==================
   const [reviews, setReviews] = useState([
-    { id: 1, customer: "Nguyễn Văn A", restaurant: "Sunflower Catering", rating: 5, comment: "Dịch vụ tuyệt vời!", date: "2025-10-06", status: "Approved" },
-    { id: 2, customer: "Trần Thị B", restaurant: "Ocean Blue Events", rating: 3, comment: "Phục vụ hơi chậm", date: "2025-10-05", status: "Pending" },
-    { id: 3, customer: "Lê Văn C", restaurant: "Green Garden Hall", rating: 1, comment: "Rất thất vọng!", date: "2025-10-04", status: "Rejected" },
+    { id: 1, customer: "Nguyễn Văn A", restaurant: "Sunflower Catering", rating: 5, comment: "Dịch vụ tuyệt vời!", date: "2025-10-06", hidden: false },
+    { id: 2, customer: "Trần Thị B", restaurant: "Ocean Blue Events", rating: 3, comment: "Phục vụ hơi chậm", date: "2025-10-05", hidden: false },
+    { id: 3, customer: "Lê Văn C", restaurant: "Green Garden Hall", rating: 1, comment: "Rất thất vọng!", date: "2025-10-04", hidden: true },
   ]);
 
-  const handleStatusChange = (id, newStatus) => {
-    setReviews(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
-    showToast(`Review #${id} status changed to "${newStatus}"`);
-  };
-
-  const handleDeleteReview = (id) => {
-    setReviews(prev => prev.filter(r => r.id !== id));
-    showToast(`Review #${id} deleted`, "danger");
+  const handleHideReview = (id) => {
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, hidden: !r.hidden } : r));
+    showToast(`Review #${id} ${reviews.find(r => r.id === id)?.hidden ? "đã hiện lại" : "đã ẩn"}`);
   };
 
   // ================= REPORTS ==================
   const [reports, setReports] = useState([
-    { id: 1, reviewId: 3, reporter: "Admin", reason: "Ngôn ngữ không phù hợp", date: "2025-10-06", status: "Pending" },
-    { id: 2, reviewId: 2, reporter: "Customer", reason: "Spam quảng cáo", date: "2025-10-05", status: "Resolved" },
+    { id: 1, type: "review", reviewId: 3, reporter: "Admin", reason: "Ngôn ngữ không phù hợp", date: "2025-10-06", hidden: false },
+    { id: 2, type: "restaurant", restaurant: "Sunflower Catering", reporter: "Customer", reason: "Quảng cáo sai sự thật", date: "2025-10-05", hidden: false },
   ]);
 
-  const handleReportStatusChange = (id, newStatus) => {
-    setReports(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
-    showToast(`Report #${id} marked as "${newStatus}"`);
+  const handleHideReport = (id) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, hidden: !r.hidden } : r));
+    showToast(`Report #${id} ${reports.find(r => r.id === id)?.hidden ? "đã hiện lại" : "đã ẩn"}`);
   };
 
-  const handleDeleteReport = (id) => {
-    setReports(prev => prev.filter(r => r.id !== id));
-    showToast(`Report #${id} deleted`, "danger");
+  // ================= MODAL XEM CHI TIẾT ==================
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleViewDetail = (report) => {
+    setSelectedReport(report);
+    setModalVisible(true);
   };
 
   // ================= TOAST ==================
@@ -61,18 +61,12 @@ const ReviewsReportsPage = () => {
 
       <CNav variant="tabs" role="tablist" className="mb-3">
         <CNavItem>
-          <CNavLink
-            active={activeTab === 1}
-            onClick={() => setActiveTab(1)}
-          >
+          <CNavLink active={activeTab === 1} onClick={() => setActiveTab(1)}>
             📝 Reviews
           </CNavLink>
         </CNavItem>
         <CNavItem>
-          <CNavLink
-            active={activeTab === 2}
-            onClick={() => setActiveTab(2)}
-          >
+          <CNavLink active={activeTab === 2} onClick={() => setActiveTab(2)}>
             📊 Reports
           </CNavLink>
         </CNavItem>
@@ -101,7 +95,10 @@ const ReviewsReportsPage = () => {
                 </CTableHead>
                 <CTableBody>
                   {reviews.map((r) => (
-                    <CTableRow key={r.id}>
+                    <CTableRow
+                      key={r.id}
+                      style={r.hidden ? { opacity: 0.5 } : {}}
+                    >
                       <CTableHeaderCell>{r.id}</CTableHeaderCell>
                       <CTableDataCell>{r.customer}</CTableDataCell>
                       <CTableDataCell>{r.restaurant}</CTableDataCell>
@@ -115,24 +112,16 @@ const ReviewsReportsPage = () => {
                       </CTableDataCell>
                       <CTableDataCell>{r.date}</CTableDataCell>
                       <CTableDataCell>
-                        <CFormSelect
-                          size="sm"
-                          value={r.status}
-                          onChange={(e) => handleStatusChange(r.id, e.target.value)}
-                        >
-                          <option value="Approved">Approved</option>
-                          <option value="Pending">Pending</option>
-                          <option value="Rejected">Rejected</option>
-                        </CFormSelect>
+                        {r.hidden ? <CBadge color="secondary">Ẩn</CBadge> : <CBadge color="success">Hiển thị</CBadge>}
                       </CTableDataCell>
                       <CTableDataCell>
                         <CButton
-                          color="danger"
+                          color={r.hidden ? "secondary" : "warning"}
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeleteReview(r.id)}
+                          onClick={() => handleHideReview(r.id)}
                         >
-                          Xóa
+                          {r.hidden ? "Hiện lại" : "Ẩn"}
                         </CButton>
                       </CTableDataCell>
                     </CTableRow>
@@ -154,7 +143,8 @@ const ReviewsReportsPage = () => {
                 <CTableHead>
                   <CTableRow>
                     <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Review ID</CTableHeaderCell>
+                    <CTableHeaderCell>Loại</CTableHeaderCell>
+                    <CTableHeaderCell>Đối tượng</CTableHeaderCell>
                     <CTableHeaderCell>Reporter</CTableHeaderCell>
                     <CTableHeaderCell>Reason</CTableHeaderCell>
                     <CTableHeaderCell>Date</CTableHeaderCell>
@@ -164,33 +154,36 @@ const ReviewsReportsPage = () => {
                 </CTableHead>
                 <CTableBody>
                   {reports.map((r) => (
-                    <CTableRow key={r.id}>
+                    <CTableRow
+                      key={r.id}
+                      style={r.hidden ? { opacity: 0.5 } : {}}
+                    >
                       <CTableHeaderCell>{r.id}</CTableHeaderCell>
                       <CTableDataCell>
-                        <a href={`/admin/reviews#review-${r.reviewId}`}>#{r.reviewId}</a>
+                        <CBadge color={r.type === "restaurant" ? "info" : "primary"}>
+                          {r.type === "restaurant" ? "Restaurant" : "Review"}
+                        </CBadge>
+                      </CTableDataCell>
+                      <CTableDataCell>
+                        {r.type === "restaurant" ? r.restaurant : `Review #${r.reviewId}`}
                       </CTableDataCell>
                       <CTableDataCell>{r.reporter}</CTableDataCell>
                       <CTableDataCell>{r.reason}</CTableDataCell>
                       <CTableDataCell>{r.date}</CTableDataCell>
                       <CTableDataCell>
-                        <CFormSelect
-                          size="sm"
-                          value={r.status}
-                          onChange={(e) => handleReportStatusChange(r.id, e.target.value)}
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Resolved">Resolved</option>
-                          <option value="Dismissed">Dismissed</option>
-                        </CFormSelect>
+                        {r.hidden ? <CBadge color="secondary">Ẩn</CBadge> : <CBadge color="success">Hiển thị</CBadge>}
                       </CTableDataCell>
-                      <CTableDataCell>
+                      <CTableDataCell className="d-flex gap-2">
+                        <CButton size="sm" color="info" variant="outline" onClick={() => handleViewDetail(r)}>
+                          Xem chi tiết
+                        </CButton>
                         <CButton
-                          color="danger"
+                          color={r.hidden ? "secondary" : "warning"}
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeleteReport(r.id)}
+                          onClick={() => handleHideReport(r.id)}
                         >
-                          Xóa
+                          {r.hidden ? "Hiện lại" : "Ẩn"}
                         </CButton>
                       </CTableDataCell>
                     </CTableRow>
@@ -201,6 +194,33 @@ const ReviewsReportsPage = () => {
           </CCard>
         </CTabPane>
       </CTabContent>
+
+      {/* Modal Xem Chi Tiết */}
+      <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Chi tiết Report</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {selectedReport && (
+            <>
+              <p><strong>ID:</strong> {selectedReport.id}</p>
+              <p><strong>Loại:</strong> {selectedReport.type}</p>
+              {selectedReport.type === "restaurant" ? (
+                <p><strong>Nhà hàng:</strong> {selectedReport.restaurant}</p>
+              ) : (
+                <p><strong>Review ID:</strong> {selectedReport.reviewId}</p>
+              )}
+              <p><strong>Reporter:</strong> {selectedReport.reporter}</p>
+              <p><strong>Lý do:</strong> {selectedReport.reason}</p>
+              <p><strong>Ngày:</strong> {selectedReport.date}</p>
+              <p><strong>Trạng thái:</strong> {selectedReport.hidden ? "Ẩn" : "Hiển thị"}</p>
+            </>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setModalVisible(false)}>Đóng</CButton>
+        </CModalFooter>
+      </CModal>
     </>
   );
 };
