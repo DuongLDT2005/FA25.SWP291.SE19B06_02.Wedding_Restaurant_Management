@@ -29,7 +29,7 @@ export default pool;
 // // connect to MongoDB
 
 import { ServerApiVersion, MongoClient } from "mongodb";
-const uri = "mongodb+srv://db_message:admin123@nosqldb.h0qwvyr.mongodb.net/?retryWrites=true&w=majority&appName=NosqlDB";
+const uri = process.env.MongoDB;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 export const client = new MongoClient(uri, {

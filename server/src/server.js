@@ -3,7 +3,7 @@ dotenv.config();
 
 import app from "./app.js";
 import db from "./config/db.js";
-
+import testSendOtp from "./services/testingServices.js";
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
@@ -14,6 +14,7 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+    testSendOtp("khiemtkqn123@gmail.com");
   } catch (err) {
     console.error("Database connection failed:", err.message);
     process.exit(1);
