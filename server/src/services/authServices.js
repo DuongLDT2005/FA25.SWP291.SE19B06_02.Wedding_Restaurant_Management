@@ -3,6 +3,7 @@ import UserDAO from "../dao/userDao.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { insertOtp } from "../dao/mongoDAO.js";
 // import Otp from "../dao/mongoDAO.js";
 
 
@@ -66,11 +67,7 @@ class AuthServices {
     }
     // Generate a one-time password (OTP)
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-
-    // Save the OTP and its expiration time in the database (or cache)
-    const otpExpiration = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
-    await Otp.create({ userId: user.userId, otp, otpExpiration });
-
+    insertOtp(email, otp);
     // Send the OTP via email
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -84,7 +81,7 @@ class AuthServices {
       from: process.env.GMAIL_USER,
       to: email,
       subject: "Your Password Reset OTP",
-      text: `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`,
+      text: `Your OTP for password reset is ${otp}. It will expire automatically.`,
     };
     // 
     await transporter.sendMail(mailOptions);
@@ -101,25 +98,25 @@ class AuthServices {
 
     res.status(200).json({ message: "Logged out successfully" });
   }
-  // static async verifyOtp(userId, otpInput) {
-  //     // Find OTP record for user
-  //     const otpRecord = await Otp.findOne({ userId });
-  //     if (!otpRecord) {
-  //         throw new Error("OTP not found");
-  //     }
-  //     // Check OTP match
-  //     if (otpRecord.otp !== otpInput) {
-  //         throw new Error("Invalid OTP");
-  //     }
-  //     // Check expiration
-  //     if (Date.now() > otpRecord.otpExpiration) {
-  //         throw new Error("OTP expired");
-  //     }
-  //     // OTP is valid
-  //     // Optionally, delete the OTP record after successful verification
-  //     await Otp.deleteOne({ userId });
-  //     return true;
-  // }
+  static async verifyOtp(userId, otpInput) {
+      // Find OTP record for user
+      const otpRecord = await Otp.findOne({ userId });
+      if (!otpRecord) {
+          throw new Error("OTP not found");
+      }
+      // Check OTP match
+      if (otpRecord.otp !== otpInput) {
+          throw new Error("Invalid OTP");
+      }
+      // Check expiration
+      if (Date.now() > otpRecord.otpExpiration) {
+          throw new Error("OTP expired");
+      }
+      // OTP is valid
+      // Optionally, delete the OTP record after successful verification
+      await Otp.deleteOne({ userId });
+      return true;
+  }
   
 }
 
