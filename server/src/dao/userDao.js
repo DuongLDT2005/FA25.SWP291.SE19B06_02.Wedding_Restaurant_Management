@@ -195,11 +195,11 @@ class UserDAO {
         return result.affectedRows > 0;
     }
 
-    static async updateUserInfo(id, user) {
-        const { email, fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate, partnerName, weddingRole } = user;
+    static async updateUserInfo(email, user) {
+        const { fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate, partnerName, weddingRole } = user;
 
         // Fetch the existing user data
-        const [existingUserRows] = await db.query('SELECT * FROM User WHERE userID = ?', [id]);
+        const [existingUserRows] = await db.query('SELECT * FROM User WHERE email = ?', [email]);
         if (existingUserRows.length === 0) {
             throw new Error('User not found');
         }

@@ -3,7 +3,7 @@ import UserDAO from "../dao/userDao.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { insertOtp } from "../dao/mongoDAO.js";
+import { deleteOtpByEmail, getOtpByEmail, insertOtp } from "../dao/mongoDAO.js";
 // import Otp from "../dao/mongoDAO.js";
 
 
@@ -56,9 +56,9 @@ class AuthServices {
     );
     return { user, token };
 }
-  static async resetPassword(userId, newPassword) {
+  static async resetPassword(email, newPassword) {
     const hashedPassword = await hashPassword(newPassword);
-    await UserDAO.updateUserInfo(userId, { password: hashedPassword });
+    await UserDAO.updateUserInfo(email, { password: hashedPassword });
   }
   static async forgotPassword(email) {
     const user = await UserDAO.findByEmail(email);
@@ -95,29 +95,25 @@ class AuthServices {
       throw new Error("Token not provided");
     }
 
-
-    res.status(200).json({ message: "Logged out successfully" });
+    // Here, you would add the token to your blacklist (not implemented in this example)
   }
-  static async verifyOtp(userId, otpInput) {
+  static async verifyOtp(email, otpInput) {
       // Find OTP record for user
-      const otpRecord = await Otp.findOne({ userId });
-      if (!otpRecord) {
-          throw new Error("OTP not found");
+      const otp = await getOtpByEmail(email);
+      if (!otp) {
+          throw new Error("OTP not found or expired");
       }
-      // Check OTP match
-      if (otpRecord.otp !== otpInput) {
+      if (otp.otp != otpInput) {
+        console.log(otpInput, otp.otp);
           throw new Error("Invalid OTP");
       }
-      // Check expiration
-      if (Date.now() > otpRecord.otpExpiration) {
-          throw new Error("OTP expired");
-      }
-      // OTP is valid
-      // Optionally, delete the OTP record after successful verification
-      await Otp.deleteOne({ userId });
+      console.log("OTP verified successfully");
+      deleteOtpByEmail(email);
       return true;
   }
-  
+  static async resetPassword(email, newPassword) {
+      const hashedPassword = await hashPassword(newPassword);
+      await UserDAO.updateUserInfo(email, { password: hashedPassword });
+  }
 }
-
 export default AuthServices;

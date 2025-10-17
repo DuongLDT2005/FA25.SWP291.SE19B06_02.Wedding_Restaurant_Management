@@ -35,12 +35,41 @@ class AuthController {
                 return res.status(400).json({ error: 'Email is required' });
             }
             await AuthServices.forgotPassword(email);
-            res.json({ message: 'Password reset email sent' });
+            //take otp from server then send email to user
+            res.json({ message: 'otp email sent' });
+            
         } catch (error) {
             console.error('Forgot password error:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
    }
+   static async verifyOtp(req, res) {
+        try {
+            const { email, otp } = req.body;
+            if (!email || !otp) {
+                return res.status(400).json({ error: 'Email and OTP are required' });
+            }
+            await AuthServices.verifyOtp(email, otp);
+            res.json({ message: 'OTP verified successfully' });
+        } catch (error) {
+            console.error('Verify OTP error:', error);
+            res.status(400).json({ error: error.message });
+        }
+    }
+    static async resetPassword(req, res) {
+        try {
+            const { email, newPassword } = req.body;
+            if (!email || !newPassword) {
+                return res.status(400).json({ error: 'Email and new password are required' });
+            }
+            await AuthServices.resetPassword(email, newPassword);
+            res.json({ message: 'Password reset successfully' });
+        }
+        catch (error) {
+            console.error('Reset password error:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
    static async signupOwner(req, res) {
         try {
             const ownerData = req.body;

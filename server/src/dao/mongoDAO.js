@@ -15,6 +15,10 @@ export function getCollection(collectionName, dbName = "userRestaurantsDB") {
     return client.db(dbName).collection(collectionName);
 }
 
+export function deleteOtpByEmail(email) {
+    const otps = getCollection("otps");
+    return otps.deleteOne({ email });
+}
 // take otp from collection otps
 export async function getOtpByEmail(email) {
     const otps = getCollection("otps");
@@ -22,20 +26,6 @@ export async function getOtpByEmail(email) {
 }
 
 // Kiểm tra OTP, xóa nếu hết hạn hoặc sau khi xác thực
-export async function verifyAndDeleteOtp(email, otp) {
-    const otps = getCollection("otps");
-    const record = await otps.findOne({ email, otp });
-    if (!record) return { valid: false, reason: "OTP không tồn tại" };
-
-    const now = new Date();
-    if (record.expiresAt < now) {
-        await otps.deleteOne({ _id: record._id }); // Xóa OTP hết hạn
-        return { valid: false, reason: "OTP đã hết hạn" };
-    }
-
-    await otps.deleteOne({ _id: record._id }); // Xóa OTP sau khi xác thực thành công
-    return { valid: true };
-}
 
 export async function insertOtp(email, otp) {
     const otps = getCollection("otps");
