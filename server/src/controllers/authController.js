@@ -1,4 +1,5 @@
 import AuthServices from "../services/AuthServices.js";
+import jwt from "jsonwebtoken";
 class AuthController {
    static async login(req, res) {
         try {
@@ -50,7 +51,13 @@ class AuthController {
                 return res.status(400).json({ error: 'Email and OTP are required' });
             }
             await AuthServices.verifyOtp(email, otp);
-            res.json({ message: 'OTP verified successfully' });
+                // Generate temporary token for password reset (valid 10 min)
+                const tempToken = jwt.sign(
+                    { email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "10m" }
+                );
+                res.status(200).json({ message: "OTP verified successfully", tempToken });
         } catch (error) {
             console.error('Verify OTP error:', error);
             res.status(400).json({ error: error.message });
@@ -58,9 +65,13 @@ class AuthController {
     }
     static async resetPassword(req, res) {
         try {
-            const { email, newPassword } = req.body;
-            if (!email || !newPassword) {
-                return res.status(400).json({ error: 'Email and new password are required' });
+            const { email, newPassword, tempToken } = req.body;
+            if (!email || !newPassword || !tempToken) {
+                return res.status(400).json({ error: 'Email, new password, and temporary token are required' });
+            }
+            const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+            if (decoded.email !== email) {
+                return res.status(400).json({ error: 'Invalid token for the provided email' });
             }
             await AuthServices.resetPassword(email, newPassword);
             res.json({ message: 'Password reset successfully' });

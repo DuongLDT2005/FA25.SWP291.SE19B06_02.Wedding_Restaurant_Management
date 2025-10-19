@@ -87,15 +87,16 @@ class AuthServices {
     await transporter.sendMail(mailOptions);
   }
   static async logout(req, res) {
-    // Since JWT tokens are stateless, you can implement a blacklist to invalidate tokens.
-    // Example: Add the token to a blacklist in your database or cache with an expiration time.
-
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       throw new Error("Token not provided");
     }
-
-    // Here, you would add the token to your blacklist (not implemented in this example)
+    // Thêm token vào blacklist trên MongoDB
+    const { getCollection } = await import("../dao/mongoDAO.js");
+    const blacklist = getCollection("blacklist");
+    // Lưu token với thời gian hết hạn (ví dụ: 1 giờ)
+    await blacklist.insertOne({ token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) });
+    res.status(200).json({ message: "Logged out successfully" });
   }
   static async verifyOtp(email, otpInput) {
       // Find OTP record for user

@@ -216,7 +216,7 @@ class UserDAO {
         // Update User table
         await db.query(
             'UPDATE User SET email = ?, fullName = ?, phone = ?, password = ?, role = ?, status = ? WHERE userID = ?',
-            [updatedEmail, updatedFullName, updatedPhone, updatedPassword, updatedRole, updatedStatus, id]
+            [updatedEmail, updatedFullName, updatedPhone, updatedPassword, updatedRole, updatedStatus, existingUser.userID]
         );
 
         // Update Owner table if the user is an owner
@@ -232,13 +232,13 @@ class UserDAO {
         if (role === userRole.customer) {
             await db.query(
                 'UPDATE Customer SET partnerName = ?, weddingRole = ? WHERE customerID = ?',
-                [partnerName || '', weddingRole || 0, id]
+                [partnerName || '', weddingRole || 0, email]
             );
-            return new Customer(id, email, fullName, phone, password, role, status, partnerName, weddingRole);
+            return new Customer(existingUser.id, email, fullName, phone, password, role, status, partnerName, weddingRole);
         }
 
         // Return updated User object for other roles
-        return new User(id, email, fullName, phone, password, role, status);
+        return new User(existingUser.id, email, fullName, phone, password, role, status);
     }
 
     static async deleteUser(id) {
