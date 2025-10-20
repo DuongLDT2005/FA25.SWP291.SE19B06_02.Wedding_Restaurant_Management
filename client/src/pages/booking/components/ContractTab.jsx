@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import jsPDF from "jspdf";
-
+import './ContractTabStyles.css';
 const ContractTab = ({ booking }) => {
-    const [isSigning, setIsSigning] = useState(false);
-    const [signature, setSignature] = useState('');
-    const [showPaymentRequiredModal, setShowPaymentRequiredModal] = useState(false);
+    const [selectedPdf, setSelectedPdf] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleDownloadPDF = () => {
         // Tạo PDF sử dụng jsPDF
@@ -84,125 +83,114 @@ const ContractTab = ({ booking }) => {
         return booking.payments && booking.payments.some(payment => payment.status === 1);
     };
 
-    const handleSignContract = async () => {
-        if (!signature.trim()) {
-            alert('Vui lòng nhập chữ ký của bạn');
+    // Partner-provided PDF URL (mock or from booking.contract)
+    const partnerPdfUrl = booking?.contract?.partnerPdfUrl
+        || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+
+    const handleChoosePdf = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') {
+            alert('Vui lòng chọn file PDF.');
             return;
         }
+        setSelectedPdf(file);
+    };
 
-        // Kiểm tra xem đã thanh toán chưa
-        if (!hasPaid()) {
-            setShowPaymentRequiredModal(true);
+    const handleUploadPdf = async () => {
+        if (!selectedPdf) {
+            alert('Vui lòng chọn file PDF để tải lên.');
             return;
         }
-
-        setIsSigning(true);
         try {
-            // Mock API call - thay thế bằng API thực tế
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // Update contract status
-            booking.contract.status = 1; // SIGNED
-            booking.contract.customerSignature = signature;
-            booking.contract.signedAt = new Date().toISOString();
-
-            alert('Ký hợp đồng thành công!');
-        } catch (error) {
-            console.error('Error signing contract:', error);
-            alert('Có lỗi xảy ra khi ký hợp đồng');
+            setIsUploading(true);
+            // Giả lập upload
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const objectUrl = URL.createObjectURL(selectedPdf);
+            // Lưu vào sessionStorage cho mock flow
+            const key = `customerUploadedContractPdf_${booking.bookingID}`;
+            sessionStorage.setItem(key, objectUrl);
+            // Gắn vào booking.contract nếu có
+            booking.contract = booking.contract || {};
+            booking.contract.customerUploadedPdf = objectUrl;
+            alert('Tải lên hợp đồng đã ký thành công!');
+        } catch (err) {
+            console.error(err);
+            alert('Tải lên thất bại, vui lòng thử lại.');
         } finally {
-            setIsSigning(false);
+            setIsUploading(false);
         }
     };
 
-    const handleCloseModal = () => {
-        setShowPaymentRequiredModal(false);
-    };
-
-    const getContractStatusText = (status) => {
-        const statusMap = {
-            0: { text: 'Chờ ký', class: 'contract-pending' },
-            1: { text: 'Đã ký', class: 'contract-signed' },
-            2: { text: 'Đã hủy', class: 'contract-cancelled' }
-        };
-        return statusMap[status] || { text: 'Không xác định', class: 'contract-unknown' };
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        return new Date(dateString).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    };
-
-    const contractStatus = getContractStatusText(booking.contract.status);
+    // Signing flow removed
 
     return (
         <div className="tab-pane fade show active">
             <div className="row">
                 <div className="col-lg-8">
-                    <div className="card contract-card">
+                    <div className="card contract-card custom-contract-card" >
                         <div className="card-header">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h5 className="card-title mb-0">
-                                    <i className="fas fa-file-pdf"></i> Hợp đồng dịch vụ
-                                </h5>
-                                <span className={`contract-status-badge ${contractStatus.class}`}>
-                                    {contractStatus.text}
-                                </span>
-                            </div>
+                            <h5 className="card-title mb-0">
+                                <i className="fas fa-file-pdf"></i> Hợp đồng dịch vụ
+                            </h5>
                         </div>
                         <div className="card-body">
-                            <div className="contract-preview">
-                                <div className="text-center mb-4">
-                                    <i className="fas fa-file-pdf" style={{ fontSize: '4rem', color: '#dc3545' }}></i>
-                                    <h4 className="mt-3">Hợp đồng dịch vụ tiệc cưới</h4>
+                            {booking?.contract?.customerUploadedPdf ? (
+                                // Hiển thị file PDF đã upload
+                                <div className="text-center">
+                                    <div className="mb-4">
+                                        <i className="fas fa-file-pdf text-success" style={{ fontSize: '4rem' }}></i>
+                                        <h4 className="mt-3 text-success">Hợp đồng đã ký</h4>
+                                        <p className="text-muted">
+                                            File PDF đã được tải lên thành công
+                                        </p>
+                                    </div>
+                                    <div className="d-flex justify-content-center gap-3">
+                                        <a
+                                            href={booking.contract.customerUploadedPdf}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="btn btn-lg"
+                                            style={{
+                                                backgroundColor: '#934',
+                                                color: '#fff',
+                                                borderColor: '#934'
+                                            }}
+                                        >
+                                            <i className="fas fa-eye me-2"></i>
+                                            Xem hợp đồng đã ký
+                                        </a>
+                                        <a
+                                            href={booking.contract.customerUploadedPdf}
+                                            download
+                                            className="btn btn-lg"
+                                            style={{
+                                                backgroundColor: '#6c757d',
+                                                color: '#fff',
+                                                borderColor: '#6c757d'
+                                            }}
+                                        >
+                                            <i className="fas fa-download me-2"></i>
+                                            Tải xuống
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : (
+                                // Hiển thị thông báo chưa có file
+                                <div className="text-center">
+                                    <i className="fas fa-file-pdf text-muted" style={{ fontSize: '4rem' }}></i>
+                                    <h4 className="mt-3 text-muted">Chưa có hợp đồng đã ký</h4>
                                     <p className="text-muted">
-                                        Số hợp đồng: HD-{booking.bookingID} | Ngày: {new Date().toLocaleDateString('vi-VN')}
+                                        Hợp đồng sẽ xuất hiện ở đây sau khi bạn tải lên file PDF đã ký
                                     </p>
                                 </div>
-
-                                <div className="contract-summary">
-                                    <div className="row">
-                                        <div className="col-md-6">
-                                            <h6>Thông tin khách hàng:</h6>
-                                            <p><strong>Họ tên:</strong> {booking.customer.fullName}</p>
-                                            <p><strong>Số điện thoại:</strong> {booking.customer.phone}</p>
-                                            <p><strong>Email:</strong> {booking.customer.email}</p>
-                                        </div>
-                                        <div className="col-md-6">
-                                            <h6>Thông tin nhà hàng:</h6>
-                                            <p><strong>Tên nhà hàng:</strong> {booking.restaurant.name}</p>
-                                            <p><strong>Địa chỉ:</strong> {booking.restaurant.address}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3">
-                                        <h6>Chi tiết sự kiện:</h6>
-                                        <p><strong>Loại sự kiện:</strong> {booking.eventType}</p>
-                                        <p><strong>Ngày tổ chức:</strong> {new Date(booking.eventDate).toLocaleDateString('vi-VN')}</p>
-                                        <p><strong>Thời gian:</strong> {booking.startTime} - {booking.endTime}</p>
-                                        <p><strong>Sảnh:</strong> {booking.hall.name}</p>
-                                        <p><strong>Số bàn:</strong> {booking.tableCount} bàn</p>
-                                        <p><strong>Menu:</strong> {booking.menu.name}</p>
-                                    </div>
-
-                                    <div className="mt-3">
-                                        <h6>Tổng chi phí:</h6>
-                                        <p className="h5 text-primary">{booking.totalAmount.toLocaleString()} VNĐ</p>
-                                    </div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 <div className="col-lg-4">
-                    <div className="card contract-actions-card">
+                    <div className="card contract-actions-card custom-contract-card" >
                         <div className="card-header">
                             <h5 className="card-title mb-0">
                                 <i className="fas fa-tools"></i> Thao tác
@@ -233,133 +221,65 @@ const ContractTab = ({ booking }) => {
                                 >
                                     <i className="fas fa-print"></i> In hợp đồng
                                 </button>
+                                {/* View partner-provided PDF before payment */}
+                                {!hasPaid() && (
+                                    <a
+                                        href={partnerPdfUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn w-100"
+                                        style={{
+                                            backgroundColor: '#0d6efd',
+                                            color: '#fff',
+                                            border: '2px solid #0d6efd'
+                                        }}
+                                    >
+                                        <i className="fas fa-file-pdf me-2"></i>
+                                        Xem hợp đồng (PDF) từ nhà hàng
+                                    </a>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="card contract-signature-card">
-                        <div className="card-header">
-                            <h5 className="card-title mb-0">
-                                <i className="fas fa-signature"></i> Ký hợp đồng
-                            </h5>
+                    {/* Upload signed PDF after payment */}
+                    {hasPaid() && (
+                        <div className="card mt-3 custom-contract-card">
+                            <div className="card-header">
+                                <h5 className="card-title mb-0">
+                                    <i className="fas fa-upload me-2"></i>
+                                    Tải lên hợp đồng đã ký (PDF)
+                                </h5>
+                            </div>
+                            <div className="card-body">
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    className="form-control mb-2"
+                                    onChange={handleChoosePdf}
+                                />
+                                <button
+                                    className="btn w-100"
+                                    onClick={handleUploadPdf}
+                                    disabled={isUploading}
+                                    style={{
+                                        backgroundColor: '#934',
+                                        color: '#fff',
+                                        borderColor: '#934'
+                                    }}
+                                >
+                                    {isUploading ? 'Đang tải lên...' : 'Tải lên PDF'}
+                                </button>
+                            </div>
                         </div>
-                        <div className="card-body">
-                            {booking.contract.customerSignature ? (
-                                <div className="signed-status">
-                                    <div className="text-center">
-                                        <i className="fas fa-check-circle text-success" style={{ fontSize: '3rem' }}></i>
-                                        <h6 className="mt-2 text-success">Đã ký hợp đồng</h6>
-                                        <p className="text-muted small">
-                                            Ký ngày: {formatDate(booking.contract.signedAt)}
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="signature-section">
-                                    {!hasPaid() ? (
-                                        <div className="alert alert-warning">
-                                            <i className="fas fa-exclamation-triangle me-2"></i>
-                                            <strong>Chưa thanh toán:</strong> Bạn cần thanh toán trước khi có thể ký hợp đồng.
-                                            <div className="mt-2">
-                                                <Link
-                                                    to={`/payment/${booking.bookingID}`}
-                                                    className="btn btn-warning btn-sm"
-                                                >
-                                                    <i className="fas fa-credit-card me-2"></i>
-                                                    Đi đến thanh toán
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="alert alert-success">
-                                            <i className="fas fa-check-circle me-2"></i>
-                                            <strong>Đã thanh toán:</strong> Bạn có thể ký hợp đồng.
-                                        </div>
-                                    )}
+                    )}
 
-                                    <div className="signature-input">
-                                        <label className="form-label">Chữ ký của bạn:</label>
-                                        <input
-                                            type="text"
-                                            className="form-control mb-3"
-                                            placeholder="Nhập chữ ký của bạn"
-                                            value={signature}
-                                            onChange={(e) => setSignature(e.target.value)}
-                                            disabled={!hasPaid()}
-                                        />
-                                        <button
-                                            className="btn btn-primary w-100"
-                                            onClick={handleSignContract}
-                                            disabled={isSigning || !hasPaid()}
-                                        >
-                                            {isSigning ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                                                    Đang ký...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="fas fa-signature me-2"></i>
-                                                    Ký hợp đồng
-                                                </>
-                                            )}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    {/* Signing removed */}
 
                 </div>
             </div>
 
-            {/* Payment Required Modal */}
-            {showPaymentRequiredModal && (
-                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h5 className="modal-title">
-                                    <i className="fas fa-exclamation-triangle text-warning me-2"></i>
-                                    Cần thanh toán trước
-                                </h5>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    onClick={handleCloseModal}
-                                ></button>
-                            </div>
-                            <div className="modal-body">
-                                <div className="text-center">
-                                    <i className="fas fa-credit-card text-warning" style={{ fontSize: '3rem' }}></i>
-                                    <h5 className="mt-3">Bạn cần thanh toán trước khi ký hợp đồng</h5>
-                                    <p className="text-muted">
-                                        Để ký hợp đồng, bạn phải hoàn thành thanh toán trước.
-                                        Sau khi thanh toán thành công, bạn sẽ có thể ký hợp đồng và xem lịch sử thanh toán.
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    onClick={handleCloseModal}
-                                >
-                                    Hủy
-                                </button>
-                                <Link
-                                    to={`/payment/${booking.bookingID}`}
-                                    className="btn btn-primary"
-                                    onClick={handleCloseModal}
-                                >
-                                    <i className="fas fa-credit-card me-2"></i>
-                                    Đi đến thanh toán
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Payment required modal removed */}
         </div>
     );
 };

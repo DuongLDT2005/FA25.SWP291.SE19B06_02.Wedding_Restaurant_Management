@@ -172,8 +172,12 @@ function ContentHomePage() {
                     </div>
                 </div>
             </div>
+            <div className="content--section">
+                <div className="container-fluid">
+                    <RestaurantType />
+                </div>
+            </div>
 
-            <RestaurantType />
 
             <div className="content--section">
                 <div className="container-fluid">
