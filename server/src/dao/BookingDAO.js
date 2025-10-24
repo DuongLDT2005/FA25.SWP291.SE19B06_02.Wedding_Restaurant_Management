@@ -1,63 +1,69 @@
 import db from "../config/db.js";
+import Booking from "../models/Booking.js";
 
 class BookingDAO {
-  // Tạo mới 1 booking cùng các thông tin con
-  async createBooking(bookingData) {
+  async createBooking(booking) {
     const connection = await db.getConnection();
     try {
       await connection.beginTransaction();
 
-      const {
-        customerID,
-        hallID,
-        bookingDate,
-        startTime,
-        endTime,
-        totalPrice,
-        status,
-        dishes = [],
-        services = [],
-        promotions = [],
-      } = bookingData;
+      const data = booking.toJSON();
 
-      // 1️⃣ Insert booking chính
       const [bookingResult] = await connection.query(
-        `INSERT INTO Booking (customerID, hallID, bookingDate, startTime, endTime, totalPrice, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [customerID, hallID, bookingDate, startTime, endTime, totalPrice, status]
+        `INSERT INTO Booking (
+          customerID, eventTypeID, hallID, menuID,
+          eventDate, startTime, endTime, tableCount,
+          specialRequest, status, originalPrice,
+          discountAmount, VAT, totalAmount, createdAt, isChecked
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          data.customerID,
+          data.eventTypeID,
+          data.hallID,
+          data.menuID,
+          data.eventDate,
+          data.startTime,
+          data.endTime,
+          data.tableCount,
+          data.specialRequest,
+          data.status,
+          data.originalPrice,
+          data.discountAmount,
+          data.VAT,
+          data.totalAmount,
+          data.createdAt,
+          data.isChecked,
+        ]
       );
 
       const bookingID = bookingResult.insertId;
 
-      // 2️⃣ Insert booking_dishes
-      for (const dish of dishes) {
+      for (const dish of booking.dishes || []) {
         await connection.query(
-          `INSERT INTO BookingDish (bookingID, dishID, quantity)
+          `INSERT INTO BookingDish (bookingID, dishID, quantity, price)
+           VALUES (?, ?, ?, ?)`,
+          [bookingID, dish.dishID, dish.quantity || 1, dish.price]
+        );
+      }
+
+      for (const service of booking.services || []) {
+        await connection.query(
+          `INSERT INTO BookingService (bookingID, serviceID, price)
            VALUES (?, ?, ?)`,
-          [bookingID, dish.dishID, dish.quantity]
+          [bookingID, service.serviceID, service.price]
         );
       }
 
-      // 3️⃣ Insert booking_services
-      for (const service of services) {
+      for (const promo of booking.promotions || []) {
         await connection.query(
-          `INSERT INTO BookingService (bookingID, serviceID)
-           VALUES (?, ?)`,
-          [bookingID, service.serviceID]
-        );
-      }
-
-      // 4️⃣ Insert booking_promotions
-      for (const promo of promotions) {
-        await connection.query(
-          `INSERT INTO BookingPromotion (bookingID, promotionID)
-           VALUES (?, ?)`,
-          [bookingID, promo.promotionID]
+          `INSERT INTO BookingPromotion (bookingID, promotionID, discountValue)
+           VALUES (?, ?, ?)`,
+          [bookingID, promo.promotionID, promo.value]
         );
       }
 
       await connection.commit();
-      return { bookingID, message: "Booking created successfully!" };
+      return bookingID;
     } catch (err) {
       await connection.rollback();
       throw err;
@@ -66,18 +72,17 @@ class BookingDAO {
     }
   }
 
-  // Lấy tất cả booking
   async getAllBookings() {
     const [rows] = await db.query(
-      `SELECT * FROM Booking ORDER BY bookingDate DESC`
+      `SELECT * FROM Booking ORDER BY createdAt DESC`
     );
-    return rows;
+    return rows.map((row) => new Booking(row));
   }
 
-  // Lấy booking theo ID (bao gồm dishes, services, promotions)
   async getBookingById(bookingID) {
     const [bookings] = await db.query(`SELECT * FROM Booking WHERE bookingID = ?`, [bookingID]);
     if (bookings.length === 0) return null;
+    const bookingData = bookings[0];
 
     const [dishes] = await db.query(
       `SELECT bd.*, d.name, d.price
@@ -103,10 +108,45 @@ class BookingDAO {
       [bookingID]
     );
 
-    return { ...bookings[0], dishes, services, promotions };
+    const booking = new Booking({
+      ...bookingData,
+      dishes,
+      services,
+      promotions,
+    });
+
+    return booking;
   }
 
-  // Xóa booking
+  async updateBooking(bookingID, booking) {
+    const data = booking.toJSON();
+    await db.query(
+      `UPDATE Booking SET
+        customerID = ?, eventTypeID = ?, hallID = ?, menuID = ?, eventDate = ?,
+        startTime = ?, endTime = ?, tableCount = ?, specialRequest = ?, status = ?,
+        originalPrice = ?, discountAmount = ?, VAT = ?, totalAmount = ?, isChecked = ?
+       WHERE bookingID = ?`,
+      [
+        data.customerID,
+        data.eventTypeID,
+        data.hallID,
+        data.menuID,
+        data.eventDate,
+        data.startTime,
+        data.endTime,
+        data.tableCount,
+        data.specialRequest,
+        data.status,
+        data.originalPrice,
+        data.discountAmount,
+        data.VAT,
+        data.totalAmount,
+        data.isChecked,
+        bookingID,
+      ]
+    );
+  }
+
   async deleteBooking(bookingID) {
     const connection = await db.getConnection();
     try {

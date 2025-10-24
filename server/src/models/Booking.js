@@ -1,4 +1,4 @@
-import BookingStatus from "../enums/BookingStatus.js";
+import BookingStatus from "./enums/BookingStatus.js";
 
 class Booking {
   constructor({
@@ -43,7 +43,19 @@ class Booking {
     this.promotions = [];
   }
 
+  createBooking(data) {
+    if (!data) throw new Error("Booking data is required");
 
+    Object.assign(this, data);
+
+    // Nếu có dish/service/promotion thì tính tổng
+    if (data.dishes) this.dishes = data.dishes;
+    if (data.services) this.services = data.services;
+    if (data.promotions) this.promotions = data.promotions;
+
+    this.calculateTotal();
+    return this;
+  }
   addDish(dish) {
     this.dishes.push(dish);
   }
@@ -70,7 +82,7 @@ class Booking {
     this.discountAmount = discount;
   }
 
-  calculateVAT(rate = 10) {
+  calculateVAT(rate = 8) {
     this.VAT = ((this.originalPrice - this.discountAmount) * rate) / 100;
   }
 
