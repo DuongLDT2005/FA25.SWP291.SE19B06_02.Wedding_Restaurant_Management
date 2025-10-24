@@ -1,7 +1,14 @@
 import UserDAO from "../dao/userDao.js";
 
 class UserService {
-     
+    static async createOwner(ownerData) {
+        const newOwner =  await UserDAO.createOwner(ownerData);
+        return newOwner;
+    }
+    static async createCustomer(customerData) {
+        const newCustomer = await UserDAO.createCustomer(customerData);
+        return newCustomer;
+    }
     static async updateUser(id,userData) {
         if (!userData || !id) {
             throw new Error('User data or User ID cannot be null');

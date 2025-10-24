@@ -1,34 +1,32 @@
-import mysql from "mysql2/promise";
+
 // import mongodb from "mongoose";
 import dotenv from "dotenv";
-
+import { Sequelize } from 'sequelize';
+import initModels from '../models/init-models.cjs';
+import { ServerApiVersion, MongoClient } from "mongodb";
 dotenv.config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,       // localhost
-  port: process.env.DB_PORT,       // 3306
-  user: process.env.DB_USER,       // root
-  password: process.env.DB_PASSWORD, // mật khẩu MySQL
-  database: process.env.DB_NAME,   // WeddingRestaurantManagement
+
+// 1. Cấu hình kết nối
+const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  dialect: 'mysql'
 });
 
+// 2. Tải tất cả các model từ thư mục /models
+const models = initModels(sequelize);
 
-// Test kết nối
-(async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log("MySQL connected successfully!");
-    connection.release();
-  } catch (err) {
-    console.error("MySQL connection failed:", err.message);
-  }
-})();
+// 3. Xuất kết nối và các model để sử dụng ở nơi khác
+const db = {
+  sequelize,
+  ...models // Xuất ra tất cả các model: users, products,...
+};
 
-export default pool;
+export default db;
 
 // // connect to MongoDB
 
-import { ServerApiVersion, MongoClient } from "mongodb";
+
 const uri = process.env.MongoDB;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version

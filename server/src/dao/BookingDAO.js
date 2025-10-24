@@ -1,8 +1,8 @@
-import Booking from '../models/Booking.js';
-import db from '../config/database.js';
+
+import db from '../config/db.js';
 import BookingStatus, {checkedStatus} from '../enums/BookingStatus.js';
 import buffer from 'buffer';
-import {bitToNumber,bitToBoolean} from '../utils/bitUtils';
+// import {bitToNumber,bitToBoolean} from '../utils/bitUtils';
 
 class BookingDAO {
     // Create new booking

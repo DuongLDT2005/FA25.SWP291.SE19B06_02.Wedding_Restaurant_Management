@@ -1,5 +1,4 @@
 import db from "../config/db.js";
-import HallImage from "../models/HallImage.js";
 class HallImageDAO {
     static async createHallImage(hallID, imageURL) {
         const [result] = await db.query(

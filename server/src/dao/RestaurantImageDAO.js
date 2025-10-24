@@ -1,5 +1,6 @@
 import db from "../config/db.js";
-import RestaurantImage from "../models/RestaurantImage.js";
+
+const { sequelize, restaurantimage: RestaurantImageModel } = db;
 
 class RestaurantImageDAO{
     static async getByRestaurantID(restaurantID){

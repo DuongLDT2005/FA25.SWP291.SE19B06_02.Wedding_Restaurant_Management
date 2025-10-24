@@ -1,6 +1,6 @@
 import db from "../config/db.js";
-import Restaurant from "../models/Restaurant.js";
-import RestaurantImage from "../models/RestaurantImage.js";
+
+const { sequelize, restaurant: restaurantModel, restaurantimage: restaurantImageModel } = db;
 
 class RestaurantDAO {
   static async getAll() {

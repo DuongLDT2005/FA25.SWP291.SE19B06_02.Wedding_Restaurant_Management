@@ -1,7 +1,7 @@
-import Hall from "../models/Hall.js";
+
 import db from "../config/db.js";
-import { hallStatus } from "../models/Hall.js";
 import RestaurantDAO from "./RestaurantDAO.js";
+
 class HallDAO {
     static async createHall(hall) {
         const { restaurantID, name, description, capacity, area, price, status } = hall;
