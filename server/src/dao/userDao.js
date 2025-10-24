@@ -6,11 +6,8 @@ import Customer from '../models/Customer.js';
 import { userRole, userStatus } from '../models/User.js';
 import { negoStatus } from '../models/RestaurantPartner.js';
 import { coupleRole } from '../models/Customer.js';
+import { bitToNumber } from '../utils/bitUtils.js';
 
-function bitToNumber(bitValue) {
-    // Convert BIT buffer to number
-    return Buffer.isBuffer(bitValue) ? bitValue[0] : bitValue;
-}
 
 class UserDAO {
     static async getAllUsers() {
