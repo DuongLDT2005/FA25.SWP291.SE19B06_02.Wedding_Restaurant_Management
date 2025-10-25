@@ -25,6 +25,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import * as XLSX from "xlsx"; // ✅ Thêm dòng này để dùng xuất Excel
 import dayjs from "dayjs";
 
 // 🧪 Mock customer data
@@ -41,7 +42,8 @@ const customers = [
 const mockCustomerData = Array.from({ length: 200 }, (_, i) => {
   const date = dayjs().subtract(i, "day").format("YYYY-MM-DD");
   return Array.from({ length: Math.floor(Math.random() * 8) + 3 }).map(() => {
-    const customerName = customers[Math.floor(Math.random() * customers.length)];
+    const customerName =
+      customers[Math.floor(Math.random() * customers.length)];
     return {
       date,
       customerId: customerName,
@@ -62,7 +64,6 @@ const CustomerInsightPage = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // 🧠 Lọc dữ liệu theo khoảng thời gian
   const filteredData = useMemo(() => {
     return mockCustomerData.filter((d) => {
       const date = dayjs(d.date);
@@ -72,7 +73,6 @@ const CustomerInsightPage = () => {
     });
   }, [startDate, endDate]);
 
-  // 📊 Gom nhóm theo khách hàng
   const customerSummary = useMemo(() => {
     const map = {};
     filteredData.forEach((d) => {
@@ -90,9 +90,23 @@ const CustomerInsightPage = () => {
     return Object.values(map).sort((a, b) => b.totalRevenue - a.totalRevenue);
   }, [filteredData]);
 
-  const totalRevenue = customerSummary.reduce((sum, c) => sum + c.totalRevenue, 0);
-  const totalBookings = customerSummary.reduce((sum, c) => sum + c.totalBookings, 0);
+  const totalRevenue = customerSummary.reduce(
+    (sum, c) => sum + c.totalRevenue,
+    0
+  );
+  const totalBookings = customerSummary.reduce(
+    (sum, c) => sum + c.totalBookings,
+    0
+  );
   const loyalCustomer = customerSummary[0];
+
+  // ✅ Hàm export Excel
+  const handleExportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(customerSummary);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Customer Stats");
+    XLSX.writeFile(workbook, "customer_insight.xlsx");
+  };
 
   return (
     <div>
@@ -208,9 +222,14 @@ const CustomerInsightPage = () => {
         </CCardBody>
       </CCard>
 
-      {/* Bảng xếp hạng khách hàng */}
+      {/* Bảng xếp hạng khách hàng + Export */}
       <CCard>
-        <CCardHeader>Bảng xếp hạng khách hàng</CCardHeader>
+        <CCardHeader className="d-flex justify-content-between align-items-center">
+          <span>Bảng xếp hạng khách hàng</span>
+          <CButton color="success" onClick={handleExportExcel}>
+            📊 Xuất Excel
+          </CButton>
+        </CCardHeader>
         <CCardBody>
           <CTable hover responsive>
             <CTableHead>
@@ -226,7 +245,9 @@ const CustomerInsightPage = () => {
                 <CTableRow key={c.customerId}>
                   <CTableHeaderCell>{idx + 1}</CTableHeaderCell>
                   <CTableDataCell>{c.customerName}</CTableDataCell>
-                  <CTableDataCell>{c.totalRevenue.toLocaleString()} VND</CTableDataCell>
+                  <CTableDataCell>
+                    {c.totalRevenue.toLocaleString()} VND
+                  </CTableDataCell>
                   <CTableDataCell>{c.totalBookings}</CTableDataCell>
                 </CTableRow>
               ))}
