@@ -1,18 +1,11 @@
 import db from "../config/db.js";
-
+const { address } = db;
 class AddressDAO{
     static async getByID(addressID){
-        const [rows] = await db.query(
-            `SELECT * FROM Address WHERE addressID = ?`,
-            [addressID]
-        );
-        return rows.length > 0 ? rows[0] : null;
+        return await address.findByPk(addressID);
     }
     static async getAllAddress(addressData){
-        const [rows] = await db.query(
-            `SELECT * FROM Address`
-        );
-        return rows;
+        return await address.findAll();
     }
 }
 

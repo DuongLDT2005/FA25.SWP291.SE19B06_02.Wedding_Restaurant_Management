@@ -1,30 +1,25 @@
 import db from "../config/db.js";
 
-const { sequelize, restaurantimage: RestaurantImageModel } = db;
+// Model key from init-models is lowercase: restaurantimage
+const { restaurantimage } = db;
 
 class RestaurantImageDAO{
     static async getByRestaurantID(restaurantID){
-        const [rows] = await db.query(
-            `SELECT * FROM RestaurantImage WHERE restaurantID = ?`,
-            [restaurantID]
-        );
-    
-    return rows.map(r => new RestaurantImage(r));
+        return await restaurantimage.findAll({ where: { restaurantID }, attributes: ['imageID','restaurantID','imageURL'] });
+    }
+
+    static async getByID(imageID){
+        return await restaurantimage.findByPk(imageID, { attributes: ['imageID','restaurantID','imageURL'] });
     }
     static async addImage(restaurantID, imageURL){
-        const [result] = await db.query(
-            `INSERT INTO RestaurantImage(restaurantID, imageURL) VALUES (?, ?)`,
-            [restaurantID, imageURL]
-        );
-        return new RestaurantImage({imageID: result.insertId, restaurantID, imageURL});
+        const img = await restaurantimage.create({ restaurantID, imageURL });
+        // Return a plain shape like before
+        return { imageID: img.imageID, restaurantID: img.restaurantID, imageURL: img.imageURL };
     }
     
     static async deleteImage(imageID){
-        const [result] = await db.query(
-            `DELETE FROM RestaurantImage WHERE imageID = ?`,
-            [imageID]
-        );
-        return result.affectedRows > 0;
+        const count = await restaurantimage.destroy({ where: { imageID } });
+        return count > 0;
     }
 }
 

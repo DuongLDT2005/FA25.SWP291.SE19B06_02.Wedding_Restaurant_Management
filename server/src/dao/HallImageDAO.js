@@ -1,24 +1,18 @@
 import db from "../config/db.js";
+import hallimage from "../models/hallimage.cjs";
+const { HallImage,sequelize } = db;
 class HallImageDAO {
     static async createHallImage(hallID, imageURL) {
-        const [result] = await db.query(
-            `INSERT INTO HallImage (hallID, imageURL) VALUES (?, ?)`,
-            [hallID, imageURL]
-        );
+        const result = await HallImage.create({ hallID, imageURL });
         return new HallImage({ imageID: result.insertId, hallID, imageURL });
     }
     static async getByHallId(hallID) {
-        const [rows] = await db.query(
-            `SELECT imageID, hallID, imageURL FROM HallImage WHERE hallID = ?`,
-            [hallID]
-        );
+        const rows = await HallImage.findAll({ where: { hallID } });
         return rows.map(row => new HallImage(row));
     }
     static async deleteHallImage(imageID) {
-        await db.query(
-            `DELETE FROM HallImage WHERE imageID = ?`,
-            [imageID]
-        );
+        const count = await HallImage.destroy({ where: { imageID } });
+        return count > 0;
     }
 }
 export default HallImageDAO;
