@@ -1,6 +1,5 @@
 import RestaurantDAO from "../dao/RestaurantDAO.js";
 import RestaurantImageDAO from "../dao/RestaurantImageDAO.js";
-import AddressDAO from "../dao/AddressDAO.js";
 
 class RestaurantService {
   static async getAll() {
@@ -20,8 +19,22 @@ class RestaurantService {
   }
 
   static async create(data) {
-    if (!data.name || !data.restaurantPartnerID) {
+    if (!data || typeof data !== 'object') {
+      throw new Error("Invalid payload");
+    }
+    const { name, restaurantPartnerID, address, thumbnailURL } = data;
+    if (!name || !restaurantPartnerID) {
       throw new Error("Restaurant name and restaurantPartnerID are required");
+    }
+    if (!thumbnailURL || typeof thumbnailURL !== 'string') {
+      throw new Error("thumbnailURL is required");
+    }
+    if (!address || typeof address !== 'object') {
+      throw new Error("address is required with { number, street, ward }");
+    }
+    const { number, street, ward } = address;
+    if (!number || !street || !ward) {
+      throw new Error("address.number, address.street and address.ward are required");
     }
     return await RestaurantDAO.createRestaurant(data);
   }
@@ -35,10 +48,13 @@ class RestaurantService {
   }
 
   static async addImage(restaurantID, imageURL){
+    if (!restaurantID) throw new Error("restaurantID is required");
+    if (!imageURL || typeof imageURL !== 'string') throw new Error("imageURL is required");
     return await RestaurantImageDAO.addImage(restaurantID, imageURL);
   }
 
   static async deleteImage(imageID){
+    if (!imageID) throw new Error("imageID is required");
     return await RestaurantImageDAO.deleteImage(imageID);
   }
 

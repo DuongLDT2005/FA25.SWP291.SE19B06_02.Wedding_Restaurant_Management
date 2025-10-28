@@ -76,6 +76,10 @@ npm install @fortawesome/react-fontawesome @fortawesome/free-solid-svg-icons @fo
 npm install @fortawesome/fontawesome-free
 ## Install router-dom
 npm install react-router-dom
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs
 ## Install CoreUI
 npm install @coreui/react @coreui/coreui
 npm install classnames @coreui/coreui @coreui/react @coreui/icons @coreui/icons-react @coreui/react-chartjs @coreui/utils
@@ -98,6 +102,13 @@ npm install jspdf
 ## Phần admin Cần tải : 
 ### Install @coreui/react
 npm install @coreui/react
+### Install recharts
+npm install recharts
+
+## Install coreui react
+npm install @coreui/react @coreui/icons-react
+## Install bootstrap coreui
+npm install bootstrap @coreui/coreui @coreui/chartjs
 
 ### Install React-redux & toolkit
 
@@ -114,3 +125,12 @@ npm install sweetalert2
 ### Phần nàyd dể xuất excel
 npm install xlsx file-saver
 npm install xlsx
+### Install @mui/x-date-pickers
+npm install @emotion/react @emotion/styled
+### Install jspdf
+### Install npm install jspdf
+npm install jspdf
+### Test
+Đường link vào view details(chưa thanh toán): http://localhost:3000/booking-details/201130?payment=0
+Đường link vào view details(đã thanh toán): http://localhost:3000/booking-details/201130?payment=1
+Đường link thanh toán: http://localhost:3000/payment/new

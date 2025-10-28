@@ -3,6 +3,7 @@ import UserDAO from "../dao/userDao.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
+import { deleteOtpByEmail, getOtpByEmail, insertOtp } from "../dao/mongoDAO.js";
 // import Otp from "../dao/mongoDAO.js";
 
 
@@ -55,9 +56,9 @@ class AuthServices {
     );
     return { user, token };
 }
-  static async resetPassword(userId, newPassword) {
+  static async resetPassword(email, newPassword) {
     const hashedPassword = await hashPassword(newPassword);
-    await UserDAO.updateUserInfo(userId, { password: hashedPassword });
+    await UserDAO.updateUserInfo(email, { password: hashedPassword });
   }
   static async forgotPassword(email) {
     const user = await UserDAO.findByEmail(email);
@@ -66,17 +67,13 @@ class AuthServices {
     }
     // Generate a one-time password (OTP)
     const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
-
-    // Save the OTP and its expiration time in the database (or cache)
-    const otpExpiration = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
-    await Otp.create({ userId: user.userId, otp, otpExpiration });
-
+    insertOtp(email, otp);
     // Send the OTP via email
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
         user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_PASS,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
 
@@ -84,43 +81,40 @@ class AuthServices {
       from: process.env.GMAIL_USER,
       to: email,
       subject: "Your Password Reset OTP",
-      text: `Your OTP for password reset is ${otp}. It is valid for 10 minutes.`,
+      text: `Your OTP for password reset is ${otp}. It will expire automatically.`,
     };
     // 
     await transporter.sendMail(mailOptions);
   }
   static async logout(req, res) {
-    // Since JWT tokens are stateless, you can implement a blacklist to invalidate tokens.
-    // Example: Add the token to a blacklist in your database or cache with an expiration time.
-
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       throw new Error("Token not provided");
     }
-
-
+    // Thêm token vào blacklist trên MongoDB
+    const { getCollection } = await import("../dao/mongoDAO.js");
+    const blacklist = getCollection("blacklist");
+    // Lưu token với thời gian hết hạn (ví dụ: 1 giờ)
+    await blacklist.insertOne({ token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) });
     res.status(200).json({ message: "Logged out successfully" });
   }
-  // static async verifyOtp(userId, otpInput) {
-  //     // Find OTP record for user
-  //     const otpRecord = await Otp.findOne({ userId });
-  //     if (!otpRecord) {
-  //         throw new Error("OTP not found");
-  //     }
-  //     // Check OTP match
-  //     if (otpRecord.otp !== otpInput) {
-  //         throw new Error("Invalid OTP");
-  //     }
-  //     // Check expiration
-  //     if (Date.now() > otpRecord.otpExpiration) {
-  //         throw new Error("OTP expired");
-  //     }
-  //     // OTP is valid
-  //     // Optionally, delete the OTP record after successful verification
-  //     await Otp.deleteOne({ userId });
-  //     return true;
-  // }
-  
+  static async verifyOtp(email, otpInput) {
+      // Find OTP record for user
+      const otp = await getOtpByEmail(email);
+      if (!otp) {
+          throw new Error("OTP not found or expired");
+      }
+      if (otp.otp != otpInput) {
+        console.log(otpInput, otp.otp);
+          throw new Error("Invalid OTP");
+      }
+      console.log("OTP verified successfully");
+      deleteOtpByEmail(email);
+      return true;
+  }
+  static async resetPassword(email, newPassword) {
+      const hashedPassword = await hashPassword(newPassword);
+      await UserDAO.updateUserInfo(email, { password: hashedPassword });
+  }
 }
-
 export default AuthServices;

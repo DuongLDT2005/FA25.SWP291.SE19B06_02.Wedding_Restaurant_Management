@@ -3,8 +3,7 @@ import restaurantRoutes from "./routes/restaurantRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import hallRoutes from "./routes/hallRoutes.js";
-import bookingRoutes from "./routes/bookingRoutes.js";
-
+import bookingRoutes from "./routes/BookingRoutes.js";
 const app = express();
 
 app.use(express.json());
