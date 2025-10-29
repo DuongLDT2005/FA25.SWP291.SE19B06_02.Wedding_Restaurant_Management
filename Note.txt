@@ -71,3 +71,5 @@ export function formatCompactCurrency(value) {
 => Cho vào folder utils -> format.js
 
 -> Done
+
+
