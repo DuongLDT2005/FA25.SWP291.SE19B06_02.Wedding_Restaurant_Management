@@ -1,4 +1,4 @@
-import BookingService from '../services/BookingService.js';
+import BookingService from '../services/BookingServices.js';
 
 class BookingController {
     // ========== CRUD CƠ BẢN ==========

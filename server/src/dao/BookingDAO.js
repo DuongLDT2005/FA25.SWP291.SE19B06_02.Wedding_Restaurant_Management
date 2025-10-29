@@ -1,171 +1,175 @@
-import db from "../config/db.js";
-import Booking from "../models/Booking.js";
+import db from '../config/db.js';
+import BookingStatus, { checkedStatus } from '../models/enums/BookingStatus.js';
+import { toDTO, toDTOs } from '../utils/dto.js';
+
+// Models from Sequelize
+const {
+    sequelize,
+    booking: BookingModel,
+    bookingdish: BookingDishModel,
+    bookingservice: BookingServiceModel,
+    bookingpromotion: BookingPromotionModel,
+    hall: HallModel,
+    restaurant: RestaurantModel,
+    restaurantpartner: RestaurantPartnerModel,
+    menu: MenuModel,
+    dish: DishModel,
+    service: ServiceModel,
+    promotion: PromotionModel,
+    customer: CustomerModel,
+    eventtype: EventTypeModel,
+    // contract: ContractModel,
+} = db;
 
 class BookingDAO {
-  async createBooking(booking) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
+    // Create a booking and optionally attach dishes, services, promotions using junction tables
+    static async createBooking(bookingData, { dishIDs = [], services = [], promotionIDs = [] } = {}) {
+        return await sequelize.transaction(async (t) => {
+            const newBooking = await BookingModel.create(bookingData, { transaction: t });
 
-      const data = booking.toJSON();
+            // Attach dishes (bookingdish)
+            if (Array.isArray(dishIDs) && dishIDs.length > 0) {
+                const rows = dishIDs.map((dishID) => ({ bookingID: newBooking.bookingID, dishID }));
+                await BookingDishModel.bulkCreate(rows, { ignoreDuplicates: true, transaction: t });
+            }
 
-      const [bookingResult] = await connection.query(
-        `INSERT INTO Booking (
-          customerID, eventTypeID, hallID, menuID,
-          eventDate, startTime, endTime, tableCount,
-          specialRequest, status, originalPrice,
-          discountAmount, VAT, totalAmount, createdAt, isChecked
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          data.customerID,
-          data.eventTypeID,
-          data.hallID,
-          data.menuID,
-          data.eventDate,
-          data.startTime,
-          data.endTime,
-          data.tableCount,
-          data.specialRequest,
-          data.status,
-          data.originalPrice,
-          data.discountAmount,
-          data.VAT,
-          data.totalAmount,
-          data.createdAt,
-          data.isChecked,
-        ]
-      );
+            // Attach services (bookingservice): expect array of { serviceID, quantity, appliedPrice }
+            if (Array.isArray(services) && services.length > 0) {
+                const rows = services.map((s) => ({
+                    bookingID: newBooking.bookingID,
+                    serviceID: s.serviceID,
+                    quantity: s.quantity ?? 1,
+                    appliedPrice: s.appliedPrice,
+                }));
+                await BookingServiceModel.bulkCreate(rows, { ignoreDuplicates: true, transaction: t });
+            }
 
-      const bookingID = bookingResult.insertId;
+            // Attach promotions (bookingpromotion)
+            if (Array.isArray(promotionIDs) && promotionIDs.length > 0) {
+                const rows = promotionIDs.map((promotionID) => ({ bookingID: newBooking.bookingID, promotionID }));
+                await BookingPromotionModel.bulkCreate(rows, { ignoreDuplicates: true, transaction: t });
+            }
 
-      for (const dish of booking.dishes || []) {
-        await connection.query(
-          `INSERT INTO BookingDish (bookingID, dishID, quantity, price)
-           VALUES (?, ?, ?, ?)`,
-          [bookingID, dish.dishID, dish.quantity || 1, dish.price]
-        );
-      }
-
-      for (const service of booking.services || []) {
-        await connection.query(
-          `INSERT INTO BookingService (bookingID, serviceID, price)
-           VALUES (?, ?, ?)`,
-          [bookingID, service.serviceID, service.price]
-        );
-      }
-
-      for (const promo of booking.promotions || []) {
-        await connection.query(
-          `INSERT INTO BookingPromotion (bookingID, promotionID, discountValue)
-           VALUES (?, ?, ?)`,
-          [bookingID, promo.promotionID, promo.value]
-        );
-      }
-
-      await connection.commit();
-      return bookingID;
-    } catch (err) {
-      await connection.rollback();
-      throw err;
-    } finally {
-      connection.release();
+            return toDTO(newBooking);
+        });
     }
-  }
 
-  async getAllBookings() {
-    const [rows] = await db.query(
-      `SELECT * FROM Booking ORDER BY createdAt DESC`
-    );
-    return rows.map((row) => new Booking(row));
-  }
+    // Get bookings for a customer with optional filters
+    static async getBookingsByCustomer({ customerID, status = null, isChecked = null }) {
+        const where = { customerID };
+        if (status !== null && typeof status !== 'undefined') where.status = status;
+        if (isChecked !== null && typeof isChecked !== 'undefined') where.isChecked = !!isChecked;
 
-  async getBookingById(bookingID) {
-    const [bookings] = await db.query(`SELECT * FROM Booking WHERE bookingID = ?`, [bookingID]);
-    if (bookings.length === 0) return null;
-    const bookingData = bookings[0];
-
-    const [dishes] = await db.query(
-      `SELECT bd.*, d.name, d.price
-       FROM BookingDish bd
-       JOIN Dish d ON bd.dishID = d.dishID
-       WHERE bd.bookingID = ?`,
-      [bookingID]
-    );
-
-    const [services] = await db.query(
-      `SELECT bs.*, s.name, s.price
-       FROM BookingService bs
-       JOIN Service s ON bs.serviceID = s.serviceID
-       WHERE bs.bookingID = ?`,
-      [bookingID]
-    );
-
-    const [promotions] = await db.query(
-      `SELECT bp.*, p.name, p.discountValue
-       FROM BookingPromotion bp
-       JOIN Promotion p ON bp.promotionID = p.promotionID
-       WHERE bp.bookingID = ?`,
-      [bookingID]
-    );
-
-    const booking = new Booking({
-      ...bookingData,
-      dishes,
-      services,
-      promotions,
-    });
-
-    return booking;
-  }
-
-  async updateBooking(bookingID, booking) {
-    const data = booking.toJSON();
-    await db.query(
-      `UPDATE Booking SET
-        customerID = ?, eventTypeID = ?, hallID = ?, menuID = ?, eventDate = ?,
-        startTime = ?, endTime = ?, tableCount = ?, specialRequest = ?, status = ?,
-        originalPrice = ?, discountAmount = ?, VAT = ?, totalAmount = ?, isChecked = ?
-       WHERE bookingID = ?`,
-      [
-        data.customerID,
-        data.eventTypeID,
-        data.hallID,
-        data.menuID,
-        data.eventDate,
-        data.startTime,
-        data.endTime,
-        data.tableCount,
-        data.specialRequest,
-        data.status,
-        data.originalPrice,
-        data.discountAmount,
-        data.VAT,
-        data.totalAmount,
-        data.isChecked,
-        bookingID,
-      ]
-    );
-  }
-
-  async deleteBooking(bookingID) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
-
-      await connection.query(`DELETE FROM BookingDish WHERE bookingID = ?`, [bookingID]);
-      await connection.query(`DELETE FROM BookingService WHERE bookingID = ?`, [bookingID]);
-      await connection.query(`DELETE FROM BookingPromotion WHERE bookingID = ?`, [bookingID]);
-      await connection.query(`DELETE FROM Booking WHERE bookingID = ?`, [bookingID]);
-
-      await connection.commit();
-      return { message: "Booking deleted successfully." };
-    } catch (err) {
-      await connection.rollback();
-      throw err;
-    } finally {
-      connection.release();
+    const rows = await BookingModel.findAll({ where, order: [['createdAt', 'DESC']] });
+    return toDTOs(rows);
     }
-  }
+
+    // Get the Restaurant Partner owning the hall where this booking is placed
+    static async getRestaurantPartnerByHallID(hallID) {
+        // hall -> restaurant -> restaurantPartner
+        const hall = await HallModel.findByPk(hallID, {
+            include: [{
+                model: RestaurantModel,
+                as: 'restaurant',
+                include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            }]
+        });
+        if (!hall) return null;
+        const partner = hall.restaurant?.restaurantPartner;
+    return toDTO(partner);
+    }
+
+        // Back-compat: original code expected a list; return [partner] or []
+        static async getRestaurantPartnersByHallID(hallID) {
+            const p = await this.getRestaurantPartnerByHallID(hallID);
+            return p ? [p] : [];
+        }
+
+    static async updateBookingStatus(bookingID, newStatus, { isChecked } = {}) {
+        const updates = { status: newStatus };
+        if (typeof isChecked !== 'undefined') updates.isChecked = !!isChecked;
+        const [affected] = await BookingModel.update(updates, { where: { bookingID } });
+        return affected > 0;
+    }
+
+    // Retrieve full booking details with junction data
+    static async getBookingDetails(bookingID) {
+        const row = await BookingModel.findByPk(bookingID, {
+            include: [
+                { model: CustomerModel, as: 'customer' },
+                { model: EventTypeModel, as: 'eventType' },
+                { model: HallModel, as: 'hall' },
+                { model: MenuModel, as: 'menu' },
+                {
+                    model: BookingDishModel,
+                    as: 'bookingdishes',
+                    include: [{ model: DishModel, as: 'dish' }]
+                },
+                {
+                    model: BookingServiceModel,
+                    as: 'bookingservices',
+                    include: [{ model: ServiceModel, as: 'service' }]
+                },
+                {
+                    model: BookingPromotionModel,
+                    as: 'bookingpromotions',
+                    include: [{ model: PromotionModel, as: 'promotion' }]
+                }
+            ]
+        });
+    return toDTO(row);
+    }
+
+    // Replace dishes for a booking
+    static async setBookingDishes(bookingID, dishIDs = []) {
+        return await sequelize.transaction(async (t) => {
+            await BookingDishModel.destroy({ where: { bookingID }, transaction: t });
+            if (dishIDs.length > 0) {
+                const rows = dishIDs.map((dishID) => ({ bookingID, dishID }));
+                await BookingDishModel.bulkCreate(rows, { transaction: t });
+            }
+            return true;
+        });
+    }
+
+    // Replace services for a booking
+    static async setBookingServices(bookingID, services = []) {
+        return await sequelize.transaction(async (t) => {
+            await BookingServiceModel.destroy({ where: { bookingID }, transaction: t });
+            if (services.length > 0) {
+                const rows = services.map((s) => ({
+                    bookingID,
+                    serviceID: s.serviceID,
+                    quantity: s.quantity ?? 1,
+                    appliedPrice: s.appliedPrice,
+                }));
+                await BookingServiceModel.bulkCreate(rows, { transaction: t });
+            }
+            return true;
+        });
+    }
+
+    // Replace promotions for a booking
+    static async setBookingPromotions(bookingID, promotionIDs = []) {
+        return await sequelize.transaction(async (t) => {
+            await BookingPromotionModel.destroy({ where: { bookingID }, transaction: t });
+            if (promotionIDs.length > 0) {
+                const rows = promotionIDs.map((promotionID) => ({ bookingID, promotionID }));
+                await BookingPromotionModel.bulkCreate(rows, { transaction: t });
+            }
+            return true;
+        });
+    }
+
+    static async deleteBooking(bookingID) {
+        return await sequelize.transaction(async (t) => {
+            await BookingDishModel.destroy({ where: { bookingID }, transaction: t });
+            await BookingServiceModel.destroy({ where: { bookingID }, transaction: t });
+            await BookingPromotionModel.destroy({ where: { bookingID }, transaction: t });
+            const affected = await BookingModel.destroy({ where: { bookingID }, transaction: t });
+            return affected > 0;
+        });
+    }
 }
 
-export default new BookingDAO();
+export default BookingDAO;

@@ -1,11 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/homePageStyles.css"
-import { restaurants } from "../pages/restaurant/ListingRestaurant"
 import RatingStars from "../components/RatingStars";
 import RestaurantType from "./RestaurantType";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import { useRestaurants } from "../hooks/useRestaurantData";
 function ContentHomePage() {
+    const { data: restaurants = [], loading, error } = useRestaurants();
     return (
         <>
             {/* Offers & Discounts*/}
@@ -35,13 +36,18 @@ function ContentHomePage() {
             <div className="content--section">
                 <h2>Nhà Hàng Được Yêu Thích</h2>
                 <div className="content--list">
+                    {loading && <p>Đang tải dữ liệu...</p>}
+                    {error && <p>Lỗi khi tải dữ liệu: {String(error.message || error)}</p>}
                     {restaurants.map((res) => {
                         const avgRating = res.reviews && res.reviews.length > 0
                             ? res.reviews.reduce((sum, r) => sum + r.rating, 0) / res.reviews.length
-                            : res.rating;
+                            : (res.avgRating ?? res.rating ?? 0);
+                        const id = res.restaurantID ?? res.id;
+                        const price = res.minPrice ?? res.price;
+                        const addressText = typeof res.address === 'string' ? res.address : res.address?.fullAddress;
 
                         return (
-                            <Link key={res.id} to={`/restaurant/${res.id}`}>
+                            <Link key={id} to={`/restaurant/${id}`}>
                                 <div className="content--card">
                                     <div className="content--image">
                                         <img src={res.thumbnailURL} alt={res.name} />
@@ -51,8 +57,8 @@ function ContentHomePage() {
                                         <div className="d-flex align-items-center">
                                             <RatingStars rating={avgRating} />
                                         </div>
-                                        <h5 className="content--price">{res.minPrice.toLocaleString()} VNĐ</h5>
-                                        <p>{res.address.fullAddress}</p>
+                                        {price != null && <h5 className="content--price">{Number(price).toLocaleString()} VNĐ</h5>}
+                                        <p>{addressText}</p>
                                     </div>
                                 </div>
                             </Link>

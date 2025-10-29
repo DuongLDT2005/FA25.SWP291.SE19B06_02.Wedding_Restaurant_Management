@@ -1,20 +1,22 @@
 import db from "../config/db.js";
+import { toDTO, toDTOs } from '../utils/dto.js';
 
 // Model key from init-models is lowercase: restaurantimage
 const { restaurantimage } = db;
 
 class RestaurantImageDAO{
     static async getByRestaurantID(restaurantID){
-        return await restaurantimage.findAll({ where: { restaurantID }, attributes: ['imageID','restaurantID','imageURL'] });
+        const rows = await restaurantimage.findAll({ where: { restaurantID }, attributes: ['imageID','restaurantID','imageURL'] });
+        return toDTOs(rows);
     }
 
     static async getByID(imageID){
-        return await restaurantimage.findByPk(imageID, { attributes: ['imageID','restaurantID','imageURL'] });
+        const r = await restaurantimage.findByPk(imageID, { attributes: ['imageID','restaurantID','imageURL'] });
+        return toDTO(r);
     }
     static async addImage(restaurantID, imageURL){
         const img = await restaurantimage.create({ restaurantID, imageURL });
-        // Return a plain shape like before
-        return { imageID: img.imageID, restaurantID: img.restaurantID, imageURL: img.imageURL };
+        return toDTO(img);
     }
     
     static async deleteImage(imageID){

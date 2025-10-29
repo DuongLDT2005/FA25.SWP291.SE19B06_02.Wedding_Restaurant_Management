@@ -3,12 +3,16 @@ dotenv.config();
 
 import app from "./app.js";
 import db from "./config/db.js";
+<<<<<<< HEAD
 
+=======
+const { sequelize } = db;
+>>>>>>> origin/testdb
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
   try {
-    await db.query("SELECT 1");
+    await sequelize.authenticate();
     console.log("MySQL Connected...");
     
     app.listen(PORT, () => {

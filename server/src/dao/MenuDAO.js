@@ -1,5 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
+import { toDTO, toDTOs } from '../utils/dto.js';
 
 // Models from init-models.cjs (lowercase keys)
 const { menu, dishmenu, dish, sequelize } = db;
@@ -9,11 +10,12 @@ export default class MenuDAO {
     static async getByRestaurantID(restaurantID, { onlyActive } = {}) {
         const where = { restaurantID };
         if (onlyActive) where.status = true;
-        return await menu.findAll({
+        const rows = await menu.findAll({
             where,
             attributes: ['menuID','restaurantID','name','price','imageURL','status'],
             order: [['menuID','ASC']]
         });
+        return toDTOs(rows);
     }
 
     static async getByID(menuID, { includeDishes = true } = {}) {
@@ -27,10 +29,11 @@ export default class MenuDAO {
                 attributes: ['dishID','restaurantID','name','imageURL','categoryID','price']
             });
         }
-        return await menu.findByPk(menuID, {
+        const r = await menu.findByPk(menuID, {
             attributes: ['menuID','restaurantID','name','price','imageURL','status'],
             include
         });
+        return toDTO(r);
     }
 
     static async createMenu({ restaurantID, name, price, imageURL, status = true, dishIDs = [] }) {
@@ -73,7 +76,8 @@ export default class MenuDAO {
     }
 
     static async getByDishID(dishID) {
-        return await dishmenu.findAll({ where: { dishID }, attributes: ['menuID','dishID'] });
+        const rows = await dishmenu.findAll({ where: { dishID }, attributes: ['menuID','dishID'] });
+        return toDTOs(rows);
     }
     static async addDishMenu(dishID, menuID) {
         const dm = await dishmenu.create({ dishID, menuID }); 

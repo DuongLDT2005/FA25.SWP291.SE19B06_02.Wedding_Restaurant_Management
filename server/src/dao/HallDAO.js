@@ -1,5 +1,6 @@
 
 import db from "../config/db.js";
+import { toDTO, toDTOs } from '../utils/dto.js';
 
 // Use Sequelize models from init-models
 const { sequelize, hall, restaurant } = db;
@@ -33,24 +34,23 @@ class HallDAO {
             // increment hallCount on restaurant
             await restaurant.increment('hallCount', { by: 1, where: { restaurantID }, transaction: t });
 
-            return newHall;
+            const dto = toDTO(newHall);
+            // provide legacy capacity mapping
+            return { ...dto, capacity: dto.maxTable };
         });
     }
 
     static async getHallById(hallID) {
         const h = await hall.findByPk(hallID);
         if (!h) return null;
-        // Provide a plain object with a legacy 'capacity' field mapped from maxTable
-        const json = h.toJSON();
-        return { ...json, capacity: json.maxTable };
+        const dto = toDTO(h);
+        return { ...dto, capacity: dto.maxTable };
     }
 
     static async getHallsByRestaurantId(restaurantID) {
         const rows = await hall.findAll({ where: { restaurantID } });
-        return rows.map(h => {
-            const json = h.toJSON();
-            return { ...json, capacity: json.maxTable };
-        });
+        const dtos = toDTOs(rows);
+        return dtos.map(d => ({ ...d, capacity: d.maxTable }));
     }
 
     static async updateHall(hallID, hallData) {
@@ -60,7 +60,8 @@ class HallDAO {
             data.maxTable = hallData.capacity;
             delete data.capacity;
         }
-        await hall.update(data, { where: { hallID } });
+        const [count] = await hall.update(data, { where: { hallID } });
+        return count > 0;
     }
 
     static async deleteHall(hallID) {

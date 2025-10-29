@@ -8,5 +8,10 @@ const BookingStatus = {
   CANCELLED: 6,   // Hủy
   COMPLETED: 7,   // Hoàn tất sau sự kiện
 };
-
 export default BookingStatus;
+
+export const checkedStatus = {
+  unchecked: 0,
+  checked: 1
+};
+
