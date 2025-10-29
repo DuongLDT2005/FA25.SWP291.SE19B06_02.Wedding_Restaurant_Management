@@ -1,5 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
+import { toDTO, toDTOs } from '../utils/dto.js';
 
 // Models from init-models.cjs
 const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
@@ -11,7 +12,8 @@ class RestaurantDAO {
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }],
       order: [['restaurantID','ASC']]
     });
-    return rows.map(r => ({
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
       restaurantID: r.restaurantID,
       restaurantPartnerID: r.restaurantPartnerID,
       name: r.name,
@@ -30,7 +32,8 @@ class RestaurantDAO {
       attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
     });
-    return rows.map(r => ({
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
       restaurantID: r.restaurantID,
       restaurantPartnerID: r.restaurantPartnerID,
       name: r.name,
@@ -49,7 +52,8 @@ class RestaurantDAO {
       attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
     });
-    return rows.map(r => ({
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
       restaurantID: r.restaurantID,
       restaurantPartnerID: r.restaurantPartnerID,
       name: r.name,
@@ -71,17 +75,18 @@ class RestaurantDAO {
       ]
     });
     if (!r) return null;
+    const dto = toDTO(r);
     return {
-      restaurantID: r.restaurantID,
-      restaurantPartnerID: r.restaurantPartnerID,
-      name: r.name,
-      description: r.description,
-      hallCount: r.hallCount,
-      addressID: r.addressID,
-      thumbnailURL: r.thumbnailURL,
-      status: r.status,
-      address: r.address?.fullAddress || null,
-      images: (r.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL }))
+      restaurantID: dto.restaurantID,
+      restaurantPartnerID: dto.restaurantPartnerID,
+      name: dto.name,
+      description: dto.description,
+      hallCount: dto.hallCount,
+      addressID: dto.addressID,
+      thumbnailURL: dto.thumbnailURL,
+      status: dto.status,
+      address: dto.address?.fullAddress || null,
+      images: (dto.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL }))
     };
   }
   /* 
@@ -205,10 +210,10 @@ constructor({
       include: [ includeAddress, { model: hall, as: 'halls', attributes: ['hallID','name','price','minTable','maxTable','status'], where: hallWhere, required: true } ],
       order: [['restaurantID','ASC']]
     });
-
     // Flatten per hall (similar to original DISTINCT join result)
+    const plain = toDTOs(rows);
     const results = [];
-    for (const r of rows) {
+    for (const r of plain) {
       for (const h of (r.halls || [])) {
         results.push({
           restaurantID: r.restaurantID,

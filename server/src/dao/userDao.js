@@ -1,6 +1,7 @@
 import db from '../config/db.js';
-import { userRole, userStatus, negoStatus, coupleRole } from '../enums/UserStatus.js';
+import { userRole, userStatus, negoStatus, coupleRole } from '../models/enums/UserStatus.js';
 import { bitToNumber } from '../utils/bitUtils.js';
+import { toDTO, toDTOs } from '../utils/dto.js';
 
 // db (from config/db.js) exports: { sequelize, user, restaurantpartner, customer, ... }
 const { sequelize, user: UserModel, restaurantpartner: RestaurantPartnerModel, customer: CustomerModel } = db;
@@ -14,7 +15,7 @@ class UserDAO {
             ]
         });
 
-        return users.map(u => u.get({ plain: true }));
+    return toDTOs(users);
     }
 
     static async getUserById(id) {
@@ -24,7 +25,7 @@ class UserDAO {
                 { model: CustomerModel, as: 'customer' }
             ]
         });
-        return user ? user.get({ plain: true }) : null;
+    return toDTO(user);
     }
 
     static async createOwner(data) {
@@ -140,21 +141,21 @@ class UserDAO {
                 { model: RestaurantPartnerModel, as: 'restaurantpartner' }
             ]
         });
-        return user ? user.get({ plain: true }) : null;
+    return toDTO(user);
     }
     static async getCustomers() {
         const customers = await UserModel.findAll({
             where: { role: userRole.customer },
             include: [{ model: CustomerModel, as: 'customer' }]
         });
-        return customers.map(c => c.get({ plain: true }));
+    return toDTOs(customers);
     }
     static async getOwners() {
         const owners = await UserModel.findAll({
             where: { role: userRole.owner },
             include: [{ model: RestaurantPartnerModel, as: 'restaurantpartner' }]
         });
-        return owners.map(o => o.get({ plain: true }));
+    return toDTOs(owners);
     }
 }
 

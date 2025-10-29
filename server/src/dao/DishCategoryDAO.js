@@ -1,17 +1,19 @@
 import db from "../config/db";
+import { toDTO, toDTOs } from '../utils/dto.js';
 const { dishcategory } = db;
 
 class DishCategoryDAO {
     static async getAll() {
-        return await dishcategory.findAll({ attributes: ['dishCategoryID', 'name', 'description'] });
+        const rows = await dishcategory.findAll({ attributes: ['dishCategoryID', 'name', 'description'] });
+        return toDTOs(rows);
     }
     static async getByID(dishCategoryID) {
-        return await dishcategory.findByPk(dishCategoryID, { attributes: ['dishCategoryID', 'name', 'description'] });
+        const r = await dishcategory.findByPk(dishCategoryID, { attributes: ['dishCategoryID', 'name', 'description'] });
+        return toDTO(r);
     }
     static async addDishCategory(name, description) {
         const dc = await dishcategory.create({ name, description });
-        // Return a plain shape like before
-        return { dishCategoryID: dc.dishCategoryID, name: dc.name, description: dc.description };
+        return toDTO(dc);
     }
     static async updateDishCategory(dishCategoryID, dishCategoryData) {
         const [count] = await dishcategory.update(dishCategoryData, { where: { dishCategoryID } });
@@ -22,3 +24,4 @@ class DishCategoryDAO {
         return count > 0;
     }
 }
+export default DishCategoryDAO;

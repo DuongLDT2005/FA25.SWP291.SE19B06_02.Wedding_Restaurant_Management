@@ -1,17 +1,17 @@
 import db from "../config/db.js";
-import hallimage from "../models/hallimage.cjs";
-const { HallImage,sequelize } = db;
+import { toDTO, toDTOs } from '../utils/dto.js';
+const { hallimage } = db;
 class HallImageDAO {
     static async createHallImage(hallID, imageURL) {
-        const result = await HallImage.create({ hallID, imageURL });
-        return new HallImage({ imageID: result.insertId, hallID, imageURL });
+        const result = await hallimage.create({ hallID, imageURL });
+        return toDTO(result);
     }
     static async getByHallId(hallID) {
-        const rows = await HallImage.findAll({ where: { hallID } });
-        return rows.map(row => new HallImage(row));
+        const rows = await hallimage.findAll({ where: { hallID } });
+        return toDTOs(rows);
     }
     static async deleteHallImage(imageID) {
-        const count = await HallImage.destroy({ where: { imageID } });
+        const count = await hallimage.destroy({ where: { imageID } });
         return count > 0;
     }
 }
