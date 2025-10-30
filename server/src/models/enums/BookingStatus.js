@@ -1,5 +1,5 @@
 const BookingStatus = {
-  PENDING: 0,     // Khách gửi yêu cầu
+  PENDING: 0,     // Khách gửi yêu cầu 
   ACCEPTED: 1,    // Partner chấp nhận
   REJECTED: 2,    // Partner từ chối
   CONFIRMED: 3,   // Customer xác nhận

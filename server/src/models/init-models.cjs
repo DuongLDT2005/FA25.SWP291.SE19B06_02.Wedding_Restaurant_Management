@@ -71,7 +71,8 @@ function initModels(sequelize) {
   dish.belongsToMany(booking, { as: 'bookingID_bookings', through: bookingdish, foreignKey: "dishID", otherKey: "bookingID" });
   dish.belongsToMany(menu, { as: 'menuID_menus', through: dishmenu, foreignKey: "dishID", otherKey: "menuID" });
   eventtype.belongsToMany(restaurant, { as: 'restaurantID_restaurant_restauranteventtypes', through: restauranteventtype, foreignKey: "eventTypeID", otherKey: "restaurantID" });
-  menu.belongsToMany(dish, { as: 'dishID_dish_dishmenus', through: dishmenu, foreignKey: "menuID", otherKey: "dishID" });
+  //Sửa as : 'dishID_dish_dishmenus' thành dishes
+  menu.belongsToMany(dish, { as: 'dishes', through: dishmenu, foreignKey: "menuID", otherKey: "dishID" });
   promotion.belongsToMany(booking, { as: 'bookingID_booking_bookingpromotions', through: bookingpromotion, foreignKey: "promotionID", otherKey: "bookingID" });
   promotion.belongsToMany(service, { as: 'serviceID_service_promotionservices', through: promotionservice, foreignKey: "promotionID", otherKey: "serviceID" });
   restaurant.belongsToMany(amenity, { as: 'amenityID_amenities', through: restaurantamenities, foreignKey: "restaurantID", otherKey: "amenityID" });
