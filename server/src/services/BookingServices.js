@@ -1,5 +1,5 @@
-import BookingDAO from "../dao/bookingDao.js";
-
+import BookingDAO from "../dao/BookingDAO.js";
+import HallDAO from "../dao/HallDAO.js";
 class BookingService {
   async createBooking(data) {
     const {
