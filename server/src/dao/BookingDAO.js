@@ -1,4 +1,5 @@
 import db from '../config/db.js';
+import { Op } from 'sequelize';
 import BookingStatus, { checkedStatus } from '../models/enums/BookingStatus.js';
 import { toDTO, toDTOs } from '../utils/dto.js';
 
@@ -88,6 +89,50 @@ class BookingDAO {
     static async updateBookingStatus(bookingID, newStatus, { isChecked } = {}) {
         const updates = { status: newStatus };
         if (typeof isChecked !== 'undefined') updates.isChecked = !!isChecked;
+        const [affected] = await BookingModel.update(updates, { where: { bookingID } });
+        return affected > 0;
+    }
+    static async markBookingChecked(bookingID) {
+        const [affected] = await BookingModel.update({ isChecked: true }, { where: { bookingID } });
+        return affected > 0;
+    }
+
+    // Find overlapping bookings for a hall on a given date and time range
+    static async findByHallAndTime(hallID, eventDate, startTime, endTime) {
+        const rows = await BookingModel.findAll({
+            where: {
+                hallID,
+                eventDate,
+                [Op.and]: [
+                    { startTime: { [Op.lt]: endTime } },
+                    { endTime: { [Op.gt]: startTime } }
+                ]
+            },
+            order: [['createdAt', 'DESC']]
+        });
+        return toDTOs(rows);
+    }
+
+    // Find bookings for a customer on a specific date
+    static async findByCustomerAndDate(customerID, eventDate) {
+        const rows = await BookingModel.findAll({ where: { customerID, eventDate }, order: [['createdAt', 'DESC']] });
+        return toDTOs(rows);
+    }
+
+    // Return all bookings (simple admin listing)
+    static async getAllBookings() {
+        const rows = await BookingModel.findAll({ order: [['createdAt', 'DESC']] });
+        return toDTOs(rows);
+    }
+
+    // Get a booking by id (simple wrapper)
+    static async getBookingById(bookingID) {
+        const row = await BookingModel.findByPk(bookingID);
+        return toDTO(row);
+    }
+
+    // Generic update for booking (partial fields) — returns boolean
+    static async updateBooking(bookingID, updates) {
         const [affected] = await BookingModel.update(updates, { where: { bookingID } });
         return affected > 0;
     }

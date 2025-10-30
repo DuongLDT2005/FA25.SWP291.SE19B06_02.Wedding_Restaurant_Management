@@ -1,9 +1,11 @@
 
 import db from "../config/db.js";
 import { toDTO, toDTOs } from '../utils/dto.js';
+import BookingStatus from '../models/enums/BookingStatus.js';
+import { Op } from 'sequelize';
 
 // Use Sequelize models from init-models
-const { sequelize, hall, restaurant } = db;
+const { sequelize, hall, restaurant, booking } = db;
 
 class HallDAO {
     static async createHall(hallData) {
@@ -85,6 +87,65 @@ class HallDAO {
     static async updateHallStatus(hallID, status) {
         const [affected] = await hall.update({ status }, { where: { hallID } });
         return affected > 0;
+    }
+    static async isAvailable(hallID) {
+        // Backwards-compatible minimal check (returns hall status) — keep for callers that expect it
+        const h = await hall.findByPk(hallID, { attributes: ['status'] });
+        return h ? h.status : false;
+    }
+
+    /**
+     * Check if a hall is available for a given date/time range.
+     * Options:
+     * - transaction: a Sequelize transaction to run the query inside
+     * - lock: boolean, if true and transaction provided, use FOR UPDATE to avoid races
+     * - blockingStatuses: array of booking statuses that block availability
+     */
+    static async isAvailableForRange(hallID, eventDate, startTime, endTime, options = {}) {
+        const { transaction = null, lock = false, blockingStatuses = [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.CONFIRMED, BookingStatus.DEPOSITED] } = options;
+
+        // Simple validation
+        if (!hallID || !eventDate || !startTime || !endTime) return false;
+
+        const where = {
+            hallID,
+            eventDate,
+            [Op.and]: [
+                { startTime: { [Op.lt]: endTime } },
+                { endTime: { [Op.gt]: startTime } }
+            ],
+            status: { [Op.in]: blockingStatuses }
+        };
+
+        const lockOption = (lock && transaction) ? { lock: sequelize.Transaction.LOCK.UPDATE } : {};
+
+        const rows = await booking.findAll({ where, transaction, ...lockOption });
+        return rows.length === 0;
+    }
+
+    /**
+     * Find ended bookings (whose eventDate + endTime < now) for a hall and mark them COMPLETED.
+     * Returns number of updated rows.
+     */
+    static async markEndedBookingsCompleted(hallID, now = new Date()) {
+        if (!hallID) return 0;
+
+        // Find bookings likely ended (status CONFIRMED or DEPOSITED)
+        const candidates = await booking.findAll({
+            where: { hallID, status: { [Op.in]: [BookingStatus.CONFIRMED, BookingStatus.DEPOSITED] } },
+            attributes: ['bookingID', 'eventDate', 'endTime']
+        });
+
+        const toCompleteIds = [];
+        for (const c of candidates) {
+            const dt = new Date(`${c.eventDate}T${c.endTime}`);
+            if (!isNaN(dt.getTime()) && dt.getTime() < now.getTime()) toCompleteIds.push(c.bookingID);
+        }
+
+        if (toCompleteIds.length === 0) return 0;
+
+        const [affected] = await booking.update({ status: BookingStatus.COMPLETED }, { where: { bookingID: { [Op.in]: toCompleteIds } } });
+        return affected;
     }
 }
 
