@@ -1,4 +1,4 @@
-import RestaurantService from "../services/RestaurantService.js";
+import RestaurantService from "../services/RestaurantServices.js";
 
 class RestaurantController {
   static async getAll(req, res) {

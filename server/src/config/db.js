@@ -27,7 +27,7 @@ export default db;
 // // connect to MongoDB
 
 
-const uri = process.env.MongoDB;
+const uri = process.env.MONGO_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 export const client = new MongoClient(uri, {
