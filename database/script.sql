@@ -418,7 +418,8 @@ CREATE TABLE SystemSetting (
     CONSTRAINT fk_systemsetting_updatedBy FOREIGN KEY (updatedBy)
         REFERENCES User(userID) ON DELETE SET NULL ON UPDATE CASCADE
 );
-
+-- lọc theo status, createAt
+create index idx_booking_confirm on booking(status, createdAt);
 -- Lọc theo customer
 CREATE INDEX idx_booking_customer ON Booking(customerID);
 
