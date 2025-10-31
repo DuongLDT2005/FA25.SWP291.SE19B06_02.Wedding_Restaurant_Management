@@ -1,7 +1,10 @@
 import BookingDAO from "../dao/BookingDAO.js";
 import HallDAO from "../dao/HallDAO.js";
+import MenuDAO from "../dao/MenuDAO.js";
+import SystemSettingDAO from "../dao/SystemSettingDAO.js";
 import BookingStatus from "../models/enums/BookingStatus.js";
 import { sendBookingStatusEmail } from "../utils/mailer.js";
+import UserDAO from "../dao/userDao.js";
 class BookingService {
   async createBooking(data) {
     const {
@@ -58,6 +61,31 @@ class BookingService {
       throw new Error("Customer has reached the maximum number of bookings for this date.");
     }
 
+    // --- Pricing: compute required non-null fields (originalPrice, VAT, totalAmount) ---
+    // Load hall & menu prices
+    const hall = await HallDAO.getHallById(hallID);
+    if (!hall) throw new Error("Hall not found");
+    const menu = await MenuDAO.getByID(menuID, { includeDishes: false });
+    if (!menu) throw new Error("Menu not found");
+
+    const hallPrice = Number(hall.price) || 0;
+    const menuPrice = Number(menu.price) || 0;
+    const tables = Number(tableCount) || 0;
+
+    const originalPrice = hallPrice + (menuPrice * tables);
+    const discountAmount = 0; // later: apply promotions
+
+    // VAT rate from settings or default 8%
+    let vatRate = 0.08;
+    try {
+      const vatSetting = await SystemSettingDAO.getByKey('VAT_RATE');
+      const v = parseFloat(vatSetting?.settingValue);
+      if (!isNaN(v) && v >= 0) vatRate = v;
+    } catch {}
+
+    const VAT = (originalPrice - discountAmount) * vatRate;
+    const totalAmount = (originalPrice - discountAmount) + VAT;
+
     return await BookingDAO.createBooking({
       customerID,
       eventTypeID,
@@ -68,6 +96,10 @@ class BookingService {
       endTime,
       tableCount,
       specialRequest,
+      originalPrice,
+      discountAmount,
+      VAT,
+      totalAmount,
     });
   }
 
@@ -116,9 +148,13 @@ class BookingService {
     if (!ok) throw new Error("Failed to update booking status.");
 
     // Send email to customer (best effort)
-    const email = booking.customer?.email;
+    const user = await UserDAO.getUserById(booking.customerID);
+    const email = user?.email;
     if (email) {
       await sendBookingStatusEmail(email, booking, 'ACCEPTED');
+    }
+    else {
+      console.log("No email found for customer, skipping email notification.");
     }
 
     // Return updated booking (optional: reload)
@@ -145,8 +181,8 @@ class BookingService {
 
     const ok = await BookingDAO.updateBookingStatus(bookingID, BookingStatus.REJECTED);
     if (!ok) throw new Error("Failed to update booking status.");
-
-    const email = booking.customer?.email;
+    const user = await UserDAO.getUserById(booking.customerID);
+    const email = user?.email;
     if (email) {
       await sendBookingStatusEmail(email, booking, 'REJECTED', { reason });
     }

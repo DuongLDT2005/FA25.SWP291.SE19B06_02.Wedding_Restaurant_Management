@@ -49,11 +49,13 @@ class AuthServices {
         throw new Error("Invalid password");
     }
     // Generate JWT token
-    const token = jwt.sign(
-        { userId: user.userId, email: user.email, role: user.role },
-        JWT_SECRET,
-        { expiresIn: "1h", algorithm: "HS256" }
-    );
+  // Include both userId and sub for compatibility; source uses userID (capital D)
+  const userId = user.userID ?? user.userId ?? user.id;
+  const token = jwt.sign(
+    { sub: userId, userId: userId, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "1h", algorithm: "HS256" }
+  );
     return { user, token };
 }
   static async resetPassword(email, newPassword) {

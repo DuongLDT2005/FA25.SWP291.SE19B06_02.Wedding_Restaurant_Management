@@ -52,7 +52,7 @@ module.exports = function(sequelize, DataTypes) {
   }, {
     sequelize,
     tableName: 'promotion',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "PRIMARY",

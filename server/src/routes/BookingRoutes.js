@@ -14,7 +14,7 @@ router.delete('/:id', BookingController.deleteBooking);
 // Partner-only middleware
 function ensurePartner(req, res, next) {
   const role = req.user?.role;
-  if (role !== 'owner') {
+  if (role !== 1) {
     return res.status(403).json({ error: 'Partner only' });
   }
   return next();
@@ -27,3 +27,4 @@ router.post('/:id/partner/accept', authenticateJWT, ensurePartner, BookingContro
 router.post('/:id/partner/reject', authenticateJWT, ensurePartner, BookingController.rejectByPartner);
 
 export default router;
+

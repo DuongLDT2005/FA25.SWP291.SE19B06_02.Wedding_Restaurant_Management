@@ -16,8 +16,8 @@ export function getTransporter() {
   const {
     SMTP_HOST,
     SMTP_PORT,
-    SMTP_USER,
-    SMTP_PASS,
+    GMAIL_USER,
+    GMAIL_APP_PASSWORD,
     SMTP_SECURE,
     SMTP_FROM,
   } = process.env;
@@ -26,10 +26,10 @@ export function getTransporter() {
     host: SMTP_HOST || 'smtp.gmail.com',
     port: SMTP_PORT ? Number(SMTP_PORT) : 587,
     secure: getBoolean(SMTP_SECURE, false),
-    auth: SMTP_USER && SMTP_PASS ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+    auth: GMAIL_USER && GMAIL_APP_PASSWORD ? { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } : undefined,
   });
 
-  transporter._defaultFrom = SMTP_FROM || SMTP_USER || 'no-reply@example.com';
+  transporter._defaultFrom = SMTP_FROM || GMAIL_USER || 'no-reply@example.com';
   return transporter;
 }
 
