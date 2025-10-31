@@ -1,34 +1,21 @@
 import cron from 'node-cron';
-import { insertDeposit,findBooking  } from '../dao/mongoDAO';
+import BookingDAO from '../dao/BookingDAO.js';
 
 /**
  * Thiết lập Cron Job để kiểm tra các booking đã hết hạn.
  * Chạy tác vụ này mỗi 1 giờ (vào phút 0 của mỗi giờ: 00:00, 01:00, 02:00, ...)
  */
-function setupExpirationChecker() {
+export function setupExpirationChecker({ days = 2 } = {}) {
     // Cron string '0 * * * *': phút (0), giờ (*), ngày trong tháng (*), tháng (*), ngày trong tuần (*)
-    cron.schedule('0 1 * * *', async () => {
+    cron.schedule('0 * * * *', async () => {
         const jobStartTime = new Date();
-        console.log(`--- CRON JOB: Bắt đầu kiểm tra hết hạn lúc ${jobStartTime.toLocaleTimeString()} ---`);
+        const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        console.log(`--- CRON JOB: Bắt đầu kiểm tra hết hạn lúc ${jobStartTime.toLocaleTimeString()} | cutoff=${cutoff.toISOString()} ---`);
 
         try {
-            // 1. Truy vấn MongoDB để lấy danh sách các booking đã hết hạn
-            const expiredBookings = await findBooking(jobStartTime);
-
-            if (expiredBookings.length === 0) {
-                console.log('Không tìm thấy booking nào cần hết hạn.');
-                return;
-            }
-
-            // 2. Lấy ra danh sách IDs
-            const expiredBookingIds = expiredBookings.map(b => b.bookingID);
-            console.log(`Tìm thấy ${expiredBookingIds.length} booking đã quá hạn.`);
-
-            // 3. Thực hiện cập nhật hàng loạt (Bulk Update)
-            const modifiedCount = await BookingDAO.bulkUpdateToExpired(expiredBookingIds);
-
-            console.log(`Hoàn thành. Đã cập nhật ${modifiedCount} booking sang trạng thái 'EXPIRED'.`);
-
+            // Dùng cơ chế batch để tận dụng index (status, createdAt) và tránh khoá bảng lâu.
+            const modifiedCount = await BookingDAO.bulkExpireConfirmedOlderThanBatch(cutoff, { batchSize: 1000, setChecked: true });
+            console.log(`Hoàn thành. Đã cập nhật ${modifiedCount} booking (CONFIRMED -> EXPIRED).`);
         } catch (error) {
             console.error('LỖI trong quá trình chạy Cron Job:', error);
         }

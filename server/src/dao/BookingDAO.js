@@ -222,6 +222,51 @@ class BookingDAO {
       return affected > 0;
     });
   }
+
+
+  // Return a batch of bookingIDs for CONFIRMED bookings older than cutoff, ordered by createdAt ASC
+  static async findConfirmedIdsOlderThan(cutoffDate, limit = 1000) {
+    if (!(cutoffDate instanceof Date) || isNaN(cutoffDate.getTime())) {
+      throw new Error('Invalid cutoffDate');
+    }
+    const rows = await BookingModel.findAll({
+      where: {
+        status: 'CONFIRMED',
+        createdAt: { [Op.lte]: cutoffDate },
+      },
+      attributes: ['bookingID'],
+      order: [['createdAt', 'ASC']],
+      limit,
+    });
+    return rows.map((r) => r.bookingID);
+  }
+
+  // Expire by a specific list of booking IDs (guarded by status)
+  static async expireByIds(ids, { setChecked = true } = {}) {
+    if (!Array.isArray(ids) || ids.length === 0) return 0;
+    const updates = { status: 'EXPIRED' };
+    if (setChecked) updates.isChecked = true;
+    const [affected] = await BookingModel.update(updates, {
+      where: {
+        bookingID: { [Op.in]: ids },
+        status: 'CONFIRMED',
+      },
+    });
+    return affected;
+  }
+
+  // Batch loop using index (status, createdAt). Safer for large datasets.
+  static async bulkExpireConfirmedOlderThanBatch(cutoffDate, { batchSize = 1000, setChecked = true } = {}) {
+    let total = 0;
+    while (true) {
+      const ids = await this.findConfirmedIdsOlderThan(cutoffDate, batchSize);
+      if (ids.length === 0) break;
+      const affected = await this.expireByIds(ids, { setChecked });
+      total += affected;
+      if (ids.length < batchSize) break;
+    }
+    return total;
+  }
 }
 
 export default BookingDAO;

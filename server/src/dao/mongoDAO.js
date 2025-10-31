@@ -38,13 +38,3 @@ export async function insertOtp(email, otp) {
 console.log("thuc hien file mongoDAO.js");
 // await client.connect();
 // await ensureOtpTTLIndex(); //using when start server first time
-export async function insertDeposit(bookingID) {
-    const deposits = getCollection("depositBooking");
-    const createdAt = new Date();
-    await deposits.insertOne({ bookingID, createdAt });
-}
-
-export async function findBooking(bookingID) {
-    const bookings = getCollection("depositBooking");
-    return await bookings.findOne({ bookingID: bookingID });
-}
