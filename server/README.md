@@ -5,4 +5,10 @@
 - npm i nodemailer,
 - npm i mongodb.
 - npm install @payos/node
-- npm sequelize
+- npm i sequelize
+- npm i @google/generative-ai
+- npm i @payos/node
+- npm i date-fns
+- npm i cors
+
+
