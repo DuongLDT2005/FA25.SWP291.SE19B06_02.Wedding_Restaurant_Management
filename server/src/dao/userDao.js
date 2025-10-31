@@ -1,7 +1,7 @@
 import db from '../config/db.js';
 import { userRole, userStatus, negoStatus, coupleRole } from '../models/enums/UserStatus.js';
-import { bitToNumber } from '../utils/bitUtils.js';
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { bitToNumber } from '../utils/convert/bitUtils.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 // db (from config/db.js) exports: { sequelize, user, restaurantpartner, customer, ... }
 const { sequelize, user: UserModel, restaurantpartner: RestaurantPartnerModel, customer: CustomerModel } = db;

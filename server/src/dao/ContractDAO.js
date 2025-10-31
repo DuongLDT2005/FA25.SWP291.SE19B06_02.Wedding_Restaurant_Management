@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { sequelize, contract } = db;
 //   status TINYINT UNSIGNED NOT NULL DEFAULT 0,
 //     -- 0: PENDING           (vừa generate)

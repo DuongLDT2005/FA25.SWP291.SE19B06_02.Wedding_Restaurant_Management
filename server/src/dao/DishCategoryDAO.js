@@ -1,5 +1,5 @@
 import db from "../config/db";
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { dishcategory } = db;
 
 class DishCategoryDAO {

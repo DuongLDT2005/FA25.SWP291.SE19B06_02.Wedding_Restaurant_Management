@@ -1,7 +1,7 @@
 import db from "../config/db";
 import { Op } from 'sequelize';
 const { refundpolicies: RefundPolicyModel } = db;
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 class RefundPolicyDAO {
 	static async listByRestaurant(restaurantId) {

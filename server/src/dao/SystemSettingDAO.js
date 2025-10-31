@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 const { systemsetting, sequelize } = db;
 

@@ -1,6 +1,6 @@
 
 import db from "../config/db.js";
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 import BookingStatus from '../models/enums/BookingStatus.js';
 import { Op } from 'sequelize';
 

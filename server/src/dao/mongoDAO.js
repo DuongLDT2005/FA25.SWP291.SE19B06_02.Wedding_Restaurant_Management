@@ -12,6 +12,9 @@ export async function ensureOtpTTLIndex() {
 
 
 export function getCollection(collectionName, dbName = "userRestaurantsDB") {
+    if (!client) {
+        throw new Error("MongoDB client is not initialized. Missing MONGO_URI/MONGODB_URI in environment.");
+    }
     return client.db(dbName).collection(collectionName);
 }
 
@@ -35,3 +38,13 @@ export async function insertOtp(email, otp) {
 console.log("thuc hien file mongoDAO.js");
 // await client.connect();
 // await ensureOtpTTLIndex(); //using when start server first time
+export async function insertDeposit(bookingID) {
+    const deposits = getCollection("depositBooking");
+    const createdAt = new Date();
+    await deposits.insertOne({ bookingID, createdAt });
+}
+
+export async function findBooking(bookingID) {
+    const bookings = getCollection("depositBooking");
+    return await bookings.findOne({ bookingID: bookingID });
+}

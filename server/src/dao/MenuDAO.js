@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 // Models from init-models.cjs (lowercase keys)
 const { menu, dishmenu, dish, sequelize } = db;
@@ -21,12 +21,11 @@ export default class MenuDAO {
     static async getByID(menuID, { includeDishes = true } = {}) {
         const include = [];
         if (includeDishes) {
-            // Use the belongsToMany association; alias may be long, so include through directly
             include.push({
                 model: dish,
-                // rely on auto alias from init-models; through ensures join without extra attrs
-                through: { attributes: [] },
-                attributes: ['dishID','restaurantID','name','imageURL','categoryID','price']
+                as : 'dishes',
+                attributes: ['dishID','restaurantID','name','imageURL','categoryID'],
+                through: { attributes: [] }
             });
         }
         const r = await menu.findByPk(menuID, {

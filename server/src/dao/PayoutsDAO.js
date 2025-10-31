@@ -2,7 +2,7 @@ import db from "../config/db";
 import { Op } from "sequelize";
 import { PayoutStatus } from "../models/enums/PayoutStatus";
 const { sequelize, payouts: PayoutModel } = db;
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 function normalizeStatus(value) {
     if (value == null) return null;

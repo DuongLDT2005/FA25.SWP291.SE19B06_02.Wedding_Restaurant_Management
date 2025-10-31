@@ -1,7 +1,7 @@
 import db from "../config/db";
 import { Op } from 'sequelize';
 const { review, sequelize } = db;
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 class ReviewDAO {
     /**

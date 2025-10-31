@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { bookingAcceptedTemplate, bookingRejectedTemplate } from './emailTemplates.js';
+import { bookingAcceptedTemplate, bookingRejectedTemplate } from '../emailTemplates.js';
 
 // Create a singleton transporter using ENV variables
 let transporter;

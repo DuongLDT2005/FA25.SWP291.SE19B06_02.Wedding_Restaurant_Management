@@ -1,7 +1,7 @@
 import db from "../config/db";
 import { Op } from 'sequelize';
 import paymentStatus from "../utils/paymentStatus.js";
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { payment: PaymentModel, sequelize } = db;
 
 class PaymentDAO {

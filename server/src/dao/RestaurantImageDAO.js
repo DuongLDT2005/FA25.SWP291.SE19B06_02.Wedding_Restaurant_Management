@@ -1,5 +1,5 @@
 import db from "../config/db.js";
-import { toDTO, toDTOs } from '../utils/dto.js';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
 
 // Model key from init-models is lowercase: restaurantimage
 const { restaurantimage } = db;

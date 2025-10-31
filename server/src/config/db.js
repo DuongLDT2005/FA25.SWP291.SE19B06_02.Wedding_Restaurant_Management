@@ -26,28 +26,39 @@ export default db;
 
 // // connect to MongoDB
 
-
-const uri = process.env.MongoDB;
+// Accept common env names to reduce configuration friction
+const uri = process.env.MONGO_URI || process.env.MONGODB_URI || process.env.MONGO_URL;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-export const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+export const client = uri
+  ? new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    })
+  : null;
 
 async function run() {
+  if (!uri) {
+    console.warn(
+      "[Mongo] Missing MONGO_URI/MONGODB_URI. Mongo features (OTP/blacklist) are disabled until you set the connection string."
+    );
+    return;
+  }
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+  } catch (err) {
+    console.error("[Mongo] Connection error:", err?.message || err);
+    throw err;
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
-run().catch(console.dir);
+run().catch(() => {});

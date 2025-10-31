@@ -140,8 +140,8 @@ export function bookingRejectedTemplate(booking, reason) {
   const hallPrice = booking?.hall?.price ?? null;
   const menuName = booking?.menu?.name || '';
   const menuPrice = booking?.menu?.price ?? null;
-  const bookingServices = Array.isArray(booking?.bookingservices) ? booking.bookingservices : [];
-  const promotions = Array.isArray(booking?.bookingpromotions) ? booking.bookingpromotions : [];
+  const bookingServices = Array.isArray(booking?.services) ? booking.services : [];
+  const promotions = Array.isArray(booking?.promotions) ? booking.promotions : [];
 
   const originalPrice = Number(booking?.originalPrice) || 0;
   const discountAmount = Number(booking?.discountAmount) || 0;
