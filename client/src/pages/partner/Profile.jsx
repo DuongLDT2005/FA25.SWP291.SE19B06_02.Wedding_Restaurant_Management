@@ -1,14 +1,7 @@
-import React, { useState } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  Badge,
-} from "react-bootstrap";
-import "../../styles/ProfileStyles.css";
+"use client"
+
+import { useState } from "react"
+import { Container, Row, Col, Card, Form, Button, Badge } from "react-bootstrap"
 
 export default function Profile() {
   const [formData, setFormData] = useState({
@@ -26,363 +19,387 @@ export default function Profile() {
     closeTime: "22:00",
     description: "Nhà hàng chuyên hải sản tươi sống và món Việt.",
     avatar: "",
-  });
+  })
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Dữ liệu cập nhật:", formData);
-    alert("Thông tin đã được lưu thành công!");
-  };
+    e.preventDefault()
+    console.log("Dữ liệu cập nhật:", formData)
+    alert("Thông tin đã được lưu thành công!")
+  }
+
+  const styles = `
+    .profile-header-gradient {
+      background: linear-gradient(135deg, #E11D48 0%, #F65C76 100%);
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-header-gradient::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0.3;
+    }
+
+    .avatar-gradient {
+      background: linear-gradient(135deg, #E11D48 0%, #F65C76 100%);
+    }
+
+    .icon-gradient {
+      background: linear-gradient(135deg, #E11D48 0%, #F65C76 100%);
+    }
+
+    .btn-gradient {
+      background: linear-gradient(135deg, #E11D48 0%, #F65C76 100%);
+      border: none;
+    }
+
+    .btn-gradient:hover {
+      background: linear-gradient(135deg, #F65C76 0%, #E11D48 100%);
+      box-shadow: 0 8px 20px rgba(225, 29, 72, 0.3);
+    }
+
+    .form-control:focus {
+      border-color: #E11D48;
+      box-shadow: 0 0 0 0.2rem rgba(225, 29, 72, 0.25);
+    }
+
+    .btn-outline-secondary {
+      color: #E11D48;
+      border-color: #E11D48;
+    }
+
+    .btn-outline-secondary:hover {
+      background-color: #E11D48;
+      border-color: #E11D48;
+      color: white;
+    }
+
+    .text-primary {
+      color: #E11D48 !important;
+    }
+
+    .text-muted-custom {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .sticky-sidebar {
+      position: sticky;
+      top: 20px;
+    }
+
+    @media (max-width: 991px) {
+      .sticky-sidebar {
+        position: relative;
+        top: 0;
+        margin-bottom: 2rem;
+      }
+    }
+  `
 
   return (
-    <Container className="my-5">
-      <Row className="g-4">
-        {/* LEFT: Thông tin avatar */}
-        <Col lg={4}>
-          <div className="sticky-sidebar">
-            <Card className="shadow-sm border-0 rounded-4 overflow-hidden">
-              {/* Header gradient */}
-              <div
-                className="position-relative"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #ea666aff 0%, #af1f2eff 100%)",
-                  height: "120px",
-                }}
-              >
-                <div
-                  className="position-absolute w-100 h-100"
-                  style={{
-                    background:
-                      "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-                    opacity: 0.3,
-                  }}
-                />
-              </div>
+    <>
+      <style>{styles}</style>
+      <Container className="py-5">
+        <Row className="g-4">
+          {/* LEFT: Avatar Card */}
+          <Col lg={4}>
+            <div className="sticky-sidebar">
+              <Card className="border-0 shadow">
+                {/* Header Gradient */}
+                <div className="profile-header-gradient position-relative" />
 
-              <Card.Body
-                className="text-center position-relative"
-                style={{ marginTop: "-50px" }}
-              >
-                {/* Avatar với border trắng */}
-                <div className="d-inline-block position-relative mb-3">
-                  <div
-                    className="d-flex align-items-center justify-content-center shadow-lg mx-auto"
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "50%",
-                      background:
-                        "linear-gradient(135deg, #7b6b6cff 0%, #b08a8eff 100%)",
-                      fontSize: "2.5rem",
-                      fontWeight: "bold",
-                      color: "white",
-                      border: "4px solid white",
-                    }}
-                  >
-                    {formData.fullName.charAt(0).toUpperCase()}
+                <Card.Body className="text-center" style={{ marginTop: "-50px" }}>
+                  {/* Avatar */}
+                  <div className="d-inline-block position-relative mb-3">
+                    <div
+                      className="d-flex align-items-center justify-content-center avatar-gradient mx-auto shadow"
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        borderRadius: "50%",
+                        fontSize: "2.5rem",
+                        fontWeight: "bold",
+                        color: "white",
+                        border: "4px solid white",
+                      }}
+                    >
+                      {formData.fullName.charAt(0).toUpperCase()}
+                    </div>
+
+                    {/* Status Badge */}
+                    <Badge
+                      bg="success"
+                      className="position-absolute"
+                      style={{
+                        bottom: "5px",
+                        right: "5px",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        border: "2px solid white",
+                        padding: 0,
+                      }}
+                    />
                   </div>
 
-                  {/* Badge trạng thái */}
-                  <Badge
-                    bg="success"
-                    className="position-absolute"
-                    style={{
-                      bottom: "5px",
-                      right: "5px",
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "50%",
-                      border: "2px solid white",
-                      padding: 0,
-                    }}
-                  />
+                  {/* Change Avatar Button */}
+                  <Form.Group className="mb-3">
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      id="avatarUpload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) alert(`Bạn đã chọn ảnh: ${file.name}`)
+                      }}
+                      style={{ display: "none" }}
+                    />
+                    <label
+                      htmlFor="avatarUpload"
+                      className="btn btn-sm btn-outline-secondary rounded-pill px-4"
+                      style={{ cursor: "pointer" }}
+                    >
+                      <i className="bi bi-camera me-2"></i>
+                      Đổi ảnh đại diện
+                    </label>
+                  </Form.Group>
+
+                  {/* Profile Info */}
+                  <h5 className="fw-bold text-dark mb-1">{formData.fullName}</h5>
+                  <p className="small text-muted-custom mb-3">
+                    <i className="bi bi-envelope me-2"></i>
+                    {formData.email}
+                  </p>
+
+                  {/* Stats */}
+                  <div className="border-top pt-3 mt-3">
+                    <Row className="text-center g-3">
+                      <Col xs={6}>
+                        <div className="p-2">
+                          <i className="bi bi-telephone-fill text-primary fs-5 d-block mb-1"></i>
+                          <small className="text-muted-custom d-block">Điện thoại</small>
+                          <strong className="text-dark small">{formData.phone}</strong>
+                        </div>
+                      </Col>
+                      <Col xs={6}>
+                        <div className="p-2">
+                          <i className="bi bi-calendar-check-fill text-success fs-5 d-block mb-1"></i>
+                          <small className="text-muted-custom d-block">Tham gia</small>
+                          <strong className="text-dark small">{formData.createdAt}</strong>
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </Card.Body>
+              </Card>
+            </div>
+          </Col>
+
+          {/* RIGHT: Form Card */}
+          <Col lg={8}>
+            <Card className="border-0 shadow">
+              <Card.Body className="p-4">
+                {/* Header */}
+                <div className="d-flex align-items-center mb-4">
+                  <div className="flex-grow-1">
+                    <h5 className="fw-bold text-dark mb-1">Thông tin đại diện nhà hàng</h5>
+                    <p className="text-muted-custom small mb-0">Cập nhật thông tin cá nhân và tài khoản</p>
+                  </div>
+                  <Badge bg="success" className="px-3 py-2">
+                    <i className="bi bi-check-circle me-1"></i>
+                    Đã xác thực
+                  </Badge>
                 </div>
 
-                {/* Nút đổi ảnh */}
-                <Form.Group className="mb-3">
-                  <Form.Control
-                    type="file"
-                    accept="image/*"
-                    id="avatarUpload"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        alert(`Bạn đã chọn ảnh: ${file.name} (chưa upload)`);
-                      }
-                    }}
-                    style={{ display: "none" }}
-                  />
-                  <label
-                    htmlFor="avatarUpload"
-                    className="btn btn-sm rounded-pill px-4"
-                    style={{
-                      border: "1px solid #140d0eff",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <i className="bi bi-camera me-2"></i>
-                    Đổi ảnh đại diện
-                  </label>
-                </Form.Group>
-
-                {/* Thông tin cá nhân */}
-                <h4 className="fw-bold mb-1" style={{color: "#000"}}>{formData.fullName}</h4>
-                <p className="small mb-3" style={{ color: "#000" }}>
-                  <i className="bi bi-envelope me-2" style={{ color: "#000" }}></i>
-                  {formData.email}
-                </p>
-
-                <div className="border-top pt-3 mt-3">
-                  <Row className="text-center g-3">
-                    <Col xs={6}>
-                      <div className="p-2 phone-info">
-                        <i className="bi bi-telephone-fill text-primary fs-5 d-block mb-1"></i>
-                        <small className="text-muted d-block">Điện thoại</small>
-                        <strong className="small">{formData.phone}</strong>
+                <Form onSubmit={handleSubmit}>
+                  {/* Account Section */}
+                  <div className="mb-4">
+                    <div className="d-flex align-items-center mb-3">
+                      <div
+                        className="rounded-circle d-flex align-items-center justify-content-center me-3 icon-gradient"
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          color: "white",
+                        }}
+                      >
+                        <i className="bi bi-person-fill"></i>
                       </div>
-                    </Col>
-                    <Col xs={6}>
-                      <div className="p-2 phone-info">
-                        <i className="bi bi-calendar-check-fill text-success fs-5 d-block mb-1"></i>
-                        <small className="text-muted d-block">Tham gia</small>
-                        <strong className="small">{formData.createdAt}</strong>
+                      <h6 className="fw-bold text-dark mb-0">Thông tin tài khoản</h6>
+                    </div>
+
+                    <div className="ps-5">
+                      <Row className="g-3 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Email</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-envelope"></i>
+                              </span>
+                              <Form.Control
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Số điện thoại</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-telephone"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="border-0"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+
+                      <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Họ và tên</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-person"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="fullName"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                className="border-0"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Ngày tạo tài khoản</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-calendar"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                value={formData.createdAt}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </div>
+                  </div>
+
+                  <hr className="my-4" />
+
+                  {/* License Section */}
+                  <div className="mb-4">
+                    <div className="d-flex align-items-center mb-3">
+                      <div
+                        className="rounded-circle d-flex align-items-center justify-content-center me-3 icon-gradient"
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          color: "white",
+                        }}
+                      >
+                        <i className="bi bi-file-earmark-text-fill"></i>
                       </div>
-                    </Col>
-                  </Row>
-                </div>
+                      <h6 className="fw-bold text-dark mb-0">Hợp tác & Giấy phép</h6>
+                    </div>
+
+                    <div className="ps-5">
+                      <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Giấy phép kinh doanh</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-link-45deg"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="licenseUrl"
+                                value={formData.licenseUrl}
+                                onChange={handleChange}
+                                placeholder="Nhập đường dẫn..."
+                                className="border-0"
+                              />
+                            </div>
+                            {formData.licenseUrl && (
+                              <a
+                                href={formData.licenseUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="small d-inline-flex align-items-center mt-2"
+                              >
+                                <i className="bi bi-eye me-1"></i>
+                                Xem giấy phép
+                              </a>
+                            )}
+                          </Form.Group>
+                        </Col>
+
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Tỷ lệ hoa hồng (%)</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-percent"></i>
+                              </span>
+                              <Form.Control
+                                type="number"
+                                name="commissionRate"
+                                value={formData.commissionRate}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="d-flex gap-2 justify-content-end mt-4 pt-3 border-top">
+                    <Button variant="outline-secondary" className="px-4 rounded-pill">
+                      <i className="bi bi-x-circle me-2"></i>
+                      Hủy
+                    </Button>
+                    <Button type="submit" className="px-4 rounded-pill btn-gradient text-white">
+                      <i className="bi bi-check-circle me-2"></i>
+                      Lưu thay đổi
+                    </Button>
+                  </div>
+                </Form>
               </Card.Body>
             </Card>
-          </div>
-        </Col>
-
-        {/* RIGHT: Nội dung chi tiết */}
-        <Col lg={8}>
-          <Card className="shadow-sm border-0 rounded-4">
-            <Card.Body className="p-4">
-              <div className="d-flex align-items-center mb-4">
-                <div className="flex-grow-1">
-                  <h4 className="fw-bold mb-1" style={{ color: "#000" }}>Thông tin đại diện nhà hàng</h4>
-                  <p className="text-muted mb-0 small">
-                    Cập nhật thông tin cá nhân và tài khoản của bạn
-                  </p>
-                </div>
-                <Badge bg="success" className="px-3 py-2">
-                  <i className="bi bi-check-circle me-1"></i>
-                  Đã xác thực
-                </Badge>
-              </div>
-
-              <Form onSubmit={handleSubmit}>
-                {/* --- Tài khoản */}
-                <div className="mb-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div
-                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        background:
-                          "linear-gradient(135deg, #e19698ff 0%, #c8555dff 100%)",
-                      }}
-                    >
-                      <i className="bi bi-person-fill text-white"></i>
-                    </div>
-                    <h5 className="mb-0 fw-bold" style={{ color: "#000" }}>Thông tin tài khoản</h5>
-                  </div>
-
-                  <div className="ps-5">
-                    <Row className="g-3 mb-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Email
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-envelope"></i>
-                            </span>
-                            <Form.Control
-                              type="email"
-                              name="email"
-                              value={formData.email}
-                              onChange={handleChange}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Số điện thoại
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-telephone"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleChange}
-                              className="border-start-0"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Họ và tên
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-person"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="fullName"
-                              value={formData.fullName}
-                              onChange={handleChange}
-                              className="border-start-0"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Ngày tạo tài khoản
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-calendar"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              value={formData.createdAt}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-                  </div>
-                </div>
-
-                <hr className="my-4" />
-
-                {/* --- Hợp tác & Giấy phép */}
-                <div className="mb-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div
-                      className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        background:
-                          "linear-gradient(135deg, #e19698ff 0%, #c8555dff 100%)",
-                      }}
-                    >
-                      <i className="bi bi-file-earmark-text-fill text-white"></i>
-                    </div>
-                    <h5 className="mb-0 fw-bold" style={{ color: "#000" }}>Hợp tác & Giấy phép</h5>
-                  </div>
-
-                  <div className="ps-5">
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Giấy phép kinh doanh
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-link-45deg"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="licenseUrl"
-                              value={formData.licenseUrl}
-                              onChange={handleChange}
-                              placeholder="Nhập hoặc dán đường dẫn..."
-                              className="border-start-0"
-                            />
-                          </div>
-                          {formData.licenseUrl && (
-                            <a
-                              href={formData.licenseUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="small text-decoration-none d-inline-flex align-items-center mt-2"
-                            >
-                              <i className="bi bi-eye me-1"></i>
-                              Xem giấy phép
-                            </a>
-                          )}
-                        </Form.Group>
-                      </Col>
-
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Tỷ lệ hoa hồng (%)
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-percent"></i>
-                            </span>
-                            <Form.Control
-                              type="number"
-                              name="commissionRate"
-                              value={formData.commissionRate}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
-                  </div>
-                </div>
-
-                <div className="d-flex gap-2 justify-content-end mt-4 pt-3 border-top">
-                  <Button
-                    variant="outline-secondary"
-                    className="px-4 rounded-pill"
-                  >
-                    <i className="bi bi-x-circle me-2"></i>
-                    Hủy
-                  </Button>
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    className="px-4 rounded-pill"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #e19698ff 0%, #c8555dff 100%)",
-                      border: "none",
-                    }}
-                  >
-                    <i className="bi bi-check-circle me-2"></i>
-                    Lưu thay đổi
-                  </Button>
-                </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
-  );
+          </Col>
+        </Row>
+      </Container>
+    </>
+  )
 }
