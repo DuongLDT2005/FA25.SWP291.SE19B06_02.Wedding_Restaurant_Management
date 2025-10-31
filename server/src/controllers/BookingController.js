@@ -283,6 +283,34 @@ class BookingController {
         }
     }
 
+    // ========== PARTNER ACTIONS ==========
+    // POST /api/bookings/:id/partner/accept
+    static async acceptByPartner(req, res) {
+        try {
+            const { id } = req.params;
+            const partnerID = req.user?.userId;
+            if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const result = await BookingService.acceptByPartner(id, partnerID);
+            res.status(200).json({ success: true, message: 'Accepted', data: result });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
+    // POST /api/bookings/:id/partner/reject
+    static async rejectByPartner(req, res) {
+        try {
+            const { id } = req.params;
+            const partnerID = req.user?.userId;
+            const reason = req.body?.reason || '';
+            if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const result = await BookingService.rejectByPartner(id, partnerID, reason);
+            res.status(200).json({ success: true, message: 'Rejected', data: result });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
     // ========== KIỂM TRA & TÌM KIẾM ==========
 
     // POST /api/bookings/check-availability - Check hall availability

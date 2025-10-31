@@ -1,5 +1,7 @@
 import BookingDAO from "../dao/BookingDAO.js";
 import HallDAO from "../dao/HallDAO.js";
+import BookingStatus from "../models/enums/BookingStatus.js";
+import { sendBookingStatusEmail } from "../utils/mailer.js";
 class BookingService {
   async createBooking(data) {
     const {
@@ -87,6 +89,69 @@ class BookingService {
   async deleteBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     return await BookingDAO.deleteBooking(bookingID);
+  }
+
+  // Partner accepts a booking (status: PENDING -> ACCEPTED)
+  async acceptByPartner(bookingID, partnerID) {
+    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+
+    // Load full booking details (to get customer + hall)
+    const booking = await BookingDAO.getBookingDetails(bookingID);
+    if (!booking) throw new Error("Booking not found.");
+
+    // Check ownership: partner must own the hall's restaurant
+    const hallID = booking.hall?.hallID || booking.hallID;
+    if (!hallID) throw new Error("Invalid booking data (missing hallID).");
+    const ownerPartner = await BookingDAO.getRestaurantPartnerByHallID(hallID);
+    if (!ownerPartner || ownerPartner.restaurantPartnerID !== partnerID) {
+      throw new Error("Not authorized to accept this booking.");
+    }
+
+    // Allowed transition
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new Error("Only PENDING bookings can be accepted.");
+    }
+
+    const ok = await BookingDAO.updateBookingStatus(bookingID, BookingStatus.ACCEPTED);
+    if (!ok) throw new Error("Failed to update booking status.");
+
+    // Send email to customer (best effort)
+    const email = booking.customer?.email;
+    if (email) {
+      await sendBookingStatusEmail(email, booking, 'ACCEPTED');
+    }
+
+    // Return updated booking (optional: reload)
+    return await BookingDAO.getBookingById(bookingID);
+  }
+
+  // Partner rejects a booking (status: PENDING -> REJECTED)
+  async rejectByPartner(bookingID, partnerID, reason = '') {
+    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+
+    const booking = await BookingDAO.getBookingDetails(bookingID);
+    if (!booking) throw new Error("Booking not found.");
+
+    const hallID = booking.hall?.hallID || booking.hallID;
+    if (!hallID) throw new Error("Invalid booking data (missing hallID).");
+    const ownerPartner = await BookingDAO.getRestaurantPartnerByHallID(hallID);
+    if (!ownerPartner || ownerPartner.restaurantPartnerID !== partnerID) {
+      throw new Error("Not authorized to reject this booking.");
+    }
+
+    if (booking.status !== BookingStatus.PENDING) {
+      throw new Error("Only PENDING bookings can be rejected.");
+    }
+
+    const ok = await BookingDAO.updateBookingStatus(bookingID, BookingStatus.REJECTED);
+    if (!ok) throw new Error("Failed to update booking status.");
+
+    const email = booking.customer?.email;
+    if (email) {
+      await sendBookingStatusEmail(email, booking, 'REJECTED', { reason });
+    }
+
+    return await BookingDAO.getBookingById(bookingID);
   }
 }
 
