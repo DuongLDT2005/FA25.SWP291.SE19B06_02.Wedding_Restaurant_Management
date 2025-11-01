@@ -1,5 +1,5 @@
 import EmailService from "./EmailServices.js";
-import { getBookingTemplate } from "../utils/mail/mailTemplates.js";
+import { getBookingTemplate } from "../utils/mail/mailPartnerTemplates.js";
 
 class NotificationService {
   /**

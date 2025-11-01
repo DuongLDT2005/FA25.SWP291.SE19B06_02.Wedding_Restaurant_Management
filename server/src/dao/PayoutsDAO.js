@@ -1,4 +1,4 @@
-import db from "../config/db";
+import db from "../config/db.js";
 import { Op } from "sequelize";
 import { PayoutStatus } from "../models/enums/PayoutStatus";
 const { sequelize, payouts: PayoutModel } = db;

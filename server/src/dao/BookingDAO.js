@@ -149,7 +149,11 @@ class BookingDAO {
         {
           model: HallModel,
           as: 'hall',
-          include: [{ model: RestaurantModel, as: 'restaurant' }]
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+          }]
         },
         { model: MenuModel, as: 'menu' },
         {

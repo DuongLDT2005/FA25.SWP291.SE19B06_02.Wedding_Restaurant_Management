@@ -3,6 +3,7 @@ dotenv.config();
 
 import app from "./app.js";
 import db from "./config/db.js";
+import { setupExpirationChecker } from "./services/CronServices.js";
 
 const { sequelize } = db;
 const PORT = process.env.PORT || 5000;
@@ -14,7 +15,8 @@ async function startServer() {
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-
+      // Khởi động Cron kiểm tra hết hạn (CONFIRMED -> EXPIRED sau N ngày)
+      setupExpirationChecker({ days: 2 });
 
     });
   } catch (err) {

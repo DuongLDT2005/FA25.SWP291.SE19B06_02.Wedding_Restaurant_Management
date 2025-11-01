@@ -1,4 +1,5 @@
 import BookingService from '../services/Booking/BookingServices.js';
+import { notifyByStatusById } from '../services/BookingNotificationService.js';
 
 class BookingController {
     // ========== CRUD CƠ BẢN ==========
@@ -146,6 +147,8 @@ class BookingController {
         try {
             const { id } = req.params;
             const booking = await BookingService.acceptBooking(id);
+                // Gửi email cho Customer khi được chấp nhận
+                try { await notifyByStatusById(id, 'ACCEPTED'); } catch (e) { console.error('Notify ACCEPTED failed:', e?.message || e); }
             res.status(200).json({
                 success: true,
                 message: 'Booking accepted successfully',
@@ -163,7 +166,10 @@ class BookingController {
     static async rejectBooking(req, res) {
         try {
             const { id } = req.params;
-            const booking = await BookingService.rejectBooking(id);
+                const reason = req.body?.reason || '';
+                const booking = await BookingService.rejectBooking(id);
+                // Gửi email cho Customer khi bị từ chối (kèm lý do nếu có)
+                try { await notifyByStatusById(id, 'REJECTED', { reason }); } catch (e) { console.error('Notify REJECTED failed:', e?.message || e); }
             res.status(200).json({
                 success: true,
                 message: 'Booking rejected',
@@ -182,6 +188,8 @@ class BookingController {
         try {
             const { id } = req.params;
             const booking = await BookingService.confirmBooking(id);
+                // Customer confirm -> gửi cho Partner
+                try { await notifyByStatusById(id, 'CONFIRMED'); } catch (e) { console.error('Notify CONFIRMED failed:', e?.message || e); }
             res.status(200).json({
                 success: true,
                 message: 'Booking confirmed successfully',
@@ -200,6 +208,8 @@ class BookingController {
         try {
             const { id } = req.params;
             const booking = await BookingService.markAsDeposited(id);
+                // Đặt cọc thành công -> gửi cho Partner
+                try { await notifyByStatusById(id, 'DEPOSITED'); } catch (e) { console.error('Notify DEPOSITED failed:', e?.message || e); }
             res.status(200).json({
                 success: true,
                 message: 'Booking marked as deposited',
@@ -291,6 +301,8 @@ class BookingController {
             const partnerID = req.user?.userId;
             if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
             const result = await BookingService.acceptByPartner(id, partnerID);
+                // Partner accept -> gửi cho Customer
+                try { await notifyByStatusById(id, 'ACCEPTED'); } catch (e) { console.error('Notify ACCEPTED failed:', e?.message || e); }
             res.status(200).json({ success: true, message: 'Accepted', data: result });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
@@ -305,6 +317,8 @@ class BookingController {
             const reason = req.body?.reason || '';
             if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
             const result = await BookingService.rejectByPartner(id, partnerID, reason);
+                // Partner reject -> gửi cho Customer
+                try { await notifyByStatusById(id, 'REJECTED', { reason }); } catch (e) { console.error('Notify REJECTED failed:', e?.message || e); }
             res.status(200).json({ success: true, message: 'Rejected', data: result });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });

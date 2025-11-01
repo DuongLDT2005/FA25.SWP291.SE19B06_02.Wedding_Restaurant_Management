@@ -1,4 +1,4 @@
-import db from "../config/db";
+import db from "../config/db.js";
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { dishcategory } = db;
 

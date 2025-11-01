@@ -1,4 +1,4 @@
-import db from "../config/db";
+import db from "../config/db.js";
 import { Op } from 'sequelize';
 const { review, sequelize } = db;
 import { toDTO, toDTOs } from '../utils/convert/dto.js';

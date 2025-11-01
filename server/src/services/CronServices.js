@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import BookingDAO from '../dao/BookingDAO.js';
+import { notifyByStatusById } from './BookingNotificationService.js';
 
 /**
  * Thiết lập Cron Job để kiểm tra các booking đã hết hạn.
@@ -13,9 +14,25 @@ export function setupExpirationChecker({ days = 2 } = {}) {
         console.log(`--- CRON JOB: Bắt đầu kiểm tra hết hạn lúc ${jobStartTime.toLocaleTimeString()} | cutoff=${cutoff.toISOString()} ---`);
 
         try {
-            // Dùng cơ chế batch để tận dụng index (status, createdAt) và tránh khoá bảng lâu.
-            const modifiedCount = await BookingDAO.bulkExpireConfirmedOlderThanBatch(cutoff, { batchSize: 1000, setChecked: true });
-            console.log(`Hoàn thành. Đã cập nhật ${modifiedCount} booking (CONFIRMED -> EXPIRED).`);
+            // Quét theo batch để tận dụng index và gửi mail cho partner với từng booking đã hết hạn
+            let total = 0;
+            const batchSize = 1000;
+            while (true) {
+                const ids = await BookingDAO.findConfirmedIdsOlderThan(cutoff, batchSize);
+                if (!ids.length) break;
+                const affected = await BookingDAO.expireByIds(ids, { setChecked: true });
+                total += affected;
+                // Gửi mail cho partner cho các booking này
+                for (const id of ids) {
+                    try {
+                        await notifyByStatusById(id, 'EXPIRED');
+                    } catch (e) {
+                        console.error(`Gửi mail EXPIRED thất bại cho booking #${id}:`, e?.message || e);
+                    }
+                }
+                if (ids.length < batchSize) break;
+            }
+            console.log(`Hoàn thành. Đã cập nhật ${total} booking (CONFIRMED -> EXPIRED) và gửi thông báo.`);
         } catch (error) {
             console.error('LỖI trong quá trình chạy Cron Job:', error);
         }
