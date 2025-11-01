@@ -22,14 +22,20 @@ export default class BookingPricing {
   }
 
   async calculateBasePrice(hall, menu) {
-    if (typeof hall?.price !== 'number' || typeof menu?.price !== 'number') {
-      throw new Error('Hall or menu price must be a number.');
-    }
-    if (typeof this.tableCount !== 'number') {
-      throw new Error('tableCount must be a number.');
-    }
-    this.originalPrice = hall.price + (menu.price * this.tableCount);
+  const hallPrice = Number(hall?.price);
+  const menuPrice = Number(menu?.price);
+  const tableCount = Number(this.tableCount);
+
+  if (isNaN(hallPrice) || isNaN(menuPrice)) {
+    throw new Error('Hall or menu price must be a number.');
   }
+  if (isNaN(tableCount)) {
+    throw new Error('tableCount must be a number.');
+  }
+
+  this.originalPrice = hallPrice + (menuPrice * tableCount);
+}
+
 
   async applyPromotions(promotions) {
     if (!Array.isArray(promotions)) {

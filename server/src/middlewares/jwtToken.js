@@ -2,8 +2,18 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { getCollection } from "../dao/mongoDAO.js";
 
-dotenv.config();
+//Nếu sài dotenv.config(); thì nó sẽ không truy cập vào được .env dẫn đếN không truy cập được jwt secret
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, "../../.env") });
+
+
 const JWT_SECRET = process.env.JWT_SECRET;
+
+console.log("JWT_Secret", JWT_SECRET);
 
 export async function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;

@@ -4,7 +4,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import hallRoutes from "./routes/hallRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
-import bookingRoutes from "./routes/BookingRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
 
 const app = express();

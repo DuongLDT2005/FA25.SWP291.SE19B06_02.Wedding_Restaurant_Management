@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import PayOS from "@payos/node";
+import { PayOS } from "@payos/node";
 import BookingDAO from "../../dao/BookingDAO.js";
 
 dotenv.config();
@@ -12,59 +12,81 @@ const {
   PAYOS_CANCEL_URL,
 } = process.env;
 
+// === Helpers ===
 function requireEnv(name, value) {
   if (!value) throw new Error(`[PayOS] Missing required env: ${name}`);
   return value;
 }
 
 function buildPayOSClient() {
-  const clientId = requireEnv("PAYOS_CLIENT_ID", PAYOS_CLIENT_ID);
-  const apiKey = requireEnv("PAYOS_API_KEY", PAYOS_API_KEY);
-  const checksumKey = requireEnv("PAYOS_CHECKSUM_KEY", PAYOS_CHECKSUM_KEY);
-  return new PayOS(clientId, apiKey, checksumKey);
+  return new PayOS({
+    clientId: requireEnv("PAYOS_CLIENT_ID", PAYOS_CLIENT_ID),
+    apiKey: requireEnv("PAYOS_API_KEY", PAYOS_API_KEY),
+    checksumKey: requireEnv("PAYOS_CHECKSUM_KEY", PAYOS_CHECKSUM_KEY),
+  });
 }
 
+/**
+ * Generate a unique order code for each booking
+ * => must be a positive integer and unique across all transactions
+ */
 function genOrderCode(seed = 0) {
-  // PayOS expects a unique positive integer. Use time + seed and clamp to 9 digits.
   const now = Date.now();
-  const code = Math.abs((now % 1_000_000_000) + (Number(seed) % 1_000_000_000));
-  return code;
+  return Math.abs((now % 1_000_000_000) + (Number(seed) % 1_000_000_000));
 }
 
+/**
+ * Convert to valid VND integer (PayOS only accepts integers)
+ */
 function toVndInt(n) {
   const v = Math.round(Number(n) || 0);
   if (v <= 0) throw new Error("[PayOS] Invalid amount, must be > 0");
   return v;
 }
 
+// === Main Service Class ===
 class PayosServices {
-  // Create a PayOS checkout link for a booking and return the URL
+  /**
+   * Tạo link thanh toán cho Booking (đặt cọc / full payment)
+   * @param {number} bookingID
+   * @param {object} buyer { name, email, phone }
+   */
   static async createCheckoutForBooking(bookingID, buyer = {}) {
     const payos = buildPayOSClient();
 
-    // 1) Load booking and compute amount
+    // --- 1. Lấy thông tin booking ---
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found");
 
+    // --- 2. Tính tổng tiền hợp lệ ---
     const amount = toVndInt(
-      booking.totalAmount ?? (Number(booking.originalPrice || 0) - Number(booking.discountAmount || 0) + Number(booking.VAT || 0))
+      booking.depositAmount ??
+        booking.totalAmount ??
+        Number(booking.originalPrice || 0) -
+          Number(booking.discountAmount || 0) +
+          Number(booking.VAT || 0)
     );
 
-    const restaurantName = booking?.hall?.restaurant?.name || booking?.restaurantName || "Nhà hàng";
+    // --- 3. Chuẩn bị thông tin mô tả ---
+    const restaurantName =
+      booking?.hall?.restaurant?.name ||
+      booking?.restaurantName ||
+      "Nhà hàng";
     const hallName = booking?.hall?.name || booking?.hallName || "Sảnh";
-    const description = `Thanh toán đơn đặt tiệc #${bookingID} - ${restaurantName} (${hallName})`;
+//    const description = `Đặt cọc đơn đặt tiệc #${bookingID} - ${restaurantName}`;
+    const description = `Đặt cọc`;
 
+
+    // --- 4. Sinh mã order duy nhất ---
     const orderCode = genOrderCode(bookingID);
 
-    const returnUrl = requireEnv("PAYOS_RETURN_URL", PAYOS_RETURN_URL);
-    const cancelUrl = requireEnv("PAYOS_CANCEL_URL", PAYOS_CANCEL_URL);
-
+    // --- 5. Build payload gửi PayOS ---
     const payload = {
       amount,
       orderCode,
       description,
-      returnUrl,
-      cancelUrl,
+      returnUrl: requireEnv("PAYOS_RETURN_URL", PAYOS_RETURN_URL),
+      cancelUrl: requireEnv("PAYOS_CANCEL_URL", PAYOS_CANCEL_URL),
       buyerName: buyer.name || booking?.customer?.fullName || "",
       buyerEmail: buyer.email || booking?.customer?.email || "",
       buyerPhone: buyer.phone || booking?.customer?.phone || "",
@@ -77,34 +99,38 @@ class PayosServices {
       ],
     };
 
-    const link = await payos.createPaymentLink(payload);
+    // --- 6. Gọi SDK để tạo link ---
+    const link = await payos.paymentRequests.create(payload);
 
     return {
       bookingID,
       orderCode,
       amount,
-      checkoutUrl: link?.checkoutUrl || link?.shortLink || link?.paymentUrl,
+      checkoutUrl: link?.checkoutUrl || link?.shortLink,
       raw: link,
     };
   }
 
-  // Retrieve PayOS payment link info by orderCode
+  /**
+   * Lấy thông tin chi tiết 1 giao dịch theo orderCode
+   */
   static async getLinkInfo(orderCode) {
     const payos = buildPayOSClient();
-    return await payos.getPaymentLinkInformation(orderCode);
+    return await payos.paymentRequests.get(orderCode);
   }
 
-  // Verify webhook signature and return parsed data
+  /**
+   * Xác minh webhook từ PayOS (bắt buộc để đảm bảo an toàn)
+   */
   static async verifyWebhook(webhookData) {
     const payos = buildPayOSClient();
-    // Depending on SDK version: confirmWebhookData or verifyWebhookData
-    if (typeof payos.confirmWebhookData === "function") {
-      return payos.confirmWebhookData(webhookData);
+    try {
+      const verified = payos.webhooks.verify(webhookData);
+      return verified;
+    } catch (err) {
+      console.error("[PayOS] ❌ Webhook verification failed:", err.message);
+      return null;
     }
-    if (typeof payos.verifyWebhookData === "function") {
-      return payos.verifyWebhookData(webhookData);
-    }
-    throw new Error("[PayOS] SDK version doesn't support webhook verification method");
   }
 }
 

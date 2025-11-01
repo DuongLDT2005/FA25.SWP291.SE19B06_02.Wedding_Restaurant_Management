@@ -573,3 +573,51 @@ INSERT INTO Amenity (name) VALUES
 ('Thực đơn in sẵn trên bàn');
 
 
+
+
+-- 2️⃣ Tạo User cho Customer
+INSERT INTO User (email, fullName, phone, password, role)
+VALUES ('customer1@test.com', 'Khách Hàng Test', '0123456789', '123456', 0);
+SET @customerUserID = LAST_INSERT_ID();
+
+INSERT INTO Customer (customerID, weddingRole, partnerName)
+VALUES (@customerUserID, 0, 'Bạn Đời Test');
+
+-- 3️⃣ Tạo User cho Restaurant Partner
+INSERT INTO User (email, fullName, phone, password, role)
+VALUES ('gonthinh7@gmail.com', 'Nhà Hàng Thịnh', '0988888888', '123456', 1);
+SET @partnerUserID = LAST_INSERT_ID();
+
+INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate)
+VALUES (@partnerUserID, 'license.pdf', 3, 0.10);
+
+-- 4️⃣ Address
+INSERT INTO Address (number, street, ward)
+VALUES ('12', 'Lê Lợi', 'Phường 5');
+SET @addressID = LAST_INSERT_ID();
+
+-- 5️⃣ Restaurant
+INSERT INTO Restaurant (restaurantPartnerID, name, description, hallCount, addressID, thumbnailURL)
+VALUES (@partnerUserID, 'Nhà Hàng Hoa Sen', 'Nhà hàng chuyên tổ chức tiệc cưới sang trọng.', 1, @addressID, 'https://dummyimage.com/600x400');
+SET @restaurantID = LAST_INSERT_ID();
+
+-- 6️⃣ Hall
+INSERT INTO Hall (restaurantID, name, description, minTable, maxTable, area, price)
+VALUES (@restaurantID, 'Sảnh A', 'Sảnh chính rộng rãi.', 10, 30, 500, 10000000);
+SET @hallID = LAST_INSERT_ID();
+
+-- 7️⃣ Menu
+INSERT INTO Menu (restaurantID, name, price, imageURL)
+VALUES (@restaurantID, 'Menu Tiệc Cưới Đặc Biệt', 5000000, 'https://dummyimage.com/300x300');
+SET @menuID = LAST_INSERT_ID();
+
+
+select * From User;
+select * From event;
+SELECT * FROM Menu;
+
+SELECT hallID, name, price FROM Hall;
+SELECT menuID, menuName, pricePerTable FROM Menu;
+
+
+Use weddingrestaurantmanagement;
