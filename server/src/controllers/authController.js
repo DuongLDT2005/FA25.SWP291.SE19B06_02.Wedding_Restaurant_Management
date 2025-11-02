@@ -19,6 +19,7 @@ class AuthController {
             res.status(401).json({ error: 'Invalid email or password' });
         }
    }
+
    static async logout(req, res) {
         try {
             // Invalidate the token (implementation depends on how you manage tokens)
@@ -81,7 +82,7 @@ class AuthController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
-   static async signupOwner(req, res) {
+    static async signupOwner(req, res) {
         try {
             const ownerData = req.body;
             if (!ownerData) {
