@@ -89,10 +89,24 @@ class BookingDAO {
   }
 
   static async updateBookingStatus(bookingID, newStatus, { isChecked } = {}) {
+    return this.updateBookingStatusWithTransaction(bookingID, newStatus, { isChecked });
+  }
+
+  // Transaction-aware update; Service should open transaction and pass it when required.
+  static async updateBookingStatusWithTransaction(bookingID, newStatus, { isChecked = undefined, transaction = null } = {}) {
     const updates = { status: newStatus };
     if (typeof isChecked !== 'undefined') updates.isChecked = !!isChecked;
-    const [affected] = await BookingModel.update(updates, { where: { bookingID } });
+    const [affected] = await BookingModel.update(updates, { where: { bookingID }, transaction });
     return affected > 0;
+  }
+
+  // Get booking row with optional FOR UPDATE lock when a transaction is provided
+  static async getBookingForUpdate(bookingID, { transaction = null } = {}) {
+    if (transaction) {
+      // lock the row within the provided transaction
+      return BookingModel.findByPk(bookingID, { transaction, lock: transaction.LOCK.UPDATE });
+    }
+    return BookingModel.findByPk(bookingID);
   }
 
   static async markBookingChecked(bookingID) {

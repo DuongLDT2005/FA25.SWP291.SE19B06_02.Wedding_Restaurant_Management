@@ -20,11 +20,34 @@ function ensurePartner(req, res, next) {
   return next();
 }
 
-// Partner accept booking
-router.post('/:id/partner/accept', authenticateJWT, ensurePartner, BookingController.acceptByPartner);
+// Partner accept booking -> reuse generic status handler
+router.post(
+  '/:id/partner/accept',
+  authenticateJWT,
+  ensurePartner,
+  (req, res, next) => {
+    req.body = req.body || {};
+    req.body.status = 'ACCEPTED';
+    next();
+  },
+  BookingController.updateBookingStatus
+);
 
-// Partner reject booking
-router.post('/:id/partner/reject', authenticateJWT, ensurePartner, BookingController.rejectByPartner);
+// Partner reject booking -> reuse generic status handler
+router.post(
+  '/:id/partner/reject',
+  authenticateJWT,
+  ensurePartner,
+  (req, res, next) => {
+    req.body = req.body || {};
+    req.body.status = 'REJECTED';
+    next();
+  },
+  BookingController.updateBookingStatus
+);
+
+// Generic status change endpoint (use role-based checks in controller)
+router.put('/:id/status', authenticateJWT, BookingController.updateBookingStatus);
 
 export default router;
 

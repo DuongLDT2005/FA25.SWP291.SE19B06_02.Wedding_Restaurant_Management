@@ -10,6 +10,8 @@ import BookingStatus from "../../models/enums/BookingStatus.js";
 import { sendBookingStatusEmail } from "../../utils/mail/mailer.js";
 import UserDAO from "../../dao/userDao.js";
 import NotificationService from "../NotificationServices.js";
+import db from "../../config/db.js";
+import { notifyByStatusById } from "../BookingNotificationService.js";
 
 class BookingService {
   /**
@@ -111,7 +113,7 @@ class BookingService {
     try {
       const vatSetting = await SystemSettingDAO.getByKey('VAT_RATE');
       if (vatSetting?.settingValue) vatRate = String(vatSetting.settingValue);
-    } catch {}
+    } catch { }
     await engine.calculateTotals({ VAT_RATE: vatRate });
 
     // Create booking with computed amounts; use engine.services (priced per-unit via appliedPrice)
@@ -185,27 +187,68 @@ class BookingService {
    * - Tự động gửi mail theo trạng thái
    */
   async updateBookingStatus(bookingID, status, isChecked = true) {
+    // Delegate to centralized changeStatus (transactional + afterCommit notifications)
+    // Accept an options object so controller can pass actor info (actorId, actorRole, reason)
+    // and any other flags (e.g., setChecked).
+    if (typeof isChecked === 'object' && isChecked !== null) {
+      // called as updateBookingStatus(id, status, opts)
+      return this.changeStatus(bookingID, status, isChecked);
+    }
+    // called as updateBookingStatus(id, status, isCheckedBoolean)
+    return this.changeStatus(bookingID, status, { setChecked: isChecked });
+  }
+
+  /**
+   * Centralized status change with transaction and afterCommit notifications.
+   * opts: { actorId, actorRole, reason, setChecked }
+   */
+  async changeStatus(bookingID, status, opts = {}) {
+    const { actorId, actorRole, reason, setChecked = true } = opts;
     if (!bookingID || !status) throw new Error("Missing bookingID or status.");
 
     const validStatuses = Object.values(BookingStatus);
-    if (!validStatuses.includes(status))
-      throw new Error("Invalid booking status.");
+    if (!validStatuses.includes(status)) throw new Error("Invalid booking status.");
 
-    const updated = await BookingDAO.updateBookingStatus(bookingID, status, { isChecked });
-    if (!updated) throw new Error("Booking not found or update failed.");
+    const { sequelize } = db;
 
-    const booking = await BookingDAO.getBookingDetails(bookingID);
-    const customer = booking?.customer;
-    const partner = await BookingDAO.getRestaurantPartnerByHallID(booking.hallID);
+    const result = await sequelize.transaction(async (t) => {
+      // Lock the row to avoid race conditions via DAO helper
+      const bk = await BookingDAO.getBookingForUpdate(bookingID, { transaction: t });
+      if (!bk) throw new Error('Booking not found');
 
-    await NotificationService.sendBookingStatusChange({
-      bookingID,
-      customerEmail: customer?.email,
-      partnerEmail: partner?.email,
-      status,
+      const prev = bk.status;
+
+      // Basic RBAC examples (caller may still validate before calling):
+      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && actorRole !== 1) {
+        throw new Error('Only partner can accept or reject bookings');
+      }
+
+      if (status === BookingStatus.CONFIRMED && !actorId) {
+        throw new Error('Authentication required to confirm booking');
+      }
+
+      // Optionally validate allowed transitions (simple example)
+      // e.g., only PENDING -> ACCEPTED/REJECTED
+      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && prev !== BookingStatus.PENDING) {
+        throw new Error('Only PENDING bookings can be accepted or rejected');
+      }
+
+      // Perform update via DAO (transaction-aware)
+      await BookingDAO.updateBookingStatusWithTransaction(bookingID, status, { isChecked: setChecked, transaction: t });
+
+      // after commit, send notifications (best-effort)
+      t.afterCommit(async () => {
+        try {
+          await notifyByStatusById(bookingID, status, { reason });
+        } catch (e) {
+          console.error(`Notification for status ${status} on booking ${bookingID} failed:`, e?.message || e);
+        }
+      });
+
+      return { success: true, previous: prev, status };
     });
 
-    return { success: true, status };
+    return result;
   }
 
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
@@ -229,20 +272,8 @@ class BookingService {
       throw new Error("Only PENDING bookings can be accepted.");
     }
 
-    const ok = await BookingDAO.updateBookingStatus(bookingID, BookingStatus.ACCEPTED);
-    if (!ok) throw new Error("Failed to update booking status.");
-
-    // Send email to customer (best effort)
-    const user = await UserDAO.getUserById(booking.customerID);
-    const email = user?.email;
-    if (email) {
-      await sendBookingStatusEmail(email, booking, 'ACCEPTED');
-    }
-    else {
-      console.log("No email found for customer, skipping email notification.");
-    }
-
-    // Return updated booking (optional: reload)
+    // Use centralized changeStatus (transaction + afterCommit notification)
+    await this.changeStatus(bookingID, BookingStatus.ACCEPTED, { actorId: partnerID, actorRole: 1 });
     return await BookingDAO.getBookingById(bookingID);
   }
 
@@ -264,42 +295,29 @@ class BookingService {
       throw new Error("Only PENDING bookings can be rejected.");
     }
 
-    const ok = await BookingDAO.updateBookingStatus(bookingID, BookingStatus.REJECTED);
-    if (!ok) throw new Error("Failed to update booking status.");
-    const user = await UserDAO.getUserById(booking.customerID);
-    const email = user?.email;
-    if (email) {
-      await sendBookingStatusEmail(email, booking, 'REJECTED', { reason });
-    }
-
+    await this.changeStatus(bookingID, BookingStatus.REJECTED, { actorId: partnerID, actorRole: 1, reason });
     return await BookingDAO.getBookingById(bookingID);
   }
   async depositBooking(bookingID) {
-      if (!bookingID) throw new Error("Missing bookingID.");
-      const booking = await BookingDAO.getBookingDetails(bookingID);
-      if (!booking) throw new Error("Booking not found.");
-      this.updateBookingStatus(bookingID, BookingStatus.DEPOSITED);
-      return await BookingDAO.getBookingById(bookingID);
+    if (!bookingID) throw new Error("Missing bookingID.");
+    const booking = await BookingDAO.getBookingDetails(bookingID);
+    if (!booking) throw new Error("Booking not found.");
+    await this.changeStatus(bookingID, BookingStatus.DEPOSITED);
+    return await BookingDAO.getBookingById(bookingID);
   }
   async confirmBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    this.updateBookingStatus(bookingID, BookingStatus.CONFIRMED);
-    // after choose confirm if not deposit in 2day, it will switch to expired
-    setTimeout(async () => {
-      const b = await BookingDAO.getBookingDetails(bookingID);
-      if (b.status === BookingStatus.CONFIRMED) {
-        this.updateBookingStatus(bookingID, BookingStatus.EXPIRED);
-      }
-    }, 2 * 24 * 60 * 60 * 1000); // 2 days in milliseconds
+    await this.changeStatus(bookingID, BookingStatus.CONFIRMED);
+    // Expiration is handled by cron (bulkExpireConfirmedOlderThanBatch)
     return await BookingDAO.getBookingById(bookingID);
   }
   async completeBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    this.updateBookingStatus(bookingID, BookingStatus.COMPLETED);
+    await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
 }
