@@ -39,7 +39,6 @@ function ContentHomePage() {
                         const avgRating = res.reviews && res.reviews.length > 0
                             ? res.reviews.reduce((sum, r) => sum + r.rating, 0) / res.reviews.length
                             : res.rating;
-
                         return (
                             <Link key={res.id} to={`/restaurant/${res.id}`}>
                                 <div className="content--card">

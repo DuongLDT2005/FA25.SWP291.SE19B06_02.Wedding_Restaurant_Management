@@ -11,7 +11,7 @@ import HallList from "./components/HallList";
 import MenuList from "./components/MenuList";
 import ServiceList from "./components/ServiceList";
 import ReviewList from "./components/ReviewList";
-import Header from "../../components/Header";
+// import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import EventTypeList from "./components/EventTypeList";
 import PromotionList from "./components/PromotionList";
@@ -33,7 +33,6 @@ export default function RestaurantDetailsPage() {
 
   return (
     <>
-      <Header />
       <div className="container my-4">
         <NavBar />
         <section id="overview">

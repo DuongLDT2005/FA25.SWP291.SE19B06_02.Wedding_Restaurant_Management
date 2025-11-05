@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login, forgotPassword } from "../../services/authService";
+import useAuth from "../../hooks/useAuth";
 import "../../styles/LoginStyles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
 export default function LoginPage() {
@@ -24,6 +23,8 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotEmailError, setForgotEmailError] = useState("");
+
+  const { login, forgotPassword } = useAuth();
 
   const emailIsValid = (e) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e.trim());
   const navigate = useNavigate();
@@ -54,14 +55,14 @@ export default function LoginPage() {
       console.log("Login success:", data);
       // Redirect theo role
       if (data.role === "ADMIN") {
-        navigate("/admin/dashboard");
-      } else if (data.role === "OWNER") {
-        navigate("/owner/dashboard");
+        navigate("/admin");
+      } else if (data.role === "RESTAURANT_PARTNER") {
+        navigate("/partner");
       } else {
         navigate("/customer/home");
       }
     } catch (err) {
-      setGlobalError(err.message);
+      setGlobalError(err?.message || String(err));
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,6 @@ export default function LoginPage() {
 
   return (
     <>
-      <Header />
       <div className="login-container">
         <div className="login-box">
           {/* Left side */}

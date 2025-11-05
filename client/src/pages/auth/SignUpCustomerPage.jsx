@@ -1,9 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import "../../styles/SignUpForCustomerStyles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import { signUpCustomer } from "../../services/authService";
-
+import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 export default function SignUpCustomer() {
   const [form, setForm] = useState({
     fullname: "",
@@ -19,7 +19,9 @@ export default function SignUpCustomer() {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const { signUpCustomer } = useAuth();
+  const navigate = useNavigate();
+  
   const validate = () => {
     let newErrors = {};
 
@@ -57,20 +59,11 @@ export default function SignUpCustomer() {
           email: form.email,
           password: form.password,
         });
-        alert("Đăng ký thành công!");
-        setForm({
-          fullname: "",
-          role: "",
-          partner: "",
-          phone: "",
-          email: "",
-          address: "",
-          password: "",
-          confirmPassword: "",
-        });
-        setErrors({});
+        // success -> redirect to login
+        navigate("/login");
       } catch (err) {
-        alert(err.message);
+        // show error (backend message or generic)
+        alert(err?.message || String(err));
       }
     }
   };

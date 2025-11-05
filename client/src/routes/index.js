@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Home from "../pages/homePage";
+import LandingPage from "../pages/landingPage/LandingPage";
 import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
@@ -34,9 +34,9 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/signup/customer" element={<SignUpCustomer />} />
-        <Route path="/signup/owner" element={<SignUpOwner />} />
+        <Route path="/signup/partner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/restaurant/:id" element={<RestaurantDetails />} />
         <Route path="/partner" element={<PartnerDashboard />} />

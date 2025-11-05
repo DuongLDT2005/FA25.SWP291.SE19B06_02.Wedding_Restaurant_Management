@@ -1,8 +1,7 @@
-.content {
+/* .content {
     margin: 50px 130px;
 }
 
-/* Offers & Discount */
 .content--section {
     margin-top: 30px;
 }
@@ -32,7 +31,6 @@
 
 .offers-section h2:hover::after {
     width: 80%;
-    /* độ dài thanh gạch ngang */
 }
 
 .btn-primary {
@@ -100,7 +98,6 @@
     font-size: 14px;
 }
 
-/* Restaurant */
 .content--list {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -140,7 +137,6 @@
 
 .content--section h2:hover::after {
     width: 80%;
-    /* độ dài thanh gạch ngang */
 }
 
 .content--card {
@@ -184,4 +180,4 @@
     font-size: 20px;
     font-weight: 700;
     min-height: 40px;
-}
+} */

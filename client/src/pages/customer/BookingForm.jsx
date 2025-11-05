@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/ContractForm.css";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
 // Mock helpers (replace with real session/auth & navigation selection)
@@ -409,7 +408,6 @@ function BookingForm({ restaurant: propRestaurant }) {
 
   return (
     <>
-      <Header />
       <div className="contract-form-wrapper">
         <h2 className="cf-title">Đặt Tiệc / Tạo Hợp Đồng</h2>
 
