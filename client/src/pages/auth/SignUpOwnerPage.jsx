@@ -98,17 +98,16 @@ function SignUpForOwner() {
 
   return (
     <AuthLayout>
-      <Container fluid className="p-0" style={{ minHeight: "100vh", paddingTop: "120px" }}>
+      <Container fluid className="p-0" style={{ minHeight: "100vh" }}>
         <style>{`
           .signup-wrapper {
             display: grid;
-            grid-template-columns: 52% 48%;
+            grid-template-columns: 55% 45%;
             border-radius: 15px;
-            margin: 100px auto 40px auto;
+            margin: 20px;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             background: white;
-            max-width: 100%;
           }
           @media (max-width: 768px) {
             .signup-wrapper {
@@ -122,10 +121,9 @@ function SignUpForOwner() {
             align-items: flex-start;
             background: #E11D48;
             color: #fefaf9;
-            padding: 60px 70px;
+            padding: 80px 100px 80px 60px;
             border-radius: 15px 0 0 15px;
             text-align: left;
-            min-height: 420px;
           }
 
           @media (max-width: 768px) {
@@ -150,14 +148,15 @@ function SignUpForOwner() {
           .signup-form-container {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 40px;
+            justify-content: flex-start;
+            padding: 40px 30px;
             background: #fff;
             border-radius: 0 15px 15px 0;
           }
           @media (max-width: 768px) {
             .signup-form-container {
               border-radius: 0 0 15px 15px;
+              padding: 25px 20px;
             }
           }
           .signup-form-container h1 {
@@ -244,7 +243,7 @@ function SignUpForOwner() {
           }
         `}</style>
 
-        <div className="signup-wrapper" style={{ maxWidth: "1000px", width: "100%", margin: "20px auto" }}>
+        <div className="signup-wrapper" style={{ maxWidth: "900px", width: "100%", margin: "40px auto 20px" }}>
           <div className="signup-slogan">
             <h2>Chào mừng!</h2>
             <p>
@@ -349,7 +348,7 @@ function SignUpForOwner() {
 
             <div className="signup-link">
               <p>
-                Bạn đã có tài khoản? <a href="#">Đăng nhập</a>
+                Bạn đã có tài khoản? <a href="/">Đăng nhập</a>
               </p>
             </div>
             <div className="signup-link">

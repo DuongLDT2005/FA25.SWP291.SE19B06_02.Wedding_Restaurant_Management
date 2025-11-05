@@ -289,7 +289,7 @@ export default function SignUpCustomer() {
               <p>
                 Bạn đã có tài khoản?{" "}
                 <a
-                  href="#"
+                  href="/"
                   style={{
                     color: "#f6a401",
                     textDecoration: "none",
@@ -302,7 +302,7 @@ export default function SignUpCustomer() {
               <p>
                 Quay lại{" "}
                 <a
-                  href="#"
+                  href="/"
                   style={{
                     color: "#f6a401",
                     textDecoration: "none",

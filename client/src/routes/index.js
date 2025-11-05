@@ -16,6 +16,8 @@ import Bookings from "../pages/partner/BookingsPage";
 // import Payments from "../pages/partner/Payments";
 import Reviews from "../pages/partner/ReviewManagement";
 // import Notifications from "../pages/partner/Notifications";
+import SearchResultList from "../pages/auth/SearchResultList";
+import BookingForm from "../pages/auth/BookingForm";
 
 function AppRoutes() {
   return (
@@ -39,6 +41,8 @@ function AppRoutes() {
         <Route path="/partner/reviews" element={<Reviews />} />
         {/* <Route path="/partner/notifications" element={<Notifications />} /> */}
         {/* Thêm các route khác tại đây */}
+        <Route path="/searchresult" element={<SearchResultList />} />
+        <Route path="/auth/bookingform" element={<BookingForm />} />
       </Routes>
     </BrowserRouter>
   );
