@@ -23,13 +23,16 @@ import PartnerReviewPage from "../pages/partner/review/PartnerReviewPage";
 import NegotiationPage from "../pages/partner/NegotiationPage";
 import DefaultLayout from "../pages/admin/layout/DefaultLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
+import SearchResultList from "../pages/customer/SearchResultList";
+// import BookingForm from "../pages/auth/BookingForm";
 
 import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 import BookingListPage from "../pages/customer/BookingListPage";
-import BookingForm from "../pages/customer/BookingForm";
+// import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
 import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
+import BookingPage from "../pages/customer/bookingForm/BookingPage";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -63,7 +66,7 @@ function AppRoutes() {
         </Route>
         <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />
-        <Route path="/bookingForm" element={<BookingForm />} />
+        <Route path="/bookingForm" element={<BookingPage />} />
         <Route path="/customer/profile" element={<Profile />} />
 
         {/* Booking Routes */}
@@ -76,6 +79,8 @@ function AppRoutes() {
         <Route path="/payment/new" element={<PaymentPage />} />
 
         {/* Thêm các route khác tại đây */}
+        <Route path="/searchresult" element={<SearchResultList />} />
+        {/* <Route path="/auth/bookingform" element={<BookingForm />} /> */}
       </Routes>
     </BrowserRouter>
   );

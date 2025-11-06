@@ -113,29 +113,20 @@ export default function BookingCard({
       >
         <Card.Body className="p-3">
           <Row className="g-3 align-items-center">
-            <Col xs={2}>
-              <div style={{
-                position: 'relative',
-                width: '80px',
-                height: '80px',
-                borderRadius: '8px'
-              }}>
-                <Card.Img
-                  src={b.restaurant.thumbnailURL || "https://via.placeholder.com/300x200?text=No+Image"}
-                  alt={b.restaurant.name}
-                  style={{
-                    height: "100%",
-                    width: "100%",
-                    objectFit: "cover",
-                    transition: 'transform 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                />
-              </div>
+            <Col xs={3}>
+              <Card.Img
+                src={b.restaurant.thumbnailURL || "https://via.placeholder.com/300x200?text=No+Image"}
+                alt={b.restaurant.name}
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  objectFit: "cover",
+                  transition: 'transform 0.3s ease'
+                }}
+              />
             </Col>
 
-            <Col xs={7}>
+            <Col xs={6}>
               <div>
                 <h5
                   className="mb-2"
@@ -162,7 +153,7 @@ export default function BookingCard({
                   color: '#6b7280',
                   marginBottom: '8px'
                 }}>
-                  {b.restaurant.address || "Chưa có địa chỉ"}
+                  {b.restaurant.fullAddress || "Chưa có địa chỉ"}
                 </div>
 
                 <div style={{
@@ -217,11 +208,6 @@ export default function BookingCard({
                     // Handle menu click
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#6b7280">
-                    <circle cx="12" cy="5" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="12" cy="19" r="2" />
-                  </svg>
                 </button>
               </div>
             </Col>

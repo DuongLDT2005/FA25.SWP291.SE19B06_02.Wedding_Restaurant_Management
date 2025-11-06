@@ -85,14 +85,14 @@ function BookingListPage() {
           <Row className="mb-4">
             <Col lg={6} md={8} xs={12} className="offset-lg-1">
               <div style={{
-                borderLeft: '4px solid rgba(131, 18, 43, 1)',
+                borderLeft: '4px solid rgb(225, 29, 72)',
                 paddingLeft: '20px',
                 marginBottom: '30px'
               }}>
                 <h2 style={{
                   fontSize: '2rem',
                   fontWeight: '700',
-                  color: 'rgba(131, 18, 43, 1)',
+                  color: 'rgb(225, 29, 72)',
                   marginBottom: '8px',
                   letterSpacing: '-0.5px'
                 }}>

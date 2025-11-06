@@ -3,12 +3,16 @@ import { Navbar, Container, Nav, Button } from "react-bootstrap";
 import NotificationDropdown from "./NotificationMenu";
 import ProfileMenu from "./ProfileMenu";
 import useAuth from "../../hooks/useAuth";
-import "../../styles/HeaderStyles.css"
-import { Link } from "react-router-dom";
+import "../../styles/HeaderStyles.css";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Header() {
   const { user, handleLogout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+
+  // treat only the landing page path ('/') as transparent area
+  const isLanding = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +26,8 @@ export default function Header() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const transparent = isLanding && !isScrolled;
 
   const notifications = [
     {
@@ -54,20 +60,19 @@ export default function Header() {
     <Navbar
       expand="md"
       fixed="top"
-      className={`py-2 transition-all ${isScrolled ? "bg-white shadow-lg" : "bg-transparent"}`}
+      className={`py-2 transition-all ${transparent ? "bg-transparent" : "bg-white shadow-lg"}`}
       style={{
         zIndex: 999,
         transition: "all 0.3s ease",
+        borderBottom: !transparent ? "1px solid #f3f3f3" : "none",
       }}
     >
-      <Container
-        fluid style={{ padding: "0 50px", maxWidth: "1200px" }}
-      >
+      <Container fluid style={{ padding: "0 50px", maxWidth: "1200px" }}>
         {/* Logo */}
         <Navbar.Brand
           href="/"
-          className="fw-bold fs-3 text-white brand-name"
-          style={{ letterSpacing: "0.5px" }}
+          className={`fw-bold fs-3 brand-name ${transparent ? "text-white" : "text-dark"}`}
+          style={{ letterSpacing: "0.5px", color: transparent ? undefined : "#e11d48" }}
         >
           LifEvent
         </Navbar.Brand>
@@ -75,9 +80,8 @@ export default function Header() {
         <Nav className="ms-auto d-flex align-items-center gap-3">
           {user ? (
             <>
-              <NotificationDropdown notifications={notifications} />
-              <ProfileMenu />
-              <ProfileMenu user={user} onLogout={handleLogout} />
+              <NotificationDropdown dark={!transparent} notifications={notifications} />
+              <ProfileMenu dark={!transparent} user={user} onLogout={handleLogout} />
             </>
           ) : (
             <>
@@ -85,18 +89,20 @@ export default function Header() {
                 as={Link}
                 to="/signup/partner"
                 variant="link"
-                className="fw-medium px-3 text-white text-decoration-none header-link"
+                className={`fw-medium px-3 text-decoration-none header-link ${transparent ? "text-white" : "text-dark"}`}
               >
                 Bạn Muốn Hợp Tác?
               </Button>
+
               <Button
                 as={Link}
                 to="/signup/customer"
-                variant="outline-light"
+                variant={transparent ? "outline-light" : "outline-secondary"}
                 className="fw-medium px-3 rounded header-link-btn"
               >
                 Đăng Ký
               </Button>
+
               <Button
                 as={Link}
                 to="/login"
