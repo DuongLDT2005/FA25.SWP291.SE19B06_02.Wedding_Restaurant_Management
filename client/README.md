@@ -88,6 +88,17 @@ npm install lucide-react
 ### Install bootstrap icon
 npm install bootstrap-icons
 
+
+### Install @mui/x-date-pickers
+npm install @emotion/react @emotion/styled
+### Install npm install jspdf
+npm install jspdf
+### Test
+Đường link vào view details(chưa thanh toán): http://localhost:3000/booking-details/201130?payment=0
+Đường link vào view details(đã thanh toán): http://localhost:3000/booking-details/201130?payment=1
+Đường link thanh toán: http://localhost:3000/payment/new
+
+
 ## Phần admin Cần tải : 
 ### Install @coreui/react
 npm install @coreui/react
@@ -109,6 +120,11 @@ npm install sass --save-dev
 
 npm install dayjs
 npm install recharts
+
+npm install sweetalert2
+### Phần nàyd dể xuất excel
+npm install xlsx file-saver
+npm install xlsx
 ### Install @mui/x-date-pickers
 npm install @emotion/react @emotion/styled
 ### Install jspdf

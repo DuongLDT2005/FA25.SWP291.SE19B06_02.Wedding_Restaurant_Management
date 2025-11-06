@@ -4,42 +4,30 @@ import {
   CCard,
   CCardBody,
   CCardHeader,
-  CRow,
-  CCol,
-  CBadge,
   CButton,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
 } from "@coreui/react";
+
+// Giả lập chung dữ liệu
+const bookings = [
+  { id: 1001, customer: "Nguyễn Văn A", restaurant: "Sunflower Wedding Hall", date: "2025-12-12", status: "Pending" },
+  { id: 1002, customer: "Trần Thị B", restaurant: "Blue Ocean Center", date: "2025-11-01", status: "Confirmed" },
+  { id: 1003, customer: "Lê Văn C", restaurant: "Green Garden", date: "2025-10-20", status: "Cancelled" },
+];
+
+const payments = [
+  { id: 1, bookingId: 1001, partner: "Sunflower Catering", amount: 10000000, date: "2025-10-07", method: "Credit Card", status: "Completed" },
+  { id: 2, bookingId: 1002, partner: "Ocean Blue Events", amount: 8000000, date: "2025-10-06", method: "Bank Transfer", status: "Pending" },
+];
 
 const BookingDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
-  // Dữ liệu giả lập
-  const bookings = [
-    {
-      id: 1001,
-      customer: "Nguyễn Văn A",
-      phone: "0909123456",
-      restaurant: "Sunflower Wedding Hall",
-      date: "2025-12-12",
-      guests: 300,
-      total: 12000000,
-      status: "Pending",
-      note: "Yêu cầu trang trí thêm hoa tươi",
-    },
-    {
-      id: 1002,
-      customer: "Trần Thị B",
-      phone: "0988123456",
-      restaurant: "Blue Ocean Center",
-      date: "2025-11-01",
-      guests: 200,
-      total: 9500000,
-      status: "Confirmed",
-      note: "Cần thêm sân khấu ngoài trời",
-    },
-  ];
-
   const booking = bookings.find((b) => b.id === Number(id));
 
   if (!booking) {
@@ -47,14 +35,16 @@ const BookingDetailPage = () => {
       <CCard className="mb-4">
         <CCardHeader>Booking Detail</CCardHeader>
         <CCardBody>
-          <p>❌ Không tìm thấy Booking #{id}</p>
+          <p>❌ Booking #{id} not found.</p>
           <CButton color="secondary" onClick={() => navigate(-1)}>
-            Quay lại
+            Back
           </CButton>
         </CCardBody>
       </CCard>
     );
   }
+
+  const relatedPayments = payments.filter((p) => p.bookingId === booking.id);
 
   return (
     <CCard className="mb-4">
@@ -62,38 +52,52 @@ const BookingDetailPage = () => {
         <strong>Booking Detail — #{booking.id}</strong>
       </CCardHeader>
       <CCardBody>
-        <CRow className="mb-3">
-          <CCol sm={6}>
-            <p><strong>Customer:</strong> {booking.customer}</p>
-            <p><strong>Phone:</strong> {booking.phone}</p>
-            <p><strong>Restaurant:</strong> {booking.restaurant}</p>
-          </CCol>
-          <CCol sm={6}>
-            <p><strong>Date:</strong> {booking.date}</p>
-            <p><strong>Guests:</strong> {booking.guests}</p>
-            <p><strong>Total:</strong> {booking.total.toLocaleString()} VND</p>
-          </CCol>
-        </CRow>
+        <p><strong>Customer:</strong> {booking.customer}</p>
+        <p><strong>Restaurant:</strong> {booking.restaurant}</p>
+        <p><strong>Date:</strong> {booking.date}</p>
+        <p><strong>Status:</strong> {booking.status}</p>
 
-        <p>
-          <strong>Status:</strong>{" "}
-          <CBadge
-            color={
-              booking.status === "Confirmed"
-                ? "success"
-                : booking.status === "Pending"
-                ? "warning"
-                : "secondary"
-            }
-          >
-            {booking.status}
-          </CBadge>
-        </p>
+        <hr />
+        <h5>Payments</h5>
+        {relatedPayments.length > 0 ? (
+          <CTable hover responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>#</CTableHeaderCell>
+                <CTableHeaderCell>Partner</CTableHeaderCell>
+                <CTableHeaderCell>Amount</CTableHeaderCell>
+                <CTableHeaderCell>Date</CTableHeaderCell>
+                <CTableHeaderCell>Status</CTableHeaderCell>
+                <CTableHeaderCell>Action</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              {relatedPayments.map((p) => (
+                <CTableRow key={p.id}>
+                  <CTableHeaderCell>{p.id}</CTableHeaderCell>
+                  <CTableDataCell>{p.partner}</CTableDataCell>
+                  <CTableDataCell>{p.amount.toLocaleString()} VND</CTableDataCell>
+                  <CTableDataCell>{p.date}</CTableDataCell>
+                  <CTableDataCell>{p.status}</CTableDataCell>
+                  <CTableDataCell>
+                    <CButton
+                      size="sm"
+                      color="info"
+                      onClick={() => navigate(`/admin/payments/${p.id}`)}
+                    >
+                      View Payment
+                    </CButton>
+                  </CTableDataCell>
+                </CTableRow>
+              ))}
+            </CTableBody>
+          </CTable>
+        ) : (
+          <p>No payments found for this booking.</p>
+        )}
 
-        <p><strong>Note:</strong> {booking.note || "Không có"}</p>
-
-        <CButton color="secondary" onClick={() => navigate(-1)}>
-          ← Quay lại danh sách
+        <CButton color="secondary" className="mt-3" onClick={() => navigate(-1)}>
+          ← Back
         </CButton>
       </CCardBody>
     </CCard>

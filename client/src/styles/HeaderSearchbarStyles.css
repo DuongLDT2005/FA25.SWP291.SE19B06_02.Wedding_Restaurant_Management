@@ -33,8 +33,8 @@
 .option--field {
     display: flex;
     color: #993344;
-    position: relative;
-    flex: 1;
+    position: relative; 
+    flex: 1; 
     min-width: 0;
     margin: 0 5px;
     padding-left: 10px;
