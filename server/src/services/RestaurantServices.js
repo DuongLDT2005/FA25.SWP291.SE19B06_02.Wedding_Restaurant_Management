@@ -18,6 +18,10 @@ class RestaurantService {
     return await RestaurantDAO.getByID(restaurantID);
   }
 
+  static async getSummaryByID(restaurantID) {
+    return await RestaurantDAO.getSummaryByID(restaurantID);
+  }
+
   static async create(data) {
     if (!data || typeof data !== 'object') {
       throw new Error("Invalid payload");

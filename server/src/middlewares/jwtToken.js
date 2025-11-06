@@ -1,9 +1,19 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { getCollection } from "../dao/mongoDAO.js";
+import { userRole } from "../models/enums/UserStatus.js";
+//Nếu sài dotenv.config(); thì nó sẽ không truy cập vào được .env dẫn đếN không truy cập được jwt secret
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, "../../.env") });
+
+
 const JWT_SECRET = process.env.JWT_SECRET;
+
+console.log("JWT_Secret", JWT_SECRET);
 
 export async function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -43,3 +53,18 @@ export async function authMiddleware(req, res, next) {
     return res.status(401).json({ success: false, message: 'Invalid/expired token' });
   }
 }
+
+  export async function ensurePartner(req, res, next) {
+    const role = req.user?.role;
+    if (role !== userRole.owner) {
+      return res.status(403).json({ error: "Partner only" });
+    }
+    return next();
+  }
+  export async function ensureCustomer(req, res, next){
+    const role = req.user?.role;
+    if (role !== userRole.customer) {
+      return res.status(403).json({ error: "Customer only" });
+    }
+    return next();
+  }

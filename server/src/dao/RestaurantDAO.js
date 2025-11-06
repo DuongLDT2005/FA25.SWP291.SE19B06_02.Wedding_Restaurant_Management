@@ -1,6 +1,11 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
+import MenuDAO from './MenuDAO.js';
+import DishDAO from './DishDAO.js';
+import PromotionDAO from './PromotionDAO.js';
+import ServiceDAO from './ServiceDAO.js';
+import HallDAO from './HallDAO.js';
 
 // Models from init-models.cjs
 const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
@@ -76,6 +81,15 @@ class RestaurantDAO {
     });
     if (!r) return null;
     const dto = toDTO(r);
+    // fetch related collections (menus, dishes, promotions, services)
+    const [menus, dishes, promotions, services, halls] = await Promise.all([
+      MenuDAO.getByRestaurantID(restaurantID).catch(() => []),
+      DishDAO.getByRestaurantID(restaurantID).catch(() => []),
+      PromotionDAO.getPromotionsByRestaurantID(restaurantID).catch(() => []),
+      ServiceDAO.getByRestaurantID(restaurantID).catch(() => []),
+      HallDAO.getHallsByRestaurantId(restaurantID).catch(() => [])
+    ]);
+
     return {
       restaurantID: dto.restaurantID,
       restaurantPartnerID: dto.restaurantPartnerID,
@@ -86,7 +100,31 @@ class RestaurantDAO {
       thumbnailURL: dto.thumbnailURL,
       status: dto.status,
       address: dto.address?.fullAddress || null,
-      images: (dto.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL }))
+      images: (dto.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL })),
+      menus,
+      dishes,
+      promotions,
+      services,
+      halls
+    };
+  }
+
+  static async getSummaryByID(restaurantID) {
+    // Return a lighter-weight representation suitable for listing or small detail views
+    const r = await restaurant.findByPk(restaurantID, {
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
+    });
+    if (!r) return null;
+    const dto = toDTO(r);
+    return {
+      restaurantID: dto.restaurantID,
+      name: dto.name,
+      description: dto.description,
+      hallCount: dto.hallCount,
+      thumbnailURL: dto.thumbnailURL,
+      status: dto.status,
+      address: dto.address?.fullAddress || null,
     };
   }
   /* 

@@ -5,13 +5,15 @@ import MenuDAO from "../../dao/MenuDAO.js";
 import SystemSettingDAO from "../../dao/SystemSettingDAO.js";
 import ServiceDAO from "../../dao/ServiceDAO.js";
 import PromotionDAO from "../../dao/PromotionDAO.js";
+import ContractDAO, { ContractStatus } from "../../dao/ContractDAO.js";
+import ContractServices from "../ContractServices.js";
 import BookingPricing from "./BookingPricing.js";
 import BookingStatus from "../../models/enums/BookingStatus.js";
 import { sendBookingStatusEmail } from "../../utils/mail/mailer.js";
 import UserDAO from "../../dao/userDao.js";
 import NotificationService from "../NotificationServices.js";
 import db from "../../config/db.js";
-import { notifyByStatusById } from "../BookingNotificationService.js";
+import { notifyByStatusById } from "./BookingNotificationService.js";
 
 class BookingService {
   /**
@@ -274,6 +276,16 @@ class BookingService {
 
     // Use centralized changeStatus (transaction + afterCommit notification)
     await this.changeStatus(bookingID, BookingStatus.ACCEPTED, { actorId: partnerID, actorRole: 1 });
+
+    // Create a Contract record linked to this booking so partner/customer can upload/sign it.
+    // Use booking details we already loaded above to get restaurantID.
+    try {
+      // Generate HTML contract, persist file and DB record
+      await ContractServices.createContractFromBooking(bookingID);
+    } catch (e) {
+      console.error(`Failed to create contract for booking ${bookingID}:`, e?.message || e);
+    }
+
     return await BookingDAO.getBookingById(bookingID);
   }
 
@@ -321,5 +333,6 @@ class BookingService {
     return await BookingDAO.getBookingById(bookingID);
   }
 }
+
 
 export default new BookingService();

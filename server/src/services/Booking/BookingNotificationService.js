@@ -1,5 +1,5 @@
-import BookingDAO from '../dao/BookingDAO.js';
-import { sendCustomerBookingEmail } from '../utils/mail/mailer.js';
+import BookingDAO from '../../dao/BookingDAO.js';
+import { sendCustomerBookingEmail } from '../../utils/mail/mailer.js';
 
 // Map transitions to audiences based on your rules
 // PENDING -> partner

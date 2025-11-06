@@ -52,5 +52,9 @@ class ServiceDAO {
         });
         return toDTOs(rows);
     }
+    static async getByRestaurantID(restaurantID) {
+        const rows = await service.findAll({ where: { restaurantID }, attributes: ['serviceID', 'name', 'description', 'price'] });
+        return toDTOs(rows);
+    }
 }
 export default ServiceDAO;

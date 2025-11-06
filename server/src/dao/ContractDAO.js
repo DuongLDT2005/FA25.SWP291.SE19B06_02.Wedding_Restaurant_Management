@@ -44,3 +44,4 @@ class ContractDAO {
     }
 }
 export default ContractDAO;
+export const ContractStatus = status;

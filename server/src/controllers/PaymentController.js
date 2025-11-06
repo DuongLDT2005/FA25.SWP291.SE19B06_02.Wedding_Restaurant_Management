@@ -1,6 +1,12 @@
 import PayosServices from "../services/payment/PayosServices.js";
 import BookingServices from "../services/Booking/BookingServices.js";
+import paymentStatus from "../models/enums/BookingStatus.js";
+
 class PaymentController {
+  /**
+   * Tạo link thanh toán đặt cọc PayOS
+   * @route POST /api/payments/deposit/:bookingID
+   */
   static async createPayosCheckout(req, res) {
     try {
       const { bookingID } = req.params;
@@ -9,7 +15,19 @@ class PaymentController {
         email: req.body?.email,
         phone: req.body?.phone,
       };
+
       const result = await PayosServices.createCheckoutForBooking(bookingID, buyer);
+
+      // (Tuỳ chọn) có thể lưu tạm payment record vào DB ở đây
+      // await PaymentDAO.create({
+      //   bookingID,
+      //   orderCode: result.orderCode,
+      //   amount: result.amount,
+      //   method: paymentStatus.paymentMethod.PAYOS,
+      //   type: paymentStatus.type.DEPOSIT,
+      //   status: paymentStatus.status.PENDING,
+      // });
+
       return res.status(200).json({
         success: true,
         bookingID: result.bookingID,
@@ -18,40 +36,104 @@ class PaymentController {
         checkoutUrl: result.checkoutUrl,
       });
     } catch (err) {
-      return res.status(400).json({ success: false, message: err?.message || String(err) });
+      console.error("[PaymentController] ❌ createPayosCheckout:", err);
+      return res.status(400).json({
+        success: false,
+        message: err?.message || String(err),
+      });
     }
   }
 
+  /**
+   * PayOS gọi webhook về khi giao dịch có thay đổi
+   * @route POST /api/payments/payos/webhook
+   */
   static async payosWebhook(req, res) {
     try {
       const payload = req.body;
       const verified = await PayosServices.verifyWebhook(payload);
-        
-      // TODO: Update your Payment record and Booking status here based on verified data
-      // Example fields (check SDK response):
-      // const { code, desc, data } = verified;
-      // const { orderCode, amount, status, transactionID } = data || {};
-      // Update Payment record
-      await BookingServices.updatePaymentStatusByOrderCode(orderCode, status);
-      // For now, just acknowledge
-      return res.status(200).json({ success: true });
+
+      if (!verified) {
+        return res.status(400).json({ success: false, message: "Invalid webhook signature" });
+      }
+
+      const { code, desc, data } = verified;
+      const { orderCode, amount, status, transactionID } = data || {};
+
+      console.log("[PayOS Webhook] 🔔 Received:", verified);
+
+      // Kiểm tra trạng thái thành công từ PayOS
+      if (status === "PAID" || status === "SUCCESS" || data?.status_code === "00") {
+        // 1️⃣ Cập nhật payment record
+        await BookingServices.updatePaymentStatusByOrderCode(
+          orderCode,
+          paymentStatus.status.SUCCESS,
+          transactionID
+        );
+
+        // 2️⃣ Cập nhật trạng thái booking -> DEPOSITED
+        await BookingServices.deposit(orderCode);
+
+        // 3️⃣ Phản hồi về PayOS để xác nhận webhook OK
+        return res.status(200).json({
+          success: true,
+          message: "Payment successful and booking updated",
+        });
+      } else if (status === "CANCELLED" || status === "FAILED") {
+        await BookingServices.updatePaymentStatusByOrderCode(
+          orderCode,
+          paymentStatus.status.FAILED
+        );
+        return res.status(200).json({
+          success: true,
+          message: "Payment failed/cancelled, status updated",
+        });
+      }
+
+      // Các trạng thái khác (pending, processing, v.v.)
+      return res.status(200).json({
+        success: true,
+        message: `Webhook received: ${status}`,
+      });
     } catch (err) {
-      return res.status(400).json({ success: false, message: err?.message || String(err) });
+      console.error("[PaymentController] ❌ payosWebhook:", err);
+      return res.status(400).json({
+        success: false,
+        message: err?.message || String(err),
+      });
     }
   }
 
+  /**
+   * Client có thể query trạng thái thanh toán theo orderCode
+   * @route GET /api/payments/status/:orderCode
+   */
   static async getPayosStatus(req, res) {
     try {
       const { orderCode } = req.params;
       const info = await PayosServices.getLinkInfo(Number(orderCode));
-      // Shape depends on SDK; common fields:
-      // info.data.status could be 'PAID' | 'PENDING' | 'CANCELLED' etc.
-      const status = info?.data?.status || info?.status;
+
+      const status =
+        info?.data?.status ||
+        info?.status ||
+        "UNKNOWN";
       const amount = info?.data?.amount || info?.amount;
       const bookingID = info?.data?.orderCode || orderCode;
-      return res.status(200).json({ success: true, bookingID, orderCode, status, amount, raw: info });
+
+      return res.status(200).json({
+        success: true,
+        bookingID,
+        orderCode,
+        status,
+        amount,
+        raw: info,
+      });
     } catch (err) {
-      return res.status(400).json({ success: false, message: err?.message || String(err) });
+      console.error("[PaymentController] ❌ getPayosStatus:", err);
+      return res.status(400).json({
+        success: false,
+        message: err?.message || String(err),
+      });
     }
   }
 }

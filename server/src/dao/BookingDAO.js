@@ -1,6 +1,7 @@
 import db from '../config/db.js';
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
+import BookingStatus from '../models/enums/BookingStatus.js';
 
 // Models from Sequelize
 const {
@@ -249,7 +250,7 @@ class BookingDAO {
     }
     const rows = await BookingModel.findAll({
       where: {
-        status: 'CONFIRMED',
+        status: BookingStatus.CONFIRMED,
         createdAt: { [Op.lte]: cutoffDate },
       },
       attributes: ['bookingID'],
@@ -262,12 +263,12 @@ class BookingDAO {
   // Expire by a specific list of booking IDs (guarded by status)
   static async expireByIds(ids, { setChecked = true } = {}) {
     if (!Array.isArray(ids) || ids.length === 0) return 0;
-    const updates = { status: 'EXPIRED' };
+    const updates = { status: BookingStatus.EXPIRED };
     if (setChecked) updates.isChecked = true;
     const [affected] = await BookingModel.update(updates, {
       where: {
         bookingID: { [Op.in]: ids },
-        status: 'CONFIRMED',
+        status: BookingStatus.CONFIRMED,
       },
     });
     return affected;

@@ -21,6 +21,7 @@ const PartnerLicense = React.lazy(() => import("../pages/admin/license/LicenseCo
 
 // Restaurants
 const RestaurantList = React.lazy(() => import("../pages/admin/restaurants/RestaurantListPage"));
+const RestaurantDetailPage = React.lazy(() => import("../pages/admin/restaurants/RestaurantDetailPage"));
 const EventTypes = React.lazy(() => import("../pages/admin/restaurants/EventTypesPage"));
 const Amenities = React.lazy(() => import("../pages/admin/restaurants/AmenitiesPage"));
 
@@ -62,6 +63,7 @@ const routes = [
 
   // Restaurants
   { path: "/restaurants", name: "Restaurant List", element: RestaurantList },
+  { path: "/restaurants/detail/:id", name: "Restaurant Detail", element: RestaurantDetailPage },
   { path: "/event-types", name: "Event Types", element: EventTypes },
   { path: "/amenities", name: "Amenities", element: Amenities },
 
