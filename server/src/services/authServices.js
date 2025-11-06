@@ -38,7 +38,7 @@ class AuthServices {
         const newOwner = await UserDAO.createOwner(userData);
         return newOwner;
     }
-
+  
   static async loginWithEmail(email, password) {
     const user = await UserDAO.findByEmail(email);
     if (!user) {
@@ -48,8 +48,6 @@ class AuthServices {
     if (!isMatch) {
         throw new Error("Invalid password");
     }
-    // Generate JWT token
-  // Include both userId and sub for compatibility; source uses userID (capital D)
   const userId = user.userID ?? user.userId ?? user.id;
   const token = jwt.sign(
     { sub: userId, userId: userId, email: user.email, role: user.role },
@@ -58,6 +56,7 @@ class AuthServices {
   );
     return { user, token };
 }
+
   static async resetPassword(email, newPassword) {
     const hashedPassword = await hashPassword(newPassword);
     await UserDAO.updateUserInfo(email, { password: hashedPassword });
@@ -88,6 +87,7 @@ class AuthServices {
     // 
     await transporter.sendMail(mailOptions);
   }
+
   static async logout(req, res) {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -100,6 +100,7 @@ class AuthServices {
     await blacklist.insertOne({ token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) });
     res.status(200).json({ message: "Logged out successfully" });
   }
+
   static async verifyOtp(email, otpInput) {
       // Find OTP record for user
       const otp = await getOtpByEmail(email);
@@ -114,6 +115,7 @@ class AuthServices {
       deleteOtpByEmail(email);
       return true;
   }
+  
   static async resetPassword(email, newPassword) {
       const hashedPassword = await hashPassword(newPassword);
       await UserDAO.updateUserInfo(email, { password: hashedPassword });

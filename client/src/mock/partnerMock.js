@@ -214,4 +214,73 @@ export const notifications = [
   },
 ];
 
+// Users
+const users = [
+  {
+    userID: 1,
+    email: "tranb@example.com",
+    fullName: "Trần Thị B",
+    phone: "0909123456",
+    password: "hashed_pw_customer_1",
+    avatarURL: "https://randomuser.me/api/portraits/women/45.jpg",
+    spent: 2500000,
+    role: 0, // CUSTOMER
+    createdAt: "2025-09-10T09:30:00",
+    status: 1,
+  },
+  {
+    userID: 2,
+    email: "levanc@example.com",
+    fullName: "Lê Văn C",
+    phone: "0912345678",
+    password: "hashed_pw_customer_2",
+    avatarURL: "https://randomuser.me/api/portraits/men/56.jpg",
+    role: 0, // CUSTOMER
+    createdAt: "2025-09-15T11:10:00",
+    status: 1,
+  },
+  {
+    userID: 3,
+    email: "admin@lifevent.vn",
+    fullName: "Nguyễn Thịnh",
+    phone: "0901234567",
+    password: "hashed_pw_admin",
+    avatarURL: "https://randomuser.me/api/portraits/men/11.jpg",
+    role: 2, // ADMIN
+    createdAt: "2025-08-01T10:00:00",
+    status: 1,
+  },
+  {
+    userID: 4,
+    email: "partner@example.com",
+    fullName: "Nguyen Van A",
+    phone: "0123456789",
+    password: "hashed_pw_partner",
+    avatarURL: "https://randomuser.me/api/portraits/men/20.jpg",
+    role: 1, // RESTAURANT_PARTNER
+    createdAt: "2025-09-20T15:45:00",
+    status: 1,
+  },
+];
+
+// Addresses
+const addresses = [
+  {
+    addressID: 1,
+    number: "12",
+    street: "Lê Lợi",
+    ward: "Phường Bến Nghé",
+  },
+  {
+    addressID: 2,
+    number: "45",
+    street: "Nguyễn Huệ",
+    ward: "Phường Bến Thành",
+  },
+];
+
+export const usersMock = users;
+export const addressesMock = addresses;
 export default mock;
+
+

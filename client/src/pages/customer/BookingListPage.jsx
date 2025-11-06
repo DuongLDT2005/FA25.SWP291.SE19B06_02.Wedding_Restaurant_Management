@@ -7,6 +7,7 @@ import { bookings as mockBookings } from "./ValueStore";
 import BookingCard from "./components/BookingCard";
 import { useNavigate } from "react-router-dom";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
+
 const statusMap = {
   0: "Pending",
   1: "Confirmed",
