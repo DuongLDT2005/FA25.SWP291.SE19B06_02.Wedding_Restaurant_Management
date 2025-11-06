@@ -186,33 +186,33 @@ function SignUpForOwner() {
             </div>
 
             <div className="form-group-custom col-12">
-                                <div className="file--upload">
-                                    <p style={{marginBottom: '5px', fontWeight: '600', color: '#555'}}>Upload giấy phép cá nhân:</p>
-                                    
-                                    <div className="file--upload-input-group">
-                                        {/* Nút Label đóng vai trò là nút "Choose File" đã được style */}
-                                        <label htmlFor="licenseUrl" className="file--label-button">
-                                            Chọn File
-                                        </label>
-                                        
-                                        {/* Hiển thị tên file đã chọn, hoặc thông báo nếu chưa chọn */}
-                                        <span className="file--name">
-                                            {file ? file.name : 'Chưa có file nào được chọn'}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Input type="file" thực tế, được ẩn */}
-                                    <input
-                                        type="file"
-                                        id="licenseUrl"
-                                        name="licenseUrl"
-                                        onChange={handleFileChange}
-                                        accept="image/*"
-                                        // Chúng ta không cần className is-invalid ở đây vì nó được ẩn
-                                    />
-                                    {errors.licenseUrl && <div className="error-message">{errors.licenseUrl}</div>}
-                                </div>
-                            </div>
+              <div className="file--upload">
+                <p style={{ marginBottom: '5px', fontWeight: '600', color: '#555' }}>Upload giấy phép cá nhân:</p>
+
+                <div className="file--upload-input-group">
+                  {/* Nút Label đóng vai trò là nút "Choose File" đã được style */}
+                  <label htmlFor="licenseUrl" className="file--label-button">
+                    Chọn File
+                  </label>
+
+                  {/* Hiển thị tên file đã chọn, hoặc thông báo nếu chưa chọn */}
+                  <span className="file--name">
+                    {file ? file.name : 'Chưa có file nào được chọn'}
+                  </span>
+                </div>
+
+                {/* Input type="file" thực tế, được ẩn */}
+                <input
+                  type="file"
+                  id="licenseUrl"
+                  name="licenseUrl"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                // Chúng ta không cần className is-invalid ở đây vì nó được ẩn
+                />
+                {errors.licenseUrl && <div className="error-message">{errors.licenseUrl}</div>}
+              </div>
+            </div>
 
             <div className="col-12">
               <button type="submit">Đăng ký</button>

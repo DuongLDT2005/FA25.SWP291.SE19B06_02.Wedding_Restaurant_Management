@@ -230,6 +230,47 @@
     text-align: center;
 }
 
+.file--upload {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.file--upload-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+/* Ẩn input type="file" gốc */
+.file--upload input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* Style cho nút Label */
+.file--label-button {
+    background: #993344;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+}
+
 .file--label-button:hover {
     background: #7a2835;
 }
@@ -241,7 +282,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 250px; /* Giới hạn chiều rộng tên file */
+    max-width: 250px;
+    /* Giới hạn chiều rộng tên file */
 }
 
 .file--upload .file--label p {
@@ -269,35 +311,19 @@
 }
 
 .sign--up--link {
-    margin: 10px 0;
     text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    color: #331111;
 }
 
 .sign--up--link a {
-    position: relative;
-    text-decoration: none;
     color: #f6a401;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.sign--up--link a::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    bottom: -10px;
-    width: 0;
-    height: 2px;
-    background-color: #f6a401;
-    transition: width 0.3s ease;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .sign--up--link a:hover {
-    font-weight: 700;
-}
-
-.sign--up--link a:hover::after {
-    width: 100%;
-    /* độ dài thanh gạch ngang */
+    text-decoration: underline;
 }

@@ -47,11 +47,22 @@ function ListingRestaurant() {
         let matchLocation = true;
 
         // Filter by price
-        if (priceFilters.length > 0) {
-            matchPrice = priceFilters.some(filter => {
-                if (filter === "10M") return r.minPrice >= 10000000;
-                if (filter === "20M") return r.minPrice >= 20000000;
-                if (filter === "30M") return r.minPrice >= 30000000;
+        // if (priceFilters.length > 0) {
+        //     matchPrice = priceFilters.some(filter => {
+        //         if (filter === "10M") return r.minPrice >= 10000000;
+        //         if (filter === "20M") return r.minPrice >= 20000000;
+        //         if (filter === "30M") return r.minPrice >= 30000000;
+        //         return false;
+        //     });
+        // }
+
+        // Filter by rating
+        if (starFilters.length > 0) {
+            matchStar = starFilters.some(filter => {
+                if (filter === "2.5") return r.rating <= 3.0;
+                if (filter === "3.0") return r.rating >= 3.0;
+                if (filter === "4.0") return r.rating >= 4.0;
+                if (filter === "5.0") return r.rating >= 5.0;
                 return false;
             });
         }
@@ -103,7 +114,7 @@ function ListingRestaurant() {
                     <aside className="listing-sidebar">
                         <h3>Bộ lọc</h3>
 
-                        <div className="filter-group">
+                        {/* <div className="filter-group">
                             <label>Mức giá:</label>
                             <div className="checkbox-group">
                                 <label className="checkbox-item">
@@ -131,9 +142,7 @@ function ListingRestaurant() {
                                     <span>30.000.000+ VNĐ</span>
                                 </label>
                             </div>
-                        </div>
-
-                        <hr className="filter-divider" />
+                        </div> */}
 
                         <div className="filter-group">
                             <label>Đánh giá:</label>

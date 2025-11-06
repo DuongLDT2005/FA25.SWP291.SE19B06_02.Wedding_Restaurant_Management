@@ -25,13 +25,16 @@
     padding: 20px;
     height: fit-content;
 }
+
 .listing-sidebar h3,
 .listing-sidebar label {
     color: #993344;
 }
-.listing-sidebar select{
+
+.listing-sidebar select {
     margin-bottom: 5px;
 }
+
 .filter-group {
     margin-bottom: 20px;
     display: flex;
@@ -111,7 +114,7 @@
 .filter-divider {
     border: none;
     height: 1px;
-    background-color: #e9ecef;
+    background-color: #993344;
     margin: 20px 0;
     opacity: 0.6;
 }
@@ -355,22 +358,22 @@
         flex-direction: column;
         padding: 15px;
     }
-    
+
     .listing-sidebar {
         width: 100%;
         margin-bottom: 20px;
     }
-    
+
     .restaurant-card {
         flex-direction: column;
         height: auto;
     }
-    
+
     .restaurant-card img {
         width: 100%;
         height: 250px;
     }
-    
+
     .restaurant-info {
         padding: 15px;
     }
