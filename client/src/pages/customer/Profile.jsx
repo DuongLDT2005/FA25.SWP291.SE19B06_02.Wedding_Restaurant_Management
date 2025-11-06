@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import "../../styles/Profile.css";
 
@@ -72,7 +71,6 @@ function Profile() {
 
   return (
     <>
-      <Header />
       <div className="profile-wrapper">
         <div className="profile-card">
           <h2 className="profile-title">Thông tin cá nhân</h2>

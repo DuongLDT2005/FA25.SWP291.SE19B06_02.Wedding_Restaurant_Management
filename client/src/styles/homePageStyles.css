@@ -1,18 +1,20 @@
+/* ============================= */
+/* 🔹 GENERAL LAYOUT */
+/* ============================= */
 .content {
-    margin: 50px 130px;
+    margin: 50px 110px;
 }
 
-/* Offers & Discount */
-.content--section {
-    margin-top: 30px;
-}
-
+/* ============================= */
+/* 🔹 OFFERS & DISCOUNTS SECTION */
+/* ============================= */
 .offers-section h2 {
     color: #993344;
     margin-bottom: 10px;
     position: relative;
     display: inline-block;
     font-weight: 600;
+    transition: font-weight 0.3s ease;
 }
 
 .offers-section h2::after {
@@ -32,17 +34,6 @@
 
 .offers-section h2:hover::after {
     width: 80%;
-    /* độ dài thanh gạch ngang */
-}
-
-.btn-primary {
-    background-color: #993344 !important;
-    border-color: #993344 !important;
-}
-
-.btn-primary:hover {
-    background-color: #772233 !important;
-    border-color: #772233 !important;
 }
 
 .offers-section h6 {
@@ -100,18 +91,46 @@
     font-size: 14px;
 }
 
-/* Restaurant */
-.content--list {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 30px;
-    margin-bottom: 10px;
-    min-height: max-content;
+/* ============================= */
+/* 🔹 CUSTOM BUTTONS */
+/* ============================= */
+.btn-custom-red {
+    background-color: #993344;
+    border: 1px solid #993344;
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.3s;
 }
 
-.content--list a {
-    text-decoration: none;
-    color: black;
+.btn-custom-red:hover {
+    background-color: #993344;
+    border-color: #993344;
+    transform: translateY(-2px);
+}
+
+.btn-sm.btn-primary {
+    background-color: #993344 !important;
+    border: none !important;
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.btn-sm.btn-primary:hover {
+    background-color: #7a2835 !important;
+    transform: translateY(-2px);
+}
+
+/* ============================= */
+/* 🔹 RESTAURANTS SECTION */
+/* ============================= */
+.content--section {
+    margin-top: 20px;
 }
 
 .content--section h2 {
@@ -140,36 +159,37 @@
 
 .content--section h2:hover::after {
     width: 80%;
-    /* độ dài thanh gạch ngang */
 }
 
 .content--card {
-    transition: all 0.5s ease;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.3s, transform 0.3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
     cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.2) 1.2px 1.95px 2.6px;
 }
 
 .content--card:hover {
-    transform: translateY(-10px);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
 }
 
 .content--image img {
     width: 100%;
-    max-width: 250px;
-    height: 150px;
-    border-radius: 10px;
+    height: 180px;
     object-fit: cover;
+    border-radius: 12px 12px 0 0;
 }
 
-.content--price {
-    margin: 8px 0;
-    font-size: 16px;
-    font-weight: 600;
-    display: flex;
-    color: #D2B981;
-}
-
-.content--price h5 {
-    margin: 0;
+.content--info h3 {
+    margin: 5px 0;
+    font-size: 20px;
+    font-weight: 700;
+    min-height: 40px;
 }
 
 .content--info p {
@@ -179,9 +199,97 @@
     min-height: 36px;
 }
 
-.content--info h3 {
-    margin: 5px 0;
-    font-size: 20px;
-    font-weight: 700;
-    min-height: 40px;
+.content--price {
+    margin: 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #D2B981;
+}
+
+/* ============================= */
+/* 🔹 CAROUSEL SECTION */
+/* ============================= */
+.carousel-container-fluid {
+    position: relative;
+    /* padding: 0 40px; */
+}
+
+.carousel-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin: 0 -8px;
+}
+
+.carousel-list::-webkit-scrollbar {
+    display: none;
+}
+
+.restaurant-card-wrapper {
+    flex-shrink: 0;
+    padding: 0 8px;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+@media (min-width: 576px) {
+    .restaurant-card-wrapper {
+        width: 50%;
+    }
+}
+
+@media (min-width: 768px) {
+    .restaurant-card-wrapper {
+        width: 33.3333%;
+    }
+}
+
+@media (min-width: 992px) {
+    .restaurant-card-wrapper {
+        width: 25%;
+    }
+}
+
+/* ============================= */
+/* 🔹 CAROUSEL BUTTONS */
+/* ============================= */
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background-color: white;
+    border: 1px solid #ddd;
+    color: #993344;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-btn.start-0 {
+    left: 0;
+}
+
+.carousel-btn.end-0 {
+    right: 0;
+}
+
+.carousel-btn:hover:not(:disabled) {
+    background-color: #993344;
+    color: white;
+    border-color: #993344;
+}
+
+.carousel-btn:disabled {
+    opacity: 0;
+    visibility: hidden;
 }
