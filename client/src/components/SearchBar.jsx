@@ -91,21 +91,13 @@ function SearchBar() {
         setTimeout(() => setShow(false), 200);
     }, []);
     return (
-        <>
-            {location.pathname === "/" && (
-                <div>
-                    <div className="header--image"><img src="https://static.vecteezy.com/system/resources/previews/047/274/684/non_2x/beautiful-indoor-wedding-aisle-with-elegant-floral-decorations-in-soft-pastel-colors-creating-a-romantic-and-enchanting-atmosphere-photo.jpg" alt="wedding" /></div>
-                    <div className="header--text">
-                        <h1>Chạm đến sự tinh tế – Đặt chỗ cho kỳ nghỉ mơ ước ngay hôm nay.</h1>
-                        <p>Khám phá những trải nghiệm tuyệt vời và dịch vụ đẳng cấp hàng đầu từ khắp nơi trên thế giới.</p>
-                    </div>
-                </div>
-            )}
-            <form className={`header--searchbar ${location.pathname !== "/" ? "searchbar--compact" : ""}`} onSubmit={handleSubmit}>
-                <div className="option--field">
+        <form className={`header--searchbar ${location.pathname !== "/" ? "searchbar--compact" : ""}`} onSubmit={handleSubmit}>
+            <div className="d-flex align-items-stretch w-100">
+                {/* Địa điểm */}
+                <div className="option--field position-relative flex-fill">
                     <i className="fa-solid fa-location-dot"></i>
                     <div>
-                        <label htmlFor="location">Địa điểm </label>
+                        <label htmlFor="location">Địa điểm</label>
                         <input
                             type="text"
                             id="location"
@@ -148,11 +140,18 @@ function SearchBar() {
                         )}
                     </div>
                 </div>
-                <div className="option--field">
-                    <i className="fa-solid fa-calendar"></i>
+
+                {/* Số lượng khách */}
+                <div className="option--field flex-fill">
+                    <i className="fa-solid fa-users"></i>
                     <div>
                         <label htmlFor="guests">Số lượng khách</label>
-                        <select type="number" id="guests" name="guests" value={formData.guests} onChange={handleInputChange}>
+                        <select
+                            id="guests"
+                            name="guests"
+                            value={formData.guests}
+                            onChange={handleInputChange}
+                        >
                             <option value="">Chọn số lượng</option>
                             <option value="50-100">50 - 100</option>
                             <option value="100-200">100 - 200</option>
@@ -161,46 +160,73 @@ function SearchBar() {
                         </select>
                     </div>
                 </div>
-                <div className="option--field">
+
+                {/* Ngày sự kiện */}
+                <div className="option--field flex-fill">
                     <i className="fa-solid fa-calendar"></i>
                     <div>
-                        <label htmlFor="events">Ngày sự kiện event</label>
-                        <input type="date" id="events" name="events" placeholder="Chọn ngày" value={formData.events} onChange={handleInputChange} />
+                        <label htmlFor="events">Ngày sự kiện</label>
+                        <input
+                            type="date"
+                            id="events"
+                            name="events"
+                            placeholder="Chọn ngày"
+                            value={formData.events}
+                            onChange={handleInputChange}
+                        />
                     </div>
                 </div>
-                <div className="option--field">
+
+                {/* Khung giờ */}
+                <div className="option--field flex-fill">
                     <i className="fa-solid fa-clock"></i>
                     <div>
                         <label htmlFor="time">Khung giờ</label>
-                        <select type="text" id="time" name="time" placeholder="Chọn khung giờ" value={formData.time} onChange={handleInputChange}>
+                        <select
+                            id="time"
+                            name="time"
+                            placeholder="Chọn khung giờ"
+                            value={formData.time}
+                            onChange={handleInputChange}
+                        >
                             <option value="">Chọn khung giờ</option>
                             <option value="trua">Trưa (11h - 13h)</option>
-                            <option value="toi">Tối (xxh - xxh)</option>
+                            <option value="toi">Tối (18h - 22h)</option>
                         </select>
                     </div>
                 </div>
-                <div className="option--field">
+
+                {/* Chi phí */}
+                <div className="option--field flex-fill">
                     <i className="fa-solid fa-dollar-sign"></i>
                     <div>
                         <label htmlFor="costs">Chi phí</label>
-                        <select type="text" id="costs" name="costs" value={formData.costs} onChange={handleInputChange} >
-                            <option value="">Chọn số lượng</option>
-                            <option value="100-200">100 - 200 người</option>
-                            <option value="200-300">200 - 300 người</option>
-                            <option value="300-400">300 - 400 người</option>
-                            <option value="400-500">400 - 500 người</option>
-                            <option value="500+">Trên 500 người</option>
+                        <select
+                            id="costs"
+                            name="costs"
+                            value={formData.costs}
+                            onChange={handleInputChange}
+                        >
+                            <option value="">Chọn mức giá</option>
+                            <option value="10M">Dưới 10M</option>
+                            <option value="20M">10M - 20M</option>
+                            <option value="30M">20M - 30M</option>
+                            <option value="50M">30M - 50M</option>
+                            <option value="50M+">Trên 50M</option>
                         </select>
                     </div>
                 </div>
-                <div className="option--field">
-                    <Link to="/restaurant/detail" state={{ location: formData.location }}>
-                        <button type="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+
+                {/* Nút tìm kiếm */}
+                <div className="option--field d-flex align-items-center justify-content-center" style={{ flex: '0 0 120px' }}>
+                    <Link to="/restaurant/detail" state={{ location: formData.location }} className="w-100">
+                        <button type="submit" className="w-100 d-flex align-items-center justify-content-center py-1">
+                            <i className="fa-solid fa-magnifying-glass"></i>
+                        </button>
                     </Link>
                 </div>
-            </form >
-        </>
-
+            </div>
+        </form>
     );
 }
 export default SearchBar;

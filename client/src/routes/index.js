@@ -25,6 +25,8 @@ import DefaultLayout from "../pages/admin/layout/DefaultLayout";
 import Dashboard from "../pages/admin/dashboard/Dashboard";
 import SearchResultList from "../pages/customer/SearchResultList";
 // import BookingForm from "../pages/auth/BookingForm";
+import NotificationsPage from "../pages/admin/notifications/NotificationsPage"
+
 
 import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 import BookingListPage from "../pages/customer/BookingListPage";
@@ -33,6 +35,7 @@ import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
 import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
+import PaymentDetailPage from "../pages/admin/operations/payments/PaymentDetailPage";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -60,9 +63,11 @@ function AppRoutes() {
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
 
-        <Route path="/admin" element={<DefaultLayout />}>
+        <Route path="/admin/*" element={<DefaultLayout />}>
           <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
           <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="payments/:id" element = {<PaymentDetailPage/>}/>
         </Route>
         <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />

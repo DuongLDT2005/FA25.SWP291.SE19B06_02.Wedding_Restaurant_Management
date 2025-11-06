@@ -8,6 +8,7 @@ import '../../styles/BookingDetailsStyles.css';
 const BookingDetailsPage = () => {
     const { bookingId } = useParams();
     const location = useLocation();
+    // search params: need setter to enforce payment=0 when pending
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('overview');
     const [booking, setBooking] = useState(null);
@@ -389,7 +390,7 @@ const BookingDetailsPage = () => {
                             <div className="row">
                                 {/* Booking Information */}
                                 <div className="col-lg-8">
-                                    <div className="card booking-info-card">
+                                    <div className="card booking-info-card custom-contract-card">
                                         <div className="card-header d-flex justify-content-between align-items-center">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-calendar-alt"></i> Thông tin đặt tiệc
@@ -483,7 +484,7 @@ const BookingDetailsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="card booking-details-card">
+                                    <div className="card booking-details-card custom-contract-card">
                                         <div className="card-header">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-info-circle"></i> Chi tiết sự kiện
@@ -592,7 +593,7 @@ const BookingDetailsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="card menu-services-card">
+                                    <div className="card menu-services-card custom-contract-card">
                                         <div className="card-header">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-utensils"></i> Menu & Dịch vụ
@@ -681,7 +682,7 @@ const BookingDetailsPage = () => {
 
                                 {/* Payment Summary */}
                                 <div className="col-lg-4">
-                                    <div className="card payment-summary-card">
+                                    <div className="card payment-summary-card custom-contract-card">
                                         <div className="card-header">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-receipt"></i> Tóm tắt thanh toán
@@ -731,7 +732,7 @@ const BookingDetailsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="card payment-history-card">
+                                    <div className="card payment-history-card custom-contract-card">
                                         <div className="card-header">
                                             <h5 className="card-title mb-0">
                                                 <i className="fas fa-history"></i> Lịch sử thanh toán
@@ -810,7 +811,7 @@ const BookingDetailsPage = () => {
 
                     {activeTab === 'payments' && (
                         <div className="tab-pane fade show active">
-                            <div className="card">
+                            <div className="card custom-contract-card">
                                 <div className="card-header">
                                     <h5 className="card-title mb-0">
                                         <i className="fas fa-credit-card"></i> Lịch sử thanh toán
@@ -866,6 +867,7 @@ const BookingDetailsPage = () => {
                     )}
                 </div>
             </div>
+
             {/* Report Issue Modal */}
             {showReportModal && (
                 <ReportIssueModal

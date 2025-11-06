@@ -6,31 +6,96 @@ import ScrollToTopButton from "../../components/ScrollToTopButton";
 import "../../styles/ListingRestaurant.css";
 import { Link } from 'react-router-dom';
 import RatingStars from "../../components/RatingStars";
+import CapacityRange from "../../components/CapacityRange";
 import { restaurantDetail } from "./share/RestaurantValue";
 function ListingRestaurant() {
     const { state } = useLocation();
-    const [priceFilter, setPriceFilter] = useState("");
-    const [starFilter, setStarFilter] = useState("");
+    const [priceFilters, setPriceFilters] = useState([]);
+    const [starFilters, setStarFilters] = useState([]);
+    const [capacityFilters, setCapacityFilters] = useState([]);
 
+    // Helper functions for checkbox handling
+    const handlePriceFilterChange = (filter) => {
+        setPriceFilters(prev =>
+            prev.includes(filter)
+                ? prev.filter(f => f !== filter)
+                : [...prev, filter]
+        );
+    };
+
+    const handleStarFilterChange = (filter) => {
+        setStarFilters(prev =>
+            prev.includes(filter)
+                ? prev.filter(f => f !== filter)
+                : [...prev, filter]
+        );
+    };
+
+    const handleCapacityFilterChange = (filter) => {
+        setCapacityFilters(prev =>
+            prev.includes(filter)
+                ? prev.filter(f => f !== filter)
+                : [...prev, filter]
+        );
+    };
 
     const filteredRestaurants = restaurants.filter((r) => {
         let matchPrice = true;
         let matchStar = true;
+        let matchCapacity = true;
         let matchLocation = true;
-        if (priceFilter) {
-            matchPrice = r.minPrice >= Number(priceFilter);
+
+        // Filter by price
+        // if (priceFilters.length > 0) {
+        //     matchPrice = priceFilters.some(filter => {
+        //         if (filter === "10M") return r.minPrice >= 10000000;
+        //         if (filter === "20M") return r.minPrice >= 20000000;
+        //         if (filter === "30M") return r.minPrice >= 30000000;
+        //         return false;
+        //     });
+        // }
+
+        // Filter by rating
+        if (starFilters.length > 0) {
+            matchStar = starFilters.some(filter => {
+                if (filter === "2.5") return r.rating <= 3.0;
+                if (filter === "3.0") return r.rating >= 3.0;
+                if (filter === "4.0") return r.rating >= 4.0;
+                if (filter === "5.0") return r.rating >= 5.0;
+                return false;
+            });
         }
-        if (starFilter) {
-            if (starFilter === "2.5") {
-                matchStar = r.rating <= 3.0;
-            } else {
-                matchStar = r.rating >= Number(starFilter);
-            }
+
+        // Filter by rating
+        if (starFilters.length > 0) {
+            matchStar = starFilters.some(filter => {
+                if (filter === "2.5") return r.rating <= 3.0;
+                if (filter === "3.0") return r.rating >= 3.0;
+                if (filter === "4.0") return r.rating >= 4.0;
+                if (filter === "5.0") return r.rating >= 5.0;
+                return false;
+            });
         }
+
+        // Filter by capacity
+        if (capacityFilters.length > 0) {
+            const minCapacity = Math.min(...r.halls.map(h => h.capacity));
+            const maxCapacity = Math.max(...r.halls.map(h => h.capacity));
+            matchCapacity = capacityFilters.some(filter => {
+                if (filter === "200") return maxCapacity >= 200;
+                if (filter === "500") return maxCapacity >= 500;
+                if (filter === "800") return maxCapacity >= 800;
+                if (filter === "1000") return maxCapacity >= 1000;
+                return false;
+            });
+        }
+
+        // Filter by location
         if (state?.location) {
             matchLocation = r.address.fullAddress.toLowerCase().includes(state.location.toLowerCase());
         }
-        return matchPrice && matchStar && matchLocation;
+
+        return matchPrice && matchStar && matchCapacity && matchLocation;
     })
 
     return (
@@ -47,27 +112,113 @@ function ListingRestaurant() {
                     {/* Sidebar bên trái */}
                     <aside className="listing-sidebar">
                         <h3>Bộ lọc</h3>
-                        <div className="filter-group">
+
+                        {/* <div className="filter-group">
                             <label>Mức giá:</label>
-                            <select
-                                value={priceFilter}
-                                onChange={(e) => setPriceFilter(e.target.value)}
-                            >
-                                <option value="">Tất cả</option>
-                                <option value="10000000">10.000.000+</option>
-                                <option value="20000000">20.000.000+</option>
-                            </select>
+                            <div className="checkbox-group">
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={priceFilters.includes("10M")}
+                                        onChange={() => handlePriceFilterChange("10M")}
+                                    />
+                                    <span>10.000.000+ VNĐ</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={priceFilters.includes("20M")}
+                                        onChange={() => handlePriceFilterChange("20M")}
+                                    />
+                                    <span>20.000.000+ VNĐ</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={priceFilters.includes("30M")}
+                                        onChange={() => handlePriceFilterChange("30M")}
+                                    />
+                                    <span>30.000.000+ VNĐ</span>
+                                </label>
+                            </div>
+                        </div> */}
+
+                        <div className="filter-group">
                             <label>Đánh giá:</label>
-                            <select
-                                value={starFilter}
-                                onChange={(e) => setStarFilter(e.target.value)}
-                            >
-                                <option value="">Tất cả</option>
-                                <option value="2.5">Dưới 3.0 </option>
-                                <option value="3.0">3.0+</option>
-                                <option value="4.0">4.0+</option>
-                                <option value="5.0">5.0</option>
-                            </select>
+                            <div className="checkbox-group">
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={starFilters.includes("2.5")}
+                                        onChange={() => handleStarFilterChange("2.5")}
+                                    />
+                                    <span>Dưới 3.0</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={starFilters.includes("3.0")}
+                                        onChange={() => handleStarFilterChange("3.0")}
+                                    />
+                                    <span>3.0+</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={starFilters.includes("4.0")}
+                                        onChange={() => handleStarFilterChange("4.0")}
+                                    />
+                                    <span>4.0+</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={starFilters.includes("5.0")}
+                                        onChange={() => handleStarFilterChange("5.0")}
+                                    />
+                                    <span>5.0</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <hr className="filter-divider" />
+
+                        <div className="filter-group">
+                            <label>Sức chứa:</label>
+                            <div className="checkbox-group">
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={capacityFilters.includes("200")}
+                                        onChange={() => handleCapacityFilterChange("200")}
+                                    />
+                                    <span>200+ khách</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={capacityFilters.includes("500")}
+                                        onChange={() => handleCapacityFilterChange("500")}
+                                    />
+                                    <span>500+ khách</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={capacityFilters.includes("800")}
+                                        onChange={() => handleCapacityFilterChange("800")}
+                                    />
+                                    <span>800+ khách</span>
+                                </label>
+                                <label className="checkbox-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={capacityFilters.includes("1000")}
+                                        onChange={() => handleCapacityFilterChange("1000")}
+                                    />
+                                    <span>1000+ khách</span>
+                                </label>
+                            </div>
                         </div>
                     </aside>
 
@@ -87,8 +238,12 @@ function ListingRestaurant() {
                                                 <div className="restaurant-info">
                                                     <h4>{res.name}</h4>
                                                     <RatingStars rating={avgRating}></RatingStars>
-                                                    <p>Địa chỉ: {res.address.fullAddress}</p>
-                                                    
+                                                    <p><strong>Số sảnh:</strong> {res.hallCount} sảnh</p>
+                                                    <div className="capacity-info">
+                                                        <p><strong>Sức chứa:</strong> <CapacityRange halls={res.halls} /></p>
+                                                    </div>
+                                                    <p><strong>Địa chỉ:</strong> {res.address.fullAddress}</p>
+
                                                     <button className="btn-detail"><Link to="/restaurant/details">Xem chi tiết</Link></button>
                                                 </div>
 
@@ -120,7 +275,10 @@ export const restaurants = [
         minPrice: 15000000,
         images: restaurantDetail.images,
         amenities: restaurantDetail.amenities,
-        halls: restaurantDetail.halls,
+        halls: [
+            { id: 1, name: "Sảnh Vàng", capacity: 300 },
+            { id: 2, name: "Sảnh Bạc", capacity: 500 }
+        ],
         menus: [
             {
                 id: 1,
@@ -174,6 +332,11 @@ export const restaurants = [
         address: { fullAddress: "45 Nguyễn Tri Phương, Hải Châu" },
         hallCount: 3,
         minPrice: 20000000,
+        halls: [
+            { id: 1, name: "Sảnh Hội Nghị", capacity: 200 },
+            { id: 2, name: "Sảnh Tiệc Cưới", capacity: 500 },
+            { id: 3, name: "Sảnh VIP", capacity: 800 }
+        ],
         rating: 3.5,
         menus: [
             {
@@ -203,6 +366,9 @@ export const restaurants = [
         address: { fullAddress: "88 Nguyễn Văn Cừ, Liên Chiểu" },
         hallCount: 1,
         minPrice: 6000000,
+        halls: [
+            { id: 1, name: "Sảnh Chính", capacity: 1000 }
+        ],
         rating: 4.0,
         menus: [
             {
@@ -241,6 +407,9 @@ export const restaurants = [
         address: { fullAddress: "1-2-3 2 Tháng 9, Hải Châu" },
         hallCount: 1,
         minPrice: 25000000,
+        halls: [
+            { id: 1, name: "Sảnh White Swan", capacity: 300 }
+        ],
         rating: 5.0,
         menus: [
             {
@@ -281,6 +450,9 @@ export const restaurants = [
         address: { fullAddress: "122b Lý Thái Tông, Liên Chiểu" },
         hallCount: 1,
         minPrice: 5000000,
+        halls: [
+            { id: 1, name: "Sảnh Minh Châu", capacity: 400 }
+        ],
         rating: 4.5,
         menus: [
             {
