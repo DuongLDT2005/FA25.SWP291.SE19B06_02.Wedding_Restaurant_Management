@@ -55,8 +55,8 @@ export const resetPassword = async ({ token, newPassword }) => {
 };
 
 
-export const signUpOwner = async ({ name, email, password, phone, licenseUrl }) => {
-  const res = await fetch(`${API_URL}/signup/owner`, {
+export const signUpPartner = async ({ name, email, password, phone, licenseUrl }) => {
+  const res = await fetch(`${API_URL}/signup/partner`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password, phone, licenseUrl }),
@@ -64,7 +64,7 @@ export const signUpOwner = async ({ name, email, password, phone, licenseUrl }) 
   });
 
   const result = await res.json();
-  if (!res.ok) throw new Error(result?.message || "Đăng ký Owner thất bại");
+  if (!res.ok) throw new Error(result?.message || "Đăng ký Partner thất bại");
   return result;
 };
 
@@ -82,9 +82,9 @@ export const signUpCustomer = async ({ fullname, weddingRole, partner, phone, em
   return result;
 };
 
-// Function saveOwner to save owner data to backend
-export async function saveOwner({ name, phoneNumber, email, password, licenseUrl }) {
-  const apiUrl = `${API_URL}/signup/owner`;
+// Function savePartner to save partner data to backend
+export async function savePartner({ name, phoneNumber, email, password, licenseUrl }) {
+  const apiUrl = `${API_URL}/signup/partner`;
 
   const response = await fetch(apiUrl, {
     method: "POST",

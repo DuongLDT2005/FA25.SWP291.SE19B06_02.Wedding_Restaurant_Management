@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchBar from "../../components/SearchBar";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
@@ -101,7 +100,7 @@ function ListingRestaurant() {
 
     return (
         <>
-            <Header />
+            {/* <Header /> */}
 
             <div className="listing-container">
                 {/* Thanh search trên đầu */}
