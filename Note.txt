@@ -1,28 +1,31 @@
-Sửa lại phần address sẽ thành 1 object ( Tức là sẽ có thể nhập vào theo - số nhà, đường, phường),
-khi show ra thì in ra adress với các thuộc tính đó.
-
-
 
 Format tiền lại ở dashboard
 
-Tạo thêm 1 trang thông báo, chèn trước cái biểu đồ ( Cứ có thông báo sẽ gửi về đó trước )
+Dashboard, trong stats hiển thị thêm ai đang onl -> Done
 
-Các management phải có thanh search Bar, phải có cột Created At
+Dashboard cho cái đường dày hơn -> Done
 
-Filter lọc ra thằng nào cus thằng nào part
+Tạo thêm 1 trang thông báo, chèn trước cái biểu đồ ( Cứ có thông báo sẽ gửi về đó trước ) -> Done
 
-UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User,
+Các management phải có thanh search Bar, phải có cột Created At -> Done
 
-License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng)
+Filter lọc ra thằng nào cus thằng nào part -> Done
 
-License tách ra thành 2 tab, 1 phần approve partner, 1 phần approve Commission 
+UserList - Thông tin chung, 1 cột set active/inactive (Set phải có alert), Bấm vào xem chi tiết User, -> Done
 
-Restaurant Thiếu sảnh, menu, dish,v.v  ( Details phải rõ hơn )
+Partner phải có thông tin tài khoản ngân hàng  -> Done
 
-Dish sẽ có category 
+License phải có xem chi tiết ( Verify xong phải có 1 màn hình để đàm phán tỉ lệ hoa hồng) -> Done
 
-Thiếu create ở Event Type với Amanities
+License tách ra thành 2 tab, 1 phần approve partner, 1 phần approve Commission -> Done
 
+Restaurant Thiếu sảnh, menu, dish,v.v  ( Details phải rõ hơn ) -> Done
+
+Dish sẽ có category -> Done
+
+Thiếu create ở Event Type với Amanities -> Done
+
+[
 Cải thiện booking, Trong booking Details phải thấy được payment.
 
 Payment List bỏ action
@@ -34,16 +37,37 @@ Payment đừng để tạo payout, nào đến payout thì sẽ hiện bên pay
 Vậy là 2 bảng, 1 cọc 1 remaining
 
 Payment phải có status ( release - Đã payout hay chưa)
+] -> Tạm thời
 
-Review không có status, Report phải xem chi tiết
+Review không có status, Report phải xem chi tiết -> Done
 
-Report có 2 loại, 1 loại report nhà hàng, 1 loại report reviews
+Report có 2 loại, 1 loại report nhà hàng, 1 loại report reviews -> Done
 
-Reviews, reports không có xoá, chỉ có ẩn (xoá mềm), 
+Reviews, reports không có xoá, chỉ có ẩn (xoá mềm) -> Done
 
-Analytics có xuất file 
+Analytics có xuất file -> Done
 
 Booking Detail phải có hợp đồng ( Tuỳ status )
 
 Check lại database ( Bảng System setting ở dưới cùng có dữ liệu mẫu )
 
+
+
+export function formatCompactCurrency(value) {
+  const formatValue = (num, divisor, suffix) => {
+    const result = num / divisor
+    // Nếu là số nguyên (vd: 3.00) → không hiển thị thập phân
+    return Number.isInteger(result)
+      ? ${result}${suffix} ₫
+      : ${result.toFixed(2).replace(/\.00$/, '')}${suffix} ₫
+  }
+
+  if (value >= 1_000_000_000) return formatValue(value, 1_000_000_000, "B")
+  if (value >= 1_000_000) return formatValue(value, 1_000_000, "M")
+  if (value >= 1_000) return formatValue(value, 1_000, "K")
+  return ${value} ₫
+} 
+
+=> Cho vào folder utils -> format.js
+
+-> Done
