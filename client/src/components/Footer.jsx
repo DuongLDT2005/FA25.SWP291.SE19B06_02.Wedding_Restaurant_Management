@@ -15,7 +15,7 @@ export default function Footer() {
 
   return (
     <footer className="bg-footer text-white py-5">
-      <Container className="px-5">
+      <Container fluid style={{ padding: "0 50px", maxWidth: "1200px", margin: "0 auto" }}>
         <Row className="g-5 align-items-center mb-5">
           <Col lg={4} md={6} sm={12} className="d-flex flex-column justify-content-center">
             <h2

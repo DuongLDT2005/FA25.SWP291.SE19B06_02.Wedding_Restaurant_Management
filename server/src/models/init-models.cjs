@@ -159,8 +159,8 @@ function initModels(sequelize) {
   service.hasMany(bookingservice, { as: "bookingservices", foreignKey: "serviceID"});
   promotionservice.belongsTo(service, { as: "service", foreignKey: "serviceID"});
   service.hasMany(promotionservice, { as: "promotionservices", foreignKey: "serviceID"});
-  customer.belongsTo(user, { as: "customer", foreignKey: "customerID"});
-  user.hasOne(customer, { as: "customer", foreignKey: "customerID"});
+  customer.belongsTo(user, {foreignKey: "customerID",targetKey: "userID",as: "user"});
+  user.hasOne(customer, {foreignKey: "customerID",sourceKey: "userID",as: "customer"});  
   payouts.belongsTo(user, { as: "releasedBy_user", foreignKey: "releasedBy"});
   user.hasMany(payouts, { as: "payouts", foreignKey: "releasedBy"});
   report.belongsTo(user, { as: "user", foreignKey: "userID"});

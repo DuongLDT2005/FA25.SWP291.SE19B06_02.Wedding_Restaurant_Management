@@ -62,8 +62,8 @@ function SignUpForOwner() {
   };
 
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
+    const selectedFile = event.target.files[0]
+    setFile(selectedFile)
     if (selectedFile) {
       setErrors((prev) => {
         const next = { ...prev };
