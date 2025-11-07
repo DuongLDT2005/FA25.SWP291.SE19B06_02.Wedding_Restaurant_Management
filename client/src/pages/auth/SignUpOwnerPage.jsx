@@ -1,100 +1,122 @@
-import { uploadImageToCloudinary } from "../../services/uploadServices"
-import { useState } from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
-import { signUpOwner } from "../../services/authService"
-import { Container, Form } from "react-bootstrap"
-import AuthLayout from "../../layouts/AuthLayout"
+import { Link } from "react-router-dom";
+import { uploadImageToCloudinary } from "../../services/uploadServices";
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
+import { Container, Form } from "react-bootstrap";
+import AuthLayout from "../../layouts/MainLayout";
 
 function SignUpForOwner() {
-  const [file, setFile] = useState(null)
-  const [errors, setErrors] = useState({})
-  const [showPassword, setShowPassword] = useState(false)
-  const [passwordError] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+  const navigate = useNavigate();
+  const { signUpOwner } = useAuth();
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    licenseUrl: "",
+  });
+  const [file, setFile] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const validateForm = (name, phoneNumber, email, password, confirmPassword, file) => {
-    const newErrors = {}
+  // Validate form
+  const validateForm = () => {
+    const e = {};
 
-    if (!name) {
-      newErrors.name = "Vui lòng nhập tên."
-    } else if (name.length < 6) {
-      newErrors.name = "Tên phải ít nhất 6 ký tự."
+    if (!form.name.trim()) {
+      e.name = "Tên không được để trống.";
+    } else if (!form.name.length < 6) {
+      e.name = "Tên phải ít nhất 6 ký tự.";
     }
 
-    const phoneRegex = /^0\d{9}$/
-    if (!phoneRegex.test(phoneNumber)) {
-      newErrors.phoneNumber = "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số."
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(form.phoneNumber)) {
+      e.phoneNumber = "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số.";
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      newErrors.email = "Email không đúng định dạng."
+    const emailRegex = /^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/;
+    if (!emailRegex.test(form.email)) {
+      e.email = "Email không hợp lệ.";
     }
 
-    const passwordRegex = /^[A-Za-z0-9]{6,}$/
-    if (!passwordRegex.test(password)) {
-      newErrors.password = "Mật khẩu phải ít nhất 6 ký tự, chỉ chứa chữ hoặc số."
+    if (!form.password || form.password.length < 6) {
+      e.password = "Mật khẩu phải ít nhất 6 ký tự.";
     }
 
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp."
+    if (form.password !== form.confirmPassword) {
+      e.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
-    if (!file) {
-      newErrors.licenseUrl = "Bạn cần upload giấy phép cá nhân."
+    // require license either via uploaded file or URL
+    if (!file && !form.licenseUrl) {
+      e.licenseUrl = "Bạn cần upload giấy phép kinh doanh.";
     }
 
-    return newErrors
-  }
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0]
     setFile(selectedFile)
     if (selectedFile) {
       setErrors((prev) => {
-        const next = { ...prev }
-        delete next.licenseUrl
-        return next
-      })
-    }
-  }
+        const next = { ...prev };
+        delete next.licenseUrl;
+        return next;
+      });
+    };
+  };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
-
-    const name = event.target.name.value
-    const phoneNumber = event.target.phoneNumber.value
-    const email = event.target.email.value
-
-    const formErrors = validateForm(name, phoneNumber, email, password, confirmPassword, file)
-
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors)
-      return
-    }
-
+  const handleSubmit = async (ev) => {
+    ev.preventDefault();
+    if (!validateForm()) return;
+    setSubmitting(true);
     try {
-      const secureUrl = await uploadImageToCloudinary(file)
-      console.log("Cloudinary URL:", secureUrl)
-      await signUpOwner({
-        name,
-        phoneNumber,
-        email,
-        password,
-        licenseUrl: secureUrl,
-      })
+      let licenseUrl = form.licenseUrl;
 
-      setErrors({})
-      setPassword("")
-      setConfirmPassword("")
-      setFile(null)
+      if (file) {
+        // upload file to cloudinary (or your upload service)
+        const secureUrl = await uploadImageToCloudinary(file);
+        licenseUrl = secureUrl;
+      }
+      await signUpOwner({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        phone: form.phone,
+        licenseUrl,
+      });
+      navigate("/login");
     } catch (err) {
-      console.error(err)
-      setErrors({ form: "Có lỗi xảy ra, vui lòng thử lại." })
+      const message = err?.message || String(err);
+      // set general form error
+      setErrors((prev) => ({ ...prev, form: message }));
+    } finally {
+      setSubmitting(false);
     }
-  }
+
+    // try {
+    //   const secureUrl = await uploadImageToCloudinary(file);
+    //   console.log("Cloudinary URL:", secureUrl);
+    //   await signUpOwner({ name, phoneNumber, email, password, licenseUrl: secureUrl });
+
+    //   // 👉 Không dùng toast hay alert, chỉ reset form
+    //   setErrors({});
+    //   setPassword("");
+    //   setConfirmPassword("");
+    //   setFile(null);
+    // } catch (err) {
+    //   console.error(err);
+    //   // 👉 Có thể gán lỗi chung nếu muốn
+    //   setErrors({ form: "Có lỗi xảy ra, vui lòng thử lại." });
+    // }
+  };
 
   return (
     <AuthLayout>
@@ -261,6 +283,7 @@ function SignUpForOwner() {
                   id="name"
                   name="name"
                   placeholder="Họ và tên"
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={`form-control signup-input ${errors.name ? "is-invalid" : ""}`}
                 />
                 {errors.name && <div className="error-message">{errors.name}</div>}
@@ -273,6 +296,7 @@ function SignUpForOwner() {
                   name="phoneNumber"
                   placeholder="Số điện thoại"
                   maxLength={10}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
                   className={`form-control signup-input ${errors.phoneNumber ? "is-invalid" : ""}`}
                 />
@@ -285,6 +309,7 @@ function SignUpForOwner() {
                   id="email"
                   name="email"
                   placeholder="Email"
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className={`form-control signup-input ${errors.email ? "is-invalid" : ""}`}
                 />
                 {errors.email && <div className="error-message">{errors.email}</div>}
@@ -295,17 +320,16 @@ function SignUpForOwner() {
                   <input
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    value={password}
-                    className={`form-control ${passwordError || errors.password ? "is-invalid" : ""}`}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mật khẩu"
+                    value={form.password}
+                    className={`form-control ${errors.password ? "is-invalid" : ""}`}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mật khẩu"
                   />
                   <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
                     <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                   </span>
                 </div>
-                {(passwordError || errors.password) && (
-                  <div className="error-message">{passwordError || errors.password}</div>
+                {errors.password && (
+                  <div className="error-message">{errors.password}</div>
                 )}
               </Form.Group>
 
@@ -314,9 +338,9 @@ function SignUpForOwner() {
                   <input
                     name="confirmPassword"
                     type={showPassword ? "text" : "password"}
-                    value={confirmPassword}
+                    value={form.confirmPassword}
                     className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
                     placeholder="Xác nhận mật khẩu"
                   />
                   <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>

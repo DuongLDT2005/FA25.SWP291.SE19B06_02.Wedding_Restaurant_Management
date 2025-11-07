@@ -1,22 +1,95 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { Nav } from "react-bootstrap";
-import { Home, FileText, Settings, Menu, CheckSquare, DollarSign, Slack, Bell } from "lucide-react";
+import { Nav, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import {
+  Home,
+  FileText,
+  CalendarCheck,
+  CheckSquare,
+  DollarSign,
+  ArrowDownCircle,
+  Slack,
+  Bell,
+  Menu as MenuIcon,
+} from "lucide-react";
 
 export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <div style={{ width: 250 }} className="bg-white border-end vh-100 position-sticky top-0">
-      <div className="p-3">
+    <div
+      className="sticky-sidebar bg-white border-end vh-100 d-flex flex-column top-0"
+      style={{
+        width: collapsed ? 70 : 220,
+        transition: "width 0.3s",
+        minWidth: collapsed ? 70 : 220,
+        maxWidth: collapsed ? 70 : 220,
+      }}
+    >
+      {/* Header */}
+      <div
+        className="d-flex align-items-center justify-content-between p-3 border-bottom"
+        style={{ height: 60 }}
+      >
+        {!collapsed && (
+          <NavLink to="/partner" className="text-decoration-none">
+            <span className="fw-bold fs-5 text-primary">LifEvent</span>
+          </NavLink>
+        )}
+        <Button
+          variant="light"
+          size="sm"
+          className="border-0"
+          onClick={() => setCollapsed(!collapsed)}
+        >
+          <MenuIcon size={18} />
+        </Button>
+      </div>
+
+      {/* Nav items */}
+      <div className="flex-grow-1 overflow-auto p-2">
         <Nav className="flex-column">
-          <Nav.Link as={NavLink} to="/partner" end><Home size={16} className="me-2" />Bảng điều khiển</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/profile"><Settings size={16} className="me-2" />Hồ sơ</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/restaurants"><Menu size={16} className="me-2" />Nhà hàng</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/bookings"><CheckSquare size={16} className="me-2" />Đặt tiệc</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/payments"><DollarSign size={16} className="me-2" />Thanh toán</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/reviews"><Slack size={16} className="me-2" />Đánh giá</Nav.Link>
-          <Nav.Link as={NavLink} to="/partner/notifications"><Bell size={16} className="me-2" />Thông báo</Nav.Link>
+          <SidebarItem to="/partner" label="Bảng điều khiển" icon={<Home size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/restaurants" label="Nhà hàng" icon={<FileText size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/hall-schedule" label="Lịch sảnh" icon={<CalendarCheck size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/bookings" label="Đặt tiệc" icon={<CheckSquare size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/payments" label="Thanh toán" icon={<DollarSign size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/payouts" label="Giải ngân" icon={<ArrowDownCircle size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/reviews" label="Đánh giá" icon={<Slack size={18} />} collapsed={collapsed} />
+          <SidebarItem to="/partner/notifications" label="Thông báo" icon={<Bell size={18} />} collapsed={collapsed} />
         </Nav>
       </div>
     </div>
+  );
+}
+
+function SidebarItem({ to, label, icon, collapsed }) {
+  return (
+    <OverlayTrigger
+      placement="right"
+      overlay={collapsed ? <Tooltip id={`tooltip-${label}`}>{label}</Tooltip> : <></>}
+    >
+      <Nav.Link
+        as={NavLink}
+        to={to}
+        end
+        className={({ isActive }) =>
+          `d-flex align-items-center rounded-3 mb-3 text-nowrap ${
+            isActive ? "bg-primary text-white" : "text-dark"
+          }`
+        }
+        style={{
+          display: "flex",
+          gap: 15,          // khoảng cách icon ↔ chữ
+          fontSize: 15,
+          minHeight: 48,    // khoảng cách giữa các hàng
+          padding: "10px 20px", // bỏ padding mặc định, tự set
+          transition: "all 0.2s ease",
+        }}
+      >
+        {icon}
+        {!collapsed && <span>{label}</span>}
+      </Nav.Link>
+    </OverlayTrigger>
   );
 }

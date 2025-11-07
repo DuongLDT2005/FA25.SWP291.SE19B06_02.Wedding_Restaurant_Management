@@ -1,19 +1,14 @@
-import express from "express";
 import RestaurantController from "../controllers/RestaurantController.js";
+import { Router } from "express";
 
-const router = express.Router();
+const router = Router();
 
-//Restaurants
-router.get("/partner/:partnerID",RestaurantController.getByPartner);
-router.get("/search",RestaurantController.search);
-router.get("/", RestaurantController.getAll);
-router.get("/:id", RestaurantController.getOne); //GetByID
-router.post("/",RestaurantController.create);
-router.put("/:id",RestaurantController.update);
-router.delete("/:id",RestaurantController.changeRestaurantStatus);
-
-//Restaurant Images
-router.post("/:id/images", RestaurantController.addImage);
-router.delete("/images/:imageID", RestaurantController.deleteImage);
+router.get("/", RestaurantController.getAll);    
+router.get("/available", RestaurantController.getAvailable);
+router.get("/:id", RestaurantController.getOne);
+router.get("/partner/:partnerID", RestaurantController.getByPartner);
+router.post("/", RestaurantController.create);
+router.put("/:id", RestaurantController.update);
+router.delete("/:id", RestaurantController.changeRestaurantStatus);
 
 export default router;

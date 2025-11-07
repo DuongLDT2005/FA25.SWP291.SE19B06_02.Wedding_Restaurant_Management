@@ -1,22 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form } from "react-bootstrap";
 import { Users } from "lucide-react";
-// import { useSearchForm } from "../../../hooks/useSearchForm";
+import { useSearchForm } from "../../hooks/useSearchForm";
 
 export default function TablesSelect() {
-//   const { state, setField } = useSearchForm();
-
-  // Tạo state tạm để component vẫn hoạt động bình thường
-  const [state, setState] = useState({ tables: 1 });
-
-  const setField = (field, value) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
+  const { state, setField } = useSearchForm();
 
   return (
     <div>
       <Form.Label>
-        <Users className="me-1" style={{ color: "#E11D48" }} size={18} />
+        <Users className="me-1" style={{ color: '#E11D48' }} size={18} />
         Số bàn
       </Form.Label>
       <Form.Control

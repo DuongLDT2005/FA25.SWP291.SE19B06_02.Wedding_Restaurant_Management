@@ -1,19 +1,12 @@
 import React, { useState } from "react";
 import { Form, ListGroup } from "react-bootstrap";
 import { MapPin } from "lucide-react";
-// import { useSearchForm } from "../../../hooks/useSearchForm"; 
+import { useSearchForm } from "../../hooks/useSearchForm";
 
 const LOCATIONS = ["Liên Chiểu", "Ngũ Hành Sơn", "Sơn Trà", "Cẩm Lệ", "Thanh Khê", "Hải Châu"];
 
 export default function LocationInput() {
-  // const { state, setField } = useSearchForm(); 
-  // Thêm state tạm để component vẫn hoạt động
-  const [state, setState] = useState({ location: "" });
-
-  const setField = (field, value) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
-
+  const { state, setField } = useSearchForm();
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
@@ -44,15 +37,13 @@ export default function LocationInput() {
         setShowSuggestions(false);
         setSelectedIndex(-1);
         break;
-      default:
-        break;
     }
   };
 
   return (
     <div className="position-relative">
       <Form.Label>
-        <MapPin className="me-1" style={{ color: "#E11D48" }} size={18} />
+        <MapPin className="me-1" style={{ color: '#E11D48' }} size={18} />
         Địa điểm
       </Form.Label>
       <Form.Control
@@ -65,19 +56,16 @@ export default function LocationInput() {
           setShowSuggestions(e.target.value.trim().length > 0);
         }}
         onKeyDown={handleKeyDown}
-        onFocus={() => {
+        onFocus={(e) => {
           if (state.location) setShowSuggestions(true);
         }}
-        onBlur={() => {
+        onBlur={(e) => {
           setTimeout(() => setShowSuggestions(false), 200);
         }}
         className="custom-form-input"
       />
       {showSuggestions && filteredLocations.length > 0 && (
-        <ListGroup
-          className="position-absolute w-100 z-50"
-          style={{ maxHeight: 180, overflowY: "auto" }}
-        >
+        <ListGroup className="position-absolute w-100 z-50" style={{ maxHeight: 180, overflowY: "auto" }}>
           {filteredLocations.map((loc, i) => (
             <ListGroup.Item
               key={i}

@@ -1,4 +1,3 @@
-// File: ReviewList.jsx
 import React, { useState } from "react";
 import Pagination from "../../../components/Pagination";
 import RatingStars from "../../../components/RatingStars";
@@ -43,13 +42,13 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
                     fontWeight: "bold",
                   }}
                 >
-                  {review.customer.fullName.charAt(0).toUpperCase()}
+                  {review.customerName.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-grow-1">
                   <h5
-                    className="card-title mb-1"
-                    style={{ color: "#993344", fontSize: "1.1rem" }}
+                    className="card-title mb-1 reviewer-name"
+                    style={{ fontSize: "1.1rem" }}
                   >
                     {review.customerName}
                   </h5>

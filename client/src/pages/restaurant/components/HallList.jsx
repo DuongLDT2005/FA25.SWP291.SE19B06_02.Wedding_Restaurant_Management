@@ -1,17 +1,23 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
 
-export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }) {
+export default function HallList({ restaurant, onSelectHall }) {
   return (
     <div>
       <h4 className="section-title">Danh sách sảnh</h4>
 
       {restaurant.halls.map((hall) => (
-        <div key={hall.id} className="card mb-4 shadow-sm">
+        <div key={hall.id} className="card mb-4"
+          style={{
+            boxShadow: "0 4px 6px rgba(0,0,0,0.25)",
+            border: "none"
+          }}
+        >
           <div className="row g-0 p-3">
             <div className="col-md-3 d-flex align-items-center">
               <img
-                src={hall.images[0]}
+                src={hall.images[0]?.imageURL}
                 alt={hall.name}
                 className="img-fluid rounded w-100"
                 style={{ height: "180px", objectFit: "cover" }}
@@ -21,7 +27,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
               <div className="card-body py-0">
                 <h5
                   className="card-title"
-                  style={{ color: "#993344", fontWeight: "bold", cursor: "pointer" }}
+                  style={{ color: "#934", fontWeight: "bold", cursor: "pointer" }}
                   data-bs-toggle="modal"
                   data-bs-target="#hallModal"
                   onClick={() => onSelectHall(hall)}
@@ -34,15 +40,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
               </div>
 
               <div className="card-footer bg-transparent border-0 text-end">
-                {role === "CUSTOMER" && (
-                  <button className="requestBtn">Gửi yêu cầu đặt chỗ</button>
-                )}
-                {(role === "RESTAURANT_PARTNER" || role === "ADMIN") && (
-                  <div className="d-flex justify-content-end gap-2">
-                    <button className="btn btn-outline-primary">Sửa sảnh</button>
-                    <button className="btn btn-outline-danger">Xóa sảnh</button>
-                  </div>
-                )}
+                <button className="requestBtn">Gửi yêu cầu đặt chỗ</button>
               </div>
             </div>
           </div>
@@ -59,8 +57,8 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
       >
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="hallModalLabel">
+            <div className="modal-header" style={{ color: "#fafef9" }}>
+              <h5 className="modal-title" id="hallModalLabel" style={{ color: "#fafef9" }}>
                 {restaurant.selectedHall?.name}
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -71,7 +69,7 @@ export default function HallList({ restaurant, role = "CUSTOMER", onSelectHall }
                   <div className="col-md-6">
                     <ImageCarousel
                       id={`hallCarousel-${restaurant.selectedHall.id}`}
-                      images={restaurant.selectedHall.images}
+                      images={restaurant.selectedHall.images.map(img => img.imageURL)}
                     />
                   </div>
                   <div className="col-md-6">

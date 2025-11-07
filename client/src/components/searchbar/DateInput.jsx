@@ -1,64 +1,56 @@
 import dayjs from "dayjs";
-import "dayjs/locale/vi";
+import "dayjs/locale/vi"
 import { Form } from "react-bootstrap";
 import { CalendarDays } from "lucide-react";
-// import { useSearchForm } from "../../../hooks/useSearchForm"; // 🔸 Comment lại hook
+import { useSearchForm } from "../../hooks/useSearchForm";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { styled, createTheme, ThemeProvider, alpha } from "@mui/material/styles";
-import TextField from "@mui/material/TextField";
-import { outlinedInputClasses } from "@mui/material/OutlinedInput";
-import React, { useState } from "react";
+import { styled, createTheme, ThemeProvider, alpha } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import { outlinedInputClasses } from '@mui/material/OutlinedInput';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#e11d48",
+      main: '#e11d48',
     },
   },
 });
 
 const StyledDatePickerTextField = styled(TextField)(({ theme }) => ({
-  "& label.Mui-focused": {
+  '& label.Mui-focused': {
     color: theme.palette.primary.main,
   },
-  "& .MuiOutlinedInput-root": {
+  '& .MuiOutlinedInput-root': {
     [`& .${outlinedInputClasses.notchedOutline}`]: {
-      borderColor: "#ced4da",
-      boxShadow: "none",
-      transition: theme.transitions.create(["border-color", "box-shadow"], {
+      borderColor: '#ced4da',
+      boxShadow: 'none',
+      transition: theme.transitions.create(['border-color', 'box-shadow'], {
         duration: 150, // 0.15s
-        easing: "ease-in-out",
+        easing: 'ease-in-out',
       }),
     },
     [`&:hover .${outlinedInputClasses.notchedOutline}`]: {
-      borderColor: "#000000",
+      borderColor: '#000000',
     },
     [`&.Mui-focused .${outlinedInputClasses.notchedOutline}`]: {
       borderColor: theme.palette.primary.main,
       boxShadow: `0 0 0 0.15rem ${alpha(theme.palette.primary.main, 0.2)}`,
-      borderWidth: "1px",
+      borderWidth: '1px',
     },
-    "& .MuiInputBase-input": {
-      cursor: "pointer",
-      padding: "7px 12px",
+    '& .MuiInputBase-input': {
+      cursor: 'pointer',
+      padding: '7px 12px',
     },
   },
 }));
 
 export default function DateInput() {
-  // const { state, setField } = useSearchForm(); // 🔸 Comment lại vì không dùng hook
+  const { state, setField } = useSearchForm();
 
-  // 🔸 Thêm state tạm để component vẫn hoạt động bình thường
-  const [state, setState] = useState({ date: "" });
-
-  const setField = (field, value) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const tomorrow = dayjs().add(1, "day");
-  const oneYearLater = dayjs().add(1, "year");
+  const tomorrow = dayjs().add(1, 'day');
+  const oneYearLater = dayjs().add(1, 'year');
 
   const handleChange = (newValue) => {
     setField("date", newValue ? newValue.format("YYYY-MM-DD") : "");
@@ -68,7 +60,7 @@ export default function DateInput() {
     <ThemeProvider theme={theme}>
       <div>
         <Form.Label>
-          <CalendarDays className="me-1" style={{ color: "#E11D48" }} size={18} />
+          <CalendarDays className="me-1" style={{ color: '#E11D48' }} size={18} />
           Ngày tổ chức
         </Form.Label>
 

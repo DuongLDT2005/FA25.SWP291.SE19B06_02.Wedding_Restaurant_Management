@@ -1,10 +1,10 @@
-import { useState } from "react"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons"
-import { signUpCustomer } from "../../services/authService"
+import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 import { Form, Button } from "react-bootstrap"
-import AuthLayout from "../../layouts/AuthLayout"
-
+import AuthLayout from "../../layouts/MainLayout"
 export default function SignUpCustomer() {
   const [form, setForm] = useState({
     fullname: "",
@@ -17,30 +17,30 @@ export default function SignUpCustomer() {
     confirmPassword: "",
   })
 
-  const [errors, setErrors] = useState({})
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
+  const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { signUpCustomer } = useAuth();
+  const navigate = useNavigate();
+  
   const validate = () => {
-    const newErrors = {}
+    const e = {}
 
-    if (!form.fullname.trim()) newErrors.fullname = "Bạn chưa nhập tên của mình"
-    else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.fullname)) newErrors.fullname = "Tên chỉ được nhập chữ"
-
-    if (!form.role) newErrors.role = "Vui lòng chọn một lựa chọn"
+    if (!form.fullname.trim()) e.fullname = "Vui lòng nhập họ tên."
+    else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.fullname)) e.fullname = "Tên không chứa số hoặc kí tự đặc biệt."
 
     if (form.role === "Cô dâu" || form.role === "Chú rể") {
-      if (!form.partner.trim()) newErrors.partner = "Vui lòng nhập tên người đồng hành"
-      else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.partner)) newErrors.partner = "Tên chỉ được nhập chữ"
+      if (!form.partner.trim()) e.partner = "Vui lòng nhập tên người đồng hành"
+      else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.partner)) e.partner = "Tên chỉ được nhập chữ"
     }
 
-    if (!/^[0-9]{9,11}$/.test(form.phone)) newErrors.phone = "Số điện thoại không hợp lệ"
-    if (!form.email.includes("@")) newErrors.email = "Email không hợp lệ"
-    if (form.password.length < 6) newErrors.password = "Mật khẩu phải ít nhất 6 ký tự"
-    if (form.confirmPassword !== form.password) newErrors.confirmPassword = "Mật khẩu nhập lại không khớp"
+    if (!/^[0-9]{9,11}$/.test(form.phone)) e.phone = "Số điện thoại không hợp lệ"
+     if (!/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(form.email)) e.email = "Email không hợp lệ";
+     if (!form.password || form.password.length < 6) e.password = "Mật khẩu >= 6 ký tự";
+    if (form.confirmPassword !== form.password) e.confirmPassword = "Mật khẩu nhập lại không khớp"
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(e)
+    return Object.keys(e).length === 0
   }
 
   const handleSubmit = async (e) => {
@@ -54,21 +54,12 @@ export default function SignUpCustomer() {
           phone: form.phone,
           email: form.email,
           password: form.password,
-        })
-        alert("Đăng ký thành công!")
-        setForm({
-          fullname: "",
-          role: "",
-          partner: "",
-          phone: "",
-          email: "",
-          address: "",
-          password: "",
-          confirmPassword: "",
-        })
-        setErrors({})
+        });
+        // success -> redirect to login
+        navigate("/login");
       } catch (err) {
-        alert(err.message)
+        // show error (backend message or generic)
+        alert(err?.message || String(err));
       }
     }
   }

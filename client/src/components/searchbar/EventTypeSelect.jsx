@@ -1,24 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form } from "react-bootstrap";
 import { Utensils } from "lucide-react";
-// import { useSearchForm } from "../../../hooks/useSearchForm"; 
+import { useSearchForm } from "../../hooks/useSearchForm";
 
 const EVENT_TYPES = ["Tiệc cưới", "Sinh nhật", "Liên hoan", "Hội thảo", "Tiệc công ty"];
 
 export default function EventTypeSelect() {
-  // const { state, setField } = useSearchForm(); 
-
-  // Tạo state tạm để component vẫn hoạt động độc lập
-  const [state, setState] = useState({ eventType: EVENT_TYPES[0] });
-
-  const setField = (field, value) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
-
+  const { state, setField } = useSearchForm();
   return (
     <div>
       <Form.Label>
-        <Utensils className="me-1" style={{ color: "#E11D48" }} size={18} />
+        <Utensils className="me-1" style={{ color: '#E11D48'}} size={18}/>
         Loại sự kiện
       </Form.Label>
       <Form.Select
@@ -27,9 +19,7 @@ export default function EventTypeSelect() {
         className="custom-form-select"
       >
         {EVENT_TYPES.map((t) => (
-          <option key={t} value={t}>
-            {t}
-          </option>
+          <option key={t} value={t}>{t}</option>
         ))}
       </Form.Select>
     </div>

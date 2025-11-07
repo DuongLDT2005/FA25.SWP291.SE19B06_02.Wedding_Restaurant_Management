@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { Form } from "react-bootstrap";
 import { Clock } from "lucide-react";
-// import { useSearchForm } from "../../../hooks/useSearchForm";
+import { useSearchForm } from "../../hooks/useSearchForm";
 
 const TIME_SLOTS = [
   { label: "Buổi trưa (10:30 - 14:00)", startTime: "10:30", endTime: "14:00" },
@@ -9,26 +9,13 @@ const TIME_SLOTS = [
 ];
 
 export default function TimeSelect() {
-//   const { state, setField } = useSearchForm();
-// Thêm state tạm để form vẫn chạy độc lập
-  const [state, setState] = useState({
-    startTime: TIME_SLOTS[0].startTime,
-    endTime: TIME_SLOTS[0].endTime,
-  });
+  const { state, setField } = useSearchForm();
 
-  const setField = (field, value) => {
-    setState((prev) => ({ ...prev, [field]: value }));
-  };
   const handleChange = (e) => {
-    const selected = TIME_SLOTS.find(
-      (slot) => slot.label === e.target.value
-    );
-    if (selected) {
-      setField("startTime", selected.startTime);
-      setField("endTime", selected.endTime);
-    } else {
-      setField("startTime", "");
-      setField("endTime", "");
+    const slot = TIME_SLOTS.find((s) => s.id === e.target.value);
+    if (slot) {
+      setField("startTime", slot.startTime);
+      setField("endTime", slot.endTime);
     }
   };
 

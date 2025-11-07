@@ -125,35 +125,61 @@ class UserDAO {
     }
 
     static async createOwner(data) {
-        const { email, fullName, phone, password, licenseUrl } = data;
-        // create user with role owner (1)
-        const [result] = await db.query(
-            'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [email, fullName, phone, password, userRole.owner, Buffer.from([userStatus.active])]
-        );
-        const userID = result.insertId;
-        // create restaurant partner
-        await db.query(
-            'INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate) VALUES (?, ?, ?, ?)',
-            [userID, licenseUrl || '', Buffer.from([negoStatus.pending]), null]
-        );
-        return new RestaurantPartner(userID, email, fullName, phone, password, userRole.owner, userStatus.active, new Date(), licenseUrl, negoStatus.pending, null);
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const { email, fullName, phone, password, licenseUrl } = data;
+            // Insert into User table with role owner (1)
+            const [userResult] = await connection.query(
+                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [email, fullName, phone, password, userRole.owner, Buffer.from([userStatus.active])]
+            );
+            const userID = userResult.insertId;
+
+            // Insert into RestaurantPartner table
+            await connection.query(
+                'INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate) VALUES (?, ?, ?, ?)',
+                [userID, licenseUrl || '', Buffer.from([negoStatus.pending]), null]
+            );
+
+            await connection.commit();
+            return new RestaurantPartner(userID, email, fullName, phone, password, userRole.owner, userStatus.active, new Date(), licenseUrl, negoStatus.pending, null);
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async createCustomer(data) {
-        const { email, fullName, phone, password, partnerName, weddingRole } = data;
-        // create user with role customer (0)
-        const [result] = await db.query(
-            'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-            [email, fullName, phone, password, userRole.customer, Buffer.from([userStatus.active])]
-        );
-        const userID = result.insertId;
-        // create customer
-        await db.query(
-            'INSERT INTO Customer (customerID, partnerName, weddingRole) VALUES (?, ?, ?)',
-            [userID, partnerName || '', weddingRole || 0]
-        );
-        return new Customer(userID, email, fullName, phone, password, userRole.customer, userStatus.active, new Date(), partnerName, weddingRole);
+        const connection = await db.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            const { email, fullName, phone, password, partnerName, weddingRole } = data;
+            // Insert into User table
+            const [userResult] = await connection.query(
+                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [email, fullName, phone, password, userRole.customer, Buffer.from([userStatus.active])]
+            );
+            const userID = userResult.insertId;
+
+            // Insert into Customer table
+            await connection.query(
+                'INSERT INTO Customer (customerID, partnerName, weddingRole) VALUES (?, ?, ?)',
+                [userID, partnerName || '', weddingRole || 0]
+            );
+
+            await connection.commit();
+            return new Customer(userID, email, fullName, phone, password, userRole.customer, userStatus.active, new Date(), partnerName, weddingRole);
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async updateStatusUser(id, status) {
@@ -169,11 +195,11 @@ class UserDAO {
         return result.affectedRows > 0;
     }
 
-    static async updateUserInfo(id, user) {
-        const { email, fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate, partnerName, weddingRole } = user;
+    static async updateUserInfo(email, user) {
+        const { fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate, partnerName, weddingRole } = user;
 
         // Fetch the existing user data
-        const [existingUserRows] = await db.query('SELECT * FROM User WHERE userID = ?', [id]);
+        const [existingUserRows] = await db.query('SELECT * FROM User WHERE email = ?', [email]);
         if (existingUserRows.length === 0) {
             throw new Error('User not found');
         }
@@ -190,7 +216,7 @@ class UserDAO {
         // Update User table
         await db.query(
             'UPDATE User SET email = ?, fullName = ?, phone = ?, password = ?, role = ?, status = ? WHERE userID = ?',
-            [updatedEmail, updatedFullName, updatedPhone, updatedPassword, updatedRole, updatedStatus, id]
+            [updatedEmail, updatedFullName, updatedPhone, updatedPassword, updatedRole, updatedStatus, existingUser.userID]
         );
 
         // Update Owner table if the user is an owner
@@ -206,13 +232,13 @@ class UserDAO {
         if (role === userRole.customer) {
             await db.query(
                 'UPDATE Customer SET partnerName = ?, weddingRole = ? WHERE customerID = ?',
-                [partnerName || '', weddingRole || 0, id]
+                [partnerName || '', weddingRole || 0, email]
             );
-            return new Customer(id, email, fullName, phone, password, role, status, partnerName, weddingRole);
+            return new Customer(existingUser.id, email, fullName, phone, password, role, status, partnerName, weddingRole);
         }
 
         // Return updated User object for other roles
-        return new User(id, email, fullName, phone, password, role, status);
+        return new User(existingUser.id, email, fullName, phone, password, role, status);
     }
 
     static async deleteUser(id) {
