@@ -21,7 +21,6 @@ const PartnerLicense = React.lazy(() => import("../pages/admin/license/LicenseCo
 
 // Restaurants
 const RestaurantList = React.lazy(() => import("../pages/admin/restaurants/RestaurantListPage"));
-const RestaurantDetailPage = React.lazy(() => import("../pages/admin/restaurants/RestaurantDetailPage"));
 const EventTypes = React.lazy(() => import("../pages/admin/restaurants/EventTypesPage"));
 const Amenities = React.lazy(() => import("../pages/admin/restaurants/AmenitiesPage"));
 
@@ -40,7 +39,7 @@ const Notifications = React.lazy(() => import("../pages/admin/notifications/Noti
 const Reviews = React.lazy(() => import("../pages/admin/feedback/ReviewsReportsPage"));
 
 //Promotions
-const PromotionsPage = React.lazy(() => import ("../pages/admin/promotions/PromotionsPage"));
+const PromotionsPage = React.lazy(() => import("../pages/admin/promotions/PromotionsPage"));
 
 // Analytics
 const RevenueAnalytics = React.lazy(() => import("../pages/admin/analytics/RevenueStatsPage"));
@@ -56,14 +55,13 @@ const Logs = React.lazy(() => import("../pages/admin/systems/LogsAuditTrailPage"
 const routes = [
   { path: "/", exact: true, name: "Home" },
   { path: "/dashboard", name: "Dashboard", element: Dashboard },
-  
+
   // Management
   { path: "/users", name: "User Management", element: Users },
   { path: "/partner-license", name: "License Verification", element: PartnerLicense },
 
   // Restaurants
   { path: "/restaurants", name: "Restaurant List", element: RestaurantList },
-  { path: "/restaurants/detail/:id", name: "Restaurant Detail", element: RestaurantDetailPage },
   { path: "/event-types", name: "Event Types", element: EventTypes },
   { path: "/amenities", name: "Amenities", element: Amenities },
 
@@ -82,7 +80,7 @@ const routes = [
   { path: "/reviews", name: "Reviews", element: Reviews },
 
   // Promotions
-  {path: "/promotions", name: "Promotions", element : PromotionsPage},
+  { path: "/promotions", name: "Promotions", element: PromotionsPage },
 
   // Analytics
   { path: "/analytics/revenue", name: "Revenue Analytics", element: RevenueAnalytics },

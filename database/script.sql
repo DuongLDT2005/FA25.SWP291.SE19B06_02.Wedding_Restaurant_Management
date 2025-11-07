@@ -46,6 +46,7 @@ CREATE TABLE Restaurant (
     restaurantID INT AUTO_INCREMENT PRIMARY KEY,
     restaurantPartnerID INT NOT NULL,
     name VARCHAR(100) NOT NULL,
+    phone VARCHAR(15) NOT NULL,
     description VARCHAR(255),
     hallCount INT DEFAULT 0,
     addressID INT NOT NULL,
@@ -132,9 +133,11 @@ CREATE TABLE Menu (
 -- Table DishCategory
 CREATE TABLE DishCategory (
     categoryID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
+    restaurantID INT NOT NULL.
+    name VARCHAR(50) NOT NULL,
     requiredQuantity INT DEFAULT 1 CHECK(requiredQuantity > 0),
-    status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
+    status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
+    FOREIGN KEY (restaurantID) REFERENCES Restaurant(restaurantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table Dish
@@ -572,6 +575,16 @@ INSERT INTO Amenity (name) VALUES
 ('Hoa tươi bàn tiệc cơ bản'),
 ('Thực đơn in sẵn trên bàn');
 
+-- Insert EventType
+INSERT INTO EventType (name) VALUES
+('Tiệc cưới'),
+('Tiệc sinh nhật'),
+('Tiệc công ty'),
+('Tiệc tất niên'),
+('Tiệc khai trương'),
+('Lễ kỷ niệm'),
+('Liên hoan'),
+('Sự kiện');
 
 
 

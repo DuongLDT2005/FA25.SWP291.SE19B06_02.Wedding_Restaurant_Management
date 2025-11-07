@@ -1,82 +1,119 @@
-import React from "react";
-import "../styles/FooterStyles.css";
-import { Link } from "react-router-dom";
-import "@fortawesome/fontawesome-free/css/all.min.css";
+import { Container, Row, Col } from "react-bootstrap"
+import { useState } from "react"
+import "../styles/FooterStyles.css"
 
-function Footer() {
-    return (
-        <footer className="footer">
-            <div className="footer-container">
-                {/* Các cột liên kết */}
-                <div className="footer-links">
-                    <div className="footer-column">
-                        <h4>Về Chúng Tôi</h4>
-                        <ul>
-                            <li><Link to="#">Tổng quan công ty</Link></li>
-                            <li><Link to="#">Sứ mệnh & Giá trị</Link></li>
-                            <li><Link to="#">Tuyển dụng</Link></li>
-                            <li><Link to="#">Blog</Link></li>
-                            <li><Link to="#">Thông cáo báo chí</Link></li>
-                        </ul>
-                    </div>
+export default function Footer() {
+  const [brandHover, setBrandHover] = useState(false)
+  const [linkHover, setLinkHover] = useState({})
 
-                    <div className="footer-column">
-                        <h4>Dịch Vụ Khách Hàng</h4>
-                        <ul>
-                            <li><Link to="#">Liên hệ</Link></li>
-                            <li><Link to="#">Câu hỏi thường gặp</Link></li>
-                            <li><Link to="#">Hỗ trợ trực tuyến</Link></li>
-                            <li><Link to="#">Chính sách hủy</Link></li>
-                            <li><Link to="#">Điều khoản đặt chỗ</Link></li>
-                        </ul>
-                    </div>
+  const handleLinkHover = (linkId, isHovered) => {
+    setLinkHover((prev) => ({
+      ...prev,
+      [linkId]: isHovered,
+    }))
+  }
 
-                    <div className="footer-column">
-                        <h4>Khám Phá</h4>
-                        <ul>
-                            <li><Link to="#">Điểm đến</Link></li>
-                            <li><Link to="#">Ưu đãi đặc biệt</Link></li>
-                            <li><Link to="#">Khuyến mãi phút chót</Link></li>
-                            <li><Link to="#">Cẩm nang du lịch</Link></li>
-                            <li><Link to="#">Mẹo & Blog du lịch</Link></li>
-                        </ul>
-                    </div>
+  return (
+    <footer className="bg-footer text-white py-5">
+      <Container className="px-5">
+        <Row className="g-5 align-items-center mb-5">
+          <Col lg={4} md={6} sm={12} className="d-flex flex-column justify-content-center">
+            <h2
+              className="fs-1 fw-bold m-0 ls-1 footer-brand"
+              onMouseEnter={() => setBrandHover(true)}
+              onMouseLeave={() => setBrandHover(false)}
+              style={{ transform: brandHover ? "translateX(5px)" : "translateX(0)" }}
+            >
+              LifEvent
+            </h2>
+          </Col>
 
-                    <div className="footer-column">
-                        <h4>Hỗ Trợ</h4>
-                        <ul>
-                            <li><Link to="#">Chính sách bảo mật</Link></li>
-                            <li><Link to="#">Điều khoản & điều kiện</Link></li>
-                            <li><Link to="#">Trợ năng</Link></li>
-                            <li><Link to="#">Góp ý & phản hồi</Link></li>
-                            <li><Link to="#">Sơ đồ trang</Link></li>
-                        </ul>
-                    </div>
-
-                    <div className="footer-column">
-                        <h4>Thành Viên</h4>
-                        <ul>
-                            <li><Link to="#">Chương trình khách hàng thân thiết</Link></li>
-                            <li><Link to="#">Ưu đãi độc quyền</Link></li>
-                            <li><Link to="#">Quyền lợi & phần thưởng</Link></li>
-                        </ul>
-                    </div>
-                </div>
+          <Col lg={4} md={6} sm={12} className="d-flex flex-column justify-content-center ps-3">
+            <h4 className="fs-6 fw-bold mb-3 text-uppercase ls-2">LIÊN HỆ</h4>
+            <div className="d-flex flex-column gap-2">
+              <a
+                href="#"
+                className="text-white text-decoration-none footer-link"
+                onMouseEnter={() => handleLinkHover("email", true)}
+                onMouseLeave={() => handleLinkHover("email", false)}
+                style={{
+                  opacity: linkHover["email"] ? 0.7 : 1,
+                  textDecoration: linkHover["email"] ? "underline" : "none",
+                }}
+              >
+                insert email here
+              </a>
+              <div className="footer-divider"></div>
+              <p className="m-0 small">Đại học FPT Đà Nẵng</p>
             </div>
+          </Col>
 
-            <hr />
+          <Col lg={4} md={6} sm={12} className="d-flex flex-column justify-content-center ps-3">
+            <ul className="list-unstyled d-flex flex-column gap-2 fw-bold">
+              <li>
+                <a
+                  href="#"
+                  className="text-white text-decoration-none footer-link"
+                  onMouseEnter={() => handleLinkHover("about", true)}
+                  onMouseLeave={() => handleLinkHover("about", false)}
+                  style={{
+                    opacity: linkHover["about"] ? 0.7 : 1,
+                    textDecoration: linkHover["about"] ? "underline" : "none",
+                  }}
+                >
+                  VỀ CHÚNG TÔI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-white text-decoration-none footer-link"
+                  onMouseEnter={() => handleLinkHover("programs", true)}
+                  onMouseLeave={() => handleLinkHover("programs", false)}
+                  style={{
+                    opacity: linkHover["programs"] ? 0.7 : 1,
+                    textDecoration: linkHover["programs"] ? "underline" : "none",
+                  }}
+                >
+                  CHƯƠNG TRÌNH HIỆN TẠI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-white text-decoration-none footer-link"
+                  onMouseEnter={() => handleLinkHover("house", true)}
+                  onMouseLeave={() => handleLinkHover("house", false)}
+                  style={{
+                    opacity: linkHover["house"] ? 0.7 : 1,
+                    textDecoration: linkHover["house"] ? "underline" : "none",
+                  }}
+                >
+                  THEO DÕI
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#"
+                  className="text-white text-decoration-none footer-link"
+                  onMouseEnter={() => handleLinkHover("looking", true)}
+                  onMouseLeave={() => handleLinkHover("looking", false)}
+                  style={{
+                    opacity: linkHover["looking"] ? 0.7 : 1,
+                    textDecoration: linkHover["looking"] ? "underline" : "none",
+                  }}
+                >
+                  LOOKING BACK
+                </a>
+              </li>
+            </ul>
+          </Col>
+        </Row>
+      </Container>
 
-            {/* Phần cuối */}
-            <div className="footer-bottom">
-                <p>© 2024 Ascenda. Bản quyền đã được bảo lưu.</p>
-                <div className="footer-socials">
-                    <Link to="#" className="twitter"><i className="fa-brands fa-x-twitter"></i></Link>
-                    <Link to="#" className="linkedin"><i className="fa-brands fa-linkedin-in"></i></Link>
-                    <Link to="#" className="facebook"><i className="fa-brands fa-facebook-f"></i></Link>
-                </div>
-            </div>
-        </footer>
-    );
+      <div className="border-top footer-bottom text-center py-4">
+        <p className="m-0 small">© 2025 LifEvent. Tất cả các quyền được bảo lưu.</p>
+      </div>
+    </footer>
+  )
 }
-
-export default Footer;

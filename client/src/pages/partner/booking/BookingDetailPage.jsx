@@ -8,7 +8,7 @@ import PartnerLayout from "../../../layouts/PartnerLayout";
 // Mock booking (thay bằng fetch nếu có API)
 const mockBookingDetail = {
   bookingID: 101,
-  status: 4, // 0: pending, 1: confirmed, 2: cancelled, 3: deposit, 4: completed, 5: rejected
+  status: 3, // 0: pending, 1: confirmed, 2: cancelled, 3: deposit, 4: completed, 5: rejected
   checked: 0,
   customer: { name: "Nguyễn Văn B", phone: "0905123456", email: "a.nguyen@example.com" },
   restaurant: {

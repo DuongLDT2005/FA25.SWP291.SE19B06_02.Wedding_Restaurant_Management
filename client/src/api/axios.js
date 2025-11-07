@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  // Use relative baseURL so CRA dev proxy can forward to backend without CORS
-  baseURL: "/api",
+  baseURL: "http://localhost:5000/api",
   headers: {
     "Content-Type": "application/json",
   },

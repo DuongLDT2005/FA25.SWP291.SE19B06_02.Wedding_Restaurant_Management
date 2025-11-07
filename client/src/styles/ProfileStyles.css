@@ -1,17 +1,17 @@
 /* Container chính */
-.profile-container {
+/* .profile-container {
   min-height: 100vh;
   background: #f8f9fa;
-  /* nền nhạt, nhẹ nhàng */
+  nền nhạt, nhẹ nhàng
 }
 
-/* Sticky sidebar cho avatar card */
+Sticky sidebar cho avatar card
 .sticky-sidebar {
   position: sticky;
   top: 20px;
-}
+} */
 
-/* Animation hover card */
+/* Animation hover card
 .card {
   transition: all 0.3s ease;
   color: #000;
@@ -21,7 +21,7 @@
   transform: translateY(-2px);
 }
 
-/* Avatar */
+Avatar
 .avatar-circle {
   width: 100px;
   height: 100px;
@@ -39,7 +39,7 @@
   box-shadow: 0 8px 20px #6610f266;
 }
 
-/* Button primary */
+Button primary
 .btn-primary {
   background-color: #6610f2 !important;
   border: none;
@@ -51,7 +51,7 @@
   color: #fff;
 }
 
-/* Section icons */
+Section icons
 .section-icon {
   width: 40px;
   height: 40px;
@@ -68,7 +68,7 @@
   transform: rotate(360deg);
 }
 
-/* Card header */
+Card header
 .card-header-gradient {
   background-color: #6610f2;
   height: 120px;
@@ -76,7 +76,7 @@
   overflow: hidden;
 }
 
-/* Shadow utilities */
+Shadow utilities
 .shadow-sm {
   box-shadow: 0 2px 8px rgba(102, 16, 242, 0.1) !important;
 }
@@ -85,11 +85,11 @@
   box-shadow: 0 10px 30px rgba(102, 16, 242, 0.2) !important;
 }
 
-/* Text colors */
+Text colors
 .text-primary {
   color: #6610f2 !important;
 }
 
 .text-muted {
   color: rgba(0, 0, 0, 0.6) !important;
-}
+} */

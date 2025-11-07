@@ -14,20 +14,17 @@ import {
   CNav,
   CNavItem,
   CNavLink,
-  CBadge,
 } from "@coreui/react";
 import { mockUsers } from "../management/users/UserList";
 
 const LicenseCommissionPage = () => {
   const [partners, setPartners] = useState(
-    mockUsers.filter((u) => u.role === "Partner" && !u.approved)
+    mockUsers.filter((u) => u.role === "Partner")
   );
-  const [commissionList, setCommissionList] = useState(
-    mockUsers.filter((u) => u.role === "Partner" && u.approved)
-  );
+  const [commissionList, setCommissionList] = useState([]);
   const [activeTab, setActiveTab] = useState("partner");
 
-  const handleApprove = (id) => {
+  const handleVerify = (id) => {
     const partner = partners.find((p) => p.id === id);
     Swal.fire({
       title: "Approve this partner?",
@@ -36,22 +33,14 @@ const LicenseCommissionPage = () => {
       showCancelButton: true,
       confirmButtonText: "Approve",
       cancelButtonText: "Cancel",
-      background: "#1e1e2f",
-      color: "#fff",
     }).then((result) => {
       if (result.isConfirmed) {
         setPartners((prev) => prev.filter((p) => p.id !== id));
         setCommissionList((prev) => [
           ...prev,
-          { ...partner, approved: true, approvedAt: new Date().toISOString().split("T")[0] },
+          { ...partner, commissionRate: null },
         ]);
-        Swal.fire({
-          title: "Approved!",
-          text: `${partner.name} moved to commission list.`,
-          icon: "success",
-          background: "#1e1e2f",
-          color: "#fff",
-        });
+        Swal.fire("Approved!", `${partner.name} moved to commission list.`, "success");
       }
     });
   };
@@ -65,25 +54,49 @@ const LicenseCommissionPage = () => {
       showCancelButton: true,
       confirmButtonText: "Reject",
       cancelButtonText: "Cancel",
-      background: "#1e1e2f",
-      color: "#fff",
     }).then((result) => {
       if (result.isConfirmed) {
         setPartners((prev) => prev.filter((p) => p.id !== id));
-        Swal.fire({
-          title: "Rejected!",
-          text: `${partner.name} has been removed.`,
-          icon: "info",
-          background: "#1e1e2f",
-          color: "#fff",
-        });
+        Swal.fire("Rejected!", `${partner.name} has been removed.`, "info");
+      }
+    });
+  };
+
+  const handleNegotiate = (id) => {
+    const partner = commissionList.find((p) => p.id === id);
+    Swal.fire({
+      title: `Negotiate Commission for ${partner.name}`,
+      input: "number",
+      inputAttributes: { min: 0, max: 100, step: 1 },
+      inputLabel: "Enter commission rate (%)",
+      inputPlaceholder: "e.g. 15",
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      cancelButtonText: "Cancel",
+      preConfirm: (rate) => {
+        if (!rate || rate < 0 || rate > 100) {
+          Swal.showValidationMessage("Please enter a valid rate (0–100%)");
+        }
+        return rate;
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const updated = commissionList.map((p) =>
+          p.id === id ? { ...p, commissionRate: result.value } : p
+        );
+        setCommissionList(updated);
+        Swal.fire(
+          "Saved!",
+          `${partner.name}'s commission set to ${result.value}%`,
+          "success"
+        );
       }
     });
   };
 
   const renderPartnerTable = () => (
-    <CTable hover responsive className="align-middle text-light">
-      <CTableHead color="dark">
+    <CTable hover responsive>
+      <CTableHead color="black">
         <CTableRow>
           <CTableHeaderCell>#</CTableHeaderCell>
           <CTableHeaderCell>Partner Name</CTableHeaderCell>
@@ -103,7 +116,7 @@ const LicenseCommissionPage = () => {
               <CTableDataCell>{partner.email}</CTableDataCell>
               <CTableDataCell>
                 <a
-                  href={partner.licenseURL || "#"}
+                  href="https://example.com/license.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -115,7 +128,7 @@ const LicenseCommissionPage = () => {
                   color="success"
                   size="sm"
                   className="me-2"
-                  onClick={() => handleApprove(partner.id)}
+                  onClick={() => handleVerify(partner.id)}
                 >
                   Approve
                 </CButton>
@@ -141,16 +154,14 @@ const LicenseCommissionPage = () => {
   );
 
   const renderCommissionTable = () => (
-    <CTable hover responsive className="align-middle text-light">
-      <CTableHead color="dark">
+    <CTable hover responsive>
+      <CTableHead color="light">
         <CTableRow>
           <CTableHeaderCell>#</CTableHeaderCell>
           <CTableHeaderCell>Partner Name</CTableHeaderCell>
           <CTableHeaderCell>Email</CTableHeaderCell>
-          <CTableHeaderCell>Restaurants</CTableHeaderCell>
-          <CTableHeaderCell>License</CTableHeaderCell>
           <CTableHeaderCell>Commission</CTableHeaderCell>
-          <CTableHeaderCell>Approved At</CTableHeaderCell>
+          <CTableHeaderCell className="text-center">Negotiation</CTableHeaderCell>
         </CTableRow>
       </CTableHead>
       <CTableBody>
@@ -162,36 +173,26 @@ const LicenseCommissionPage = () => {
                 <strong>{partner.name}</strong>
               </CTableDataCell>
               <CTableDataCell>{partner.email}</CTableDataCell>
-              <CTableDataCell>
-                {partner.restaurants?.map((r, i) => (
-                  <div key={i}>
-                    • {r.name} – <span className="text-success">{r.status}</span>
-                  </div>
-                ))}
+              <CTableDataCell className="text-success fw-semibold">
+                {partner.commissionRate
+                  ? `${partner.commissionRate}%`
+                  : "Pending negotiation"}
               </CTableDataCell>
-              <CTableDataCell>
-                <a
-                  href={partner.licenseURL || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <CTableDataCell className="text-center">
+                <CButton
+                  color="warning"
+                  size="sm"
+                  onClick={() => handleNegotiate(partner.id)}
                 >
-                  View License
-                </a>
-              </CTableDataCell>
-              <CTableDataCell>
-                <CBadge color="info" className="px-3 py-2">
-                  {partner.commissionRate ? `${partner.commissionRate}%` : "N/A"}
-                </CBadge>
-              </CTableDataCell>
-              <CTableDataCell>
-                {partner.approvedAt || "—"}
+                  Negotiate
+                </CButton>
               </CTableDataCell>
             </CTableRow>
           ))
         ) : (
           <CTableRow>
-            <CTableDataCell colSpan="7" className="text-center text-muted">
-              No approved partners yet.
+            <CTableDataCell colSpan="5" className="text-center text-muted">
+              No commission negotiations yet.
             </CTableDataCell>
           </CTableRow>
         )}
@@ -200,18 +201,18 @@ const LicenseCommissionPage = () => {
   );
 
   return (
-    <CCard className="mb-4 shadow-sm bg-dark text-light">
-      <CCardHeader className="bg-secondary text-light">
+    <CCard className="mb-4 shadow-sm">
+      <CCardHeader>
         <h5 className="mb-0 fw-bold">Partner License & Commission Management</h5>
       </CCardHeader>
 
-      <CNav variant="tabs" role="tablist" className="px-3 pt-2 bg-dark">
+      {/* Tabs */}
+      <CNav variant="tabs" role="tablist" className="px-3 pt-2">
         <CNavItem>
           <CNavLink
             active={activeTab === "partner"}
             onClick={() => setActiveTab("partner")}
             role="button"
-            className="text-light"
           >
             Approve Partner
           </CNavLink>
@@ -221,14 +222,13 @@ const LicenseCommissionPage = () => {
             active={activeTab === "commission"}
             onClick={() => setActiveTab("commission")}
             role="button"
-            className="text-light"
           >
-            Approved Commissions
+            Approve Commission
           </CNavLink>
         </CNavItem>
       </CNav>
 
-      <CCardBody className="bg-dark">
+      <CCardBody>
         {activeTab === "partner" ? renderPartnerTable() : renderCommissionTable()}
       </CCardBody>
     </CCard>
