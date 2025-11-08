@@ -7,7 +7,7 @@ import aiRoutes from "./routes/aiRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
 import contractRoutes from "./routes/contractRoutes.js";
-
+import chatRoutes from "./routes/chatRoutes.js";
 const app = express();
 
 app.use(express.json());
@@ -20,5 +20,6 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/contracts", contractRoutes);
+app.use("/api/chats", chatRoutes);
 
 export default app;
