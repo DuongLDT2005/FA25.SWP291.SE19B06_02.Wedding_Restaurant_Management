@@ -11,6 +11,7 @@ CREATE TABLE User (
     password VARCHAR(255) NOT NULL,
     avatarURL VARCHAR(255) DEFAULT NULL,
     role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
+    role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
@@ -18,6 +19,7 @@ CREATE TABLE User (
 -- Table Customer
 CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
+    weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     partnerName VARCHAR(255),
     FOREIGN KEY (customerID) REFERENCES User(userID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -529,48 +531,8 @@ CREATE INDEX idx_restaurant_eventtype ON RestaurantEventType(
 -- Insert SystemSetting
 INSERT INTO SystemSetting (category, settingKey, settingName, settingValue, dataType, description)
 VALUES
-(3, 'DEFAULT_COMMISSION_RATE', 'Tỷ lệ hoa hồng mặc định', '0.10', 1, 'Áp dụng cho chủ nhà hàng mới được duyệt'),
-(2, 'REFUND_POLICY_DAYS', 'Số ngày hoàn tiền tối đa', '7', 1, 'Số ngày tối đa khách hàng có thể yêu cầu hoàn tiền'),
-(1, 'MIN_BOOKING_NOTICE_HOURS', 'Thời gian đặt tiệc tối thiểu (giờ)', '48', 1, 'Phải đặt trước ít nhất 48 giờ'),
-(0, 'ENABLE_PROMOTIONS', 'Cho phép hiển thị khuyến mãi', 'true', 2, 'Bật/tắt module khuyến mãi'),
-(4, 'EMAIL_SENDER', 'Địa chỉ email hệ thống', 'noreply@weddinghub.vn', 0, 'Email gửi thông báo hệ thống'),
-(2, 'VAT_RATE', 'Thuế giá trị gia tăng mặc định', '0.08', 1, 'Thuế VAT mặc định 8% áp dụng cho các giao dịch'),
-(1, 'BOOKING_DEPOSIT_PERCENTAGE', 'Tỷ lệ tiền cọc khi khách đặt tiệc', '0.30', 1, 'Khách cần đặt cọc 30% tổng giá trị tiệc khi xác nhận booking'),
-(1, 'DEFAULT_MIN_GAP_HOURS', 'Thời gian cách giữa 2 tiệc', '3', 1, 'Khoảng cách tối thiểu giữa 2 booking cùng sảnh'),
-(1, 'DEFAULT_MIN_BOOKING_NOTICE_HOURS', 'Thời gian đặt trước tối thiểu', '48', 1, 'Khách phải đặt trước ít nhất 48 giờ');
+('VAT_RATE', '0.10', 'Finance', 'Thuế giá trị gia tăng mặc định 10%'),
+('BOOKING_DEPOSIT_PERCENTAGE', '0.30', 'Booking', 'Tỷ lệ tiền cọc khi khách đặt tiệc');
+-- ('SUPPORT_EMAIL', 'support@weddingvenue.vn', 'System', 'Email liên hệ hiển thị trong hệ thống', 1);
 
--- Insert EventType
-INSERT INTO EventType (name) VALUES
-('Tiệc cưới'),
-('Tiệc sinh nhật'),
-('Tiệc công ty'),
-('Tiệc tất niên'),
-('Tiệc khai trương'),
-('Lễ kỷ niệm'),
-('Liên hoan'),
-('Sự kiện');
 
--- Insert Amenity
-INSERT INTO Amenity (name) VALUES
-('Máy lạnh'),
-('Hệ thống âm thanh'),
-('Hệ thống ánh sáng'),
-('Hệ thống micro không dây'),
-('Bãi giữ xe'),
-('Wi-Fi miễn phí'),
-('Phòng chờ cô dâu'),
-('Phòng thay đồ'),
-('Nhà vệ sinh riêng'),
-('Bục cake & champagne riêng'),
-('Khu vực chụp ảnh'),
-('Khu vực hút thuốc riêng'),
-('Máy phát điện dự phòng'),
-('Điều hòa trung tâm'),
-('Thang máy'),
-('Lối thoát hiểm'),
-('Hồ bơi'),
-('Camera an ninh'),
-('Bục ký tên lễ tân'),
-('Thảm đỏ lối vào'),
-('Hoa tươi bàn tiệc cơ bản'),
-('Thực đơn in sẵn trên bàn');

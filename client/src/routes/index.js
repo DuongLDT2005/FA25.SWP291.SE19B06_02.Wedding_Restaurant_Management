@@ -21,21 +21,32 @@ import PartnerPayoutPage from "../pages/partner/payment/PartnerPayoutPage";
 import Notification from "../pages/partner/Notification";
 import PartnerReviewPage from "../pages/partner/review/PartnerReviewPage";
 import NegotiationPage from "../pages/partner/NegotiationPage";
-import DefaultLayout from "../pages/admin/layout/DefaultLayout";
-import Dashboard from "../pages/admin/dashboard/Dashboard";
 import SearchResultList from "../pages/customer/SearchResultList";
 // import BookingForm from "../pages/auth/BookingForm";
-import NotificationsPage from "../pages/admin/notifications/NotificationsPage"
 
+/*Admin Routes */
+import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
+import UserList from "../pages/admin/management/user/UserList";
+import UserDetail from "../pages/admin/management/user/UserDetails";
+import AdminRestaurantDetail from "../pages/admin/management/restaurant/AdminRestaurantDetail";
+import AdminBookingListPage from "../pages/admin/booking/AdminBookingListPage";
+import AdminBookingDetailsPage from "../pages/admin/booking/AdminBookingDetailsPage";
+import AdminProfilePage from "../pages/admin/Profile";
+import AdminLicensePage from "../pages/admin/management/license/AdminiLicensePage";
+import AdminRestaurantList from "../pages/admin/management/restaurant/AdminRestaurantList";
+import AdminPaymentListPage from "../pages/admin/management/payment/AdminPaymentListPage";
+import AdminPaymentDetail from "../pages/admin/management/payment/AdminPaymentDetail";
+import AdminReviewListPage from "../pages/admin/management/report/ReviewList";
+import AdminReportListPage from "../pages/admin/management/report/ReportList";
+import AdminNotificationPage from "../pages/admin/notification/AdminNotificationPage";
+import AdminSettingsPage from "../pages/admin/setting/AdminSettingPage";
 
-import ListingRestaurants from "../pages/restaurant/ListingRestaurant"
 import BookingListPage from "../pages/customer/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
 import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
-import PaymentDetailPage from "../pages/admin/operations/payments/PaymentDetailPage";
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -49,35 +60,60 @@ function AppRoutes() {
         <Route path="/partner/negotiation" element={<NegotiationPage />} />
         {/* <Route path="/partner/profile" element={<ProfileBusiness />} /> */}
         <Route path="/partner/restaurants" element={<Restaurants />} />
-        <Route path="/partner/restaurants/new" element={<RestaurantCreatePage />} />
-        <Route path="/partner/restaurants/detail/:id" element={<RestaurantDetail />} />
+        <Route
+          path="/partner/restaurants/new"
+          element={<RestaurantCreatePage />}
+        />
+        <Route
+          path="/partner/restaurants/detail/:id"
+          element={<RestaurantDetail />}
+        />
         <Route path="/partner/halls/detail/:id" element={<HallDetailPage />} />
         <Route path="/partner/halls/new" element={<HallCreate />} />
         <Route path="/partner/hall-schedule" element={<HallSchedulePage />} />
         <Route path="/partner/bookings" element={<PartnerBookingPage />} />
         <Route path="/partner/profile" element={<ProfileBusiness />} />
         <Route path="/partner/bookings/:id" element={<BookingDetailPage />} />
-        <Route path="/partner/bookings/:id/contract" element={<ContractPage />} />
+        <Route
+          path="/partner/bookings/:id/contract"
+          element={<ContractPage />}
+        />
         <Route path="/partner/payments" element={<PartnerPaymentPage />} />
         <Route path="/partner/payouts" element={<PartnerPayoutPage />} />
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
 
-        <Route path="/admin/*" element={<DefaultLayout />}>
-          <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
-          <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="payments/:id" element = {<PaymentDetailPage/>}/>
-        </Route>
-        <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />
         <Route path="/bookingForm" element={<BookingPage />} />
         <Route path="/customer/profile" element={<Profile />} />
 
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<UserList />} />
+        <Route path="/admin/users/:id" element = {<UserDetail/>} />
+        <Route path="/admin/restaurants" element={<AdminRestaurantList />} />
+        <Route path="/admin/restaurants/:id" element = {<AdminRestaurantDetail/>}/>
+        <Route path="/admin/bookings" element={<AdminBookingListPage />} />
+        <Route path="/admin/bookings/:bookingId" element={<AdminBookingDetailsPage />} />
+        <Route path="/admin/license" element={<AdminLicensePage />} />
+        <Route path="/admin/profile" element= {<AdminProfilePage/>} />
+        <Route path="/admin/payments" element={<AdminPaymentListPage />} />
+        <Route path="/admin/payments/:id" element={<AdminPaymentDetail />} />
+        <Route path="/admin/reviews" element={<AdminReviewListPage />} />
+        <Route path="/admin/reports" element={<AdminReportListPage />} />
+        <Route path="/admin/notifications" element={<AdminNotificationPage />} />
+        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+
         {/* Booking Routes */}
         <Route path="/booking/:bookingId" element={<BookingDetailsPage />} />
-        <Route path="/booking/:bookingId/contract" element={<BookingDetailsPage />} />
-        <Route path="/booking/:bookingId/payments" element={<BookingDetailsPage />} />
+        <Route
+          path="/booking/:bookingId/contract"
+          element={<BookingDetailsPage />}
+        />
+        <Route
+          path="/booking/:bookingId/payments"
+          element={<BookingDetailsPage />}
+        />
 
         {/* Payment Routes */}
         <Route path="/payment/:bookingId" element={<PaymentPage />} />

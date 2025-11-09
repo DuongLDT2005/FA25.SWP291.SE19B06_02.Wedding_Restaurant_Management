@@ -12,9 +12,9 @@ import {
  * useSearchForm hook
  */
 export function useSearchForm() {
+  
   const dispatch = useDispatch();
   const state = useSelector(selectSearch);
-
   const setField = useCallback(
     (key, value) => {
       if (key === "tables") value = value === "" ? "" : Number(value);
