@@ -1,6 +1,6 @@
 import { useState } from "react";
-import AuthLayout from "../../layouts/MainLayout";
-import SearchBar from "../../components/searchbar/SearchBar";
+import MainLayout from "../../layouts/MainLayout";
+import SearchSection from "../../components/searchbar/SearchSection";
 
 const SAMPLE_VENUES = [
   {
@@ -11,7 +11,7 @@ const SAMPLE_VENUES = [
     reviews: 156,
     price: "50,000,000",
     capacity: "500-1000",
-    image: "/luxury-ballroom-venue.jpg",
+    image: "/assets/img/wedding_main.jpg",
     discount: "15%",
     amenities: ["WiFi", "Bãi đỗ xe", "Máy lạnh", "Nhà bếp"],
     featured: true,
@@ -112,9 +112,9 @@ const SearchResultList = () => {
   );
 
   return (
-    <AuthLayout>
+    <MainLayout>
       <section style={{ marginTop: "100px" }}>
-        <SearchBar />
+        <SearchSection />
       </section>
       <main style={{ backgroundColor: "#fafafa", padding: "30px 0" }}>
         <div
@@ -454,7 +454,7 @@ const SearchResultList = () => {
           </div>
         </div>
       </main>
-    </AuthLayout>
+    </MainLayout>
   );
 };
 

@@ -133,7 +133,7 @@ CREATE TABLE Menu (
 -- Table DishCategory
 CREATE TABLE DishCategory (
     categoryID INT AUTO_INCREMENT PRIMARY KEY,
-    restaurantID INT NOT NULL.
+    restaurantID INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     requiredQuantity INT DEFAULT 1 CHECK(requiredQuantity > 0),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE

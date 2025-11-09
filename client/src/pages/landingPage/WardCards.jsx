@@ -50,7 +50,7 @@ export default function WardCards() {
             <Container>
                 <div className="d-flex align-items-center gap-2 mb-4">
                     <MapPin size={24} className="text-danger" />
-                    <h2 className="fw-bold text-dark mb-0">Tìm kiếm theo địa điểm</h2>
+                    <h2 className="fw-bold text-danger mb-0">Tìm kiếm theo địa điểm</h2>
                 </div>
 
                 <Row className="g-4">

@@ -28,7 +28,7 @@ export default function LoginPage() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotEmailError, setForgotEmailError] = useState("");
 
-  const { login, forgotPassword } = useAuth();
+  const { login, forgotPassword, loginWithGoogle } = useAuth();
 
   const emailIsValid = (e) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e.trim());
   const navigate = useNavigate();
@@ -99,166 +99,167 @@ export default function LoginPage() {
   };
 
   // 🔹 Google Sign In
-  const openGoogleSignIn = () => {
-    const w = 600, h = 700;
-    const left = (window.screenX || 0) + (window.innerWidth - w) / 2;
-    const top = (window.screenY || 0) + (window.innerHeight - h) / 2;
-    window.open(
-      "/api/auth/google",
-      "GoogleSignIn",
-      `width=${w},height=${h},left=${left},top=${top}`
-    );
+  const handleGoogleClick = async () => {
+    try {
+      const user = await loginWithGoogle();
+
+      if (user.role === "ADMIN") navigate("/admin/dashboard");
+      else if (user.role === "RESTAURANT_PARTNER") navigate("/partner");
+      else navigate("/customer/home");
+    } catch (err) {
+      setGlobalError(err.message);
+    }
   };
 
   return (
     <AuthLayout>
-            <div
-              style={{
-                minHeight: "100vh",
-                display: "flex",
-                alignItems: "center",
-                backgroundColor: "#fefaf9",
-                paddingTop: "50px",
-                paddingBottom: "50px",
-              }}
-            >
-              <Container>
-                <Row
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          backgroundColor: "#fefaf9",
+          paddingTop: "50px",
+          paddingBottom: "50px",
+        }}
+      >
+        <Container>
+          <Row
+            style={{
+              minHeight: "500px",
+              boxShadow: "0 8px 15px rgba(0, 0, 0, 0.1)",
+              borderRadius: "15px",
+              overflow: "hidden",
+            }}
+          >
+            <Col md={7} style={{ backgroundColor: "#E11D48", color: "#fefaf9", padding: "100px 40px 0px 40px" }}>
+              <h1 style={{ fontSize: "50px", marginBottom: "10px", fontWeight: "700" }}>Welcome back!</h1>
+              <p style={{ fontSize: "18px", margin: "0", lineHeight: "1.5" }}>
+                Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại LifEvent.com.
+              </p>
+            </Col>
+
+            <Col md={5} style={{ backgroundColor: "#fff", padding: "40px" }}>
+              <h1
+                style={{
+                  marginBottom: "20px",
+                  fontSize: "32px",
+                  textAlign: "center",
+                  color: "#E11D48",
+                  fontWeight: "700",
+                }}
+              >
+                Đăng Nhập
+              </h1>
+
+              {globalError && (
+                <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+                  {globalError}
+                </Alert>
+              )}
+              {info && (
+                <Alert variant="success" style={{ marginBottom: "12px", fontSize: "14px" }}>
+                  {info}
+                </Alert>
+              )}
+
+              <Form onSubmit={handleSubmit}>
+                <Form.Group className="mb-3">
+                  <Form.Control
+                    name="email"
+                    type="email"
+                    value={email}
+                    isInvalid={!!emailError}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                  />
+                  {emailError && <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>}
+                </Form.Group>
+
+                <Form.Group className="mb-2">
+                  <div style={{ position: "relative" }}>
+                    <Form.Control
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      isInvalid={!!passwordError}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Mật khẩu"
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "50%",
+                        right: "12px",
+                        transform: "translateY(-50%)",
+                        cursor: "pointer",
+                        color: "#777",
+                      }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                    </span>
+                  </div>
+                  <Form.Control.Feedback type="invalid">{passwordError}</Form.Control.Feedback>
+                </Form.Group>
+
+                <div className="text-end mb-3">
+                  <Button
+                    variant="link"
+                    style={{ color: "#E11D48", fontSize: "13px", padding: "0", textDecoration: "none" }}
+                    onClick={() => setShowForgot(true)}
+                  >
+                    Quên mật khẩu?
+                  </Button>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
                   style={{
-                    minHeight: "500px",
-                    boxShadow: "0 8px 15px rgba(0, 0, 0, 0.1)",
-                    borderRadius: "15px",
-                    overflow: "hidden",
+                    backgroundColor: "#E11D48",
+                    borderColor: "#dc3257ff",
+                    width: "100%",
+                    marginBottom: "16px",
+                    color: "#fff",
                   }}
                 >
-                  <Col md={7} style={{ backgroundColor: "#E11D48", color: "#fefaf9", padding: "100px 40px 0px 40px" }}>
-                    <h1 style={{ fontSize: "50px", marginBottom: "10px", fontWeight: "700" }}>Welcome back!</h1>
-                    <p style={{ fontSize: "18px", margin: "0", lineHeight: "1.5" }}>
-                      Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại LifEvent.com.
-                    </p>
-                  </Col>
+                  {loading ? "Đang xử lý..." : "Đăng nhập"}
+                </Button>
+              </Form>
 
-                  <Col md={5} style={{ backgroundColor: "#fff", padding: "40px" }}>
-                    <h1
-                      style={{
-                        marginBottom: "20px",
-                        fontSize: "32px",
-                        textAlign: "center",
-                        color: "#E11D48",
-                        fontWeight: "700",
-                      }}
-                    >
-                      Đăng Nhập
-                    </h1>
+              <div
+                style={{ textAlign: "center", margin: "16px 0", fontSize: "13px", color: "#999", position: "relative" }}
+              >
+                <span style={{ position: "relative", zIndex: "1", backgroundColor: "#fff", padding: "0 8px" }}>
+                  Hoặc đăng nhập với
+                </span>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "0",
+                    right: "0",
+                    height: "1px",
+                    backgroundColor: "#ddd",
+                    zIndex: "0",
+                  }}
+                ></div>
+              </div>
 
-                    {globalError && (
-                      <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
-                        {globalError}
-                      </Alert>
-                    )}
-                    {info && (
-                      <Alert variant="success" style={{ marginBottom: "12px", fontSize: "14px" }}>
-                        {info}
-                      </Alert>
-                    )}
-
-                    <Form onSubmit={handleSubmit}>
-                      <Form.Group className="mb-3">
-                        <Form.Control
-                          name="email"
-                          type="email"
-                          value={email}
-                          isInvalid={!!emailError}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Email"
-                        />
-                        {emailError && <Form.Control.Feedback type="invalid">{emailError}</Form.Control.Feedback>}
-                      </Form.Group>
-
-                      <Form.Group className="mb-2">
-                        <div style={{ position: "relative" }}>
-                          <Form.Control
-                            name="password"
-                            type={showPassword ? "text" : "password"}
-                            value={password}
-                            isInvalid={!!passwordError}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Mật khẩu"
-                          />
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: "50%",
-                              right: "12px",
-                              transform: "translateY(-50%)",
-                              cursor: "pointer",
-                              color: "#777",
-                            }}
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                          </span>
-                        </div>
-                        <Form.Control.Feedback type="invalid">{passwordError}</Form.Control.Feedback>
-                      </Form.Group>
-
-                      <div className="text-end mb-3">
-                        <Button
-                          variant="link"
-                          style={{ color: "#E11D48", fontSize: "13px", padding: "0", textDecoration: "none" }}
-                          onClick={() => setShowForgot(true)}
-                        >
-                          Quên mật khẩu?
-                        </Button>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        style={{
-                          backgroundColor: "#E11D48",
-                          borderColor: "#dc3257ff",
-                          width: "100%",
-                          marginBottom: "16px",
-                          color: "#fff",
-                        }}
-                      >
-                        {loading ? "Đang xử lý..." : "Đăng nhập"}
-                      </Button>
-                    </Form>
-
-                    <div
-                      style={{ textAlign: "center", margin: "16px 0", fontSize: "13px", color: "#999", position: "relative" }}
-                    >
-                      <span style={{ position: "relative", zIndex: "1", backgroundColor: "#fff", padding: "0 8px" }}>
-                        Hoặc đăng nhập với
-                      </span>
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "50%",
-                          left: "0",
-                          right: "0",
-                          height: "1px",
-                          backgroundColor: "#ddd",
-                          zIndex: "0",
-                        }}
-                      ></div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "center", margin: "10px 0" }}>
-                      <Button
-                        variant="light"
-                        style={{ width: "45px", height: "45px", padding: "0", borderRadius: "50%", border: "1px solid #ddd" }}
-                        onClick={openGoogleSignIn}
-                      >
-                        <img
-                          src="https://developers.google.com/identity/images/g-logo.png"
-                          alt="Google logo"
-                          style={{ width: "24px", height: "24px" }}
-                        />
-                      </Button>
-                    </div>
+              <div style={{ display: "flex", justifyContent: "center", margin: "10px 0" }}>
+                <Button
+                  variant="light"
+                  style={{ width: "45px", height: "45px", padding: "0", borderRadius: "50%", border: "1px solid #ddd" }}
+                  onClick={handleGoogleClick}
+                >
+                  <img
+                    src="https://developers.google.com/identity/images/g-logo.png"
+                    alt="Google logo"
+                    style={{ width: "24px", height: "24px" }}
+                  />
+                </Button>
+              </div>
 
               <p style={{ textAlign: "center", fontSize: "14px", marginTop: "10px", color: "rgb(51, 17, 17)" }}>
                 Bạn mới đặt tiệc lần đầu?{" "}
@@ -277,46 +278,46 @@ export default function LoginPage() {
         </Container>
       </div >
 
-    <Modal show={showForgot} onHide={() => setShowForgot(false)} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Đặt lại mật khẩu</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <p style={{ fontSize: "14px", marginBottom: "12px" }}>Nhập email để nhận đường dẫn đặt lại mật khẩu.</p>
-        {forgotGlobalError && (
-          <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
-            {forgotGlobalError}
-          </Alert>
-        )}
-        {forgotEmailError && (
-          <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
-            {forgotEmailError}
-          </Alert>
-        )}
-        <Form onSubmit={handleForgot}>
-          <Form.Group className="mb-3">
-            <Form.Control
-              type="email"
-              value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </Form.Group>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-            <Button variant="secondary" onClick={() => setShowForgot(false)}>
-              Hủy
-            </Button>
-            <Button
-              type="submit"
-              style={{ backgroundColor: "#E11D48", borderColor: "#dd4666ff" }}
-              disabled={forgotLoading}
-            >
-              {forgotLoading ? "Đang gửi..." : "Gửi"}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
-    </Modal>
+      <Modal show={showForgot} onHide={() => setShowForgot(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Đặt lại mật khẩu</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p style={{ fontSize: "14px", marginBottom: "12px" }}>Nhập email để nhận đường dẫn đặt lại mật khẩu.</p>
+          {forgotGlobalError && (
+            <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+              {forgotGlobalError}
+            </Alert>
+          )}
+          {forgotEmailError && (
+            <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+              {forgotEmailError}
+            </Alert>
+          )}
+          <Form onSubmit={handleForgot}>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </Form.Group>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+              <Button variant="secondary" onClick={() => setShowForgot(false)}>
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                style={{ backgroundColor: "#E11D48", borderColor: "#dd4666ff" }}
+                disabled={forgotLoading}
+              >
+                {forgotLoading ? "Đang gửi..." : "Gửi"}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </AuthLayout >
   )
 }

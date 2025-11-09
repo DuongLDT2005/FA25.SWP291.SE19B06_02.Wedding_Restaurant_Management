@@ -36,7 +36,7 @@ export default function SearchSection() {
       <Container fluid style={{ padding: "0 50px", maxWidth: "1200px" }}>
         <Form onSubmit={handleSubmit} className="bg-white rounded-3 shadow p-4">
           {/* Hàng input */}
-          <Row className="g-2 align-items-end">
+          <Row className="g-1 align-items-end">
             <Col xs={12} md={6} lg={3}>
               <LocationInput />
             </Col>
