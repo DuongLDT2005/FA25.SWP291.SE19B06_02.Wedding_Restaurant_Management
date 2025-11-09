@@ -3,26 +3,26 @@ import DishDetailPage from "./DishDetailPage";
 import DishCreatePage from "./DishCreatePage";
 import mock from "../../../mock/partnerMock";
 
-export default function DishListPage() {
+export default function DishListPage({ readOnly = false }) {
   const [activeDish, setActiveDish] = useState(null);
   const [creatingDish, setCreatingDish] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
   const [categories, setCategories] = useState(mock.dishCategories);
   const [dishes, setDishes] = useState(mock.dish);
 
-  // === Thêm category mới ===
   const handleAddCategory = () => {
+    if (readOnly) return;
     const newCategory = {
       categoryID: Date.now(),
       name: "Loại mới",
       requiredQuantity: 1,
-      status: 1, // 1 = active, 0 = inactive
+      status: 1,
     };
     setCategories((prev) => [...prev, newCategory]);
   };
 
-  // === Cập nhật category (tên hoặc số lượng yêu cầu) ===
   const handleUpdateCategory = (id, field, value) => {
+    if (readOnly) return;
     setCategories((prev) =>
       prev.map((c) =>
         c.categoryID === id ? { ...c, [field]: value } : c
@@ -30,8 +30,8 @@ export default function DishListPage() {
     );
   };
 
-  // === Xóa mềm category (inactive) ===
   const handleToggleCategoryStatus = (id) => {
+    if (readOnly) return;
     setCategories((prev) =>
       prev.map((c) =>
         c.categoryID === id
@@ -41,14 +41,14 @@ export default function DishListPage() {
     );
   };
 
-  // === Thêm món mới trong 1 category ===
   const handleAddDish = (categoryID) => {
+    if (readOnly) return;
     setActiveCategory(categoryID);
     setCreatingDish(true);
   };
 
-  // === Toggle trạng thái món ===
   const handleToggleDishStatus = (id) => {
+    if (readOnly) return;
     setDishes((prev) =>
       prev.map((d) =>
         d.dishID === id ? { ...d, status: d.status === 1 ? 0 : 1 } : d
@@ -56,28 +56,37 @@ export default function DishListPage() {
     );
   };
 
-  // === Filter theo category active ===
   const activeCategories = categories.filter((c) => c.status === 1);
 
   return (
     <>
       {creatingDish ? (
-        <DishCreatePage
-          categoryID={activeCategory}
-          onBack={() => setCreatingDish(false)}
-        />
+        readOnly ? (
+          <div className="alert alert-secondary text-center mt-3">
+            Chế độ chỉ xem: không thể thêm món mới.
+          </div>
+        ) : (
+          <DishCreatePage
+            categoryID={activeCategory}
+            onBack={() => setCreatingDish(false)}
+          />
+        )
       ) : activeDish ? (
-        <DishDetailPage dish={activeDish} onBack={() => setActiveDish(null)} />
+        <DishDetailPage dish={activeDish} onBack={() => setActiveDish(null)} readOnly={readOnly} />
       ) : (
         <div className="p-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3>Danh sách món ăn theo loại</h3>
-            <button className="btn btn-primary text-white" onClick={handleAddCategory}>
-              + Thêm loại món
-            </button>
+            {!readOnly && (
+              <button
+                className="btn btn-primary text-white"
+                onClick={handleAddCategory}
+              >
+                + Thêm loại món
+              </button>
+            )}
           </div>
 
-          {/* --- Danh sách Category --- */}
           {categories.map((cat) => {
             const categoryDishes = dishes.filter(
               (d) => d.categoryID === cat.categoryID
@@ -90,7 +99,6 @@ export default function DishListPage() {
                   cat.status === 0 ? "bg-secondary-subtle" : "bg-light"
                 }`}
               >
-                {/* --- Header Category --- */}
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div className="d-flex flex-column">
                     <div className="d-flex align-items-center gap-2">
@@ -102,7 +110,7 @@ export default function DishListPage() {
                         }
                         className="form-control fw-bold"
                         style={{ width: "250px" }}
-                        disabled={cat.status === 0}
+                        disabled={readOnly || cat.status === 0}
                       />
                       <span
                         className={`badge ${
@@ -127,31 +135,38 @@ export default function DishListPage() {
                         }
                         className="form-control"
                         style={{ width: "80px" }}
-                        disabled={cat.status === 0}
+                        disabled={readOnly || cat.status === 0}
                       />
                     </div>
                   </div>
 
                   <div className="d-flex gap-2">
-                    <button
-                      className="btn btn-success text-white"
-                      onClick={() => handleAddDish(cat.categoryID)}
-                      disabled={cat.status === 0}
-                    >
-                      + Thêm món
-                    </button>
-                    <button
-                      className={`btn ${
-                        cat.status === 1 ? "btn-outline-danger" : "btn-outline-secondary"
-                      }`}
-                      onClick={() => handleToggleCategoryStatus(cat.categoryID)}
-                    >
-                      {cat.status === 1 ? "Ẩn loại" : "Khôi phục"}
-                    </button>
+                    {!readOnly && (
+                      <>
+                        <button
+                          className="btn btn-success text-white"
+                          onClick={() => handleAddDish(cat.categoryID)}
+                          disabled={cat.status === 0}
+                        >
+                          + Thêm món
+                        </button>
+                        <button
+                          className={`btn ${
+                            cat.status === 1
+                              ? "btn-outline-danger"
+                              : "btn-outline-secondary"
+                          }`}
+                          onClick={() =>
+                            handleToggleCategoryStatus(cat.categoryID)
+                          }
+                        >
+                          {cat.status === 1 ? "Ẩn loại" : "Khôi phục"}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
-                {/* --- Danh sách món trong category --- */}
                 <table className="table align-middle mb-0">
                   <thead>
                     <tr>
@@ -182,16 +197,20 @@ export default function DishListPage() {
                               >
                                 Xem
                               </button>
-                              <button
-                                className={`btn btn-sm ${
-                                  d.status === 1
-                                    ? "btn-outline-danger"
-                                    : "btn-outline-success"
-                                }`}
-                                onClick={() => handleToggleDishStatus(d.dishID)}
-                              >
-                                {d.status === 1 ? "Ẩn" : "Hiện"}
-                              </button>
+                              {!readOnly && (
+                                <button
+                                  className={`btn btn-sm ${
+                                    d.status === 1
+                                      ? "btn-outline-danger"
+                                      : "btn-outline-success"
+                                  }`}
+                                  onClick={() =>
+                                    handleToggleDishStatus(d.dishID)
+                                  }
+                                >
+                                  {d.status === 1 ? "Ẩn" : "Hiện"}
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

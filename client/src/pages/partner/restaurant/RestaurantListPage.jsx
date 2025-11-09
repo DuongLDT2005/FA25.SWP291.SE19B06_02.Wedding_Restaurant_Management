@@ -130,7 +130,7 @@ const RestaurantCard = (props) => {
     <Card style={{ height: '100%' }}>
       <Card.Body>
         <Card.Title
-          style={{ cursor: "pointer", color: "#0d6efd" }}
+          style={{ cursor: "pointer", color: "black !important" }}
           onClick={() => navigate(`/partner/restaurants/detail/${props.r.id}`)}
         >{props.r.name}
         </Card.Title>

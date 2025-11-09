@@ -1,4 +1,4 @@
-import RestaurantService from "../services/RestaurantService.js";
+import RestaurantService from "../services/RestaurantServices.js";
 
 class RestaurantController {
   static async getAll(req, res) {
@@ -24,7 +24,7 @@ class RestaurantController {
   static async getAvailable(req,res){
     try{
       const data = await RestaurantService.getAvailable();
-      req.json(data);
+      res.json(data);
     }catch(err){
       res.status(500).json({message : "Error fetching restaurant", error : err.message});
     }
