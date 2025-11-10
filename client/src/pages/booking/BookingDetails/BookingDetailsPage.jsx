@@ -1,7 +1,7 @@
 // BookingDetailsPage.jsx
 import React, { useState, useEffect } from "react";
-import { useParams, useLocation, useSearchParams } from "react-router-dom";
-import { Container, Row, Col, Card, Nav, Tab, Button, Spinner, Badge, Alert } from "react-bootstrap";
+import { useParams, useLocation, useSearchParams, useNavigate } from "react-router-dom";
+import { Container, Row, Col, Card, Nav, Tab, Spinner, Badge} from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import OverviewTab from "./components/OverviewTab";
@@ -9,12 +9,10 @@ import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ScrollToTopButton from "../../../components/ScrollToTopButton";
 import "../../../styles/BookingDetailsStyles.css"; // optional extra styles
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCalendarAlt, faCheck, faX, faClock, faExclamationTriangle, faCreditCard, faDownload, faUpload } from "@fortawesome/free-solid-svg-icons";
+
 
 const PRIMARY = "#D81C45";
 
-// Thêm hàm formatDate để chuyển đổi định dạng ngày
 const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -23,7 +21,68 @@ const formatDate = (dateString) => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 };
-
+export const mockBooking = (bookingId, restaurantData = null) => ({
+    bookingID: bookingId,
+    customer: { fullName: "Nguyễn Văn A", phone: "0123456789", email: "customer@email.com" },
+    restaurant: { 
+      name: restaurantData?.restaurantName || "Quảng Đại Gold", 
+      address: restaurantData?.restaurantAddress || "8 30 Tháng 4, Hải Châu, Đà Nẵng" 
+    },
+    hall: restaurantData?.selectedHall 
+      ? { 
+          name: restaurantData.selectedHall.hallName, 
+          capacity: restaurantData.selectedHall.capacity, 
+          area: restaurantData.selectedHall.area 
+        } 
+      : { name: "Sảnh Hoa Hồng", capacity: 500, area: 600 },
+    eventType: "Tiệc cưới",
+    eventDate: "2024-12-25",
+    startTime: "18:00",
+    endTime: "22:00",
+    tableCount: 20,
+    specialRequest: "Trang trí hoa hồng đỏ",
+    status: 0,
+    acceptedAt: null, 
+    originalPrice: 50000000,
+    discountAmount: 5000000,
+    VAT: 4500000,
+    totalAmount: 49500000,
+    createdAt: new Date().toISOString(),
+    menu: { 
+      name: "Menu Truyền Thống", 
+      price: 2500000, 
+      categories: [
+        { 
+          name: "Món khai vị", 
+          dishes: [
+            { id: 1, name: "Gỏi ngó sen tôm thịt", price: 450000 },
+            { id: 2, name: "Súp cua gà xé", price: 400000 }
+          ] 
+        }, 
+        { 
+          name: "Món chính", 
+          dishes: [
+            { id: 3, name: "Gà hấp lá chanh", price: 650000 },
+            { id: 4, name: "Bò nướng tiêu đen", price: 750000 },
+            { id: 5, name: "Cá hấp xì dầu", price: 700000 }
+          ] 
+        }, 
+        { 
+          name: "Tráng miệng", 
+          dishes: [
+            { id: 6, name: "Chè hạt sen long nhãn", price: 250000 }
+          ] 
+        }
+      ] 
+    },
+    services: [
+      { name: "Trang trí hoa tươi", quantity: 1, price: 5000000 },
+      { name: "Ban nhạc sống", quantity: 1, price: 8000000 }
+    ],
+    payments: [],
+    contract: { content: "Hợp đồng dịch vụ tiệc cưới...", status: 0, signedAt: null }
+  });
+  
 export default function BookingDetailsPage() {
     const { bookingId } = useParams();
     const location = useLocation();
@@ -37,7 +96,16 @@ export default function BookingDetailsPage() {
     const [isApproved, setIsApproved] = useState(false);
     const [paymentCompleted, setPaymentCompleted] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const navigate = useNavigate();
+    useEffect(() => {
+                if (location.pathname.endsWith("/contract")) {
+                setActiveKey("contract");
+               } else if (location.pathname.endsWith("/payments")) {
+                  setActiveKey("payments");
+                } else {
+                    setActiveKey("overview");
+                }
+            }, [location.pathname]);
 
     useEffect(() => {
         if (!hasLoaded) {
@@ -45,7 +113,6 @@ export default function BookingDetailsPage() {
             if (storedBooking) {
                 try {
                     const parsedBooking = JSON.parse(storedBooking);
-                    // Chỉ dùng booking từ sessionStorage nếu bookingID khớp với bookingId trong URL
                     if (parsedBooking.bookingID === bookingId) {
                         setBooking(parsedBooking);
                         setLoading(false);
@@ -60,7 +127,7 @@ export default function BookingDetailsPage() {
             }
 
             if (location.state?.booking) {
-                // Kiểm tra bookingID có khớp không
+
                 if (location.state.booking.bookingID === bookingId) {
                     setBooking(location.state.booking);
                     setLoading(false);
@@ -73,7 +140,6 @@ export default function BookingDetailsPage() {
             setHasLoaded(true);
         }
 
-        // Chỉ đọc payment parameter nếu có, không tự động thêm
         const paymentStatus = searchParams.get("payment");
         if (paymentStatus === "1") {
             setPaymentCompleted(true);
@@ -91,50 +157,29 @@ export default function BookingDetailsPage() {
 
     const fetchBookingDetails = () => {
         try {
-            setLoading(true);
-            const bookingDataFromForm = sessionStorage.getItem("newBookingData");
-            if (bookingDataFromForm) {
-                setBooking(JSON.parse(bookingDataFromForm));
-                setLoading(false);
-                setHasLoaded(true);
-                return;
-            }
-
-            const selectedRestaurant = sessionStorage.getItem("selectedRestaurant");
-            const restaurantData = selectedRestaurant ? JSON.parse(selectedRestaurant) : null;
-
-            const mockBooking = {
-                bookingID: bookingId,
-                customer: { fullName: "Nguyễn Văn A", phone: "0123456789", email: "customer@email.com" },
-                restaurant: { name: restaurantData?.restaurantName || "Quảng Đại Gold", address: restaurantData?.restaurantAddress || "8 30 Tháng 4, Hải Châu, Đà Nẵng" },
-                hall: restaurantData?.selectedHall ? { name: restaurantData.selectedHall.hallName, capacity: restaurantData.selectedHall.capacity, area: restaurantData.selectedHall.area } : { name: "Sảnh Hoa Hồng", capacity: 500, area: 600 },
-                eventType: "Tiệc cưới",
-                eventDate: "2024-12-25",
-                startTime: "18:00",
-                endTime: "22:00",
-                tableCount: 20,
-                specialRequest: "Trang trí hoa hồng đỏ",
-                status: 0,
-                acceptedAt: null, // Thêm field này
-                originalPrice: 50000000,
-                discountAmount: 5000000,
-                VAT: 4500000,
-                totalAmount: 49500000,
-                createdAt: new Date().toISOString(),
-                menu: { name: "Menu Truyền Thống", price: 2500000, categories: [{ name: "Món khai vị", dishes: [{ id: 1, name: "Gỏi ngó sen tôm thịt" }, { id: 2, name: "Súp cua gà xé" }] }, { name: "Món chính", dishes: [{ id: 3, name: "Gà hấp lá chanh" }, { id: 4, name: "Bò nướng tiêu đen" }, { id: 5, name: "Cá hấp xì dầu" }] }, { name: "Tráng miệng", dishes: [{ id: 6, name: "Chè hạt sen long nhãn" }] }] },
-                services: [{ name: "Trang trí hoa tươi", quantity: 1, price: 5000000 }, { name: "Ban nhạc sống", quantity: 1, price: 8000000 }],
-                payments: [],
-                contract: { content: "Hợp đồng dịch vụ tiệc cưới...", status: 0, signedAt: null }
-            };
-
-            setBooking(mockBooking);
+          setLoading(true);
+          const bookingDataFromForm = sessionStorage.getItem("newBookingData");
+          if (bookingDataFromForm) {
+            setBooking(JSON.parse(bookingDataFromForm));
             setLoading(false);
             setHasLoaded(true);
+            return;
+          }
+      
+          const selectedRestaurant = sessionStorage.getItem("selectedRestaurant");
+          const restaurantData = selectedRestaurant ? JSON.parse(selectedRestaurant) : null;
+      
+          const mockData = mockBooking(bookingId, restaurantData);
+      
+          setBooking(mockData);
+          setLoading(false);
+          setHasLoaded(true);
         } catch (err) {
-            console.error(err);
-            setLoading(false);
+          console.error(err);
+          setLoading(false);
         }
-    };
+      };
+      
 
     const getStatusText = (s) => {
         return { 
@@ -156,10 +201,6 @@ export default function BookingDetailsPage() {
     const handleApprove = async () => {
         if (window.confirm("Bạn có chắc chắn muốn xác nhận thông tin đặt tiệc này?")) {
             try {
-                // TODO: Gọi API để cập nhật status = 1 (ACCEPTED)
-                // const response = await updateBookingStatus(bookingId, 1);
-                
-                // Cập nhật local state
                 const updatedBooking = {
                     ...booking,
                     status: 1, // ACCEPTED
@@ -257,7 +298,19 @@ export default function BookingDetailsPage() {
                 </Card.Body>
             </Card>
 
-            <Tab.Container activeKey={activeKey} onSelect={k => setActiveKey(k)}>
+            <Tab.Container
+                activeKey={activeKey}
+                onSelect={(k) => {                    
+                    setActiveKey(k);
+                    if (k === "contract") {
+                        navigate(`/booking/${bookingId}/contract`, { replace: true });
+                    } else if (k === "payments") {
+                        navigate(`/booking/${bookingId}/payments`, { replace: true });
+                    } else {
+                        navigate(`/booking/${bookingId}`, { replace: true });
+                    }
+                }}
+            >
                 <Row>
                     <Col lg={12}>
                         <Card className="mb-3">

@@ -5,6 +5,8 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
     const [isEditing, setIsEditing] = useState(false);
     const [editingData, setEditingData] = useState({});
     const PRIMARY = "#D81C45";
+    const servicesSafe = Array.isArray(booking?.services) ? booking.services : [];
+    const menuCategoriesSafe = Array.isArray(booking?.menu?.categories) ? booking.menu.categories : [];
 
     const formatCurrency = (amount) =>
         (amount || 0).toLocaleString("vi-VN") + " VNĐ";
@@ -29,7 +31,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
         const menuPrice = (data.menu?.price || booking.menu?.price || 0) * (data.eventDetails?.tableCount || booking.tableCount || 0);
 
         // Tổng giá dịch vụ
-        const servicesTotal = (data.services || booking.services || []).reduce((sum, service) => {
+        const servicesTotal = (data.services || servicesSafe).reduce((sum, service) => {
             return sum + ((service.price || 0) * (service.quantity || 1));
         }, 0);
 
@@ -58,11 +60,8 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
 
     const prices = calculatePrices();
 
-    // Thêm useEffect để tự động tính lại giá khi editingData thay đổi
     useEffect(() => {
         if (isEditing) {
-            // Tự động tính lại giá khi đang chỉnh sửa
-            // Giá sẽ được tính lại mỗi khi render
         }
     }, [isEditing, editingData, booking]);
 
@@ -426,8 +425,8 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                 </div>
                             ) : (
                                 <ul className="list-unstyled">
-                                    {booking.menu.categories.map((cat) =>
-                                        cat.dishes.map((dish) => (
+                                    {menuCategoriesSafe.map((cat) =>
+                                        (cat.dishes || []).map((dish) => (
                                             <li key={dish.id}>
                                                 {dish.name} <em className="text-muted">({cat.name})</em>
                                             </li>
@@ -448,7 +447,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                             <i className="fas fa-plus me-1"></i>Thêm dịch vụ
                                         </Button>
                                     </div>
-                                    {editingData.services?.map((s, i) => (
+                                    {(editingData.services || []).map((s, i) => (
                                         <Card key={i} className="mb-2 border">
                                             <Card.Body className="p-3">
                                                 <Row className="align-items-center">
@@ -496,7 +495,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                             </Card.Body>
                                         </Card>
                                     ))}
-                                    {(!editingData.services || editingData.services.length === 0) && (
+                                    {(!Array.isArray(editingData.services) || editingData.services.length === 0) && (
                                         <p className="text-muted text-center py-3">
                                             Chưa có dịch vụ nào. Nhấn "Thêm dịch vụ" để thêm.
                                         </p>
@@ -504,10 +503,10 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                 </div>
                             ) : (
                                 <>
-                                    {booking.services.length > 0 && (
+                                    {servicesSafe.length > 0 && (
                                         <>
                                             <h6 className="mt-3">Dịch vụ bổ sung:</h6>
-                                            {booking.services.map((s, i) => (
+                                            {servicesSafe.map((s, i) => (
                                                 <div
                                                     key={i}
                                                     className="d-flex justify-content-between small border-bottom py-1"
@@ -515,7 +514,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                                     <span>
                                                         {s.name} x{s.quantity}
                                                     </span>
-                                                    <span>{formatCurrency(s.price * s.quantity)}</span>
+                                                    <span>{formatCurrency((s.price || 0) * (s.quantity || 1))}</span>
                                                 </div>
                                             ))}
                                         </>
@@ -606,7 +605,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                         style={{ borderRadius: "30px", color: "white" }}
                                         onClick={onApprove}
                                     >
-                                        <i className="fa-solid fa-check me-1"></i>Đồng ý tiệc
+                                        <i className="fa-solid fa-check me-1"></i>Xác nhận tiệc
                                     </Button>
                                     <Button
                                         className="flex-fill"
@@ -622,8 +621,6 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                     </Button>
                                 </div>
                             )}
-
-                            {/* Chỉ hiển thị khi status = 1 (ACCEPTED) hoặc 3 (CONFIRMED), không phải REJECTED */}
                             {(booking.status === 1 || booking.status === 3) && !paymentCompleted && (
                                 <Alert variant="success" className="text-center mt-3 mb-0 py-2">
                                     <i className="fas fa-check-circle me-2"></i>
@@ -647,7 +644,6 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                 </Alert>
                             )}
 
-                            {/* Hiển thị thông báo khi đã hủy */}
                             {booking.status === 6 && (
                                 <Alert variant="secondary" className="text-center mt-3 mb-0 py-2">
                                     <i className="fas fa-ban me-2"></i>

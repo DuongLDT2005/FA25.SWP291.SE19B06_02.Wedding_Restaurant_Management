@@ -39,7 +39,7 @@ export default function BookingActions({
             </Button>
             <Button
               as={Link}
-              to={`/booking/${bookingID}?payment=1`}
+              to={`/booking/${bookingID}`}
               state={{ booking: prepareAndStore() }}
               variant="outline-secondary"
               size="sm"
@@ -54,7 +54,7 @@ export default function BookingActions({
         {status === 3 && (
           <Button
             as={Link}
-            to={`/booking/${bookingID}`}
+            to={`/booking/${bookingID}/contract`}
             state={{ booking: prepareAndStore() }}
             variant="outline-secondary"
             size="sm"
@@ -92,7 +92,7 @@ export default function BookingActions({
 
       {status === 1 && (
         <>
-          <Button variant="primary" onClick={onTransfer} className="flex-grow-1">
+          <Button variant="primary" onClick={onTransfer} >
             <i className="bi bi-credit-card me-2"></i>
             Đặt cọc
           </Button>

@@ -4,10 +4,8 @@ import useAuth from "../../hooks/useAuth";
 import "../../styles/LoginStyles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import Footer from "../../components/Footer";
 import { Container, Row, Col, Form, Button, Alert, Modal } from "react-bootstrap";
 import AuthLayout from "../../layouts/MainLayout";
-
 
 export default function LoginPage() {
 
@@ -98,7 +96,6 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 Google Sign In
   const openGoogleSignIn = () => {
     const w = 600, h = 700;
     const left = (window.screenX || 0) + (window.innerWidth - w) / 2;
