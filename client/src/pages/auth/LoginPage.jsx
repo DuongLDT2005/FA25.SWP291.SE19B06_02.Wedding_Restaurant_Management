@@ -36,6 +36,9 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+
+    let valid = true;
+    
     if (!emailIsValid(email)) {
       setEmailError("Vui lòng nhập email hợp lệ.")
       setLoading(false)
