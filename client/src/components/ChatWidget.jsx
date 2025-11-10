@@ -24,8 +24,9 @@ export default function ChatWidget() {
     try {
       const isRestaurantQuery =
         input.toLowerCase().includes("nhà hàng") ||
-        input.toLowerCase().includes("tiệc") ||
         input.toLowerCase().includes("quán") ||
+        input.toLowerCase().includes("tiệc") ||
+        input.toLowerCase().includes("cưới") ||
         input.toLowerCase().includes("wedding");
 
       const endpoint = isRestaurantQuery
@@ -37,11 +38,10 @@ export default function ChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
-
       const data = await res.json();
       const aiMessage = { role: "ai", text: data.reply, data: data.data || [] };
       setMessages((prev) => [...prev, aiMessage]);
-    } catch {
+    } catch (error) {
       setMessages((prev) => [
         ...prev,
         { role: "ai", text: "Xin lỗi, tôi không thể phản hồi lúc này." },
@@ -52,7 +52,7 @@ export default function ChatWidget() {
   };
 
   const handleRestaurantClick = (id) => {
-    setIsOpen(false); // đóng chatbox
+    setIsOpen(false);
     navigate(`/restaurant/${id}`);
   };
 
@@ -87,13 +87,13 @@ export default function ChatWidget() {
                   style={{
                     ...styles.messageBubble,
                     backgroundColor:
-                      msg.role === "user" ? "#007bff" : "#f1f0f0",
+                      msg.role === "user" ? "#D81C45" : "#f6f6f6",
                     color: msg.role === "user" ? "white" : "black",
                   }}
                 >
                   <div style={{ whiteSpace: "pre-wrap" }}>{msg.text}</div>
 
-                  {/* ✅ Danh sách nhà hàng */}
+                  {/* Nếu AI trả về danh sách nhà hàng */}
                   {msg.role === "ai" && msg.data?.length > 0 && (
                     <div style={styles.cardContainer}>
                       {msg.data.map((r, index) => (
@@ -139,7 +139,6 @@ export default function ChatWidget() {
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef}></div>
           </div>
 
@@ -163,9 +162,14 @@ export default function ChatWidget() {
 }
 
 const styles = {
-  container: { position: "fixed", bottom: "20px", right: "20px", zIndex: 9999 },
+  container: {
+    position: "fixed",
+    bottom: "20px",
+    right: "20px",
+    zIndex: 9999,
+  },
   toggleButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#D81C45",
     color: "white",
     border: "none",
     borderRadius: "50%",
@@ -173,25 +177,29 @@ const styles = {
     height: "60px",
     fontSize: "26px",
     cursor: "pointer",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+    boxShadow: "0 4px 10px rgba(216, 28, 69, 0.4)",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
   chatBox: {
     width: "360px",
     height: "500px",
     backgroundColor: "#fff",
     borderRadius: "18px",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.25)",
+    boxShadow: "0 8px 25px rgba(216, 28, 69, 0.25)",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
   },
   header: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#D81C45",
     color: "white",
     padding: "10px 14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    fontSize: "16px",
+    fontWeight: "bold",
+    letterSpacing: "0.3px",
   },
   closeButton: {
     background: "none",
@@ -207,7 +215,7 @@ const styles = {
     flexDirection: "column",
     gap: "10px",
     overflowY: "auto",
-    backgroundColor: "#fafafa",
+    backgroundColor: "#f9f9f9",
   },
   messageWrapper: { display: "flex", width: "100%" },
   messageBubble: {
@@ -217,6 +225,7 @@ const styles = {
     lineHeight: "1.4",
     maxWidth: "80%",
     wordWrap: "break-word",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
   },
   cardContainer: {
     marginTop: "8px",
@@ -228,11 +237,11 @@ const styles = {
     display: "flex",
     gap: "10px",
     backgroundColor: "#fff",
-    border: "1px solid #ddd",
+    border: "1px solid #eee",
     borderRadius: "10px",
     padding: "8px",
     cursor: "pointer",
-    transition: "0.2s",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
   thumbnail: {
     width: "60px",
@@ -240,25 +249,33 @@ const styles = {
     borderRadius: "8px",
     objectFit: "cover",
   },
-  cardTitle: { fontWeight: "bold", fontSize: "14px" },
-  cardSub: { fontSize: "12px", color: "#555" },
+  cardTitle: { fontWeight: "bold", fontSize: "14px", color: "#D81C45" },
+  cardSub: { fontSize: "12px", color: "#777" },
   cardDesc: { fontSize: "13px", color: "#333" },
   cardAddr: { fontSize: "12px", color: "#777" },
-  inputArea: { display: "flex", padding: "10px", borderTop: "1px solid #ddd" },
+  inputArea: {
+    display: "flex",
+    padding: "10px",
+    borderTop: "1px solid #ddd",
+    backgroundColor: "white",
+  },
   input: {
     flex: 1,
     padding: "10px",
     borderRadius: "8px",
     border: "1px solid #ccc",
+    fontSize: "15px",
   },
   sendButton: {
     marginLeft: "8px",
-    backgroundColor: "#007bff",
+    backgroundColor: "#D81C45",
     color: "white",
     border: "none",
     borderRadius: "8px",
     padding: "0 14px",
     cursor: "pointer",
+    fontSize: "16px",
+    boxShadow: "0 3px 6px rgba(216, 28, 69, 0.3)",
   },
   loadingBubble: {
     display: "flex",
@@ -266,6 +283,7 @@ const styles = {
     backgroundColor: "#f1f0f0",
     borderRadius: "15px",
     padding: "8px 12px",
+    alignItems: "center",
   },
   dot: {
     width: "6px",
