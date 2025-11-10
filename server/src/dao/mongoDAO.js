@@ -12,6 +12,9 @@ export async function ensureOtpTTLIndex() {
 
 
 export function getCollection(collectionName, dbName = "userRestaurantsDB") {
+    if (!client) {
+        throw new Error("MongoDB client is not initialized. Missing MONGO_URI/MONGODB_URI in environment.");
+    }
     return client.db(dbName).collection(collectionName);
 }
 

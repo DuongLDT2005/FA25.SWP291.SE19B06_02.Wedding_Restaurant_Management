@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import CrudSection from "../../../layouts/CrudSection";
 import PromotionDetailPage from "./PromotionDetailPage";
 import PromotionCreatePage from "./PromotionCreatePage.jsx";
-import mock from "../../../mock/partnerMock"; // file mock data
+import mock from "../../../mock/partnerMock";
 
-export default function PromotionListPage() {
+export default function PromotionListPage({ readOnly = false }) {
   const [activePromotion, setActivePromotion] = useState(null);
   const [creating, setCreating] = useState(false);
 
@@ -15,9 +15,7 @@ export default function PromotionListPage() {
       description: p.description,
       minTable: p.minTable,
       discount:
-        p.discountType === 0
-          ? `${p.discountValue}%`
-          : "Miễn phí dịch vụ",
+        p.discountType === 0 ? `${p.discountValue}%` : "Miễn phí dịch vụ",
       date: `${p.startDate} - ${p.endDate}`,
       status: p.status === 1 ? "active" : "inactive",
     }))
@@ -37,6 +35,7 @@ export default function PromotionListPage() {
   ];
 
   const handleToggleStatus = (id, activate) => {
+    if (readOnly) return;
     setPromotions((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, status: activate ? "active" : "inactive" } : p
@@ -47,11 +46,18 @@ export default function PromotionListPage() {
   return (
     <>
       {creating ? (
-        <PromotionCreatePage onBack={() => setCreating(false)} />
+        readOnly ? (
+          <div className="alert alert-secondary text-center mt-3">
+            Chế độ chỉ xem: không thể tạo mới khuyến mãi.
+          </div>
+        ) : (
+          <PromotionCreatePage onBack={() => setCreating(false)} />
+        )
       ) : activePromotion ? (
         <PromotionDetailPage
           promotion={activePromotion}
           onBack={() => setActivePromotion(null)}
+          readOnly={readOnly}
         />
       ) : (
         <CrudSection
@@ -64,7 +70,8 @@ export default function PromotionListPage() {
             setActivePromotion(full);
           }}
           onToggleStatus={handleToggleStatus}
-          onCreate={() => setCreating(true)}
+          onCreate={() => !readOnly && setCreating(true)}
+          readOnly={readOnly}
         />
       )}
     </>

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Container } from "react-bootstrap";
 import MainLayout from "../../layouts/MainLayout";
 import SearchBar from "../../components/searchbar/SearchSection";
-import FilterResult from "./components/FilterResult";
-import ListResult from "./components/ListResult";
+import FilterResult from "./components/Filter/FilterResult";
+import ListResult from "./components/search/ListResult";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 const SAMPLE_VENUES = [
