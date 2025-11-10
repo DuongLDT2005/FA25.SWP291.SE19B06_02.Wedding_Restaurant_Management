@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import SearchBar from "../../components/SearchBar";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
@@ -67,6 +66,17 @@ function ListingRestaurant() {
             });
         }
 
+        // Filter by rating
+        if (starFilters.length > 0) {
+            matchStar = starFilters.some(filter => {
+                if (filter === "2.5") return r.rating <= 3.0;
+                if (filter === "3.0") return r.rating >= 3.0;
+                if (filter === "4.0") return r.rating >= 4.0;
+                if (filter === "5.0") return r.rating >= 5.0;
+                return false;
+            });
+        }
+
         // Filter by capacity
         if (capacityFilters.length > 0) {
             const minCapacity = Math.min(...r.halls.map(h => h.capacity));
@@ -90,7 +100,7 @@ function ListingRestaurant() {
 
     return (
         <>
-            <Header />
+            {/* <Header /> */}
 
             <div className="listing-container">
                 {/* Thanh search trên đầu */}

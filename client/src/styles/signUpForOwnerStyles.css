@@ -189,6 +189,46 @@
     display: block;
     min-height: 18px;
 }
+.file--upload {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.file--upload-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+/* Ẩn input type="file" gốc */
+.file--upload input[type="file"] {
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+}
+
+/* Style cho nút Label */
+.file--label-button {
+    background: #993344;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+}
 
 .file--upload {
     margin: 15px 0;
