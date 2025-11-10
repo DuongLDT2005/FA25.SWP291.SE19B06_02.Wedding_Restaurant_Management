@@ -10,41 +10,105 @@ export default function ChatWidget() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      const greeting = {
+        role: "ai",
+        text: `🌸 Xin chào bạn, mình là AI Assistant — trợ lý ảo của hệ thống Wedding Restaurant Management 💍
+
+Mình có thể giúp bạn:
+- 🔍 Gợi ý nhà hàng tiệc cưới phù hợp theo khu vực hoặc phong cách  
+- 💡 Tư vấn sảnh, menu, khuyến mãi nổi bật  
+- 💬 Trả lời các thắc mắc nhanh về đặt tiệc  
+
+Ví dụ, bạn có thể thử nói:
+👉 "Tôi cần nhà hàng tổ chức tiệc cưới sang trọng ở Hải Châu"
+👉 "Gợi ý nhà hàng có khuyến mãi tại Đà Nẵng"`,
+      };
+      setMessages([greeting]);
+    }
+  }, [isOpen, messages.length]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
+    const lowerInput = input.trim().toLowerCase();
     const userMessage = { role: "user", text: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
 
     try {
-      const isRestaurantQuery =
-        input.toLowerCase().includes("nhà hàng") ||
-        input.toLowerCase().includes("quán") ||
-        input.toLowerCase().includes("tiệc") ||
-        input.toLowerCase().includes("cưới") ||
-        input.toLowerCase().includes("wedding");
+      // 🧠 1️⃣ Trường hợp input "vô nghĩa" hoặc quá ngắn
+      if (
+        lowerInput.length < 2 || // chỉ 1 ký tự
+        /^[^a-zA-Z0-9\u00C0-\u1EF9]+$/.test(lowerInput) // toàn ký tự đặc biệt
+      ) {
+        const aiMessage = {
+          role: "ai",
+          text: "Mình chưa hiểu ý bạn lắm 😅 Bạn có thể nói rõ hơn được không?\nVí dụ:\n👉 'Tôi cần nhà hàng tổ chức tiệc cưới sang trọng ở Hải Châu'\n👉 'Gợi ý nhà hàng có view đẹp ở Sơn Trà'",
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+        setLoading(false);
+        return;
+      }
 
-      const endpoint = isRestaurantQuery
-        ? "http://localhost:5000/api/ai/suggest"
-        : "http://localhost:5000/api/chat";
+      // 🧠 2️⃣ Phân loại input: casual / restaurant / general
+      const casualWords = [
+        "hello",
+        "hi",
+        "chào",
+        "cảm ơn",
+        "thanks",
+        "bye",
+        "tạm biệt",
+        "ok",
+        "okay",
+        "uhm",
+        "ờ",
+        "haha",
+        "hihi",
+        "who",
+        "bạn là ai",
+      ];
+      const restaurantWords = [
+        "nhà hàng",
+        "quán",
+        "tiệc",
+        "cưới",
+        "wedding",
+        "restaurant",
+        "sảnh",
+        "view",
+      ];
+
+      const isCasual = casualWords.some((w) => lowerInput.includes(w));
+      const isRestaurant = restaurantWords.some((w) => lowerInput.includes(w));
+
+      const endpoint =
+        isCasual || isRestaurant
+          ? "http://localhost:5000/api/ai/suggest"
+          : "http://localhost:5000/api/chat";
 
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
+
       const data = await res.json();
       const aiMessage = { role: "ai", text: data.reply, data: data.data || [] };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: "ai", text: "Xin lỗi, tôi không thể phản hồi lúc này." },
+        {
+          role: "ai",
+          text: "Xin lỗi, hiện tại tôi đang bận 🥺 bạn thử lại chút nhé!",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -113,12 +177,8 @@ export default function ChatWidget() {
                               ⭐ {r.avgRating ?? "N/A"} | {r.totalReviews ?? 0}{" "}
                               đánh giá
                             </div>
-                            <div style={styles.cardDesc}>
-                              {r.description}
-                            </div>
-                            <div style={styles.cardAddr}>
-                              {r.fullAddress}
-                            </div>
+                            <div style={styles.cardDesc}>{r.description}</div>
+                            <div style={styles.cardAddr}>{r.fullAddress}</div>
                           </div>
                         </div>
                       ))}
@@ -130,7 +190,10 @@ export default function ChatWidget() {
 
             {loading && (
               <div
-                style={{ ...styles.messageWrapper, justifyContent: "flex-start" }}
+                style={{
+                  ...styles.messageWrapper,
+                  justifyContent: "flex-start",
+                }}
               >
                 <div style={styles.loadingBubble}>
                   <span style={styles.dot}></span>
