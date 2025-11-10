@@ -49,8 +49,8 @@ export default function WardCards() {
         <section className="py-5">
             <Container>
                 <div className="d-flex align-items-center gap-2 mb-4">
-                    <MapPin size={24} className="text-danger" />
-                    <h2 className="fw-bold text-danger mb-0">Tìm kiếm theo địa điểm</h2>
+                    <MapPin size={24} />
+                    <h3 className="fw-bold text-danger mb-0">Tìm kiếm theo địa điểm</h3>
                 </div>
 
                 <Row className="g-4">

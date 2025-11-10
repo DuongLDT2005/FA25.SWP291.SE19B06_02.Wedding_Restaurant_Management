@@ -15,7 +15,7 @@ const EventTypesSection = () => {
     return (
         <Container className="py-5">
             <div className="d-flex align-items-center gap-2 mb-4">
-                <PartyPopper size={24} className="text-danger" />
+                <PartyPopper size={26} />
                 <h2 className="fw-bold mb-0" style={{color: "#E11D48"}}>Các loại sự kiện được hỗ trợ</h2>
             </div>
 
