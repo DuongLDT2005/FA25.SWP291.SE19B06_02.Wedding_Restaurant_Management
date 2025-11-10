@@ -5,10 +5,12 @@ class UserService {
         const newOwner =  await UserDAO.createOwner(ownerData);
         return newOwner;
     }
+
     static async createCustomer(customerData) {
         const newCustomer = await UserDAO.createCustomer(customerData);
         return newCustomer;
     }
+
     static async updateUser(id,userData) {
         if (!userData || !id) {
             throw new Error('User data or User ID cannot be null');
@@ -16,10 +18,12 @@ class UserService {
         const updatedUser = await UserDAO.updateUserInfo(id, userData);
         return updatedUser;
     }
+
     static async getAllUsers() {
         const users = await UserDAO.getAllUsers();
         return users;
     }
+
     static async deleteUser(userId) {
         if (!userId) {
             throw new Error('User ID cannot be null');
@@ -31,10 +35,12 @@ class UserService {
         const customers = await UserDAO.getCustomers();
         return customers;
     }
+
     static async getAllOwners() {
         const owners = await UserDAO.getOwners();
         return owners;
     }
+
     static async getUserById(userId) {
         if (!userId) {
             throw new Error('User ID cannot be null');
@@ -53,8 +59,6 @@ class UserService {
         const updatedUser = await UserDAO.updateStatusUser(userId, status);
         return updatedUser;
     }
-
-    
-    
+   
 }
 export default UserService;

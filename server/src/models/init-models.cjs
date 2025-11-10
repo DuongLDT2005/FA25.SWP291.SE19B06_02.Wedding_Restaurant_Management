@@ -105,6 +105,8 @@ function initModels(sequelize) {
   dish.hasMany(dishmenu, { as: "dishmenus", foreignKey: "dishID"});
   dish.belongsTo(dishcategory, { as: "category", foreignKey: "categoryID"});
   dishcategory.hasMany(dish, { as: "dishes", foreignKey: "categoryID"});
+  dishcategory.belongsTo(restaurant, { as: "restaurant", foreignKey: "restaurantID"});
+  restaurant.hasMany(dishcategory, { as: "dishcategories", foreignKey: "restaurantID"});
   booking.belongsTo(eventtype, { as: "eventType", foreignKey: "eventTypeID"});
   eventtype.hasMany(booking, { as: "bookings", foreignKey: "eventTypeID"});
   restauranteventtype.belongsTo(eventtype, { as: "eventType", foreignKey: "eventTypeID"});
@@ -159,8 +161,8 @@ function initModels(sequelize) {
   service.hasMany(bookingservice, { as: "bookingservices", foreignKey: "serviceID"});
   promotionservice.belongsTo(service, { as: "service", foreignKey: "serviceID"});
   service.hasMany(promotionservice, { as: "promotionservices", foreignKey: "serviceID"});
-  customer.belongsTo(user, { as: "customer", foreignKey: "customerID"});
-  user.hasOne(customer, { as: "customer", foreignKey: "customerID"});
+  customer.belongsTo(user, {foreignKey: "customerID",targetKey: "userID",as: "user"});
+  user.hasOne(customer, {foreignKey: "customerID",sourceKey: "userID",as: "customer"});  
   payouts.belongsTo(user, { as: "releasedBy_user", foreignKey: "releasedBy"});
   user.hasMany(payouts, { as: "payouts", foreignKey: "releasedBy"});
   report.belongsTo(user, { as: "user", foreignKey: "userID"});

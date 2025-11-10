@@ -13,7 +13,7 @@ const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
 class RestaurantDAO {
   static async getAll() {
     const rows = await restaurant.findAll({
-      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }],
       order: [['restaurantID','ASC']]
     });
@@ -25,6 +25,7 @@ class RestaurantDAO {
       description: r.description,
       hallCount: r.hallCount,
       addressID: r.addressID,
+      phone: r.phone || null,
       thumbnailURL: r.thumbnailURL,
       status: r.status,
       address: r.address?.fullAddress || null,
@@ -34,7 +35,7 @@ class RestaurantDAO {
   static async getAvailable(){
     const rows = await restaurant.findAll({
       where: { status: true },
-      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
     });
     const dtos = toDTOs(rows);
@@ -45,6 +46,7 @@ class RestaurantDAO {
       description: r.description,
       hallCount: r.hallCount,
       addressID: r.addressID,
+      phone: r.phone || null,
       thumbnailURL: r.thumbnailURL,
       status: r.status,
       address: r.address?.fullAddress || null,
@@ -54,7 +56,7 @@ class RestaurantDAO {
   static async getAllByPartnerID(restaurantPartnerID) {
     const rows = await restaurant.findAll({
       where: { restaurantPartnerID },
-      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
     });
     const dtos = toDTOs(rows);
@@ -65,6 +67,7 @@ class RestaurantDAO {
       description: r.description,
       hallCount: r.hallCount,
       addressID: r.addressID,
+      phone: r.phone || null,
       thumbnailURL: r.thumbnailURL,
       status: r.status,
       address: r.address?.fullAddress || null,
@@ -73,7 +76,7 @@ class RestaurantDAO {
 
   static async getByID(restaurantID) {
     const r = await restaurant.findByPk(restaurantID, {
-      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [
         { model: address, as: 'address', attributes: ['fullAddress'] },
         { model: restaurantimage, as: 'restaurantimages', attributes: ['imageID','imageURL'] }
@@ -97,6 +100,7 @@ class RestaurantDAO {
       description: dto.description,
       hallCount: dto.hallCount,
       addressID: dto.addressID,
+      phone: dto.phone || null,
       thumbnailURL: dto.thumbnailURL,
       status: dto.status,
       address: dto.address?.fullAddress || null,
@@ -122,6 +126,7 @@ class RestaurantDAO {
       name: dto.name,
       description: dto.description,
       hallCount: dto.hallCount,
+      phone: dto.phone || null,
       thumbnailURL: dto.thumbnailURL,
       status: dto.status,
       address: dto.address?.fullAddress || null,
@@ -145,6 +150,7 @@ constructor({
     address: addr,
     thumbnailURL,
     status,
+    phone,
   }) {
     return await sequelize.transaction(async (t) => {
       const a = await address.create({
@@ -159,6 +165,7 @@ constructor({
         name,
         description,
         addressID: a.addressID,
+        phone,
         thumbnailURL,
         status: status ?? true,
       }, { transaction: t });
@@ -170,6 +177,7 @@ constructor({
         description: r.description,
         hallCount: r.hallCount ?? 0,
         addressID: r.addressID,
+        phone: r.phone || null,
         thumbnailURL: r.thumbnailURL,
         status: r.status,
       };
@@ -178,7 +186,7 @@ constructor({
 
   static async updateRestaurant(
     restaurantID,
-    { restaurantPartnerID, name, description, address: addr, thumbnailURL }
+    { restaurantPartnerID, name, description, address: addr, thumbnailURL, phone }
   ) {
     return await sequelize.transaction(async (t) => {
       const r = await restaurant.findByPk(restaurantID, { transaction: t });
@@ -196,6 +204,7 @@ constructor({
         restaurantPartnerID,
         name,
         description,
+        phone,
         thumbnailURL,
       }, { transaction: t });
 

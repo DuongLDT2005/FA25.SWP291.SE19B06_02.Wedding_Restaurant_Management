@@ -11,6 +11,7 @@ CREATE TABLE User (
     password VARCHAR(255) NOT NULL,
     avatarURL VARCHAR(255) DEFAULT NULL,
     role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
+    role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
@@ -18,6 +19,7 @@ CREATE TABLE User (
 -- Table Customer
 CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
+    weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     partnerName VARCHAR(255),
     FOREIGN KEY (customerID) REFERENCES User(userID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -634,3 +636,8 @@ SELECT menuID, menuName, pricePerTable FROM Menu;
 
 
 Use weddingrestaurantmanagement;
+('VAT_RATE', '0.10', 'Finance', 'Thuế giá trị gia tăng mặc định 10%'),
+('BOOKING_DEPOSIT_PERCENTAGE', '0.30', 'Booking', 'Tỷ lệ tiền cọc khi khách đặt tiệc');
+-- ('SUPPORT_EMAIL', 'support@weddingvenue.vn', 'System', 'Email liên hệ hiển thị trong hệ thống', 1);
+
+

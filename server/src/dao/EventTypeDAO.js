@@ -37,5 +37,19 @@ class EventTypeDAO {
         });
         return toDTOs(rows);
     }
+    static async addEventType(name, description) {
+        const e = await eventtype.create({ name, description });
+        return toDTO(e);
+    }
+
+    static async addEventTypeToRestaurant(restaurantID, eventTypeID) {
+        const [link, created] = await restauranteventtype.findOrCreate({ where: { restaurantID, eventTypeID }, defaults: { restaurantID, eventTypeID } });
+        return !!link;
+    }
+
+    static async removeEventTypeFromRestaurant(restaurantID, eventTypeID) {
+        const count = await restauranteventtype.destroy({ where: { restaurantID, eventTypeID } });
+        return count > 0;
+    }
 }
 export default EventTypeDAO;

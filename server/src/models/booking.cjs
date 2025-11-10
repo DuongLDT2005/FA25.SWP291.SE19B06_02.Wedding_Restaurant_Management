@@ -9,7 +9,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     customerID: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'customer',
         key: 'customerID'
@@ -17,7 +17,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     eventTypeID: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'eventtype',
         key: 'eventTypeID'
@@ -33,7 +33,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     menuID: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'menu',
         key: 'menuID'

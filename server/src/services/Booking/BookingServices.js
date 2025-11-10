@@ -160,6 +160,62 @@ class BookingService {
     return booking;
   }
 
+  /**
+   * Create a manual/blocked booking (external booking) that reserves a time slot for a hall.
+   * This booking has no customer (customerID = null) and status = MANUAL_BLOCKED.
+   * Useful when restaurant admin wants to mark a timeslot as already booked by an external system.
+   * Required fields: hallID, eventDate, startTime, endTime, tableCount
+   */
+  async setBooking(data, actorPartnerID = null) {
+    const { hallID, eventDate, startTime, endTime, tableCount, specialRequest = '', menuID = null, eventTypeID = null } = data;
+    if (!hallID || !eventDate || !startTime || !endTime || !Number.isInteger(tableCount) || tableCount <= 0) {
+      throw new Error('Missing required fields for manual booking (hallID, eventDate, startTime, endTime, tableCount)');
+    }
+
+    // Validate date/time
+    const now = new Date();
+    const event = new Date(eventDate);
+    if (isNaN(event.getTime())) throw new Error('Invalid event date format.');
+    if (event < now) throw new Error('Event date cannot be in the past.');
+
+    const start = new Date(`1970-01-01T${startTime}`);
+    const end = new Date(`1970-01-01T${endTime}`);
+    if (start >= end) throw new Error('Invalid time range: startTime must be before endTime.');
+
+    // Check overlapping bookings for the hall
+    const overlapping = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+    if (overlapping.length > 0) throw new Error('This hall is already booked for the selected time range.');
+
+    // If actorPartnerID provided, ensure partner owns the hall's restaurant
+    if (actorPartnerID) {
+      const ownerPartner = await BookingDAO.getRestaurantPartnerByHallID(hallID);
+      if (!ownerPartner || String(ownerPartner.restaurantPartnerID) !== String(actorPartnerID)) {
+        throw new Error('Not authorized to create manual booking for this hall');
+      }
+    }
+
+    // Create a booking record with customerID = null and status = MANUAL_BLOCKED
+    const bookingData = {
+      customerID: null,
+      eventTypeID,
+      hallID,
+      menuID,
+      eventDate,
+      startTime,
+      endTime,
+      tableCount,
+      specialRequest,
+      status: BookingStatus.MANUAL_BLOCKED,
+    };
+
+    const created = await BookingDAO.createBooking(bookingData, { dishIDs: [], services: [], promotionIDs: [] });
+    // Immediately set status via DAO (in case createBooking doesn't persist status field)
+    if (created && created.bookingID) {
+      await BookingDAO.updateBooking(created.bookingID, { status: BookingStatus.MANUAL_BLOCKED, customerID: null });
+    }
+    return created;
+  }
+
   /** ✅ GET ALL */
   async getAllBookings() {
     return BookingDAO.getAllBookings();

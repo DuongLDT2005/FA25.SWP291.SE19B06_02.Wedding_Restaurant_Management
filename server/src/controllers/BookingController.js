@@ -107,6 +107,18 @@ class BookingController {
         }
     }
 
+    // POST /api/bookings/manual - Create manual (external) booking (partner/admin only)
+    static async createManualBooking(req, res) {
+        try {
+            const partnerID = req.user?.userId;
+            if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const booking = await BookingService.setBooking(req.body, partnerID);
+            res.status(201).json({ success: true, message: 'Manual booking created', data: booking });
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    }
+
     // PUT /api/bookings/:id - Update booking
     static async updateBooking(req, res) {
         try {

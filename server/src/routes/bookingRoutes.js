@@ -11,6 +11,8 @@ const router = Router();
 router.get("/", BookingController.getAllBookings);
 router.get("/:id", BookingController.getBookingById);
 router.post("/", BookingController.createBooking);
+// Create manual/external booking (partner only)
+router.post('/manual', authenticateJWT, ensurePartner, BookingController.createManualBooking);
 router.put("/:id", BookingController.updateBooking);
 router.delete("/:id", BookingController.deleteBooking);
 

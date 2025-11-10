@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import Footer from "../../components/Footer";
-import SearchBar from "../../components/SearchBar";
+import SearchBar from "../../components/searchbar/SearchSection";
 import ScrollToTopButton from "../../components/ScrollToTopButton";
 import "../../styles/ListingRestaurant.css";
 import { Link } from 'react-router-dom';

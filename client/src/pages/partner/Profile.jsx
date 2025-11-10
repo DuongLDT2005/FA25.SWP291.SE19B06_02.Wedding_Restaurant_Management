@@ -9,7 +9,7 @@ import {
   Badge,
 } from "react-bootstrap";
 import PartnerLayOut from "../../layouts/PartnerLayout";
-import "../../styles/ProfileStyles.css";
+// import "../../styles/ProfileStyles.css";
 
 export default function Profile() {
   const [formData, setFormData] = useState({
@@ -392,22 +392,21 @@ export default function Profile() {
             </Card>
         </Col>
 
-        {/* RIGHT: Nội dung chi tiết */}
-        <Col lg={8}>
-          <Card className="shadow-sm border-0 rounded-4">
-            <Card.Body className="p-4">
-              <div className="d-flex align-items-center mb-4">
-                <div className="flex-grow-1">
-                  <h4 className="fw-bold mb-1" style={{ color: "#000" }}>Thông tin đại diện nhà hàng</h4>
-                  <p className="text-muted mb-0 small">
-                    Cập nhật thông tin cá nhân và tài khoản của bạn
-                  </p>
+          {/* RIGHT: Form Card */}
+          <Col lg={8}>
+            <Card className="border-0 shadow">
+              <Card.Body className="p-4">
+                {/* Header */}
+                <div className="d-flex align-items-center mb-4">
+                  <div className="flex-grow-1">
+                    <h5 className="fw-bold text-dark mb-1">Thông tin đại diện nhà hàng</h5>
+                    <p className="text-muted-custom small mb-0">Cập nhật thông tin cá nhân và tài khoản</p>
+                  </div>
+                  <Badge bg="success" className="px-3 py-2">
+                    <i className="bi bi-check-circle me-1"></i>
+                    Đã xác thực
+                  </Badge>
                 </div>
-                <Badge bg="success" className="px-3 py-2">
-                  <i className="bi bi-check-circle me-1"></i>
-                  Đã xác thực
-                </Badge>
-              </div>
 
               <Form onSubmit={handleSubmit}>
                 {/* --- Tài khoản */}
@@ -427,92 +426,84 @@ export default function Profile() {
                     <h5 className="mb-0 fw-bold" style={{ color: "#000" }}>Thông tin tài khoản</h5>
                   </div>
 
-                  <div className="ps-5">
-                    <Row className="g-3 mb-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Email
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-envelope"></i>
-                            </span>
-                            <Form.Control
-                              type="email"
-                              name="email"
-                              value={formData.email}
-                              onChange={handleChange}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Số điện thoại
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-telephone"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleChange}
-                              className="border-start-0"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
+                    <div className="ps-5">
+                      <Row className="g-3 mb-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Email</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-envelope"></i>
+                              </span>
+                              <Form.Control
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Số điện thoại</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-telephone"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                className="border-0"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
 
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Họ và tên
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-person"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="fullName"
-                              value={formData.fullName}
-                              onChange={handleChange}
-                              className="border-start-0"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Ngày tạo tài khoản
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-calendar"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              value={formData.createdAt}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
+                      <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Họ và tên</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-person"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="fullName"
+                                value={formData.fullName}
+                                onChange={handleChange}
+                                className="border-0"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Ngày tạo tài khoản</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-calendar"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                value={formData.createdAt}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </div>
                   </div>
-                </div>
 
-                <hr className="my-4" />
+                  <hr className="my-4" />
 
                 {/* --- Hợp tác & Giấy phép */}
                 <div className="mb-4">
@@ -531,62 +522,58 @@ export default function Profile() {
                     <h5 className="mb-0 fw-bold" style={{ color: "#000" }}>Hợp tác & Giấy phép</h5>
                   </div>
 
-                  <div className="ps-5">
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Giấy phép kinh doanh
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-white border-end-0">
-                              <i className="bi bi-link-45deg"></i>
-                            </span>
-                            <Form.Control
-                              type="text"
-                              name="licenseUrl"
-                              value={formData.licenseUrl}
-                              onChange={handleChange}
-                              placeholder="Nhập hoặc dán đường dẫn..."
-                              className="border-start-0"
-                            />
-                          </div>
-                          {formData.licenseUrl && (
-                            <a
-                              href={formData.licenseUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="small text-decoration-none d-inline-flex align-items-center mt-2"
-                            >
-                              <i className="bi bi-eye me-1"></i>
-                              Xem giấy phép
-                            </a>
-                          )}
-                        </Form.Group>
-                      </Col>
+                    <div className="ps-5">
+                      <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Giấy phép kinh doanh</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-0">
+                                <i className="bi bi-link-45deg"></i>
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="licenseUrl"
+                                value={formData.licenseUrl}
+                                onChange={handleChange}
+                                placeholder="Nhập đường dẫn..."
+                                className="border-0"
+                              />
+                            </div>
+                            {formData.licenseUrl && (
+                              <a
+                                href={formData.licenseUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="small d-inline-flex align-items-center mt-2"
+                              >
+                                <i className="bi bi-eye me-1"></i>
+                                Xem giấy phép
+                              </a>
+                            )}
+                          </Form.Group>
+                        </Col>
 
-                      <Col md={6}>
-                        <Form.Group>
-                          <Form.Label className="small fw-semibold text-muted">
-                            Tỷ lệ hoa hồng (%)
-                          </Form.Label>
-                          <div className="input-group">
-                            <span className="input-group-text bg-light border-end-0">
-                              <i className="bi bi-percent"></i>
-                            </span>
-                            <Form.Control
-                              type="number"
-                              name="commissionRate"
-                              value={formData.commissionRate}
-                              disabled
-                              className="border-start-0 bg-light"
-                            />
-                          </div>
-                        </Form.Group>
-                      </Col>
-                    </Row>
+                        <Col md={6}>
+                          <Form.Group>
+                            <Form.Label className="small fw-semibold text-primary">Tỷ lệ hoa hồng (%)</Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-0">
+                                <i className="bi bi-percent"></i>
+                              </span>
+                              <Form.Control
+                                type="number"
+                                name="commissionRate"
+                                value={formData.commissionRate}
+                                disabled
+                                className="border-0 bg-light"
+                              />
+                            </div>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </div>
                   </div>
-                </div>
 
                 <div className="d-flex gap-2 justify-content-end mt-4 pt-3 border-top">
                   <Button

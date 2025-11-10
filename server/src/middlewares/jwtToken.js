@@ -61,6 +61,13 @@ export async function authMiddleware(req, res, next) {
     }
     return next();
   }
+  export async function ensureAdmin(req, res, next) {
+    const role = req.user?.role;
+    if (role !== userRole.admin) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+    return next();
+  }
   export async function ensureCustomer(req, res, next){
     const role = req.user?.role;
     if (role !== userRole.customer) {
