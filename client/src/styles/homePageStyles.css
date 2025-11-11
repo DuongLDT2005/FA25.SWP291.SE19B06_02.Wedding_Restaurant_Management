@@ -1,9 +1,0 @@
-.scroll-row {
-  display: flex;
-  gap: 16px;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-}
-
-.scroll-row::-webkit-scrollbar { display: none; }
-.scroll-row { -ms-overflow-style: none; scrollbar-width: none; }
