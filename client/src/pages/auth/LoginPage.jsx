@@ -38,6 +38,7 @@ export default function LoginPage() {
   const [forgotEmailError, setForgotEmailError] = useState("");
 
   const { login, forgotPassword } = useAuth();
+
   const navigate = useNavigate();
 
   const emailIsValid = (e) =>

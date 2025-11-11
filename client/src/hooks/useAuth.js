@@ -12,6 +12,7 @@ import {
   clearError,
   clearSuccess,
 } from "../redux/slices/authSlice";
+import { loginWithGooglePopup } from "../firebase/firebase";
 
 /**
  * useAuth hook (Redux backed)
@@ -106,6 +107,34 @@ export default function useAuth() {
     [dispatch]
   );
 
+  const loginWithGoogle = async () => {
+    try {
+      // 1. Login Firebase popup
+      const result = await loginWithGooglePopup();
+      const firebaseUser = result.user;
+
+      // 2. Lấy Firebase ID token
+      const token = await firebaseUser.getIdToken();
+
+      // 3. Gửi token sang backend
+      const res = await fetch("/api/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Google login failed");
+
+      // 4. Lưu user vào redux
+      dispatch(setUser(data.user));
+
+      return data.user;
+    } catch (err) {
+      throw err;
+    }
+  };
+
   return {
     user,
     isLoading,
@@ -121,5 +150,6 @@ export default function useAuth() {
     resetPassword,
     clearAuthError,
     clearAuthSuccess,
+    loginWithGoogle,
   };
 }

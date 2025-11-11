@@ -60,7 +60,7 @@ export default function Header() {
     <Navbar
       expand="md"
       fixed="top"
-      className={`py-2 transition-all ${transparent ? "bg-transparent" : "bg-white shadow-lg"}`}
+      className={`py-2 transition-all ${transparent ? "bg-transparent" : "bg-white shadow-sm"}`}
       style={{
         zIndex: 999,
         transition: "all 0.3s ease",

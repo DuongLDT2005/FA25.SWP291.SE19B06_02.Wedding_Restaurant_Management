@@ -9,8 +9,11 @@ export default function MainLayout({ children }) {
   return (
     <div className="min-vh-100">
       <Header />
-      <main role="main" style={{ paddingTop: 88, paddingBottom: 32 }}>
-        {children}
+
+      <main role="main">
+        <Container fluid style={{ paddingTop: 88, paddingBottom: 32 }}>
+          {children}
+        </Container>
       </main>
 
       <Footer />

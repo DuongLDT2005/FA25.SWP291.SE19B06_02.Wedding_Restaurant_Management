@@ -1,8 +1,12 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ImageCarousel from "../../../components/ImageCarousel";
 
 export default function HallList({ restaurant, onSelectHall }) {
+  const navigate = useNavigate();
+  const handleRequestBooking = () => {
+    navigate("/bookingForm");
+  }
   return (
     <div>
       <h4 className="section-title">Danh sách sảnh</h4>
@@ -27,7 +31,7 @@ export default function HallList({ restaurant, onSelectHall }) {
               <div className="card-body py-0">
                 <h5
                   className="card-title"
-                  style={{ color: "#934", fontWeight: "bold", cursor: "pointer" }}
+                  style={{ color: "#e11d48", fontWeight: "bold", cursor: "pointer" }}
                   data-bs-toggle="modal"
                   data-bs-target="#hallModal"
                   onClick={() => onSelectHall(hall)}
@@ -40,7 +44,7 @@ export default function HallList({ restaurant, onSelectHall }) {
               </div>
 
               <div className="card-footer bg-transparent border-0 text-end">
-                <button className="requestBtn">Gửi yêu cầu đặt chỗ</button>
+                <button className="requestBtn" onClick={handleRequestBooking()}>Gửi yêu cầu đặt chỗ</button>
               </div>
             </div>
           </div>
