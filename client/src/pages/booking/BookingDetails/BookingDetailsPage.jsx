@@ -9,8 +9,8 @@ import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ScrollToTopButton from "../../../components/ScrollToTopButton";
 import "../../../styles/BookingDetailsStyles.css"; // optional extra styles
-import useBooking from "../../../hooks/useBooking";
 import { restaurants } from "../../restaurant/ListingRestaurant";
+import useBooking from "../../../hooks/useBooking";
 
 const PRIMARY = "#D81C45";
 

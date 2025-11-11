@@ -9,19 +9,6 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
     const PRIMARY = "#D81C45";
     const servicesSafe = Array.isArray(booking?.services) ? booking.services : [];
     const menuCategoriesSafe = Array.isArray(booking?.menu?.categories) ? booking.menu.categories : [];
-    const user = useSelector((state) => state?.auth?.user);
-    const roleString = String(user?.role || user?.userRole || user?.type || "").toLowerCase();
-    const isCustomer = roleString.includes("customer");
-    const [showMenuModal, setShowMenuModal] = useState(false);
-    const [showServiceModal, setShowServiceModal] = useState(false);
-    const [selectedMenuId, setSelectedMenuId] = useState("");
-    const [tempMenu, setTempMenu] = useState(null);
-    const [selectedDishes, setSelectedDishes] = useState([]);
-    const [selectedServiceIds, setSelectedServiceIds] = useState([]);
-    const restaurantData = restaurants.find(
-      (r) => r.name.trim() === booking.restaurant.name.trim()
-    );
-    const eventTypeText = typeof booking?.eventType === "string" ? booking.eventType : (booking?.eventType?.name || "");
 
     const formatCurrency = (amount) =>
         (amount || 0).toLocaleString("vi-VN") + " VNĐ";
@@ -299,7 +286,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                                 <Form.Label><strong>Loại sự kiện:</strong></Form.Label>
                                                 <Form.Control
                                                     type="text"
-                                                    value={eventTypeText}
+                                                    value={booking.eventType || ""}
                                                     disabled
                                                 />
                                             </Form.Group>
@@ -327,7 +314,7 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
                                             <strong>Địa chỉ:</strong> {booking.restaurant?.address}
                                         </p>
                                         <p>
-                                            <strong>Loại sự kiện:</strong> {eventTypeText}
+                                            <strong>Loại sự kiện:</strong> {booking.eventType}
                                         </p>
                                     </Col>
                                 </Row>
