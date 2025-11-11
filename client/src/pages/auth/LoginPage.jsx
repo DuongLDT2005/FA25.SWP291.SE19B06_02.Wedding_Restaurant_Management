@@ -38,6 +38,7 @@ export default function LoginPage() {
   const [forgotEmailError, setForgotEmailError] = useState("");
 
   const { login, forgotPassword } = useAuth();
+
   const navigate = useNavigate();
 
   const emailIsValid = (e) =>
@@ -71,7 +72,7 @@ export default function LoginPage() {
       // Điều hướng theo vai trò
       if (data.role === "ADMIN") navigate("/admin/dashboard");
       else if (data.role === "RESTAURANT_PARTNER") navigate("/partner");
-      else navigate("/customer/home");
+      else navigate("/");
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");
     } finally {
@@ -134,7 +135,7 @@ export default function LoginPage() {
 
             // Nếu backend trả về JWT → lưu lại
             localStorage.setItem("token", res.data.token);
-            navigate("/customer/home"); // hoặc điều hướng theo role
+            navigate("/"); // hoặc điều hướng theo role
           } catch (error) {
             console.error("Google login API error:", error);
             toast.error("Đăng nhập Google thất bại. Vui lòng thử lại!");

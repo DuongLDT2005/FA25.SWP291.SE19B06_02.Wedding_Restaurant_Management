@@ -23,8 +23,6 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div
         style={{
-          padding: "24px",
-          backgroundColor: "#fafafa",
           minHeight: "100vh",
         }}
       >

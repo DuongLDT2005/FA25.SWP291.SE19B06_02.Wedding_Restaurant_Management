@@ -12,7 +12,8 @@ export default function TimeSelect() {
   const { state, setField } = useSearchForm();
 
   const handleChange = (e) => {
-    const slot = TIME_SLOTS.find((s) => s.id === e.target.value);
+    const selectedLabel = e.target.value;
+    const slot = TIME_SLOTS.find((s) => s.label === selectedLabel);
     if (slot) {
       setField("startTime", slot.startTime);
       setField("endTime", slot.endTime);

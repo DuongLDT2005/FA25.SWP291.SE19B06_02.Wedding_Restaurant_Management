@@ -4,7 +4,7 @@ import LandingPage from "../pages/landingPage/LandingPage";
 import SignUpCustomer from "../pages/auth/SignUpCustomerPage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpOwner from "../pages/auth/SignUpOwnerPage";
-import RestaurantDetails from "../pages/restaurant/RestaurantDetailsPage";
+import RestaurantDetailsPage from "../pages/restaurant/restaurantDetails/RestaurantDetailsPage";
 import PartnerDashboard from "../pages/partner/dashboard/Dashboard";
 import ProfileBusiness from "../pages/partner/Profile";
 import Restaurants from "../pages/partner/restaurant/RestaurantListPage";
@@ -45,7 +45,7 @@ import BookingListPage from "../pages/customer/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
-import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
+import BookingDetailsPage from "../pages/booking/BookingDetails/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
 
 function AppRoutes() {
@@ -56,7 +56,7 @@ function AppRoutes() {
         <Route path="/signup/customer" element={<SignUpCustomer />} />
         <Route path="/signup/partner" element={<SignUpOwner />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+        <Route path="/restaurants/:id" element={<RestaurantDetailsPage />} />
         <Route path="/partner" element={<PartnerDashboard />} />
         <Route path="/partner/negotiation" element={<NegotiationPage />} />
         {/* <Route path="/partner/profile" element={<ProfileBusiness />} /> */}
@@ -83,6 +83,7 @@ function AppRoutes() {
         <Route path="/partner/payouts" element={<PartnerPayoutPage />} />
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
+
 
         <Route path="/customer/bookings" element={<BookingListPage />} />
         <Route path="/bookingForm" element={<BookingPage />} />

@@ -33,12 +33,17 @@ export default function AdminSideBar() {
 
   return (
     <div
-      className="sticky-sidebar bg-white border-end vh-100 d-flex flex-column top-0"
+      className="bg-white border-end d-flex flex-column"
       style={{
+        // make sidebar sticky so it stays visible while right content scrolls
+        position: "sticky",
+        top: 0,
+        height: "100vh",
         width: collapsed ? 70 : 220,
         transition: "width 0.3s",
         minWidth: collapsed ? 70 : 220,
         maxWidth: collapsed ? 70 : 220,
+        overflowY: "auto", // allow internal scrolling if sidebar taller than viewport
       }}
     >
       {/* Header */}
@@ -148,8 +153,7 @@ function SidebarItem({ to, label, icon, collapsed }) {
         to={to}
         end
         className={({ isActive }) =>
-          `d-flex align-items-center rounded-3 mb-2 ${
-            isActive ? "bg-primary text-white" : "text-dark"
+          `d-flex align-items-center rounded-3 mb-2 ${isActive ? "bg-primary text-white" : "text-dark"
           }`
         }
         style={{
@@ -176,11 +180,8 @@ function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
     <div>
       <button
         onClick={toggle}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        className={`w-100 border-0 text-start d-flex align-items-center rounded-3 mb-2 ${
-          open || hover ? "bg-primary text-white" : "text-primary"
-        }`}
+        className={`w-100 border-0 bg-transparent text-start d-flex align-items-center rounded-3 mb-2 ${open ? "bg-light text-primary" : "text-dark"
+          }`}
         style={{
           display: "flex",
           gap: 15,
@@ -210,8 +211,7 @@ function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
               key={index}
               to={item.to}
               className={({ isActive }) =>
-                `d-block rounded-3 py-2 ps-3 mb-1 text-decoration-none ${
-                  isActive ? "text-primary fw-semibold" : "text-secondary"
+                `d-block rounded-3 py-2 ps-3 mb-1 text-decoration-none ${isActive ? "text-primary fw-semibold" : "text-secondary"
                 }`
               }
             >

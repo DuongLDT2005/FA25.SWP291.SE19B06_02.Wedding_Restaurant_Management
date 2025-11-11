@@ -3,7 +3,7 @@ import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTopButton";
 import ChatWidget from "../components/ChatWidget";
 
-export default function MainLayout({ children }) {
+export default function LandingPageLayout({ children }) {
   return (
     <div className="d-flex flex-column min-vh-100">
         <Header />

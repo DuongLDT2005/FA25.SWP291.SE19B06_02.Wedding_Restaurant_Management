@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Card, Row, Col } from "react-bootstrap"
@@ -9,7 +8,6 @@ import ConfirmModal from "./ConfirmModal"
 import CancelModal from "./CancelModal"
 import ReviewModal from "./ReviewModal"
 import ScrollToTopButton from "../../../components/ScrollToTopButton"
-import "bootstrap/dist/css/bootstrap.min.css"
 
 export default function BookingCard({
   booking,
@@ -112,14 +110,14 @@ export default function BookingCard({
         }}
       >
         <Card.Body className="p-3">
-          <Row className="g-3 align-items-center">
+          <Row className="g-3">
             <Col xs={3}>
               <Card.Img
                 src={b.restaurant.thumbnailURL || "https://via.placeholder.com/300x200?text=No+Image"}
                 alt={b.restaurant.name}
                 style={{
-                  height: "100%",
                   width: "100%",
+                  height: "200px",
                   objectFit: "cover",
                   transition: 'transform 0.3s ease'
                 }}
@@ -128,17 +126,16 @@ export default function BookingCard({
 
             <Col xs={6}>
               <div>
-                <h5
+                <h3
                   className="mb-2"
                   style={{
-                    fontSize: '1.1rem',
                     fontWeight: '600',
                     color: '#1f2937',
                     letterSpacing: '-0.3px'
                   }}
                 >
                   {b.restaurant.name}
-                </h5>
+                </h3>
 
                 <div style={{
                   fontSize: "0.85rem",
@@ -188,9 +185,9 @@ export default function BookingCard({
                 <div style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
-                  color: 'rgb(225, 29, 72)'
+                  color: 'rgb(225, 29, 72)',
                 }}>
-                  VND {formatPrice(b.totalAmount || b.total || b.price || 0)}
+                  {formatPrice(b.totalAmount || b.total || b.price || 0)} VND
                 </div>
 
                 <button

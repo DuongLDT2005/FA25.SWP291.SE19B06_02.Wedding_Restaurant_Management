@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   login as loginThunk,
@@ -12,11 +12,13 @@ import {
   clearError,
   clearSuccess,
 } from "../redux/slices/authSlice";
+import { loginWithGooglePopup } from "../firebase/firebase";
 
 /**
- * useAuth hook (Redux backed)
- * - returns user, loading, error, successMessage, isAuthenticated
- * - exposes login/logout/refresh/signUp/forgot/reset helpers
+ * ✅ useAuth hook (Redux backed)
+ * - Lưu token vào localStorage
+ * - Tự động lấy lại user khi reload (nếu có token)
+ * - Xử lý đăng nhập Google + đăng nhập truyền thống
  */
 export default function useAuth() {
   const dispatch = useDispatch();
@@ -26,26 +28,70 @@ export default function useAuth() {
 
   const isAuthenticated = !!user;
 
-  /** Đăng nhập */
+  // ======================================================
+  // 1️⃣ Tự động refresh user khi app load lại
+  // ======================================================
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      // gọi helper kiểm tra token hợp lệ
+      fetchCurrentUserFromToken(token);
+    }
+  }, [dispatch]);
+
+  const fetchCurrentUserFromToken = async (token) => {
+    try {
+      const res = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch(setUser(data.user));
+      } else {
+        localStorage.removeItem("token");
+        dispatch(setUser(null));
+      }
+    } catch (err) {
+      localStorage.removeItem("token");
+      dispatch(setUser(null));
+    }
+  };
+
+  // ======================================================
+  // 2️⃣ Đăng nhập truyền thống
+  // ======================================================
   const login = useCallback(
     async (credentials) => {
       const action = await dispatch(loginThunk(credentials));
       if (loginThunk.rejected.match(action))
         throw action.payload || action.error.message;
+
+      // ✅ Lưu token nếu backend trả về
+      if (action.payload?.token) {
+        localStorage.setItem("token", action.payload.token);
+      }
+
       return action.payload;
     },
     [dispatch]
   );
 
-  /** Đăng xuất */
+  // ======================================================
+  // 3️⃣ Đăng xuất
+  // ======================================================
   const logout = useCallback(async () => {
     const action = await dispatch(logoutThunk());
     if (logoutThunk.rejected.match(action))
       throw action.payload || action.error.message;
-    dispatch(setUser(null)); // đảm bảo xóa user local
+
+    // ✅ Xóa token + user
+    localStorage.removeItem("token");
+    dispatch(setUser(null));
   }, [dispatch]);
 
-  /** Lấy user hiện tại */
+  // ======================================================
+  // 4️⃣ Refresh user (bằng redux thunk fetchCurrentUser)
+  // ======================================================
   const refreshUser = useCallback(async () => {
     const action = await dispatch(fetchCurrentUser());
     if (fetchCurrentUser.rejected.match(action)) {
@@ -55,7 +101,9 @@ export default function useAuth() {
     return action.payload;
   }, [dispatch]);
 
-  /** Đăng ký Customer */
+  // ======================================================
+  // 5️⃣ Đăng ký Customer
+  // ======================================================
   const signUpCustomer = useCallback(
     async (payload) => {
       const action = await dispatch(signUpCustomerThunk(payload));
@@ -66,7 +114,9 @@ export default function useAuth() {
     [dispatch]
   );
 
-  /** Đăng ký Partner */
+  // ======================================================
+  // 6️⃣ Đăng ký Partner
+  // ======================================================
   const signUpPartner = useCallback(
     async (payload) => {
       const action = await dispatch(signUpPartnerThunk(payload));
@@ -77,7 +127,9 @@ export default function useAuth() {
     [dispatch]
   );
 
-  /** Quên mật khẩu */
+  // ======================================================
+  // 7️⃣ Quên mật khẩu
+  // ======================================================
   const forgotPassword = useCallback(
     async (email) => {
       const action = await dispatch(forgotPasswordThunk(email));
@@ -88,7 +140,9 @@ export default function useAuth() {
     [dispatch]
   );
 
-  /** Đặt lại mật khẩu */
+  // ======================================================
+  // 8️⃣ Đặt lại mật khẩu
+  // ======================================================
   const resetPassword = useCallback(
     async (payload) => {
       const action = await dispatch(resetPasswordThunk(payload));
@@ -99,13 +153,54 @@ export default function useAuth() {
     [dispatch]
   );
 
-  /** Xóa lỗi và thông báo thành công */
+  // ======================================================
+  // 9️⃣ Login bằng Google (Firebase popup)
+  // ======================================================
+  const loginWithGoogle = async () => {
+    try {
+      // 1. Mở popup đăng nhập Google qua Firebase
+      const result = await loginWithGooglePopup();
+      const firebaseUser = result.user;
+
+      // 2. Lấy Firebase ID token
+      const idToken = await firebaseUser.getIdToken();
+
+      // 3. Gửi token lên backend để xác thực
+      const res = await fetch("/api/auth/google-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: idToken }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Google login failed");
+
+      // ✅ 4. Lưu JWT vào localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // ✅ 5. Lưu user vào Redux
+      dispatch(setUser(data.user));
+
+      return data.user;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  // ======================================================
+  // 🔹 Xóa lỗi / thông báo
+  // ======================================================
   const clearAuthError = useCallback(() => dispatch(clearError()), [dispatch]);
   const clearAuthSuccess = useCallback(
     () => dispatch(clearSuccess()),
     [dispatch]
   );
 
+  // ======================================================
+  // ✅ Trả ra các giá trị và hàm helper
+  // ======================================================
   return {
     user,
     isLoading,
@@ -121,5 +216,6 @@ export default function useAuth() {
     resetPassword,
     clearAuthError,
     clearAuthSuccess,
+    loginWithGoogle,
   };
 }

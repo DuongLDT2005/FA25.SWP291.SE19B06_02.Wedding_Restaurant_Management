@@ -5,12 +5,17 @@ import PartnerLayout from "../../../layouts/PartnerLayout";
 import BookingCard from "./BookingCard";
 import mock from "../../../mock/partnerMock";
 
+const TIME_SLOTS = [
+  { label: "Buổi trưa (10:30 - 14:00)", startTime: "10:30", endTime: "14:00" },
+  { label: "Buổi tối (17:30 - 21:00)", startTime: "17:30", endTime: "21:00" },
+];
+
 export default function PartnerBookingPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
   const [restaurantFilter, setRestaurantFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const [timeFilter, setTimeFilter] = useState("");
+  const [timeFilter, setTimeFilter] = useState(""); // will store startTime like "10:30"
 
   // --- Chuẩn bị dữ liệu booking có đầy đủ thông tin ---
   const bookings = useMemo(() => {
@@ -20,19 +25,12 @@ export default function PartnerBookingPage() {
     const promotions = mock?.promotions || [];
 
     return (mock?.bookings || []).map((b) => {
-      // ✅ Tìm hall và restaurant chứa hall đó
       const restaurant = restaurants.find((r) =>
         (r.halls || []).some((h) => h.hallID === b.hallID)
       );
       const hall = restaurant?.halls?.find((h) => h.hallID === b.hallID);
-
-      // ✅ Tìm customer
       const customer = customers.find((c) => c.customerID === b.customerID);
-
-      // ✅ Tìm menu
       const menu = menus.find((m) => m.menuID === b.menuID);
-
-      // ✅ Tìm promotion theo restaurant
       const promo = restaurant?.promotions?.length
         ? promotions.find((p) => p.promotionID === restaurant.promotions[0])
         : null;
@@ -105,7 +103,10 @@ export default function PartnerBookingPage() {
     navigate(`/partner/bookings/${bookingID}`);
   };
 
-  // --- Render ---
+  // current selected label for select (fallback to empty)
+  const currentSlotLabel =
+    TIME_SLOTS.find((s) => s.startTime === timeFilter)?.label || "";
+
   return (
     <PartnerLayout>
       <div className="p-3">
@@ -127,7 +128,7 @@ export default function PartnerBookingPage() {
 
         {/* Filters */}
         <Row className="mb-3">
-          <Col md={3}>
+          <Col md={5}>
             <Form.Select
               value={restaurantFilter}
               onChange={(e) => setRestaurantFilter(e.target.value)}
@@ -147,12 +148,24 @@ export default function PartnerBookingPage() {
               onChange={(e) => setDateFilter(e.target.value)}
             />
           </Col>
-          <Col md={2}>
-            <Form.Control
-              type="time"
-              value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
-            />
+          <Col md={4}>
+            <Form.Group>
+              <Form.Select
+                value={currentSlotLabel}
+                onChange={(e) => {
+                  const label = e.target.value;
+                  const slot = TIME_SLOTS.find((s) => s.label === label);
+                  setTimeFilter(slot ? slot.startTime : "");
+                }}
+              >
+                <option value="">-- Khung giờ --</option>
+                {TIME_SLOTS.map((s) => (
+                  <option key={s.label} value={s.label}>
+                    {s.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
           </Col>
         </Row>
 
