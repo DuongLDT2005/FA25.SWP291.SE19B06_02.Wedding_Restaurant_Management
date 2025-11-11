@@ -4,7 +4,6 @@ import MainLayout from "../../layouts/MainLayout";
 import SearchBar from "../../components/searchbar/SearchSection";
 import FilterResult from "./components/FilterResult";
 import ListResult from "./components/ListResult";
-import "bootstrap/dist/css/bootstrap.min.css";
 
 const SAMPLE_VENUES = [
   {

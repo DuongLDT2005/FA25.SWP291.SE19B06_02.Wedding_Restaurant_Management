@@ -18,18 +18,23 @@ export default function Sidebar() {
 
   return (
     <div
-      className="sticky-sidebar bg-white border-end vh-100 d-flex flex-column top-0"
+      className="bg-white border-end d-flex flex-column"
       style={{
+        // make sidebar sticky so it stays visible while right content scrolls
+        position: "sticky",
+        top: 0,
+        height: "100vh",
         width: collapsed ? 70 : 220,
         transition: "width 0.3s",
         minWidth: collapsed ? 70 : 220,
         maxWidth: collapsed ? 70 : 220,
+        overflowY: "auto", // allow internal scrolling if sidebar taller than viewport
       }}
     >
       {/* Header */}
       <div
         className="d-flex align-items-center justify-content-between p-3 border-bottom"
-        style={{ height: 60 }}
+        style={{ height: 70 }}
       >
         {!collapsed && (
           <NavLink to="/partner" className="text-decoration-none">
@@ -74,8 +79,7 @@ function SidebarItem({ to, label, icon, collapsed }) {
         to={to}
         end
         className={({ isActive }) =>
-          `d-flex align-items-center rounded-3 mb-3 text-nowrap ${
-            isActive ? "bg-primary text-white" : "text-dark"
+          `d-flex align-items-center rounded-3 mb-3 text-nowrap ${isActive ? "bg-primary text-white" : "text-dark"
           }`
         }
         style={{

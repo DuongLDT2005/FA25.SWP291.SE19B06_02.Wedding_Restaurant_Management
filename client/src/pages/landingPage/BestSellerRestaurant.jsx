@@ -25,7 +25,7 @@ const TOP_RESTAURANTS = [
         priceFrom: 450000,
         avgRating: 4.7,
         totalReviews: 198,
-        thumbnailURL: "/top-restaurant-2.jpg",
+        thumbnailURL: "/assets/img/hotel.jpg",
         minCapacity: 20,
         maxCapacity: 40,
         hallCount: 3,
@@ -82,7 +82,7 @@ export default function BestSellerRestaurant() {
     };
 
     return (
-        <section className="py-5">
+        <section className="py-3">
             <Container>
                 <div className="d-flex align-items-center gap-2 mb-4">
                     <Spotlight size={26} />

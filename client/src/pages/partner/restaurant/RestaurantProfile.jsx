@@ -3,7 +3,8 @@ import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 
-export default function RestaurantProfile({ restaurant, allEventTypes, readOnly = false }) {
+export default function RestaurantProfile(props) {
+
   const [profile, setProfile] = useState({
     name: "",
     phone: "",
@@ -11,7 +12,11 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
     description: "",
     thumbnailURL: "",
     imageURLs: [],
-    address: { number: "", street: "", ward: "" },
+    address: {
+      number: "",
+      street: "",
+      ward: "",
+    },
     eventTypes: [],
   });
 
@@ -19,25 +24,26 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
   const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
-    if (restaurant) {
+    if (props.restaurant) {
       setProfile({
-        name: restaurant.name || "",
-        phone: restaurant.contactPhone || "",
-        email: restaurant.contactEmail || "",
-        description: restaurant.description || "",
-        thumbnailURL: restaurant.thumbnailURL || "",
-        imageURLs: restaurant.imageURLs || [],
+        name: props.restaurant.name || "",
+        phone: props.restaurant.contactPhone || "",
+        email: props.restaurant.contactEmail || "",
+        description: props.restaurant.description || "",
+        thumbnailURL: props.restaurant.thumbnailURL || "",
+        imageURLs: props.restaurant.imageURLs || [],
         address: {
-          number: restaurant.address?.number || "",
-          street: restaurant.address?.street || "",
-          ward: restaurant.address?.ward || "",
+          number: props.restaurant.address?.number || "",
+          street: props.restaurant.address?.street || "",
+          ward: props.restaurant.address?.ward || "",
         },
-        eventTypes: restaurant.eventTypes
-          ? restaurant.eventTypes.map((e) => e.eventTypeID)
+        // Chỉ lưu ID
+        eventTypes: props.restaurant.eventTypes
+          ? props.restaurant.eventTypes.map((e) => e.eventTypeID)
           : [],
       });
     }
-  }, [restaurant]);
+  }, [props.restaurant]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,111 +100,99 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
         <h4 className="mb-3">Hồ sơ nhà hàng</h4>
         <Form>
           {/* --- Thông tin cơ bản --- */}
-          <Form.Group className="mb-3">
+          <Form.Group controlId="restaurantName" className="mb-3">
             <Form.Label>Tên nhà hàng</Form.Label>
             <Form.Control
               type="text"
               name="name"
               value={profile.name}
-              onChange={(e) => handleChange(e)}
-              disabled={readOnly}
+              onChange={handleChange}
             />
           </Form.Group>
 
           <Row className="mb-3">
             <Col md={6}>
-              <Form.Group>
+              <Form.Group controlId="restaurantPhone">
                 <Form.Label>Số điện thoại</Form.Label>
                 <Form.Control
                   type="text"
                   name="phone"
                   value={profile.phone}
-                  onChange={(e) => handleChange(e)}
-                  disabled={readOnly}
+                  onChange={handleChange}
                 />
               </Form.Group>
             </Col>
             <Col md={6}>
-              <Form.Group>
+              <Form.Group controlId="restaurantEmail">
                 <Form.Label>Email</Form.Label>
                 <Form.Control
                   type="email"
                   name="email"
                   value={profile.email}
-                  onChange={(e) => handleChange(e)}
-                  disabled={readOnly}
+                  onChange={handleChange}
                 />
               </Form.Group>
             </Col>
           </Row>
-
-          {/* --- Địa chỉ --- */}
           <Row className="mb-3">
             <Col md={2}>
-              <Form.Group>
+              <Form.Group controlId="restaurantNumber">
                 <Form.Label>Số nhà</Form.Label>
                 <Form.Control
                   type="text"
                   name="number"
                   value={profile.address.number}
                   onChange={handleChange}
-                  disabled={readOnly}
                 />
               </Form.Group>
             </Col>
             <Col md={5}>
-              <Form.Group>
+              <Form.Group controlId="restaurantStreet">
                 <Form.Label>Đường</Form.Label>
                 <Form.Control
                   type="text"
                   name="street"
                   value={profile.address.street}
                   onChange={handleChange}
-                  disabled={readOnly}
                 />
               </Form.Group>
             </Col>
             <Col md={5}>
-              <Form.Group>
+              <Form.Group controlId="restaurantWard">
                 <Form.Label>Phường / Xã</Form.Label>
                 <Form.Control
                   type="text"
                   name="ward"
                   value={profile.address.ward}
                   onChange={handleChange}
-                  disabled={readOnly}
                 />
               </Form.Group>
             </Col>
           </Row>
-
-          {/* --- Sự kiện hỗ trợ --- */}
+          {/* --- Event Types --- */}
           <Form.Group className="mb-4">
             <Form.Label>Sự kiện hỗ trợ</Form.Label>
             <div className="d-flex flex-wrap gap-3">
-              {allEventTypes?.map((event) => (
+              {props.allEventTypes?.map((event) => (
                 <Form.Check
                   key={event.eventTypeID}
                   type="checkbox"
                   label={event.name}
-                  checked={profile.eventTypes.includes(event.eventTypeID)}
-                  disabled={readOnly} // 👈 chỉ cần thêm dòng này
+                  checked={
+                    profile.eventTypes?.some((e) => e === event.eventTypeID) || false
+                  }
                   onChange={() => {
-                    if (readOnly) return; // 👈 tránh xử lý nếu chỉ xem
                     setProfile((prev) => {
                       const selected = prev.eventTypes || [];
                       if (selected.includes(event.eventTypeID)) {
+                        // bỏ chọn
                         return {
                           ...prev,
-                          eventTypes: selected.filter(
-                            (id) => id !== event.eventTypeID
-                          ),
+                          eventTypes: selected.filter((id) => id !== event.eventTypeID),
                         };
                       } else {
-                        return {
-                          ...prev,
-                          eventTypes: [...selected, event.eventTypeID],
-                        };
+                        // thêm chọn
+                        return { ...prev, eventTypes: [...selected, event.eventTypeID] };
                       }
                     });
                   }}
@@ -206,9 +200,7 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
               ))}
             </div>
           </Form.Group>
-
-          {/* --- Mô tả --- */}
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" controlId="restaurantDescription">
             <Form.Label>Mô tả</Form.Label>
             <Form.Control
               as="textarea"
@@ -216,84 +208,128 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
               name="description"
               value={profile.description}
               onChange={handleChange}
-              disabled={readOnly}
             />
           </Form.Group>
 
-          {/* --- Ảnh đại diện --- */}
-          <Form.Group className="mb-4">
-            <Form.Label>Ảnh đại diện</Form.Label>
+          {/* --- Thumbnail --- */}
+          <Form.Group className="mb-4" controlId="restaurantThumbnail">
+            <Form.Label>Ảnh đại diện (Thumbnail)</Form.Label>
             <div className="d-flex align-items-center gap-3">
               {profile.thumbnailURL ? (
-                <Image
-                  src={profile.thumbnailURL}
-                  thumbnail
-                  style={{
-                    width: "150px",
-                    height: "100px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                  }}
-                  onClick={() => handleViewImage(profile.thumbnailURL)}
-                />
+                <div style={{ position: "relative" }}>
+                  <Image
+                    src={profile.thumbnailURL}
+                    thumbnail
+                    style={{
+                      width: "150px",
+                      height: "100px",
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                      transition: "transform 0.2s ease",
+                    }}
+                    onClick={() => handleViewImage(profile.thumbnailURL)}
+                    onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+                    onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                  />
+                  {/* Nút xoá thumbnail */}
+                  <Button
+                    onClick={() => handleDeleteImage(profile.thumbnailURL)}
+                    style={{
+                      position: "absolute",
+                      top: "6px",
+                      right: "6px",
+                      width: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(0, 0, 0, 0.6)",
+                      color: "white",
+                      border: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease, transform 0.1s ease",
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faTimes} size="sm" />
+                  </Button>
+                </div>
               ) : (
                 <div
-                  className="d-flex align-items-center justify-content-center border rounded"
                   style={{
                     width: "150px",
                     height: "100px",
-                    backgroundColor: "#f8f9fa",
+                    backgroundColor: "#f0f0f0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "10px",
+                    border: "1px dashed #ccc",
                   }}
                 >
-                  <span className="text-muted small">Chưa có ảnh</span>
+                  <span>Chưa có ảnh</span>
                 </div>
               )}
-              {!readOnly && (
-                <Form.Control
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailChange}
-                />
-              )}
+              <Form.Control
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailChange}
+              />
             </div>
           </Form.Group>
 
-          {/* --- Hình ảnh khác --- */}
-          <Form.Group className="mb-4">
+          {/* --- Ảnh khác --- */}
+          <Form.Group className="mb-4" controlId="restaurantImages">
             <Form.Label>Hình ảnh khác</Form.Label>
-            {!readOnly && (
-              <Form.Control
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImagesChange}
-              />
-            )}
+            <Form.Control
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImagesChange}
+            />
             <Row className="mt-3">
-              {profile.imageURLs?.length ? (
+              {profile.imageURLs && profile.imageURLs.length > 0 ? (
                 profile.imageURLs.map((img, idx) => (
                   <Col md={3} key={idx} className="mb-3 text-center">
-                    <Image
-                      src={img}
-                      thumbnail
-                      style={{
-                        width: "100%",
-                        height: "150px",
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                      }}
-                      onClick={() => handleViewImage(img)}
-                    />
-                    {!readOnly && (
+                    <div style={{ position: "relative" }}>
+                      <Image
+                        src={img}
+                        thumbnail
+                        onClick={() => handleViewImage(img)}
+                        style={{
+                          width: "100%",
+                          height: "150px",
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                          cursor: "pointer",
+                        }}
+                      />
                       <Button
                         onClick={() => handleDeleteImage(img)}
-                        variant="danger"
-                        size="sm"
-                        className="mt-2"
+                        style={{
+                          position: "absolute",
+                          top: "6px",
+                          right: "6px",
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "50%",
+                          backgroundColor: "rgba(0, 0, 0, 0.6)",
+                          color: "white",
+                          border: "none",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+                          cursor: "pointer",
+                          transition: "background-color 0.2s ease, transform 0.1s ease",
+                        }}
                       >
-                        Xóa
+                        <FontAwesomeIcon icon={faTimes} size="sm" />
                       </Button>
-                    )}
+                    </div>
                   </Col>
                 ))
               ) : (
@@ -303,13 +339,26 @@ export default function RestaurantProfile({ restaurant, allEventTypes, readOnly 
               )}
             </Row>
           </Form.Group>
-
-          {/* Ẩn nút Lưu nếu readOnly */}
-          {!readOnly && (
-            <Button variant="primary" onClick={handleSave}>
-              Lưu
-            </Button>
-          )}
+          <Button variant="primary" onClick={handleSave}>
+            Lưu
+          </Button>
+          {/* --- Modal xem ảnh --- */}
+          <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+            <Modal.Body className="text-center">
+              {selectedImage && (
+                <Image
+                  src={selectedImage}
+                  fluid
+                  style={{ maxHeight: "80vh", borderRadius: "10px" }}
+                />
+              )}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={() => setShowModal(false)}>
+                Đóng
+              </Button>
+            </Modal.Footer>
+          </Modal>
         </Form>
       </Card.Body>
     </Card>

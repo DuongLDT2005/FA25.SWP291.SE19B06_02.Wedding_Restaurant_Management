@@ -1,6 +1,6 @@
 import React from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { Star, Heart, MapPin, DollarSign, CircleDollarSign, Spotlight, Users, Landmark, Gem } from "lucide-react";
+import { Star, Heart, MapPin, CircleDollarSign, Gem } from "lucide-react";
 import RatingStars from "../../components/RatingStars";
 import { formatFullCurrency } from "../../utils/formatter";
 import { Link } from "react-router-dom";
@@ -9,7 +9,7 @@ export default function RestaurantCard({ restaurant }) {
     return (
         <Card
             className="border-0 shadow-sm rounded-3 d-flex flex-column"
-            style={{ overflow: "hidden", height: "100%" }}
+            style={{ overflow: "hidden", height: "99%" }}
         >
             <Card.Img
                 src={restaurant.thumbnailURL}

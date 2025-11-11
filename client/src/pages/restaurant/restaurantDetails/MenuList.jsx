@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import "../../../styles/RestaurantDetailsStyles.css";
 const MenuList = ({ restaurant }) => {
+  const [hovered, setHovered] = useState(null);
   return (
     <div>
       <h4 className="section-title mb-3">Danh sách thực đơn</h4>
@@ -19,6 +20,8 @@ const MenuList = ({ restaurant }) => {
               }}
               data-bs-toggle="modal"
               data-bs-target={`#menuModal-${menu.id}`}
+              onMouseEnter={() => setHovered(menu.id)}
+              onMouseLeave={() => setHovered(null)}
             >
               <img
                 src={menu.imageURL}
@@ -31,9 +34,11 @@ const MenuList = ({ restaurant }) => {
               <div
                 className="overlay position-absolute bottom-0 w-100 text-white p-2"
                 style={{
-                  background: "rgba(0,0,0,0.5)",
-                  transform: "translateY(100%)",
-                  transition: "transform 0.3s ease",
+                  background: "rgba(0,0,0,0.55)",
+                  transform: hovered === menu.id ? "translateY(0)" : "translateY(100%)",
+                  transition: "transform 0.28s ease",
+                  zIndex: 2,
+                  left: 0,
                 }}
               >
                 <p className="mb-1 fw-bold">{menu.name}</p>
@@ -69,7 +74,7 @@ const MenuList = ({ restaurant }) => {
                   <div className="modal-body">
                     {menu.categories?.map((category) => (
                       <div key={category.categoryID} className="mb-4">
-                        <h6 style={{ color: "#993344", fontWeight: "bold" }}>
+                        <h6 style={{ color: "#e80334", fontWeight: "bold" }}>
                           {category.name}
                           {category.requiredQuantity && (
                             <span className="text-muted"> (chọn {category.requiredQuantity})</span>
