@@ -1,18 +1,14 @@
 import db from "../config/db.js";
-
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
+const { address } = db;
 class AddressDAO{
     static async getByID(addressID){
-        const [rows] = await db.query(
-            `SELECT * FROM Address WHERE addressID = ?`,
-            [addressID]
-        );
-        return rows.length > 0 ? rows[0] : null;
+        const r = await address.findByPk(addressID);
+        return toDTO(r);
     }
     static async getAllAddress(addressData){
-        const [rows] = await db.query(
-            `SELECT * FROM Address`
-        );
-        return rows;
+        const rows = await address.findAll();
+        return toDTOs(rows);
     }
 }
 

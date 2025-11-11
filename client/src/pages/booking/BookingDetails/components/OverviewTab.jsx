@@ -4,27 +4,29 @@ import { useSelector } from "react-redux";
 import { restaurants } from "../../../restaurant/ListingRestaurant";
 
 export default function OverviewTab({ booking, onApprove, onReject, isApproved, paymentCompleted }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingData, setEditingData] = useState({});
-  const PRIMARY = "#D81C45";
-  const servicesSafe = Array.isArray(booking?.services) ? booking.services : [];
-  const menuCategoriesSafe = Array.isArray(booking?.menu?.categories) ? booking.menu.categories : [];
-  const user = useSelector((state) => state?.auth?.user);
-  const roleString = String(user?.role || user?.userRole || user?.type || "").toLowerCase();
-  const isCustomer = roleString.includes("customer");
-  const [showMenuModal, setShowMenuModal] = useState(false);
-  const [showServiceModal, setShowServiceModal] = useState(false);
-  const [selectedMenuId, setSelectedMenuId] = useState("");
-  const [tempMenu, setTempMenu] = useState(null);
-  const [selectedDishes, setSelectedDishes] = useState([]);
-  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
-  const restaurantData = restaurants.find(
-    (r) => r.name.trim() === booking.restaurant.name.trim()
-  );
-  const formatCurrency = (amount) =>
-    (amount || 0).toLocaleString("vi-VN") + " VNĐ";
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString("vi-VN");
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingData, setEditingData] = useState({});
+    const PRIMARY = "#D81C45";
+    const servicesSafe = Array.isArray(booking?.services) ? booking.services : [];
+    const menuCategoriesSafe = Array.isArray(booking?.menu?.categories) ? booking.menu.categories : [];
+    const user = useSelector((state) => state?.auth?.user);
+    const roleString = String(user?.role || user?.userRole || user?.type || "").toLowerCase();
+    const isCustomer = roleString.includes("customer");
+    const [showMenuModal, setShowMenuModal] = useState(false);
+    const [showServiceModal, setShowServiceModal] = useState(false);
+    const [selectedMenuId, setSelectedMenuId] = useState("");
+    const [tempMenu, setTempMenu] = useState(null);
+    const [selectedDishes, setSelectedDishes] = useState([]);
+    const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+    const restaurantData = restaurants.find(
+      (r) => r.name.trim() === booking.restaurant.name.trim()
+    );
+    const eventTypeText = typeof booking?.eventType === "string" ? booking.eventType : (booking?.eventType?.name || "");
+
+    const formatCurrency = (amount) =>
+        (amount || 0).toLocaleString("vi-VN") + " VNĐ";
+    const formatDate = (dateString) =>
+        new Date(dateString).toLocaleDateString("vi-VN");
 
   const calculatePrices = () => {
     const data = isEditing ? editingData : {
@@ -246,92 +248,92 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
               )}
             </Card.Header>
 
-            <Card.Body>
-              {isEditing ? (
-                <Form>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Khách hàng:</strong></Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={editingData.customer?.fullName || ""}
-                          onChange={(e) => handleInputChange("customer", "fullName", e.target.value)}
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Số điện thoại:</strong></Form.Label>
-                        <Form.Control
-                          type="tel"
-                          value={editingData.customer?.phone || ""}
-                          onChange={(e) => handleInputChange("customer", "phone", e.target.value)}
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Email:</strong></Form.Label>
-                        <Form.Control
-                          type="email"
-                          value={editingData.customer?.email || ""}
-                          onChange={(e) => handleInputChange("customer", "email", e.target.value)}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Nhà hàng:</strong></Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={booking.restaurant?.name || ""}
-                          disabled
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Địa chỉ:</strong></Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={booking.restaurant?.address || ""}
-                          disabled
-                        />
-                      </Form.Group>
-                      <Form.Group className="mb-3">
-                        <Form.Label><strong>Loại sự kiện:</strong></Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={booking.eventType || ""}
-                          disabled
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                </Form>
-              ) : (
-                <Row>
-                  <Col md={6}>
-                    <p>
-                      <strong>Khách hàng:</strong> {booking.customer.fullName}
-                    </p>
-                    <p>
-                      <strong>Số điện thoại:</strong> {booking.customer.phone}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {booking.customer.email}
-                    </p>
-                  </Col>
-                  <Col md={6}>
-                    <p>
-                      <strong>Nhà hàng:</strong> {booking.restaurant?.name}
-                    </p>
-                    <p>
-                      <strong>Địa chỉ:</strong> {booking.restaurant?.address}
-                    </p>
-                    <p>
-                      <strong>Loại sự kiện:</strong> {booking.eventType}
-                    </p>
-                  </Col>
-                </Row>
-              )}
-            </Card.Body>
-          </Card>
+                        <Card.Body>
+                            {isEditing ? (
+                                <Form>
+                                    <Row>
+                                        <Col md={6}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Khách hàng:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={editingData.customer?.fullName || ""}
+                                                    onChange={(e) => handleInputChange("customer", "fullName", e.target.value)}
+                                                />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Số điện thoại:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="tel"
+                                                    value={editingData.customer?.phone || ""}
+                                                    onChange={(e) => handleInputChange("customer", "phone", e.target.value)}
+                                                />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Email:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="email"
+                                                    value={editingData.customer?.email || ""}
+                                                    onChange={(e) => handleInputChange("customer", "email", e.target.value)}
+                                                />
+                                            </Form.Group>
+                                        </Col>
+                                        <Col md={6}>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Nhà hàng:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={booking.restaurant?.name || ""}
+                                                    disabled
+                                                />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Địa chỉ:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={booking.restaurant?.address || ""}
+                                                    disabled
+                                                />
+                                            </Form.Group>
+                                            <Form.Group className="mb-3">
+                                                <Form.Label><strong>Loại sự kiện:</strong></Form.Label>
+                                                <Form.Control
+                                                    type="text"
+                                                    value={eventTypeText}
+                                                    disabled
+                                                />
+                                            </Form.Group>
+                                        </Col>
+                                    </Row>
+                                </Form>
+                            ) : (
+                                <Row>
+                                    <Col md={6}>
+                                        <p>
+                                            <strong>Khách hàng:</strong> {booking.customer.fullName}
+                                        </p>
+                                        <p>
+                                            <strong>Số điện thoại:</strong> {booking.customer.phone}
+                                        </p>
+                                        <p>
+                                            <strong>Email:</strong> {booking.customer.email}
+                                        </p>
+                                    </Col>
+                                    <Col md={6}>
+                                        <p>
+                                            <strong>Nhà hàng:</strong> {booking.restaurant?.name}
+                                        </p>
+                                        <p>
+                                            <strong>Địa chỉ:</strong> {booking.restaurant?.address}
+                                        </p>
+                                        <p>
+                                            <strong>Loại sự kiện:</strong> {eventTypeText}
+                                        </p>
+                                    </Col>
+                                </Row>
+                            )}
+                        </Card.Body>
+                    </Card>
 
           {/* Chi tiết sự kiện */}
           <Card className="mb-3 shadow-sm border-0">

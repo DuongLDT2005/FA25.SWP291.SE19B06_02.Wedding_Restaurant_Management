@@ -60,6 +60,20 @@ class BookingDetailsAPI {
     }
 
     /**
+     * Create manual/external booking (partner only)
+     * payload: { hallID, eventDate, startTime, endTime, tableCount, menuID?, eventTypeID?, specialRequest? }
+     */
+    async createManualBooking(payload) {
+        try {
+            const response = await this.api.post(`/bookings/manual`, payload);
+            return response.data;
+        } catch (error) {
+            console.error('Error creating manual booking:', error);
+            throw new Error('Không thể tạo booking thủ công');
+        }
+    }
+
+    /**
      * Update booking status
      * @param {string|number} bookingId - Booking ID
      * @param {number} status - New status
@@ -389,3 +403,4 @@ export const {
     getBookingDocuments,
     deleteBookingDocument
 } = bookingDetailsAPI;
+export const createManualBooking = (...args) => bookingDetailsAPI.createManualBooking(...args);

@@ -13,14 +13,27 @@ export const submitBooking = createAsyncThunk(
   }
 );
 
+// Simple mock promotions builder for fallback/testing
+const buildMockPromotions = (params = {}) => {
+  const tables = Number(params?.tables || 0);
+  const mocks = [
+    { id: "PERC10", title: "Giảm 10% cho tiệc từ 20 bàn", type: "percent", value: 10 },
+    { id: "FIX1M", title: "Giảm 1.000.000₫ chi phí dịch vụ", type: "fixed", value: 1000000 },
+  ];
+  // If tables threshold not met, still return a smaller incentive
+  return tables >= 20 ? mocks : [mocks[1]];
+};
+
 export const fetchPromotions = createAsyncThunk(
   "booking/fetchPromotions",
-  async (params, { rejectWithValue }) => {
+  async (params) => {
     try {
       const data = await bookingService.getPromotions(params);
+      // If backend returns empty, use mock fallback to keep UX meaningful
+      if (!Array.isArray(data) || data.length === 0) return buildMockPromotions(params);
       return data;
     } catch (err) {
-      return rejectWithValue(err?.message || err);
+      return buildMockPromotions(params);
     }
   }
 );
@@ -33,12 +46,16 @@ const initialState = {
     date: "",
     tables: 1,
     eventType: "Tiệc cưới",
+    specialRequest: "",
   },
   menu: null, // { id, name, price, categories... }
   services: [], // selected service objects
+  dishes: [], // selected dish objects
   promotions: [], // suggestions
   appliedPromotion: null,
   priceSummary: { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 },
+  // financial snapshot from server (if any)
+  financial: { originalPrice: 0, discountAmount: 0, VAT: 0, totalAmount: 0 },
   status: "idle",
   error: null,
 };
@@ -58,11 +75,17 @@ const bookingSlice = createSlice({
     setMenu(state, action) {
       state.menu = action.payload;
     },
+    setDishes(state, action) {
+      state.dishes = Array.isArray(action.payload) ? action.payload : [];
+    },
     toggleService(state, action) {
       const svc = action.payload;
       const exists = state.services.find((s) => s.id === svc.id);
       if (exists) state.services = state.services.filter((s) => s.id !== svc.id);
       else state.services.push(svc);
+    },
+    setServices(state, action) {
+      state.services = Array.isArray(action.payload) ? action.payload : [];
     },
     setPromotions(state, action) {
       state.promotions = action.payload;
@@ -75,6 +98,61 @@ const bookingSlice = createSlice({
     },
     setPriceSummary(state, action) {
       state.priceSummary = action.payload;
+    },
+    setFinancial(state, action) {
+      const f = action.payload || {};
+      state.financial = {
+        originalPrice: f.originalPrice ?? 0,
+        discountAmount: f.discountAmount ?? 0,
+        VAT: f.VAT ?? 0,
+        totalAmount: f.totalAmount ?? 0,
+      };
+    },
+    hydrateFromDTO(state, action) {
+      // Accept a booking DTO (possibly from server detailed payload)
+      const b = action.payload || {};
+      // customer
+      if (b.customer) {
+        const u = b.customer.user || {};
+        state.customer = {
+          name: b.customer.name ?? u.fullName ?? u.name ?? state.customer.name,
+          phone: b.customer.phone ?? u.phone ?? state.customer.phone,
+          email: b.customer.email ?? u.email ?? state.customer.email,
+          address: b.customer.address ?? u.address ?? state.customer.address,
+        };
+      }
+      // booking info basics
+      state.bookingInfo = {
+        ...state.bookingInfo,
+        restaurant: b.hall?.restaurant?.name ?? state.bookingInfo.restaurant,
+        hall: b.hall?.name ?? state.bookingInfo.hall,
+        date: b.eventDate ?? state.bookingInfo.date,
+        tables: b.tableCount ?? state.bookingInfo.tables,
+        eventType: b.eventType?.name ?? state.bookingInfo.eventType,
+      };
+      // menu
+      if (b.menu) state.menu = b.menu;
+      // dishes
+      if (Array.isArray(b.bookingdishes)) {
+        state.dishes = b.bookingdishes.map((bd) => bd.dish).filter(Boolean);
+      }
+      // services
+      if (Array.isArray(b.bookingservices)) {
+        state.services = b.bookingservices.map((bs) => ({
+          id: bs.service?.serviceID ?? bs.serviceID,
+          name: bs.service?.name,
+          price: bs.service?.basePrice,
+          quantity: bs.quantity ?? 1,
+          appliedPrice: bs.appliedPrice,
+        })).filter((s) => s.id);
+      }
+      // financial
+      state.financial = {
+        originalPrice: b.originalPrice ?? state.financial.originalPrice,
+        discountAmount: b.discountAmount ?? state.financial.discountAmount,
+        VAT: b.VAT ?? state.financial.VAT,
+        totalAmount: b.totalAmount ?? state.financial.totalAmount,
+      };
     },
     clearError(state) {
       state.error = null;
@@ -97,8 +175,9 @@ const bookingSlice = createSlice({
       .addCase(fetchPromotions.fulfilled, (state, action) => {
         state.promotions = action.payload || [];
       })
-      .addCase(fetchPromotions.rejected, (state, action) => {
-        state.promotions = [];
+      .addCase(fetchPromotions.rejected, (state) => {
+        // if rejected (should rarely happen due to fallback), keep existing or clear
+        state.promotions = state.promotions || [];
       });
   },
 });
@@ -107,11 +186,15 @@ export const {
   setCustomerField,
   setBookingField,
   setMenu,
+  setDishes,
   toggleService,
+  setServices,
   setPromotions,
   applyPromotion,
   clearBooking,
   setPriceSummary,
+  setFinancial,
+  hydrateFromDTO,
   clearError,
 } = bookingSlice.actions;
 

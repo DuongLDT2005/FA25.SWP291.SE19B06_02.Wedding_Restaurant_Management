@@ -4,7 +4,7 @@ import MenuDetailPage from "./MenuDetailPage";
 import MenuCreatePage from "./MenuCreatePage";
 import mock from "../../../mock/partnerMock";
 
-export default function MenuListPage() {
+export default function MenuListPage({ readOnly = false }) {
   const [activeMenu, setActiveMenu] = useState(null);
   const [creating, setCreating] = useState(false);
 
@@ -29,6 +29,7 @@ export default function MenuListPage() {
   ];
 
   const handleToggleStatus = (id, activate) => {
+    if (readOnly) return;
     setMenus((prev) =>
       prev.map((m) =>
         m.id === id ? { ...m, status: activate ? "active" : "inactive" } : m
@@ -39,9 +40,15 @@ export default function MenuListPage() {
   return (
     <>
       {creating ? (
-        <MenuCreatePage onBack={() => setCreating(false)} />
+        readOnly ? (
+          <div className="alert alert-secondary text-center mt-3">
+            Chế độ chỉ xem: không thể tạo mới thực đơn.
+          </div>
+        ) : (
+          <MenuCreatePage onBack={() => setCreating(false)} />
+        )
       ) : activeMenu ? (
-        <MenuDetailPage menu={activeMenu} onBack={() => setActiveMenu(null)} />
+        <MenuDetailPage menu={activeMenu} onBack={() => setActiveMenu(null)} readOnly={readOnly} />
       ) : (
         <CrudSection
           title="Menu"
@@ -52,8 +59,9 @@ export default function MenuListPage() {
             const fullMenu = mock.menu.find((m) => m.menuID === row.id);
             setActiveMenu(fullMenu);
           }}
-          onToggleStatus={handleToggleStatus} 
-          onCreate={() => setCreating(true)}
+          onToggleStatus={handleToggleStatus}
+          onCreate={() => !readOnly && setCreating(true)}
+          readOnly={readOnly}
         />
       )}
     </>

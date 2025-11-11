@@ -1,70 +1,135 @@
 import db from "../config/db.js";
-import Restaurant from "../models/Restaurant.js";
-import RestaurantImage from "../models/RestaurantImage.js";
+import { Op } from 'sequelize';
+import { toDTO, toDTOs } from '../utils/convert/dto.js';
+import MenuDAO from './MenuDAO.js';
+import DishDAO from './DishDAO.js';
+import PromotionDAO from './PromotionDAO.js';
+import ServiceDAO from './ServiceDAO.js';
+import HallDAO from './HallDAO.js';
+
+// Models from init-models.cjs
+const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
 
 class RestaurantDAO {
   static async getAll() {
-    const [rows] = await db.query(
-      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
-    FROM Restaurant r
-    JOIN Address a ON r.addressID = a.addressID`
-    );
-    return rows.map((r) => ({
-      ...new Restaurant(r),
-      address: r.fullAddress,
+    const rows = await restaurant.findAll({
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
+      include: [{ model: address, as: 'address', attributes: ['fullAddress'] }],
+      order: [['restaurantID','ASC']]
+    });
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
+      restaurantID: r.restaurantID,
+      restaurantPartnerID: r.restaurantPartnerID,
+      name: r.name,
+      description: r.description,
+      hallCount: r.hallCount,
+      addressID: r.addressID,
+      phone: r.phone || null,
+      thumbnailURL: r.thumbnailURL,
+      status: r.status,
+      address: r.address?.fullAddress || null,
     }));
   }
 
   static async getAvailable(){
-    const [rows] = await db.query(
-      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.fullAddress
-      FROM Restaurant r
-      JOIN Address a ON r.addressID = a.addressID
-      WHERE r.status = 1;
-      `
-    );
-    return rows.map((r) => ({
-      ...new Restaurant(r),
-      address: r.fullAddress,
+    const rows = await restaurant.findAll({
+      where: { status: true },
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
+      include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
+    });
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
+      restaurantID: r.restaurantID,
+      restaurantPartnerID: r.restaurantPartnerID,
+      name: r.name,
+      description: r.description,
+      hallCount: r.hallCount,
+      addressID: r.addressID,
+      phone: r.phone || null,
+      thumbnailURL: r.thumbnailURL,
+      status: r.status,
+      address: r.address?.fullAddress || null,
     }));
   }
 
   static async getAllByPartnerID(restaurantPartnerID) {
-    const [rows] = await db.query(
-      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
-      FROM Restaurant r 
-      JOIN Address a ON r.addressID = a.addressID
-      WHERE r.restaurantPartnerID = ?`,
-      [restaurantPartnerID]
-    );
-    return rows.map((r) => ({
-      ...new Restaurant(r),
-      address: r.fullAddress,
+    const rows = await restaurant.findAll({
+      where: { restaurantPartnerID },
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
+      include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
+    });
+    const dtos = toDTOs(rows);
+    return dtos.map(r => ({
+      restaurantID: r.restaurantID,
+      restaurantPartnerID: r.restaurantPartnerID,
+      name: r.name,
+      description: r.description,
+      hallCount: r.hallCount,
+      addressID: r.addressID,
+      phone: r.phone || null,
+      thumbnailURL: r.thumbnailURL,
+      status: r.status,
+      address: r.address?.fullAddress || null,
     }));
   }
 
   static async getByID(restaurantID) {
-    const [rows] = await db.query(
-      `SELECT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount, r.addressID, r.thumbnailURL, r.status, a.fullAddress
-      FROM Restaurant r
-      JOIN Address a ON r.addressID = a.addressID
-      WHERE r.restaurantID = ?`,
-      [restaurantID]
-    );
-
-    if (rows.length === 0) return null;
-
-    const [images] = await db.query(
-      `SELECT ri.imageID, ri.imageURL 
-        FROM RestaurantImage ri 
-        WHERE ri.restaurantID = ?`,
-      [restaurantID]
-    );
+    const r = await restaurant.findByPk(restaurantID, {
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
+      include: [
+        { model: address, as: 'address', attributes: ['fullAddress'] },
+        { model: restaurantimage, as: 'restaurantimages', attributes: ['imageID','imageURL'] }
+      ]
+    });
+    if (!r) return null;
+    const dto = toDTO(r);
+    // fetch related collections (menus, dishes, promotions, services)
+    const [menus, dishes, promotions, services, halls] = await Promise.all([
+      MenuDAO.getByRestaurantID(restaurantID).catch(() => []),
+      DishDAO.getByRestaurantID(restaurantID).catch(() => []),
+      PromotionDAO.getPromotionsByRestaurantID(restaurantID).catch(() => []),
+      ServiceDAO.getByRestaurantID(restaurantID).catch(() => []),
+      HallDAO.getHallsByRestaurantId(restaurantID).catch(() => [])
+    ]);
 
     return {
-      ...new Restaurant(rows[0]),
-      address: rows[0].fullAddress,
-      images: images.map((img) => new RestaurantImage(img)),
+      restaurantID: dto.restaurantID,
+      restaurantPartnerID: dto.restaurantPartnerID,
+      name: dto.name,
+      description: dto.description,
+      hallCount: dto.hallCount,
+      addressID: dto.addressID,
+      phone: dto.phone || null,
+      thumbnailURL: dto.thumbnailURL,
+      status: dto.status,
+      address: dto.address?.fullAddress || null,
+      images: (dto.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL })),
+      menus,
+      dishes,
+      promotions,
+      services,
+      halls
+    };
+  }
+
+  static async getSummaryByID(restaurantID) {
+    // Return a lighter-weight representation suitable for listing or small detail views
+    const r = await restaurant.findByPk(restaurantID, {
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      include: [{ model: address, as: 'address', attributes: ['fullAddress'] }]
+    });
+    if (!r) return null;
+    const dto = toDTO(r);
+    return {
+      restaurantID: dto.restaurantID,
+      name: dto.name,
+      description: dto.description,
+      hallCount: dto.hallCount,
+      phone: dto.phone || null,
+      thumbnailURL: dto.thumbnailURL,
+      status: dto.status,
+      address: dto.address?.fullAddress || null,
     };
   }
   /* 
@@ -82,147 +147,142 @@ constructor({
     restaurantPartnerID,
     name,
     description,
-    address,
+    address: addr,
     thumbnailURL,
     status,
+    phone,
   }) {
-    const conn = await db.getConnection();
-    try {
-      await conn.beginTransaction();
+    return await sequelize.transaction(async (t) => {
+      const a = await address.create({
+        number: addr.number,
+        street: addr.street,
+        ward: addr.ward,
+        // fullAddress could be generated by a trigger; leave null if DB handles it
+      }, { transaction: t });
 
-      //INSERT ADDRESS
-      const [addressResult] = await conn.query(
-        `INSERT INTO Address(number, street, ward) VALUES (?, ?, ?)`,
-        [address.number, address.street, address.ward]
-      );
-      const newAddressID = addressResult.insertId;
-
-      //INSERT RESTAURANT
-      const [restaurantResult] = await conn.query(
-        `INSERT INTO Restaurant(restaurantPartnerID, name, description, addressID, thumbnailURL, status)
-        VALUES(?, ?, ?, ?, ?, ?)`,
-        [
-          restaurantPartnerID,
-          name,
-          description,
-          newAddressID,
-          thumbnailURL,
-          status ?? 1,
-        ]
-      );
-
-      await conn.commit();
-
-      return new Restaurant({
-        restaurantID: restaurantResult.insertId,
+      const r = await restaurant.create({
         restaurantPartnerID,
         name,
         description,
-        hallCount: 0,
-        addressID: newAddressID,
+        addressID: a.addressID,
+        phone,
         thumbnailURL,
-        status: status ?? 1,
-      });
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
-    }
+        status: status ?? true,
+      }, { transaction: t });
+
+      return {
+        restaurantID: r.restaurantID,
+        restaurantPartnerID: r.restaurantPartnerID,
+        name: r.name,
+        description: r.description,
+        hallCount: r.hallCount ?? 0,
+        addressID: r.addressID,
+        phone: r.phone || null,
+        thumbnailURL: r.thumbnailURL,
+        status: r.status,
+      };
+    });
   }
 
   static async updateRestaurant(
     restaurantID,
-    { restaurantPartnerID, name, description, address, thumbnailURL }
+    { restaurantPartnerID, name, description, address: addr, thumbnailURL, phone }
   ) {
-    const conn = await db.getConnection();
-    try {
-      await conn.beginTransaction();
+    return await sequelize.transaction(async (t) => {
+      const r = await restaurant.findByPk(restaurantID, { transaction: t });
+      if (!r) throw new Error('Restaurant not found');
 
-      const [[restaurant]] = await conn.query(
-        `SELECT addressID FROM Restaurant WHERE restaurantID = ?`,
-        [restaurantID]
-      );
-      if (!restaurant) throw new Error("Restaurant not found");
-
-      const addressID = restaurant.addressID;
-
-      if (address) {
-        await conn.query(
-          `UPDATE Address SET number = ?, street = ?, ward = ? WHERE addressID = ?`,
-          [address.number, address.street, address.ward, addressID]
-        );
+      if (addr) {
+        await address.update({
+          number: addr.number,
+          street: addr.street,
+          ward: addr.ward,
+        }, { where: { addressID: r.addressID }, transaction: t });
       }
 
-      await conn.query(
-        `
-      UPDATE Restaurant
-      SET restaurantPartnerID = ?, name = ?, description = ?, 
-          thumbnailURL = ?
-      WHERE restaurantID = ?
-    `,
-        [restaurantPartnerID, name, description, thumbnailURL, restaurantID]
-      );
-
-      await conn.commit();
+      await r.update({
+        restaurantPartnerID,
+        name,
+        description,
+        phone,
+        thumbnailURL,
+      }, { transaction: t });
 
       return await this.getByID(restaurantID);
-    } catch (err) {
-      await conn.rollback();
-      throw err;
-    } finally {
-      conn.release();
-    }
+    });
   }
 
   static async toggleRestaurantStatus(restaurantID) {
-    const [result] = await db.query(
-      "UPDATE Restaurant SET status = CASE WHEN status = 1 THEN 0 ELSE 1 END WHERE restaurantID = ?",
-      [restaurantID]
-    );
-    return result.affectedRows > 0;
+    const r = await restaurant.findByPk(restaurantID, { attributes: ['status'] });
+    if (!r) return false;
+    await r.update({ status: !r.status });
+    return true;
   }
 
   static async search({ location, capacity, date, minPrice, maxPrice }) {
-    let query = `SELECT DISTINCT r.restaurantID, r.restaurantPartnerID, r.name, r.description, r.hallCount,
-    r.addressID, r.thumbnailURL, r.status, a.fullAddress, h.hallID, h.name as hallName, h.capacity, h.price
-    FROM Restaurant r
-    JOIN Address a ON r.addressID = a.addressID
-    JOIN Hall h ON r.restaurantID = h.restaurantID
-    WHERE r.status = 1 AND h.status = 1`;
-
-    const params = [];
-
-    if (location) {
-      query += " AND a.fullAddress LIKE ? ";
-      params.push(`%${location}%`);
-    }
-
+    // Build hall filters
+    const hallWhere = { status: true };
     if (capacity) {
-      query += " AND h.capacity >= ?";
-      params.push(capacity);
+      hallWhere.maxTable = { [Op.gte]: capacity };
+    }
+    if (minPrice || maxPrice) {
+      hallWhere.price = {};
+      if (minPrice) hallWhere.price[Op.gte] = minPrice;
+      if (maxPrice) hallWhere.price[Op.lte] = maxPrice;
     }
 
-    if (minPrice) {
-      query += " AND h.price >= ? ";
-      params.push(minPrice);
+    // Exclude halls already booked on date with status = 1
+    if (date) {
+      const busy = await booking.findAll({
+        attributes: ['hallID'],
+        where: { eventDate: date, status: 1 },
+        raw: true,
+      });
+      const busyIds = busy.map(b => b.hallID).filter(Boolean);
+      if (busyIds.length) {
+        hallWhere.hallID = { [Op.notIn]: busyIds };
+      }
     }
 
-    if (maxPrice) {
-      query += " AND h.price <= ? ";
-      params.push(maxPrice);
+    const includeAddress = {
+      model: address,
+      as: 'address',
+      attributes: ['fullAddress'],
+      ...(location ? { where: { fullAddress: { [Op.like]: `%${location}%` } } } : {})
+    };
+
+    const rows = await restaurant.findAll({
+      where: { status: true },
+      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
+      include: [ includeAddress, { model: hall, as: 'halls', attributes: ['hallID','name','price','minTable','maxTable','status'], where: hallWhere, required: true } ],
+      order: [['restaurantID','ASC']]
+    });
+    // Flatten per hall (similar to original DISTINCT join result)
+    const plain = toDTOs(rows);
+    const results = [];
+    for (const r of plain) {
+      for (const h of (r.halls || [])) {
+        results.push({
+          restaurantID: r.restaurantID,
+          restaurantPartnerID: r.restaurantPartnerID,
+          name: r.name,
+          description: r.description,
+          hallCount: r.hallCount,
+          addressID: r.addressID,
+          thumbnailURL: r.thumbnailURL,
+          status: r.status,
+          fullAddress: r.address?.fullAddress || null,
+          hallID: h.hallID,
+          hallName: h.name,
+          price: h.price,
+          minTable: h.minTable,
+          maxTable: h.maxTable,
+          // Preserve legacy 'capacity' field expected by some callers: map to maxTable
+          capacity: h.maxTable,
+        });
+      }
     }
-
-    if(date){
-      query += 
-      `And h.hallID NOT IN (SELECT b.hallID FROM Booking b  WHERE b.eventDate = ? and b.status = 1)`;
-      params.push(date);
-    }
-
-    const [rows] = await db.query(query,params);
-
-    return rows;
-
+    return results;
   }
 
 }

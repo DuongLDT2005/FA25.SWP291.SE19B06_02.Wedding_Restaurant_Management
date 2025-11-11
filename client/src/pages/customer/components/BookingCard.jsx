@@ -8,7 +8,6 @@ import ConfirmModal from "./ConfirmModal"
 import CancelModal from "./CancelModal"
 import ReviewModal from "./ReviewModal"
 import ScrollToTopButton from "../../../components/ScrollToTopButton"
-import "bootstrap/dist/css/bootstrap.min.css"
 
 export default function BookingCard({
   booking,
@@ -41,11 +40,13 @@ export default function BookingCard({
   }
 
   function buildDetailPayload(b) {
-    const tokenRaw = localStorage.getItem("token")
-    let user = {}
-    try {
-      user = tokenRaw ? JSON.parse(tokenRaw) : {}
-    } catch { }
+    // Build customer info strictly from booking data (not auth)
+    const embeddedUser = b.customer?.user || {}
+    const customer = {
+      fullName: b.customer?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
+      phone: b.customer?.phone || embeddedUser.phone || "N/A",
+      email: b.customer?.email || embeddedUser.email || "N/A",
+    }
     return {
       bookingID: b.bookingID,
       status: b.status ?? 0,
@@ -56,11 +57,7 @@ export default function BookingCard({
       tableCount: b.tableCount || b.tables || 0,
       specialRequest: b.specialRequest || b.note || "",
       createdAt: b.createdAt || new Date().toISOString(),
-      customer: {
-        fullName: user.fullName || b.customer?.fullName || "Khách hàng",
-        phone: user.phone || b.customer?.phone || "N/A",
-        email: user.email || b.customer?.email || "N/A",
-      },
+      customer,
       restaurant: {
         name: b.restaurant?.name || "Nhà hàng",
         address: b.restaurant?.address || b.restaurant?.fullAddress || "Đang cập nhật",
@@ -92,7 +89,11 @@ export default function BookingCard({
 
   function prepareAndStore() {
     const payload = buildDetailPayload(b)
-    sessionStorage.setItem("currentBooking", JSON.stringify(payload))
+    try {
+      sessionStorage.setItem(`booking_${payload.bookingID}`, JSON.stringify(payload))
+      // keep legacy key for backward compatibility
+      sessionStorage.setItem("currentBooking", JSON.stringify(payload))
+    } catch {}
     return payload
   }
 
@@ -111,14 +112,14 @@ export default function BookingCard({
         }}
       >
         <Card.Body className="p-3">
-          <Row className="g-3 align-items-center">
+          <Row className="g-3">
             <Col xs={3}>
               <Card.Img
                 src={b.restaurant.thumbnailURL || "https://via.placeholder.com/300x200?text=No+Image"}
                 alt={b.restaurant.name}
                 style={{
-                  height: "100%",
                   width: "100%",
+                  height: "200px",
                   objectFit: "cover",
                   transition: 'transform 0.3s ease'
                 }}
@@ -127,17 +128,16 @@ export default function BookingCard({
 
             <Col xs={6}>
               <div>
-                <h5
+                <h3
                   className="mb-2"
                   style={{
-                    fontSize: '1.1rem',
                     fontWeight: '600',
                     color: '#1f2937',
                     letterSpacing: '-0.3px'
                   }}
                 >
                   {b.restaurant.name}
-                </h5>
+                </h3>
 
                 <div style={{
                   fontSize: "0.85rem",
@@ -187,9 +187,9 @@ export default function BookingCard({
                 <div style={{
                   fontSize: '1.25rem',
                   fontWeight: '700',
-                  color: 'rgb(225, 29, 72)'
+                  color: 'rgb(225, 29, 72)',
                 }}>
-                  VND {formatPrice(b.totalAmount || b.total || b.price || 0)}
+                  {formatPrice(b.totalAmount || b.total || b.price || 0)} VND
                 </div>
 
                 <button

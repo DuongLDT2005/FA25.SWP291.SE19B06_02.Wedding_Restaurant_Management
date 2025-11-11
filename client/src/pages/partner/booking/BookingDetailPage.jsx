@@ -1,5 +1,5 @@
 // File: BookingDetailPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Row, Col, Table, Badge } from "react-bootstrap";
 import { ArrowLeft } from "lucide-react";
@@ -61,6 +61,7 @@ const mockReviews = [
 ];
 
 // Lọc review của booking này
+
 const bookingReviews = mockReviews.filter(
   (r) => r.bookingID === mockBookingDetail.bookingID && r.status === "Visible"
 );
@@ -70,7 +71,35 @@ export default function BookingDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [booking, setBooking] = useState({ ...mockBookingDetail, bookingID: id ? Number(id) : mockBookingDetail.bookingID });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // use effect
+  useEffect(() => {
+  let mounted = true;
+  async function load() {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // Use named export from your axios wrapper
+      const { getBookingDetails } = await import("../../booking/BookingDetailsAPI");
+      const res = await getBookingDetails(id);
+      // BookingDetailsAPI.getBookingDetails returns the response.data (per file),
+      // but if your backend wraps with { success, data } adapt accordingly.
+      const payload = res?.data ?? res;
+      if (!mounted) return;
+      setBooking(prev => ({ ...prev, ...payload }));
+    } catch (err) {
+      console.error("Failed to load booking details", err);
+      setError(err?.message || "Failed to load booking");
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  }
+  load();
+  return () => { mounted = false; };
+}, [id]);
   // Helper format
   const formatVND = (val) => (Number(val ?? 0)).toLocaleString("vi-VN") + " ₫";
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("vi-VN") + " " + new Date(dateStr).toLocaleTimeString("vi-VN");

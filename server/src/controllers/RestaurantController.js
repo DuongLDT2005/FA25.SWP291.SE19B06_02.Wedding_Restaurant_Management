@@ -1,4 +1,4 @@
-import RestaurantService from "../services/RestaurantService.js";
+import RestaurantService from "../services/RestaurantServices.js";
 
 class RestaurantController {
   static async getAll(req, res) {
@@ -24,7 +24,7 @@ class RestaurantController {
   static async getAvailable(req,res){
     try{
       const data = await RestaurantService.getAvailable();
-      req.json(data);
+      res.json(data);
     }catch(err){
       res.status(500).json({message : "Error fetching restaurant", error : err.message});
     }
@@ -38,6 +38,26 @@ class RestaurantController {
       res.json(restaurant);
     } catch (err) {
       res.status(500).json({ message: "Error fetching restaurant", error: err.message });
+    }
+  }
+
+  static async getSummary(req, res) {
+    try {
+      const restaurant = await RestaurantService.getSummaryByID(req.params.id);
+      if (!restaurant) return res.status(404).json({ message: 'Restaurant not found' });
+      res.json(restaurant);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching restaurant summary', error: err.message });
+    }
+  }
+
+  static async getFull(req, res) {
+    try {
+      const restaurant = await RestaurantService.getByID(req.params.id);
+      if (!restaurant) return res.status(404).json({ message: 'Restaurant not found' });
+      res.json(restaurant);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching restaurant detail', error: err.message });
     }
   }
 
@@ -105,6 +125,14 @@ class RestaurantController {
       res.json(results)
     }catch(err){
       res.status(500).json({message : "Error searching restaurants", error : err.message});
+    }
+  }
+  static async getTopBookedRestaurants(req, res) {
+    try {
+      const restaurants = await RestaurantService.getTopBookedRestaurants();
+      res.json(restaurants);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching top booked restaurants', error: err.message });
     }
   }
 

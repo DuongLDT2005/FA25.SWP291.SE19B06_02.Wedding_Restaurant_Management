@@ -9,6 +9,7 @@ import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ScrollToTopButton from "../../../components/ScrollToTopButton";
 import "../../../styles/BookingDetailsStyles.css"; // optional extra styles
+import useBooking from "../../../hooks/useBooking";
 import { restaurants } from "../../restaurant/ListingRestaurant";
 
 const PRIMARY = "#D81C45";
@@ -125,6 +126,7 @@ export default function BookingDetailsPage() {
     const { bookingId } = useParams();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { booking: bookingSlice } = useBooking();
 
     const [activeKey, setActiveKey] = useState("overview");
     const [booking, setBooking] = useState(null);
@@ -147,33 +149,66 @@ export default function BookingDetailsPage() {
 
     useEffect(() => {
         if (!hasLoaded) {
-            const storedBooking = sessionStorage.getItem("currentBooking");
-            if (storedBooking) {
+            // 1) Prefer Redux slice hydrated via hydrateFromDTO
+            const sliceId = bookingSlice?.bookingID
+              || bookingSlice?.bookingId
+              || bookingSlice?.id
+              || bookingSlice?.bookingInfo?.bookingID
+              || bookingSlice?.bookingInfo?.bookingId
+              || bookingSlice?.bookingInfo?.id;
+            if (sliceId && String(sliceId) === String(bookingId)) {
+                const merged = {
+                    bookingID: sliceId,
+                    ...bookingSlice,
+                };
+                setBooking(merged);
+                try { sessionStorage.setItem(`booking_${sliceId}`, JSON.stringify(merged)); } catch {}
+                setLoading(false);
+                setHasLoaded(true);
+                return;
+            }
+
+            // 2) Fallback to sessionStorage key set by BookingListPage
+            const key = `booking_${bookingId}`;
+            const storedByKey = sessionStorage.getItem(key);
+            if (storedByKey) {
                 try {
-                    const parsedBooking = JSON.parse(storedBooking);
-                    if (parsedBooking.bookingID === bookingId) {
-                        setBooking(parsedBooking);
+                    const parsed = JSON.parse(storedByKey);
+                    setBooking(parsed);
+                    setLoading(false);
+                    setHasLoaded(true);
+                    return;
+                } catch (e) {
+                    console.error("Error parsing booking from sessionStorage:", e);
+                }
+            }
+
+            // 3) Legacy fallback: previous storage/state
+            const legacy = sessionStorage.getItem("currentBooking");
+            if (legacy) {
+                try {
+                    const parsedLegacy = JSON.parse(legacy);
+                    if (parsedLegacy.bookingID === bookingId) {
+                        setBooking(parsedLegacy);
                         setLoading(false);
                         setHasLoaded(true);
                         return;
-                    } else {
-                        sessionStorage.removeItem("currentBooking");
                     }
                 } catch (e) {
-                    console.error("Error parsing stored booking:", e);
+                    console.error("Error parsing legacy booking:", e);
                 }
             }
 
             if (location.state?.booking) {
-
-                if (location.state.booking.bookingID === bookingId) {
-                    setBooking(location.state.booking);
-                    setLoading(false);
-                    setHasLoaded(true);
-                    return;
-                }
+                const b = location.state.booking;
+                setBooking(b);
+                try { sessionStorage.setItem(`booking_${b.bookingID || b.id || bookingId}` , JSON.stringify(b)); } catch {}
+                setLoading(false);
+                setHasLoaded(true);
+                return;
             }
 
+            // 4) As a last resort, build from mock/temp form
             fetchBookingDetails();
             setHasLoaded(true);
         }
@@ -193,7 +228,7 @@ export default function BookingDetailsPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bookingId, hasLoaded, searchParams, booking]);
 
-    const fetchBookingDetails = () => {
+        const fetchBookingDetails = () => {
         try {
           setLoading(true);
           const bookingDataFromForm = sessionStorage.getItem("newBookingData");
@@ -313,8 +348,12 @@ export default function BookingDetailsPage() {
         );
     }
 
-    // ensure safe defaults
-    booking.customer = booking.customer || { fullName: "Khách hàng", phone: "N/A", email: "N/A" };
+    // ensure safe defaults; prefer data embedded in booking (and nested booking.customer.user) not auth context
+    booking.customer = booking.customer || {};
+    const embeddedUser = booking.customer.user || {};
+    booking.customer.fullName = booking.customer.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng";
+    booking.customer.phone = booking.customer.phone || embeddedUser.phone || "N/A";
+    booking.customer.email = booking.customer.email || embeddedUser.email || "N/A";
     booking.restaurant = booking.restaurant || { name: "Nhà hàng", address: "Đang cập nhật" };
     booking.hall = booking.hall || { name: "Sảnh", capacity: 0, area: 0 };
     booking.menu = booking.menu || { name: "Menu", price: 0, categories: [] };
@@ -409,7 +448,7 @@ export default function BookingDetailsPage() {
                                                                         <td>{p.status === 1 ? "Đã thanh toán" : "Chờ"}</td>
                                                                         <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : "-"}</td>
                                                                         <td>{p.paymentMethod || "-"}</td>
-                                                                    </tr>
+                                                                    </tr>   
                                                                 ))}
                                                             </tbody>
                                                         </table>

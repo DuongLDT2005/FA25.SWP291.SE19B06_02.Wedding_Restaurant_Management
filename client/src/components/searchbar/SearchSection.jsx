@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 import TimeSelect from "./TimeSelect";
 import "../../styles/SearchBarStyles.css"
 import { useNavigate } from "react-router-dom";
-export default function SearchSection() {
+export default function SearchSection({ noOverlap = false }) {
   const { getQueryString, performSearch, state } = useSearchForm();
   const navigate = useNavigate();
 
@@ -31,12 +31,12 @@ export default function SearchSection() {
     <section style={{
       position: "relative",
       zIndex: 5,
-      marginTop: "-70px",
+      marginTop: noOverlap ? "20px" : "-70px",
     }}>
       <Container fluid style={{ padding: "0 50px", maxWidth: "1200px" }}>
         <Form onSubmit={handleSubmit} className="bg-white rounded-3 shadow p-4">
           {/* Hàng input */}
-          <Row className="g-2 align-items-end">
+          <Row className="g-1 align-items-end">
             <Col xs={12} md={6} lg={3}>
               <LocationInput />
             </Col>

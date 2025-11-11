@@ -28,16 +28,14 @@ function SignUpForOwner() {
   const validateForm = () => {
     const e = {};
 
-    if (!form.name.trim()) {
-      e.name = "Tên không được để trống.";
-    } else if (!form.name.length < 6) {
-      e.name = "Tên phải ít nhất 6 ký tự.";
-    }
+    if (!form.name.trim()) e.name = "Vui lòng nhập họ tên.";
+    else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.name))
+      e.name = "Tên không chứa số hoặc kí tự đặc biệt.";
+
 
     const phoneRegex = /^0\d{9}$/;
-    if (!phoneRegex.test(form.phoneNumber)) {
-      e.phoneNumber = "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số.";
-    }
+    if (!/^[0-9]{9,11}$/.test(form.phone))
+      e.phone = "Số điện thoại không hợp lệ";
 
     const emailRegex = /^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(form.email)) {
@@ -62,8 +60,8 @@ function SignUpForOwner() {
   };
 
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
+    const selectedFile = event.target.files[0]
+    setFile(selectedFile)
     if (selectedFile) {
       setErrors((prev) => {
         const next = { ...prev };
