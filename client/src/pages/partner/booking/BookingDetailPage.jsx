@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, Button, Row, Col, Table, Badge } from "react-bootstrap";
 import { ArrowLeft } from "lucide-react";
-import PartnerLayout from "../../../layouts/PartnerLayout";
+import MainLayout from "../../../layouts/MainLayout";
 
 // Mock booking (thay bằng fetch nếu có API)
 const mockBookingDetail = {
@@ -100,8 +100,8 @@ export default function BookingDetailPage() {
   const handleViewContract = () => navigate(`/partner/bookings/${booking.bookingID}/contract`);
 
   return (
-    <PartnerLayout>
-      <div className="p-3">
+    <MainLayout>
+      <div style={{ padding: "0 50px", maxWidth: "1200px" }}>
         <Button variant="secondary" className="mb-3 d-flex align-items-center gap-1" onClick={() => navigate(-1)}>
           <ArrowLeft size={18} /> Quay lại
         </Button>
@@ -195,6 +195,6 @@ export default function BookingDetailPage() {
           </Col>
         </Row>
       </div>
-    </PartnerLayout>
+    </MainLayout>
   );
 }

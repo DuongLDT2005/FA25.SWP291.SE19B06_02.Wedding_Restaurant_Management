@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Card, Row, Col } from "react-bootstrap"

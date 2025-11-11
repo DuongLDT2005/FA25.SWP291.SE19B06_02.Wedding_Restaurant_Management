@@ -45,7 +45,7 @@ import BookingListPage from "../pages/customer/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
-import BookingDetailsPage from "../pages/booking/BookingDetailsPage";
+import BookingDetailsPage from "../pages/booking/BookingDetails/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
 function AppRoutes() {
   return (
@@ -83,6 +83,13 @@ function AppRoutes() {
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
 
+        <Route path="/admin/*" element={<DefaultLayout />}>
+          <Route index element={<Dashboard />} /> {/* /admin -> Dashboard */}
+          <Route path="dashboard" element={<Dashboard />} /> {/* /admin/dashboard */}
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="payments/:id" element={<PaymentDetailPage />} />
+        </Route>
+        <Route path="/restaurant/detail" element={<ListingRestaurants />} />
         <Route path="/customer/bookings" element={<BookingListPage />} />
         <Route path="/bookingForm" element={<BookingPage />} />
         <Route path="/customer/profile" element={<Profile />} />
