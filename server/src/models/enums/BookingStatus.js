@@ -7,6 +7,7 @@ const BookingStatus = {
   EXPIRED: 5,     // Hết hạn
   CANCELLED: 6,   // Hủy
   COMPLETED: 7,   // Hoàn tất sau sự kiện
+  MANUAL_BLOCKED: 8
 };
 export default BookingStatus;
 

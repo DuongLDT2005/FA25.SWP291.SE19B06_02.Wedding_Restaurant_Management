@@ -1,7 +1,7 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
-const { service, sequelize, restauranteventtype } = db;
+const { service, sequelize, restauranteventtype, restau } = db;
 
 class ServiceDAO {
     static async getAll() {
@@ -50,6 +50,10 @@ class ServiceDAO {
             },
             attributes: ['serviceID', 'name', 'description', 'price']
         });
+        return toDTOs(rows);
+    }
+    static async getByRestaurantID(restaurantID) {
+        const rows = await service.findAll({ where: { restaurantID }, attributes: ['serviceID', 'name', 'description', 'price'] });
         return toDTOs(rows);
     }
 }

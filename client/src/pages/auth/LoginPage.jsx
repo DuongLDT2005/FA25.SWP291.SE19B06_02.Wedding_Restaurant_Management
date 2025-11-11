@@ -72,7 +72,7 @@ export default function LoginPage() {
       // Điều hướng theo vai trò
       if (data.role === "ADMIN") navigate("/admin/dashboard");
       else if (data.role === "RESTAURANT_PARTNER") navigate("/partner");
-      else navigate("/customer/home");
+      else navigate("/");
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");
     } finally {
@@ -133,9 +133,18 @@ export default function LoginPage() {
             console.log("✅ Google login success:", res.data);
             toast.success("Đăng nhập Google thành công!");
 
-            // Nếu backend trả về JWT → lưu lại
-            localStorage.setItem("token", res.data.token);
-            navigate("/customer/home"); // hoặc điều hướng theo role
+            // Cookie HttpOnly đã được set ở response; chỉ cần điều hướng theo role int
+            const role = res.data?.user?.role;
+            switch (role) {
+              case 2:
+                navigate('/admin/dashboard');
+                break;
+              case 1:
+                navigate('/partner');
+                break;
+              default:
+                navigate('/customer/bookings');
+            }
           } catch (error) {
             console.error("Google login API error:", error);
             toast.error("Đăng nhập Google thất bại. Vui lòng thử lại!");

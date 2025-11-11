@@ -54,6 +54,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: true
+    },
+    phone: {
+      type: DataTypes.STRING(15),
+      allowNull: false
     }
   }, {
     sequelize,

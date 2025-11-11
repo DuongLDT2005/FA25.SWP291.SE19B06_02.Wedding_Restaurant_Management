@@ -94,13 +94,13 @@ class AuthServices {
       throw new Error("Invalid password");
     }
     // Generate JWT token
-    // Include both userId and sub for compatibility; source uses userID (capital D)
-    const userId = user.userID ?? user.userId ?? user.id;
-    const token = jwt.sign(
-      { sub: userId, userId: userId, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "1h", algorithm: "HS256" }
-    );
+  // Include both userId and sub for compatibility; source uses userID (capital D)
+  const userId = user.userID ?? user.userId ?? user.id;
+  const token = jwt.sign(
+    { sub: userId, userId: userId, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "1h", algorithm: "HS256" }
+  );
     return { user, token };
   }
   static async resetPassword(email, newPassword) {
@@ -135,22 +135,48 @@ class AuthServices {
     //
     await transporter.sendMail(mailOptions);
   }
-  static async logout(req, res) {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      throw new Error("Token not provided");
-    }
-    // Thêm token vào blacklist trên MongoDB
+  static async logout(req) {
+    const authHeader = req.headers.authorization;
+    let token = null;
+    if (authHeader?.startsWith('Bearer ')) token = authHeader.split(' ')[1];
+    if (!token && req.cookies?.token) token = req.cookies.token;
+
+    // Optional temp reset token (JWT 10m) sent in body or header or cookie
+    const tempToken = req.body?.tempToken || req.cookies?.tempToken || null;
+    // Optional raw OTP code if client wants to explicitly invalidate it early
+    const otpCode = req.body?.otp || null;
+
     const { getCollection } = await import("../dao/mongoDAO.js");
     const blacklist = getCollection("blacklist");
-    // Lưu token với thời gian hết hạn (ví dụ: 1 giờ)
-    await blacklist.insertOne({
-      token,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    });
-    res.status(200).json({ message: "Logged out successfully" });
+
+    const now = Date.now();
+    const docs = [];
+    if (token) {
+      docs.push({ token, type: 'access', expiresAt: new Date(now + 60 * 60 * 1000) });
+    }
+    if (tempToken) {
+      // Temp token already short-lived; still blacklist to force immediate invalidation
+      docs.push({ token: tempToken, type: 'temp', expiresAt: new Date(now + 10 * 60 * 1000) });
+    }
+    if (otpCode) {
+      // Mark OTP used/invalid — shorter TTL (5m) just for safety window
+      docs.push({ otp: String(otpCode), type: 'otp', expiresAt: new Date(now + 5 * 60 * 1000) });
+      // Also remove OTP document if still exists so it can't be verified
+      try { await deleteOtpByEmail(req.body?.email); } catch (_) {}
+    }
+    if (docs.length > 0) {
+      await blacklist.insertMany(docs);
+    }
+    return true;
   }
   static async verifyOtp(email, otpInput) {
+    // Block if OTP is blacklisted
+    try {
+      const { getCollection } = await import("../dao/mongoDAO.js");
+      const blacklist = getCollection("blacklist");
+      const blocked = await blacklist.findOne({ otp: String(otpInput) });
+      if (blocked) throw new Error("OTP has been invalidated");
+    } catch (_) {}
     // Find OTP record for user
     const otp = await getOtpByEmail(email);
     if (!otp) {

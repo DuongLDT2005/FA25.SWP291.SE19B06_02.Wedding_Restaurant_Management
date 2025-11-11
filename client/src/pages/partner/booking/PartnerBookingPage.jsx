@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Tabs, Tab, Form, Row, Col } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import PartnerLayout from "../../../layouts/PartnerLayout";
 import BookingCard from "./BookingCard";
-import mock from "../../../mock/partnerMock";
+import { getPartnerBookings, partnerReject, partnerAccept } from "../../../services/bookingService";
 
 const TIME_SLOTS = [
   { label: "Buổi trưa (10:30 - 14:00)", startTime: "10:30", endTime: "14:00" },
@@ -16,43 +16,62 @@ export default function PartnerBookingPage() {
   const [restaurantFilter, setRestaurantFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState(""); // will store startTime like "10:30"
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rows, setRows] = useState([]);
+  const restaurants = useMemo(() => {
+    // derive restaurant options from bookings
+    const map = new Map();
+    for (const b of rows) {
+      const r = b.hall?.restaurant || b.restaurant;
+      if (r?.restaurantID && !map.has(r.restaurantID)) {
+        map.set(r.restaurantID, { restaurantID: r.restaurantID, name: r.name });
+      }
+    }
+    return Array.from(map.values());
+  }, [rows]);
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await getPartnerBookings({ detailed: true });
+        if (!ignore) setRows(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!ignore) setError(e.message || "Không thể tải danh sách booking");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => { ignore = true; };
+  }, []);
 
   // --- Chuẩn bị dữ liệu booking có đầy đủ thông tin ---
   const bookings = useMemo(() => {
-    const restaurants = mock?.restaurants || [];
-    const customers = mock?.customers || [];
-    const menus = mock?.menu || [];
-    const promotions = mock?.promotions || [];
-
-    return (mock?.bookings || []).map((b) => {
-      const restaurant = restaurants.find((r) =>
-        (r.halls || []).some((h) => h.hallID === b.hallID)
-      );
-      const hall = restaurant?.halls?.find((h) => h.hallID === b.hallID);
-      const customer = customers.find((c) => c.customerID === b.customerID);
-      const menu = menus.find((m) => m.menuID === b.menuID);
-      const promo = restaurant?.promotions?.length
-        ? promotions.find((p) => p.promotionID === restaurant.promotions[0])
-        : null;
-
+    return rows.map((b) => {
+      const r = b.hall?.restaurant || b.restaurant || {};
+      const h = b.hall || {};
+      const m = b.menu || {};
+      const c = b.customer?.user || b.customer || {};
       return {
         ...b,
-        hallID: b.hallID,
-        hallName: hall?.name ?? "Không xác định",
-        restaurantID: restaurant?.restaurantID ?? null,
-        restaurantName: restaurant?.name ?? "Không xác định",
-        restaurantThumbnail: restaurant?.thumbnailURL ?? "",
-        menuName: menu?.name ?? "Không xác định",
-        promotionName: promo?.name ?? "Không có ưu đãi",
-        promotionDiscount: promo?.discountValue ?? 0,
-        fullName: customer?.fullName ?? "Ẩn danh",
-        phone: customer?.phone ?? "Không có",
-        email: customer?.email ?? "Không có",
-        checked: b.checked ?? 0,
+        hallID: h.hallID || b.hallID,
+        hallName: h.name || "Không xác định",
+        restaurantID: r.restaurantID || b.restaurantID || null,
+        restaurantName: r.name || "Không xác định",
+        restaurantThumbnail: r.thumbnailURL || "",
+        menuName: m.name || "Không xác định",
+        fullName: c.fullName || c.name || "Ẩn danh",
+        phone: c.phone || "Không có",
+        email: c.email || "Không có",
+        checked: b.isChecked ?? b.checked ?? 0,
         totalAmount: b.totalAmount ?? 0,
       };
     });
-  }, []);
+  }, [rows]);
 
   // --- Lọc dữ liệu theo tab và filter ---
   const filteredBookings = useMemo(() => {
@@ -87,15 +106,30 @@ export default function PartnerBookingPage() {
   }, [activeTab, restaurantFilter, dateFilter, timeFilter, bookings]);
 
   // --- Hành động ---
-  const handleMarkChecked = (bookingID) => {
-    if (window.confirm("Đánh dấu booking này đã được kiểm tra?")) {
-      alert(`Booking ${bookingID} đã được đánh dấu là đã kiểm tra.`);
+  const handleMarkChecked = async (bookingID) => {
+    if (!window.confirm("Đánh dấu booking này đã được kiểm tra?")) return;
+    // Optional: call backend to mark checked if endpoint exists, else only update UI
+    setRows((prev) => prev.map((x) => x.bookingID === bookingID ? { ...x, isChecked: 1 } : x));
+  };
+
+  const handleReject = async (bookingID) => {
+    if (!window.confirm("Bạn có chắc muốn từ chối booking này?")) return;
+    try {
+      await partnerReject(bookingID, 'Partner rejected');
+      setRows((prev) => prev.map((x) => x.bookingID === bookingID ? { ...x, status: 2 } : x));
+    } catch (e) {
+      alert(e.message || 'Từ chối thất bại');
     }
   };
 
-  const handleReject = (bookingID) => {
-    if (window.confirm("Bạn có chắc muốn từ chối booking này?")) {
-      alert(`Booking ${bookingID} đã bị từ chối.`);
+  const handleAccept = async (bookingID) => {
+    if (!window.confirm("Xác nhận chấp nhận booking này?")) return;
+    try {
+      await partnerAccept(bookingID);
+      setRows(prev => prev.map(x => x.bookingID === bookingID ? { ...x, status: 1 } : x));
+      // status 1 => Đã xác nhận
+    } catch (e) {
+      alert(e.message || 'Chấp nhận thất bại');
     }
   };
 
@@ -134,7 +168,7 @@ export default function PartnerBookingPage() {
               onChange={(e) => setRestaurantFilter(e.target.value)}
             >
               <option value="">-- Chọn nhà hàng --</option>
-              {(mock?.restaurants || []).map((r) => (
+              {restaurants.map((r) => (
                 <option key={r.restaurantID} value={r.restaurantID}>
                   {r.name}
                 </option>
@@ -171,6 +205,12 @@ export default function PartnerBookingPage() {
 
         {/* Booking Cards */}
         <Row>
+          {loading && (
+            <div className="text-center text-muted py-4">Đang tải dữ liệu...</div>
+          )}
+          {!loading && error && (
+            <div className="text-center text-danger py-4">{error}</div>
+          )}
           {filteredBookings.length > 0 ? (
             filteredBookings.map((b) => (
               <Col md={4} key={b.bookingID} className="mb-3">
@@ -180,6 +220,7 @@ export default function PartnerBookingPage() {
                   onViewDetail={handleView}
                   onMarkChecked={handleMarkChecked}
                   onReject={handleReject}
+                  onAccept={handleAccept}
                 />
               </Col>
             ))

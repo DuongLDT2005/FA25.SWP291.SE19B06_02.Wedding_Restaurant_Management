@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
 import useBooking from "../../../hooks/useBooking";
+import { calculatePrice } from "../../../services/bookingService";
 
 /**
  * Hiển thị khuyến mãi đang áp dụng + gợi ý promotion kế cận
  * Cho phép áp dụng promotion gợi ý.
  */
 export default function PromotionBadge() {
-  const { booking, applyPromotion, fetchPromotions, recalcPrice, summary } = useBooking();
+  const { booking, applyPromotion, fetchPromotions, recalcPrice } = useBooking();
 
   useEffect(() => {
     // fetch promotions relevant to current booking info
@@ -21,47 +22,39 @@ export default function PromotionBadge() {
 
   const suggestions = booking.promotions || [];
 
+  // Auto apply the best promotion when promotions list or inputs change
+  useEffect(() => {
+    if (!suggestions.length) return;
+    const base = { menu: booking.menu, tables: booking.bookingInfo?.tables, services: booking.services };
+    let best = null;
+    let bestDiscount = 0;
+    suggestions.forEach((p) => {
+      const { discount } = calculatePrice({ ...base, promotion: p });
+      if (discount > bestDiscount) {
+        best = p;
+        bestDiscount = discount;
+      }
+    });
+    // apply only if better or not set yet
+    if (best && (!booking.appliedPromotion || booking.appliedPromotion?.id !== best.id)) {
+      applyPromotion(best);
+      // recalc after apply
+      setTimeout(recalcPrice, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestions, booking.menu, booking.bookingInfo?.tables, booking.services]);
+
   return (
     <div>
       <label className="small">Khuyến mãi</label>
       <div className="mt-2">
         {booking.appliedPromotion ? (
           <div className="p-2 bg-green-50 border rounded">
-            <strong>Đang áp dụng:</strong> {booking.appliedPromotion.title} — giảm{" "}
-            {booking.appliedPromotion.type === "percent" ? `${booking.appliedPromotion.value}%` : `${booking.appliedPromotion.value}₫`}
+            <strong>Đang áp dụng:</strong> {booking.appliedPromotion.title} — giảm {booking.appliedPromotion.type === "percent" ? `${booking.appliedPromotion.value}%` : `${booking.appliedPromotion.value}₫`}
           </div>
         ) : (
           <div className="text-sm text-muted">Chưa áp dụng khuyến mãi</div>
         )}
-
-        {suggestions.length > 0 && (
-          <div className="mt-2">
-            <div className="text-xs text-muted mb-1">Gợi ý:</div>
-            <div className="flex gap-2">
-              {suggestions.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="px-3 py-1 rounded bg-yellow-100"
-                  onClick={() => {
-                    applyPromotion(p);
-                    // recalc price after apply
-                    setTimeout(recalcPrice, 0);
-                  }}
-                >
-                  {p.title} {p.type === "percent" ? `- ${p.value}%` : `- ${p.value}₫`}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-3 text-sm">
-        <div>Subtotal: {summary.subtotal?.toLocaleString() ?? 0}₫</div>
-        <div>Discount: -{summary.discount?.toLocaleString() ?? 0}₫</div>
-        <div>VAT: {summary.vat?.toLocaleString() ?? 0}₫</div>
-        <div className="font-semibold">Total: {summary.total?.toLocaleString() ?? 0}₫</div>
       </div>
     </div>
   );

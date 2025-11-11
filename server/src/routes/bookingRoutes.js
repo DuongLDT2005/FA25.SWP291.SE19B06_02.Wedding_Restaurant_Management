@@ -1,45 +1,55 @@
 import { Router } from "express";
-import { authenticateJWT } from "../middlewares/jwtToken.js";
+import { authenticateJWT, ensureCustomer, ensurePartner } from "../middlewares/jwtToken.js";
 import BookingController from "../controllers/BookingController.js";
 import PaymentController from "../controllers/PaymentController.js"; // ✅ thêm dòng này
-
+import BookingStatus from "../models/enums/BookingStatus.js";
 const router = Router();
 
 // ======================
 // 📌 Booking CRUD Routes
 // ======================
 router.get("/", BookingController.getAllBookings);
+// Authenticated customer gets own bookings
+router.get('/me', authenticateJWT, ensureCustomer, BookingController.getMyBookings);
+// Partner fetch own bookings (restaurants owned)
+router.get('/partner/me', authenticateJWT, ensurePartner, BookingController.getBookingsByCurrentPartner);
 router.get("/:id", BookingController.getBookingById);
 router.post("/", BookingController.createBooking);
+// Create manual/external booking (partner only)
+router.post('/manual', authenticateJWT, ensurePartner, BookingController.createManualBooking);
 router.put("/:id", BookingController.updateBooking);
 router.delete("/:id", BookingController.deleteBooking);
 
-// ======================
-// 📌 Partner Booking Actions
-// ======================
-function ensurePartner(req, res, next) {
-  const role = req.user?.role;
-  if (role !== 1) {
-    return res.status(403).json({ error: "Partner only" });
-  }
-  return next();
-}
+
+
 
 // Partner accept booking
-router.post(
-  "/:id/partner/accept",
-  authenticateJWT,
-  ensurePartner,
-  BookingController.acceptByPartner
-);
+router.patch('/:id/partner/accept', authenticateJWT, ensurePartner, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.ACCEPTED;
+  next();
+}, BookingController.updateBookingStatus);
 
+// Generic status change endpoint (use role-based checks in controller)
+router.put('/:id/status', authenticateJWT, BookingController.updateBookingStatus);
 // Partner reject booking
-router.post(
-  "/:id/partner/reject",
-  authenticateJWT,
-  ensurePartner,
-  BookingController.rejectByPartner
-);
+router.patch('/:id/partner/reject', authenticateJWT, ensurePartner, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.REJECTED;
+  next();
+}, BookingController.updateBookingStatus);
+
+router.patch('/:id/customer/cancel', authenticateJWT, ensureCustomer, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.CANCELLED;
+  next();
+}, BookingController.updateBookingStatus);
+
+router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.CONFIRMED;
+  next();
+}, BookingController.updateBookingStatus);
 
 // ======================
 // 💳 PayOS Payment Routes
