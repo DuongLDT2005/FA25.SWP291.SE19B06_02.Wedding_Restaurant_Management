@@ -43,6 +43,9 @@ export default function useAuth() {
     if (logoutThunk.rejected.match(action))
       throw action.payload || action.error.message;
     dispatch(setUser(null)); // đảm bảo xóa user local
+    // Reload page to fully reset client state and pick up cleared HttpOnly cookie
+    // You can change to: window.location.assign('/') if you prefer redirect to home
+    window.location.reload();
   }, [dispatch]);
 
   /** Lấy user hiện tại */

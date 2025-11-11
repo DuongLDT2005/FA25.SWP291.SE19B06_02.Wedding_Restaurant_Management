@@ -2,6 +2,7 @@
 
 import { Button } from "react-bootstrap"
 import { Link } from "react-router-dom"
+import { BookingStatus } from "../../../constants/bookingStatus"
 
 export default function BookingActions({
   booking,
@@ -17,7 +18,13 @@ export default function BookingActions({
   if (compact) {
     return (
       <div className="d-flex gap-1 flex-wrap mt-2">
-        {status === 0 && (
+        {status === BookingStatus.PENDING && (
+          <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
+            <i className="bi bi-x-circle me-1"></i>
+            Hủy
+          </Button>
+        )}
+        {status === BookingStatus.ACCEPTED && (
           <>
             <Button variant="success" onClick={onConfirm} size="sm" className="flex-grow-1">
               <i className="bi bi-check-circle me-1"></i>
@@ -26,15 +33,6 @@ export default function BookingActions({
             <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
               <i className="bi bi-x-circle me-1"></i>
               Hủy
-            </Button>
-          </>
-        )}
-
-        {status === 1 && (
-          <>
-            <Button variant="primary" onClick={onTransfer} size="sm" className="flex-grow-1">
-              <i className="bi bi-credit-card me-1"></i>
-              Đặt cọc
             </Button>
             <Button
               as={Link}
@@ -50,21 +48,27 @@ export default function BookingActions({
           </>
         )}
 
-        {status === 3 && (
-          <Button
-            as={Link}
-            to={`/booking/${bookingID}`}
-            state={{ booking: prepareAndStore() }}
-            variant="outline-secondary"
-            size="sm"
-            className="w-100"
-          >
-            <i className="bi bi-file-text me-1"></i>
-            Xem hợp đồng
-          </Button>
+        {status === BookingStatus.CONFIRMED && (
+          <>
+            <Button variant="primary" onClick={onTransfer} size="sm" className="flex-grow-1">
+              <i className="bi bi-credit-card me-1"></i>
+              Đặt cọc
+            </Button>
+            <Button
+              as={Link}
+              to={`/booking/${bookingID}`}
+              state={{ booking: prepareAndStore() }}
+              variant="outline-secondary"
+              size="sm"
+              className="flex-grow-1"
+            >
+              <i className="bi bi-file-text me-1"></i>
+              Xem hợp đồng
+            </Button>
+          </>
         )}
 
-        {status === 4 && (
+        {status === BookingStatus.DEPOSITED && (
           <Button variant="warning" onClick={onReview} size="sm" className="w-100">
             <i className="bi bi-star me-1"></i>
             Đánh giá
@@ -76,7 +80,14 @@ export default function BookingActions({
 
   return (
     <div className="d-flex gap-2 flex-wrap mt-3">
-      {status === 0 && (
+      {status === BookingStatus.PENDING && (
+        <Button variant="danger" onClick={onCancel} className="flex-grow-1">
+          <i className="bi bi-x-circle me-2"></i>
+          Hủy
+        </Button>
+      )}
+
+      {status === BookingStatus.ACCEPTED && (
         <>
           <Button variant="success" onClick={onConfirm} className="flex-grow-1">
             <i className="bi bi-check-circle me-2"></i>
@@ -86,10 +97,20 @@ export default function BookingActions({
             <i className="bi bi-x-circle me-2"></i>
             Hủy
           </Button>
+          <Button
+            as={Link}
+            to={`/booking/${bookingID}`}
+            state={{ booking: prepareAndStore() }}
+            variant="outline-secondary"
+            className="flex-grow-1"
+          >
+            <i className="bi bi-file-text me-2"></i>
+            Hợp đồng
+          </Button>
         </>
       )}
 
-      {status === 1 && (
+      {status === BookingStatus.CONFIRMED && (
         <>
           <Button variant="primary" onClick={onTransfer} className="flex-grow-1">
             <i className="bi bi-credit-card me-2"></i>
@@ -108,20 +129,7 @@ export default function BookingActions({
         </>
       )}
 
-      {status === 3 && (
-        <Button
-          as={Link}
-          to={`/booking/${bookingID}`}
-          state={{ booking: prepareAndStore() }}
-          variant="outline-secondary"
-          className="w-100"
-        >
-          <i className="bi bi-file-text me-2"></i>
-          Xem hợp đồng
-        </Button>
-      )}
-
-      {status === 4 && (
+      {status === BookingStatus.DEPOSITED && (
         <Button variant="warning" onClick={onReview} className="w-100">
           <i className="bi bi-star me-2"></i>
           Tạo đánh giá
