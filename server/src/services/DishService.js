@@ -2,13 +2,13 @@ import DishDAO from '../dao/DishDAO.js';
 import RestaurantDAO from '../dao/RestaurantDAO.js';
 
 class DishService {
-  static async addDishForPartner(actorUserId, { restaurantID, name, description, price, imageURL }) {
+  static async addDishForPartner(actorUserId, { restaurantID, categoryID, name, description, price, imageURL }) {
     if (!restaurantID) throw new Error('restaurantID required');
     const r = await RestaurantDAO.getByID(restaurantID);
     if (!r) throw new Error('Restaurant not found');
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
 
-    return await DishDAO.addDish(restaurantID, name, description, price, imageURL);
+    return await DishDAO.addDish(restaurantID, categoryID, name, description, price, imageURL);
   }
 
   static async updateDishForPartner(actorUserId, dishID, patch) {

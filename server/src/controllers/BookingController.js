@@ -19,6 +19,21 @@ class BookingController {
         }
     }
 
+    // GET /api/bookings/me - Get bookings of the authenticated customer
+    static async getMyBookings(req, res) {
+        try {
+            const customerID = req.user?.userId;
+            if (!customerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const bookings = await BookingService.getBookingsByCustomerId(customerID, {
+                status: req.query.status ? parseInt(req.query.status) : null,
+                isChecked: req.query.isChecked === 'true' ? true : (req.query.isChecked === 'false' ? false : null)
+            });
+            res.status(200).json({ success: true, data: bookings });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
     // GET /api/bookings/:id - Get booking by ID
     static async getBookingById(req, res) {
         try {
@@ -40,7 +55,10 @@ class BookingController {
     static async getBookingsByCustomerId(req, res) {
         try {
             const { customerID } = req.params;
-            const bookings = await BookingService.getBookingsByCustomerId(customerID);
+            const bookings = await BookingService.getBookingsByCustomerId(customerID, {
+              status: req.query.status ? parseInt(req.query.status) : null,
+              isChecked: req.query.isChecked === 'true' ? true : (req.query.isChecked === 'false' ? false : null)
+            });
             res.status(200).json({
                 success: true,
                 data: bookings
@@ -67,6 +85,20 @@ class BookingController {
                 success: false,
                 message: error.message
             });
+        }
+    }
+
+    // GET /api/bookings/partner/me - Get bookings under partner-owned restaurants
+    static async getBookingsByCurrentPartner(req, res) {
+        try {
+            const partnerID = req.user?.userId;
+            if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const include = req.query.include;
+            const detailed = include === 'details' || include === 'all';
+            const bookings = await BookingService.getBookingsByPartnerId(partnerID, { detailed });
+            res.status(200).json({ success: true, data: bookings, detailed });
+        } catch (error) {
+            res.status(500).json({ success: false, message: error.message });
         }
     }
 

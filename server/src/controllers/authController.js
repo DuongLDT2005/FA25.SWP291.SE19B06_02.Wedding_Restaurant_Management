@@ -16,8 +16,15 @@ class AuthController {
       );
       // Remove password before sending user data
       user.password = undefined;
-      // send user data and token
-      res.json({ user, token });
+      // Set HttpOnly cookie for JWT; still return token for backward compatibility
+      const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+        maxAge: 60 * 60 * 1000, // 1h
+      };
+      res.cookie('token', token, cookieOptions);
+      res.json({ user });
     } catch (error) {
       console.error("Login error:", error);
       res.status(401).json({ error: "Invalid email or password" });
@@ -63,7 +70,14 @@ class AuthController {
       { expiresIn: "2h" }
     );
 
-    res.json({ message: "Đăng nhập Google thành công", user, token });
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      maxAge: 2 * 60 * 60 * 1000,
+    };
+    res.cookie('token', token, cookieOptions);
+    res.json({ message: "Đăng nhập Google thành công", user });
   } catch (err) {
     console.error("Google Sign-In Error:", err.response?.data || err.message);
     res.status(500).json({
@@ -76,8 +90,9 @@ class AuthController {
 
   static async logout(req, res) {
     try {
-      // Invalidate the token (implementation depends on how you manage tokens)
       await AuthServices.logout(req);
+      // Clear cookie
+      res.clearCookie('token', { httpOnly: true, sameSite: 'Lax' });
       res.json({ message: "Logged out successfully" });
     } catch (error) {
       console.error("Logout error:", error);

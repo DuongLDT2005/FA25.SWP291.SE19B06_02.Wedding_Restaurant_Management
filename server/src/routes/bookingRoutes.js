@@ -9,6 +9,10 @@ const router = Router();
 // 📌 Booking CRUD Routes
 // ======================
 router.get("/", BookingController.getAllBookings);
+// Authenticated customer gets own bookings
+router.get('/me', authenticateJWT, ensureCustomer, BookingController.getMyBookings);
+// Partner fetch own bookings (restaurants owned)
+router.get('/partner/me', authenticateJWT, ensurePartner, BookingController.getBookingsByCurrentPartner);
 router.get("/:id", BookingController.getBookingById);
 router.post("/", BookingController.createBooking);
 // Create manual/external booking (partner only)

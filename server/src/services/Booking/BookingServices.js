@@ -142,21 +142,6 @@ class BookingService {
       }
     );
 
-    // 7️⃣ Gửi mail cho partner (chỉ khi có email)
-    const [partner, customer] = await Promise.all([
-      BookingDAO.getRestaurantPartnerByHallID(hallID),
-      BookingDAO.getCustomerByID(customerID),
-    ]);
-
-    if (partner?.email || customer?.email) {
-      await NotificationService.sendBookingStatusChange({
-        bookingID: booking.bookingID,
-        customerEmail: customer?.email,
-        partnerEmail: partner?.email,
-        status: BookingStatus.PENDING,
-      });
-    }
-
     return booking;
   }
 
@@ -225,6 +210,21 @@ class BookingService {
   async getBookingById(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     return BookingDAO.getBookingById(bookingID);
+  }
+
+  /** ✅ GET BY CUSTOMER */
+  async getBookingsByCustomerId(customerID, { status = null, isChecked = null } = {}) {
+    if (!customerID) throw new Error("Missing customerID.");
+    return BookingDAO.getBookingsByCustomer({ customerID, status, isChecked });
+  }
+
+  /** ✅ GET BY PARTNER (all bookings under partner-owned restaurants)
+   * options: { detailed?: boolean }
+   */
+  async getBookingsByPartnerId(partnerID, { detailed = false } = {}) {
+    if (!partnerID) throw new Error("Missing partnerID.");
+    if (detailed) return BookingDAO.getBookingsByPartnerDetailed(partnerID);
+    return BookingDAO.getBookingsByPartner(partnerID);
   }
 
   /** ✅ UPDATE (partial) */

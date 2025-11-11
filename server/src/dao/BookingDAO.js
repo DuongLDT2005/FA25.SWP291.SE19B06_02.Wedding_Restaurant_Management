@@ -19,6 +19,7 @@ const {
   promotion: PromotionModel,
   customer: CustomerModel,
   eventtype: EventTypeModel,
+  user: UserModel,
 } = db;
 
 class BookingDAO {
@@ -61,11 +62,46 @@ class BookingDAO {
 
   // Get bookings for a customer with optional filters
   static async getBookingsByCustomer({ customerID, status = null, isChecked = null }) {
+    if (customerID == null) return [];
     const where = { customerID };
-    if (status !== null && typeof status !== 'undefined') where.status = status;
-    if (isChecked !== null && typeof isChecked !== 'undefined') where.isChecked = !!isChecked;
+    if (status != null) where.status = status;
+    if (isChecked != null) where.isChecked = !!isChecked;
 
-    const rows = await BookingModel.findAll({ where, order: [['createdAt', 'DESC']] });
+    const rows = await BookingModel.findAll({
+      where,
+      include: [
+        // include customer and its associated user
+        { model: CustomerModel, as: 'customer', include: [{ model: UserModel, as: 'user' }] },
+        { model: EventTypeModel, as: 'eventType' },
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+          }]
+        },
+        { model: MenuModel, as: 'menu' },
+        {
+          model: BookingDishModel,
+          as: 'bookingdishes',
+          include: [{ model: DishModel, as: 'dish' }]
+        },
+        {
+          model: BookingServiceModel,
+          as: 'bookingservices',
+          include: [{ model: ServiceModel, as: 'service' }]
+        },
+        {
+          model: BookingPromotionModel,
+          as: 'bookingpromotions',
+          include: [{ model: PromotionModel, as: 'promotion' }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
     return toDTOs(rows);
   }
 
@@ -115,11 +151,12 @@ class BookingDAO {
     return affected > 0;
   }
 
-  // Find overlapping bookings for a hall on a given date and time range
+  // Find overlapping bookings for a hall on a given date and time range, and only hall is at deposit stage
   static async findByHallAndTime(hallID, eventDate, startTime, endTime) {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
+        status: BookingStatus.DEPOSITED, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -189,6 +226,79 @@ class BookingDAO {
       ]
     });
     return toDTO(row);
+  }
+
+  /**
+   * Get all bookings that belong to restaurants owned by a given partner.
+   * This traverses hall -> restaurant -> restaurantPartner and filters by partner ID.
+   */
+  static async getBookingsByPartner(partnerID) {
+    if (!partnerID) return [];
+    const rows = await BookingModel.findAll({
+      include: [
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{
+              model: RestaurantPartnerModel,
+              as: 'restaurantPartner',
+              where: { restaurantPartnerID: partnerID },
+              attributes: [] // we only need to filter; omit partner fields
+            }]
+          }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
+  }
+
+  /**
+   * Get partner-owned bookings with full details (customer, eventType, hall->restaurant, menu,
+   * dishes, services, promotions). Intended for partner list pages that need rich DTOs.
+   */
+  static async getBookingsByPartnerDetailed(partnerID) {
+    if (!partnerID) return [];
+    const rows = await BookingModel.findAll({
+      include: [
+        { model: CustomerModel, as: 'customer' },
+        { model: EventTypeModel, as: 'eventType' },
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{
+              model: RestaurantPartnerModel,
+              as: 'restaurantPartner',
+              where: { restaurantPartnerID: partnerID },
+            }]
+          }]
+        },
+        { model: MenuModel, as: 'menu' },
+        {
+          model: BookingDishModel,
+          as: 'bookingdishes',
+          include: [{ model: DishModel, as: 'dish' }]
+        },
+        {
+          model: BookingServiceModel,
+          as: 'bookingservices',
+          include: [{ model: ServiceModel, as: 'service' }]
+        },
+        {
+          model: BookingPromotionModel,
+          as: 'bookingpromotions',
+          include: [{ model: PromotionModel, as: 'promotion' }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
   }
 
   // Replace dishes for a booking
