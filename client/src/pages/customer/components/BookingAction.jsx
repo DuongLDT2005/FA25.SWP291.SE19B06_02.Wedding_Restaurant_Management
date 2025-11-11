@@ -19,11 +19,11 @@ export default function BookingActions({
       <div className="d-flex gap-1 flex-wrap mt-2">
         {status === 0 && (
           <>
-            <Button variant="success" onClick={onConfirm} size="sm" className="flex-grow-1">
+            <Button variant="success" onClick={onConfirm} size="sm" className="flex-grow-1 text-white" >
               <i className="bi bi-check-circle me-1"></i>
               Xác nhận
             </Button>
-            <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
+            <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1 text-white" >
               <i className="bi bi-x-circle me-1"></i>
               Hủy
             </Button>
@@ -32,7 +32,8 @@ export default function BookingActions({
 
         {status === 1 && (
           <>
-            <Button variant="primary" onClick={onTransfer} size="sm" className="flex-grow-1">
+            <Button variant="outline-info" onClick={onTransfer} size="sm" className="flex-grow-1" onMouseEnter={(e) => (e.target.style.color = "#ffffff")}
+              onMouseLeave={(e) => (e.target.style.color = "#0dcaf0")}>
               <i className="bi bi-credit-card me-1"></i>
               Đặt cọc
             </Button>
@@ -53,7 +54,7 @@ export default function BookingActions({
         {status === 3 && (
           <Button
             as={Link}
-            to={`/booking/${bookingID}`}
+            to={`/booking/${bookingID}/contract`}
             state={{ booking: prepareAndStore() }}
             variant="outline-secondary"
             size="sm"
@@ -65,7 +66,7 @@ export default function BookingActions({
         )}
 
         {status === 4 && (
-          <Button variant="warning" onClick={onReview} size="sm" className="w-100">
+          <Button variant="warning" onClick={onReview} size="sm" className="w-100 text-white">
             <i className="bi bi-star me-1"></i>
             Đánh giá
           </Button>
@@ -78,11 +79,11 @@ export default function BookingActions({
     <div className="d-flex gap-2 flex-wrap mt-3">
       {status === 0 && (
         <>
-          <Button variant="success" onClick={onConfirm} className="flex-grow-1">
+          <Button variant="success" onClick={onConfirm} className="flex-grow-1" style={{ color: "white !important" }}>
             <i className="bi bi-check-circle me-2"></i>
             Xác nhận
           </Button>
-          <Button variant="danger" onClick={onCancel} className="flex-grow-1">
+          <Button variant="danger" onClick={onCancel} className="flex-grow-1" style={{ color: "white !important" }}>
             <i className="bi bi-x-circle me-2"></i>
             Hủy
           </Button>
@@ -91,7 +92,7 @@ export default function BookingActions({
 
       {status === 1 && (
         <>
-          <Button variant="primary" onClick={onTransfer} className="flex-grow-1">
+          <Button variant="primary" onClick={onTransfer} >
             <i className="bi bi-credit-card me-2"></i>
             Đặt cọc
           </Button>
