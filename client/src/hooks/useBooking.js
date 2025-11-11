@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import * as bookingActions from "../redux/slices/bookingSlice";
 import { calculatePrice } from "../services/bookingService";
@@ -24,34 +24,51 @@ export function useBooking() {
       menu: booking.menu,
       tables: booking.bookingInfo?.tables,
       services: booking.services,
+      promotion: booking.appliedPromotion,
     };
-    const summary = calculatePrice({ menu: payload.menu, tables: payload.tables, services: payload.services });
+    const summary = calculatePrice({ menu: payload.menu, tables: payload.tables, services: payload.services, promotion: payload.promotion });
     dispatch(bookingActions.setPriceSummary(summary));
     return summary;
-  }, [dispatch, booking.menu, booking.bookingInfo?.tables, booking.services]);
+  }, [dispatch, booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion]);
+
+  // Auto-recalculate whenever inputs change (menu, tables, services, promotion)
+  useEffect(() => {
+    recalcPrice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion]);
 
   // derived summary always available locally
   const summary = useMemo(() => {
     try {
-      return booking.priceSummary || recalcPrice();
+      return booking.priceSummary || { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 };
     } catch {
       return { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.priceSummary, booking.menu, booking.bookingInfo?.tables, booking.services]);
+  }, [booking.priceSummary]);
 
   const submit = useCallback(
     async (extra = {}) => {
-      // prepare payload
-      const payload = {
-        customer: booking.customer,
-        bookingInfo: booking.bookingInfo,
-        menu: booking.menu,
-        services: booking.services,
-        promotion: booking.appliedPromotion,
-        priceSummary: booking.priceSummary,
-        ...extra,
-      };
+      // If caller prepared a server-ready payload (flat IDs), send it as-is to avoid unknown-column errors server-side.
+      const isServerShape =
+        extra && (
+          extra.customerID !== undefined ||
+          extra.hallID !== undefined ||
+          extra.menuID !== undefined ||
+          extra.eventDate !== undefined
+        );
+
+      const payload = isServerShape
+        ? extra
+        : {
+            customer: booking.customer,
+            bookingInfo: booking.bookingInfo,
+            menu: booking.menu,
+            services: booking.services,
+            promotion: booking.appliedPromotion,
+            priceSummary: booking.priceSummary,
+            ...extra,
+          };
+
       const action = await dispatch(bookingActions.submitBooking(payload));
       if (action.error) throw action.payload || action.error.message;
       return action.payload;

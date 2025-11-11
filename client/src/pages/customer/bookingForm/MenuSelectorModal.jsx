@@ -39,7 +39,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
   // Hoàn tất chọn
   const handleConfirm = () => {
     onSelect({
-      menu: selectedMenu?.name,
+      menu: selectedMenu, // pass full object so price is available
       dishes: selectedDishes,
     });
     setShow(false);

@@ -47,6 +47,7 @@ import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
 import BookingDetailsPage from "../pages/booking/BookingDetails/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
+
 function AppRoutes() {
   return (
     <BrowserRouter>

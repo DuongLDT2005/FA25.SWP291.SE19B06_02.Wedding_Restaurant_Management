@@ -69,18 +69,10 @@ export default function LoginPage() {
       const data = await login({ email, password });
       setInfo("Đăng nhập thành công — điều hướng...");
 
-      // Backend trả về { user }, role dạng int: 0=customer,1=owner(partner),2=admin
-      const role = data?.user?.role ?? data?.role;
-      switch (role) {
-        case 2: // admin
-          navigate("/admin/dashboard");
-          break;
-        case 1: // partner/owner
-          navigate("/partner");
-          break;
-        default: // customer
-          navigate("/");  
-      }
+      // Điều hướng theo vai trò
+      if (data.role === "ADMIN") navigate("/admin/dashboard");
+      else if (data.role === "RESTAURANT_PARTNER") navigate("/partner");
+      else navigate("/");
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");
     } finally {

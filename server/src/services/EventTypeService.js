@@ -7,9 +7,9 @@ class EventTypeService {
   }
 
   static async createEventType(data) {
-    const { name, description } = data;
+    const { name } = data;
     if (!name) throw new Error('name required');
-    return await EventTypeDAO.addEventType(name, description);
+    return await EventTypeDAO.addEventType(name);
   }
 
   static async assignEventTypeToRestaurant(restaurantID, eventTypeID, actorUserId) {

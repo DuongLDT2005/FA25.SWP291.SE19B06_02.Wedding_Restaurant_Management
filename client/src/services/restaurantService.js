@@ -132,3 +132,14 @@ export const getFeaturedRestaurants = async () => {
   if (!res.ok) throw data || new Error("Fetch featured restaurants failed");
   return data;
 };
+
+export const getTopBookedRestaurants = async () => {
+  const res = await fetch(`${API_URL}/top-booked`, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const data = await res.json().catch(() => []);
+  if (!res.ok) throw data || new Error("Fetch top booked restaurants failed");
+  return data;
+};

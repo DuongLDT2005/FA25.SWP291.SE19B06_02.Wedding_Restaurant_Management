@@ -15,11 +15,15 @@ import EventTypeList from "./EventTypeList";
 import PromotionList from "./PromotionList";
 import MainLayout from "../../../layouts/MainLayout";
 import SearchSection from "../../../components/searchbar/SearchSection";
+import { useNavigate } from "react-router-dom";
+import useBooking from "../../../hooks/useBooking";
 export default function RestaurantDetailsPage() {
   const restaurant = restaurantDetail;
   const resImages = [restaurant.thumbnailURL, ...restaurant.images.map(img => img.imageURL)];
   const [expanded, setExpanded] = useState(false);
   const [selectedHall, setSelectedHall] = useState(null);
+  const navigate = useNavigate();
+  const { setBookingField, clear } = useBooking();
 
   const totalReviews = restaurant.reviews.length;
   const avgRating = restaurant.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
@@ -94,6 +98,21 @@ export default function RestaurantDetailsPage() {
                   border: "none",
                   transition: "transform 0.2s, box-shadow 0.2s",
                   boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                }}
+                onClick={() => {
+                  // Optional: clear previous booking to avoid stale data
+                  try { clear(); } catch {}
+                  // Prefill basic booking info for the form
+                  setBookingField("restaurant", restaurant.name || "");
+                  const hallName = (selectedHall?.name) || (restaurant.halls?.[0]?.name) || "";
+                  setBookingField("hall", hallName);
+                  // Navigate to booking form; include ids in state if needed later
+                  navigate("/bookingForm", {
+                    state: {
+                      restaurantId: restaurant.id,
+                      hallId: selectedHall?.id || restaurant.halls?.[0]?.id,
+                    },
+                  });
                 }}
               >
                 <MessageSquare size={18} className="me-2" /> Gửi yêu cầu tư vấn

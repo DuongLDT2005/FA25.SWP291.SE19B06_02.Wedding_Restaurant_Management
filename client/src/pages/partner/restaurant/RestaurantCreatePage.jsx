@@ -9,6 +9,16 @@ import { uploadImageToCloudinary } from "../../../services/uploadServices";
 
 export default function CreateRestaurantPage() {
     const { user } = useAuth();
+    // Helper: revoke object URL if it's a blob URL to avoid memory leaks
+    const revokeIfBlob = (url) => {
+        try {
+            if (url && typeof url === "string" && url.startsWith("blob:")) {
+                URL.revokeObjectURL(url);
+            }
+        } catch (_) {
+            // no-op
+        }
+    };
     const [newRestaurant, setNewRestaurant] = useState({
         // Will be filled at submit time; keep safe defaults in case user not loaded yet
         restaurantPartnerID: "",
@@ -47,7 +57,11 @@ export default function CreateRestaurantPage() {
         const file = e.target.files[0];
         if (file) {
             const previewUrl = URL.createObjectURL(file);
-            setNewRestaurant((prev) => ({ ...prev, thumbnailURL: previewUrl, thumbnailFile: file }));
+            setNewRestaurant((prev) => {
+                // Revoke previous thumbnail preview if any
+                revokeIfBlob(prev.thumbnailURL);
+                return { ...prev, thumbnailURL: previewUrl, thumbnailFile: file };
+            });
         }
     };
 
@@ -69,12 +83,22 @@ export default function CreateRestaurantPage() {
     const handleDeleteImage = (url) => {
         if (window.confirm("Bạn có chắc muốn xóa ảnh này không?")) {
             if (newRestaurant.thumbnailURL === url) {
-                setNewRestaurant((prev) => ({ ...prev, thumbnailURL: "" }));
+                // If deleting thumbnail, revoke and clear both URL and file
+                revokeIfBlob(url);
+                setNewRestaurant((prev) => ({ ...prev, thumbnailURL: "", thumbnailFile: null }));
             } else {
-                setNewRestaurant((prev) => ({
-                    ...prev,
-                    imageURLs: prev.imageURLs.filter((img) => img !== url),
-                }));
+                // Find the index of the preview URL and remove the corresponding file as well
+                setNewRestaurant((prev) => {
+                    const idx = prev.imageURLs.findIndex((img) => img === url);
+                    if (idx !== -1) {
+                        revokeIfBlob(prev.imageURLs[idx]);
+                        const newURLs = prev.imageURLs.filter((_, i) => i !== idx);
+                        const newFiles = prev.imageFiles.filter((_, i) => i !== idx);
+                        return { ...prev, imageURLs: newURLs, imageFiles: newFiles };
+                    }
+                    // Fallback: just filter URL if not found (shouldn't happen)
+                    return { ...prev, imageURLs: prev.imageURLs.filter((img) => img !== url) };
+                });
             }
         }
     };
@@ -121,6 +145,24 @@ export default function CreateRestaurantPage() {
             }
 
             alert("Tạo nhà hàng thành công!");
+
+            // Cleanup object URLs to avoid memory leaks
+            revokeIfBlob(newRestaurant.thumbnailURL);
+            newRestaurant.imageURLs.forEach(revokeIfBlob);
+
+            // Reset form state after successful creation
+            setNewRestaurant({
+                restaurantPartnerID: "",
+                name: "",
+                phone: "",
+                email: "",
+                description: "",
+                thumbnailURL: "",
+                imageURLs: [],
+                thumbnailFile: null,
+                imageFiles: [],
+                address: { number: "", street: "", ward: "" },
+            });
         } catch (err) {
             alert(err.message || "Tạo nhà hàng thất bại");
         }

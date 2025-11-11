@@ -1,6 +1,7 @@
 import Header from "../components/header/Header";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTopButton";
+import ChatWidget from "../components/ChatWidget";
 
 export default function LandingPageLayout({ children }) {
   return (
@@ -13,6 +14,8 @@ export default function LandingPageLayout({ children }) {
 
       <Footer />
       <ScrollToTop />
+      <ChatWidget />
+
     </div>
   );
 }

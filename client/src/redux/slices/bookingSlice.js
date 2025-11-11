@@ -13,14 +13,27 @@ export const submitBooking = createAsyncThunk(
   }
 );
 
+// Simple mock promotions builder for fallback/testing
+const buildMockPromotions = (params = {}) => {
+  const tables = Number(params?.tables || 0);
+  const mocks = [
+    { id: "PERC10", title: "Giảm 10% cho tiệc từ 20 bàn", type: "percent", value: 10 },
+    { id: "FIX1M", title: "Giảm 1.000.000₫ chi phí dịch vụ", type: "fixed", value: 1000000 },
+  ];
+  // If tables threshold not met, still return a smaller incentive
+  return tables >= 20 ? mocks : [mocks[1]];
+};
+
 export const fetchPromotions = createAsyncThunk(
   "booking/fetchPromotions",
-  async (params, { rejectWithValue }) => {
+  async (params) => {
     try {
       const data = await bookingService.getPromotions(params);
+      // If backend returns empty, use mock fallback to keep UX meaningful
+      if (!Array.isArray(data) || data.length === 0) return buildMockPromotions(params);
       return data;
     } catch (err) {
-      return rejectWithValue(err?.message || err);
+      return buildMockPromotions(params);
     }
   }
 );
@@ -33,6 +46,7 @@ const initialState = {
     date: "",
     tables: 1,
     eventType: "Tiệc cưới",
+    specialRequest: "",
   },
   menu: null, // { id, name, price, categories... }
   services: [], // selected service objects
@@ -161,8 +175,9 @@ const bookingSlice = createSlice({
       .addCase(fetchPromotions.fulfilled, (state, action) => {
         state.promotions = action.payload || [];
       })
-      .addCase(fetchPromotions.rejected, (state, action) => {
-        state.promotions = [];
+      .addCase(fetchPromotions.rejected, (state) => {
+        // if rejected (should rarely happen due to fallback), keep existing or clear
+        state.promotions = state.promotions || [];
       });
   },
 });

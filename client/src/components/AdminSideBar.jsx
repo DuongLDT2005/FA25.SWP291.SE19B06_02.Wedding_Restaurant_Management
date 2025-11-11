@@ -174,6 +174,8 @@ function SidebarItem({ to, label, icon, collapsed }) {
 
 /* --- COMPONENT GROUP (MENU CÓ CON) --- */
 function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
+  const [hover, setHover] = useState(false);
+
   return (
     <div>
       <button
@@ -187,7 +189,10 @@ function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
           minHeight: 45,
           padding: "8px 18px",
           width: "100%",
+          background: open || hover ? "#0d6efd" : "transparent", // màu xanh đồng nhất
           transition: "all 0.2s ease",
+          boxShadow: "none", // xoá viền shadow focus
+          outline: "none",   // xoá outline mặc định
         }}
       >
         {icon}

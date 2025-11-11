@@ -402,6 +402,28 @@ class BookingDAO {
     }
     return total;
   }
+
+  /// write for me raw sql to get total booking count with status deposited, to get rank, i can post on my web take 8 restaurants with most deposited bookings + completed bookings + manual bookings status 4 7 8
+  static async getTopBookedRestaurants(statuses = [4, 7, 8], limit = 8) {
+    if (!Array.isArray(statuses) || statuses.length === 0) return [];
+
+    const rows = await sequelize.query(
+      `SELECT r."restaurantID", r."name", COUNT(b."bookingID") AS "count"
+       FROM "restaurants" r
+       JOIN "halls" h ON h."restaurantID" = r."restaurantID"
+       JOIN "bookings" b ON b."hallID" = h."hallID" AND b."status" IN (:statuses)
+       GROUP BY r."restaurantID", r."name"
+       ORDER BY "count" DESC
+       LIMIT :limit`,
+      {
+        replacements: { statuses, limit },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return rows.map((r) => ({ ...r, count: Number(r.count) }));
+  }
+
 }
 
 export default BookingDAO;

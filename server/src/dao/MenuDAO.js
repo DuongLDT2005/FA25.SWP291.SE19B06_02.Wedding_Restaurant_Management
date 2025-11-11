@@ -18,7 +18,7 @@ export default class MenuDAO {
         return toDTOs(rows);
     }
 
-    static async getByID(menuID, { includeDishes = true } = {}) {
+    static async getByID(menuID, { includeDishes = false } = {}) {
         const include = [];
         if (includeDishes) {
             include.push({

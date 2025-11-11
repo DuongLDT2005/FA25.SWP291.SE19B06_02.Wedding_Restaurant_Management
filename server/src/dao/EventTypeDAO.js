@@ -6,13 +6,13 @@ const { eventtype, sequelize, restaurant, restauranteventtype } = db;
 class EventTypeDAO {
     static async getAll() {
         const rows = await eventtype.findAll({
-            attributes: ['eventTypeID', 'name', 'description']
+            attributes: ['eventTypeID', 'name']
         });
         return toDTOs(rows);
     }
     static async getByID(eventTypeID) {
         const r = await eventtype.findByPk(eventTypeID, {
-            attributes: ['eventTypeID', 'name', 'description']
+            attributes: ['eventTypeID', 'name']
         });
         return toDTO(r);
     }
@@ -33,12 +33,12 @@ class EventTypeDAO {
                     [Op.in]: eventTypeIDs
                 }
             },
-            attributes: ['eventTypeID', 'name', 'description']
+            attributes: ['eventTypeID', 'name']
         });
         return toDTOs(rows);
     }
-    static async addEventType(name, description) {
-        const e = await eventtype.create({ name, description });
+    static async addEventType(name) {
+        const e = await eventtype.create({ name });
         return toDTO(e);
     }
 
