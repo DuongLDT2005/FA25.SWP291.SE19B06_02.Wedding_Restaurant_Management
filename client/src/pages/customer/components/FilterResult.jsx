@@ -1,30 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
+import axios from "axios";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
-export default function FilterResult({ amenities = [] }) {
+export default function FilterResult({ venues = [], onFilter }) {
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(100000000);
   const [currentPromo, setCurrentPromo] = useState(0);
+  const [amenities, setAmenities] = useState([]);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+  const [selectedRatings, setSelectedRatings] = useState([]);
+
   const trackRef = useRef(null);
-  const [localAmenities, setLocalAmenities] = useState(amenities);
+  
 
-  // Dữ liệu mẫu (fake từ script.sql)
+  // ✅ Lấy danh sách tiện nghi từ backend
   useEffect(() => {
-    if (!amenities.length) {
-      setLocalAmenities([
-        { id: 1, name: "Máy lạnh" },
-        { id: 2, name: "Hệ thống âm thanh" },
-        { id: 3, name: "Hệ thống ánh sáng" },
-        { id: 4, name: "Wi-Fi miễn phí" },
-        { id: 5, name: "Bãi giữ xe" },
-        { id: 6, name: "Thang máy" },
-        { id: 7, name: "Hồ bơi" },
-        { id: 8, name: "Camera an ninh" },
-      ]);
-    }
-  }, [amenities]);
+    const fetchAmenities = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/amenities");
+        setAmenities(res.data || []);
+      } catch (err) {
+        console.error("❌ Lỗi khi tải tiện nghi:", err);
+      }
+    };
+    fetchAmenities();
+  }, []);
 
+  // ✅ Quảng cáo luân phiên
   const promotions = [
     "🎉 Giảm 25% khi đặt trước 30 ngày",
     "💖 Tặng voucher 2 triệu cho tiệc cưới",
@@ -40,16 +43,16 @@ export default function FilterResult({ amenities = [] }) {
     return () => clearInterval(interval);
   }, []);
 
-  const formatVND = (val) => new Intl.NumberFormat("vi-VN").format(val);
+  // ✅ Định dạng VND
+  const formatVND = (val) =>
+    new Intl.NumberFormat("vi-VN").format(Math.round(val));
 
-  // Xử lý kéo slider thủ công
+  // ✅ Kéo slider khoảng giá
   const handleDrag = (e, type) => {
     const rect = trackRef.current.getBoundingClientRect();
-    const percent = Math.min(
-      Math.max(0, (e.clientX - rect.left) / rect.width),
-      1
-    );
+    const percent = Math.min(Math.max(0, (e.clientX - rect.left) / rect.width), 1);
     const value = 5000000 + percent * (100000000 - 5000000);
+
     if (type === "min" && value < maxPrice - 1000000) setMinPrice(value);
     if (type === "max" && value > minPrice + 1000000) setMaxPrice(value);
   };
@@ -62,6 +65,69 @@ export default function FilterResult({ amenities = [] }) {
     };
     document.addEventListener("mousemove", move);
     document.addEventListener("mouseup", up);
+  };
+
+  // ✅ Tick chọn rating
+  const toggleRating = (r) => {
+    setSelectedRatings((prev) =>
+      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]
+    );
+  };
+
+  // ✅ Tick chọn amenity
+  const toggleAmenity = (id) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // ✅ Lọc dữ liệu khi người dùng thao tác filter
+  useEffect(() => {
+    const userFiltering =
+      selectedRatings.length > 0 ||
+      selectedAmenities.length > 0 ||
+      minPrice > 0 ||
+      maxPrice < 100000000;
+
+    if (!userFiltering) return; // nếu chưa chọn gì thì không lọc
+
+    let filtered = [...venues];
+
+    // 🔹 Lọc theo khoảng giá
+    filtered = filtered.filter((v) => {
+      const halls = v.halls || [];
+      const minHallPrice = halls.length
+        ? Math.min(...halls.map((h) => Number(h.price)))
+        : 0;
+      return minHallPrice >= minPrice && minHallPrice <= maxPrice;
+    });
+
+    // 🔹 Lọc theo rating
+    if (selectedRatings.length > 0) {
+      filtered = filtered.filter((v) =>
+        selectedRatings.some((r) => (v.avgRating || 0) >= r)
+      );
+    }
+
+    // 🔹 Lọc theo tiện nghi
+    if (selectedAmenities.length > 0) {
+      filtered = filtered.filter((v) =>
+        selectedAmenities.every((a) =>
+          v.amenityIDs?.includes(a)
+        )
+      );
+    }
+
+    onFilter(filtered);
+  }, [minPrice, maxPrice, selectedRatings, selectedAmenities]);
+
+  // ✅ Reset filter
+  const resetFilter = () => {
+    setMinPrice(0);
+    setMaxPrice(100000000);
+    setSelectedRatings([]);
+    setSelectedAmenities([]);
+    onFilter(venues); // quay về danh sách ban đầu
   };
 
   return (
@@ -111,25 +177,9 @@ export default function FilterResult({ amenities = [] }) {
       </Card>
 
       {/* 💰 PRICE RANGE */}
-      <Card
-        className="mb-4 shadow-sm"
-        style={{
-          border: "none",
-          borderRadius: "12px",
-          padding: "20px",
-        }}
-      >
-        <h5
-          style={{
-            fontSize: "16px",
-            fontWeight: "700",
-            marginBottom: "12px",
-          }}
-        >
-          Khoảng giá
-        </h5>
+      <Card className="mb-4 shadow-sm" style={{ border: "none", borderRadius: "12px", padding: "20px" }}>
+        <h5 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "12px" }}>Khoảng giá</h5>
 
-        {/* Thanh trượt */}
         <div
           ref={trackRef}
           style={{
@@ -140,7 +190,6 @@ export default function FilterResult({ amenities = [] }) {
             marginTop: "20px",
           }}
         >
-          {/* Thanh chọn màu */}
           <div
             style={{
               position: "absolute",
@@ -152,7 +201,6 @@ export default function FilterResult({ amenities = [] }) {
             }}
           ></div>
 
-          {/* Thumb Min */}
           <div
             onMouseDown={() => startDrag("min")}
             style={{
@@ -168,7 +216,6 @@ export default function FilterResult({ amenities = [] }) {
             }}
           ></div>
 
-          {/* Thumb Max */}
           <div
             onMouseDown={() => startDrag("max")}
             style={{
@@ -185,72 +232,19 @@ export default function FilterResult({ amenities = [] }) {
           ></div>
         </div>
 
-        {/* Hiển thị giá trị chọn */}
         <Row className="mt-3 text-center">
           <Col xs={6}>
-            <div
-              style={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "20px",
-                width: "100%", // ✅ chiếm hết cột (đều nhau)
-                padding: "6px 10px",
-                fontSize: "14px",
-                fontWeight: "500",
-                display: "inline-flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "4px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              }}
-            >
-              {formatVND(minPrice)}{" "}
-              <span style={{ color: "#6b7280" }}>VND</span>
-            </div>
+            <div className="border rounded-pill py-1">{formatVND(minPrice)} VND</div>
           </Col>
-
           <Col xs={6}>
-            <div
-              style={{
-                backgroundColor: "#fff",
-                border: "1px solid #e5e7eb",
-                borderRadius: "20px",
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "14px",
-                fontWeight: "500",
-                display: "inline-flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: "4px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-              }}
-            >
-              {formatVND(maxPrice)}{" "}
-              <span style={{ color: "#6b7280" }}>VND</span>
-            </div>
+            <div className="border rounded-pill py-1">{formatVND(maxPrice)} VND</div>
           </Col>
         </Row>
       </Card>
 
       {/* ⭐ RATING */}
-      <Card
-        className="mb-4 shadow-sm"
-        style={{
-          border: "none",
-          borderRadius: "12px",
-          padding: "20px",
-        }}
-      >
-        <h5
-          style={{
-            fontSize: "16px",
-            fontWeight: "700",
-            marginBottom: "10px",
-          }}
-        >
-          Đánh giá
-        </h5>
+      <Card className="mb-4 shadow-sm" style={{ border: "none", borderRadius: "12px", padding: "20px" }}>
+        <h5 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "10px" }}>Đánh giá</h5>
         {[4.5, 4.0, 3.5, 3.0].map((r) => (
           <Form.Check
             key={r}
@@ -258,48 +252,34 @@ export default function FilterResult({ amenities = [] }) {
             id={`rating-${r}`}
             label={
               <span>
-                {"⭐".repeat(Math.floor(r))}{" "}
-                <span style={{ color: "#6b7280" }}>{r}+</span>
+                {"⭐".repeat(Math.floor(r))} <span style={{ color: "#6b7280" }}>{r}+</span>
               </span>
             }
-            style={{
-              marginBottom: "8px",
-              fontSize: "14px",
-              color: "#374151",
-            }}
+            checked={selectedRatings.includes(r)}
+            onChange={() => toggleRating(r)}
+            style={{ marginBottom: "8px", fontSize: "14px", color: "#374151" }}
           />
         ))}
       </Card>
 
       {/* 🏨 AMENITIES */}
-      <Card
-        className="shadow-sm"
-        style={{ border: "none", borderRadius: "12px", padding: "20px" }}
-      >
-        <h5
-          style={{ fontSize: "16px", fontWeight: "700", marginBottom: "10px" }}
-        >
-          Tiện nghi
-        </h5>
+      <Card className="shadow-sm" style={{ border: "none", borderRadius: "12px", padding: "20px" }}>
+        <h5 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "10px" }}>Tiện nghi</h5>
 
-        {localAmenities.length > 0 ? (
-          localAmenities.map((item) => (
+        {amenities.length > 0 ? (
+          amenities.map((item) => (
             <Form.Check
-              key={item.id}
+              key={item.amenityID}
               type="checkbox"
-              id={`amenity-${item.id}`}
-              label={<span>{item.name}</span>}
-              style={{
-                marginBottom: "8px",
-                color: "#374151",
-                fontSize: "14px",
-              }}
+              id={`amenity-${item.amenityID}`}
+              label={item.name}
+              checked={selectedAmenities.includes(item.amenityID)}
+              onChange={() => toggleAmenity(item.amenityID)}
+              style={{ marginBottom: "8px", fontSize: "14px", color: "#374151" }}
             />
           ))
         ) : (
-          <p style={{ fontSize: "14px", color: "#6b7280" }}>
-            (Chưa có dữ liệu tiện nghi)
-          </p>
+          <p style={{ fontSize: "14px", color: "#6b7280" }}>(Chưa có dữ liệu tiện nghi)</p>
         )}
       </Card>
 
@@ -307,11 +287,8 @@ export default function FilterResult({ amenities = [] }) {
       <Button
         variant="outline-danger"
         className="w-100 mt-3"
-        style={{
-          borderRadius: "8px",
-          fontWeight: "600",
-          padding: "12px",
-        }}
+        style={{ borderRadius: "8px", fontWeight: "600", padding: "12px" }}
+        onClick={resetFilter}
       >
         <i className="bi bi-arrow-clockwise" style={{ marginRight: "6px" }}></i>
         Đặt lại bộ lọc

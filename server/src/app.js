@@ -8,6 +8,7 @@ import hallRoutes from "./routes/hallRoutes.js";
 import aiSuggestRoutes from "./routes/aiSuggestRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
+import amenityRoutes from "./routes/AmenityRoutes.js";
 
 const app = express();
 
@@ -28,5 +29,6 @@ app.use("/api/admin", userRoutes);
 app.use("/api/ai", aiSuggestRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/amenities", amenityRoutes);
 
 export default app;

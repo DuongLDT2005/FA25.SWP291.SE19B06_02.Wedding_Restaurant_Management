@@ -1,69 +1,94 @@
-import { useState } from "react";
-import { Container } from "react-bootstrap";
+import { useEffect, useState, useMemo } from "react";
+import { Spinner } from "react-bootstrap";
+import { useLocation } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import SearchBar from "../../components/searchbar/SearchSection";
 import FilterResult from "./components/FilterResult";
 import ListResult from "./components/ListResult";
-
-const SAMPLE_VENUES = [
-  {
-    id: 1,
-    name: "Grand Ballroom Palace",
-    image: "/assets/img/hotel.jpg",
-    location: "56/12 Nguyễn Lương Bằng, Liên Chiểu, Đà Nẵng",
-    rating: 4.8,
-    reviews: 156,
-    price: "50,000,000",
-    capacity: "500-1000",
-    discount: "15%",
-    amenities: ["WiFi", "Bãi đỗ xe", "Máy lạnh", "Nhà bếp"],
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "Ocean View Gardens",
-    location: "56/23 Võ Nguyên Giáp, Ngũ Hành Sơn, Đà Nẵng",
-    rating: 4.6,
-    reviews: 98,
-    price: "35,000,000",
-    capacity: "300-600",
-    image: "/beachside-garden-venue.jpg",
-    discount: "10%",
-    amenities: ["Lối ra biển", "Bãi đỗ xe", "Dịch vụ ăn uống", "Hệ thống đèn"],
-    featured: false,
-  },
-];
+import { useRestaurant } from "../../hooks/useRestaurant";
 
 const SearchResultList = () => {
+  const { search, searchResults, status, error } = useRestaurant();
+
+  const [filteredVenues, setFilteredVenues] = useState([]);
   const [sortBy, setSortBy] = useState("recommended");
-  const [filteredVenues, setFilteredVenues] = useState(SAMPLE_VENUES);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const locationHook = useLocation();
+
+  // ✅ Dùng useMemo để đảm bảo params ổn định (tránh re-render vô ích)
+  const params = useMemo(() => {
+    const queryParams = new URLSearchParams(locationHook.search);
+    return {
+      location: queryParams.get("location") || null,
+      eventType: queryParams.get("eventType") || null,
+      capacity: queryParams.get("tables")
+        ? Number(queryParams.get("tables"))
+        : null, // ✅ chuyển sang number, tránh null
+      date: queryParams.get("date") || null,
+      startTime: queryParams.get("startTime") || null,
+      endTime: queryParams.get("endTime") || null,
+      minPrice: queryParams.get("minPrice") || null,
+      maxPrice: queryParams.get("maxPrice") || null,
+    };
+  }, [locationHook.search]);
+
+  // 🧠 1️⃣ Gọi search() khi query thay đổi, chỉ khi params thực sự có location hoặc eventType
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!params.location && !params.eventType) return; // tránh gọi dư
+      try {
+        console.log("🚀 [SearchResultList] Trigger search with params:", params);
+        await search(params);
+      } catch (err) {
+        console.error("❌ [SearchResultList] Error in search:", err);
+      }
+    };
+
+    fetchResults();
+  }, [params, search]);
+
+  // 🧠 2️⃣ Khi Redux có dữ liệu => cập nhật filteredVenues
+  useEffect(() => {
+    if (status === "succeeded" && Array.isArray(searchResults)) {
+      console.log("✅ [SearchResultList] Redux đã cập nhật:", searchResults);
+      setFilteredVenues(searchResults);
+    } else if (status === "loading") {
+      console.log("⏳ [SearchResultList] Đang load dữ liệu...");
+    } else if (status === "failed") {
+      console.error("❌ [SearchResultList] Tải thất bại:", error);
+    }
+  }, [status, searchResults, error]);
+
+  // 🧠 3️⃣ Sắp xếp
   const handleSort = (value) => {
     setSortBy(value);
-    const sorted = [...SAMPLE_VENUES];
-    if (value === "price-low")
-      sorted.sort(
-        (a, b) =>
-          parseInt(a.price.replace(/,/g, "")) -
-          parseInt(b.price.replace(/,/g, ""))
-      );
-    if (value === "price-high")
-      sorted.sort(
-        (a, b) =>
-          parseInt(b.price.replace(/,/g, "")) -
-          parseInt(a.price.replace(/,/g, ""))
-      );
-    if (value === "rating") sorted.sort((a, b) => b.rating - a.rating);
+    if (!filteredVenues?.length) return;
+
+    const sorted = [...filteredVenues];
+    if (value === "price-low") sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+    if (value === "price-high") sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+    if (value === "rating") sorted.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
 
     setFilteredVenues(sorted);
     setCurrentPage(1);
   };
 
+  // 📄 Pagination
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentVenues = filteredVenues.slice(startIndex, startIndex + itemsPerPage);
+
+  // 📊 Debug
+  console.log("📊 [SearchResultList] status:", status);
+  console.log("📊 [SearchResultList] params:", params);
+  console.log("📊 [SearchResultList] searchResults:", searchResults);
+  console.log("📊 [SearchResultList] filteredVenues:", filteredVenues);
+
+  // 🧠 4️⃣ Render
   return (
     <MainLayout>
-      {/* Search Section */}
+      {/* Search bar */}
       <div
         style={{
           width: "100%",
@@ -77,36 +102,46 @@ const SearchResultList = () => {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Content */}
       <div style={{ backgroundColor: "#fff", paddingBlock: "40px" }}>
         <div
           style={{
-            paddingInline: "50px", // căn lề 50px như Header
-            maxWidth: "1200px", // giữ giới hạn khung như Header
-            margin: "0 auto", // căn giữa màn hình
-            boxSizing: "border-box", // tránh cộng padding
+            paddingInline: "50px",
+            maxWidth: "1200px",
+            margin: "0 auto",
+            boxSizing: "border-box",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              gap: "32px",
-              alignItems: "flex-start",
-            }}
-          >
+          <div style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}>
+            {/* Sidebar filter */}
             <div style={{ width: "26%", minWidth: "260px" }}>
-              <FilterResult />
+              <FilterResult venues={searchResults || []} onFilter={setFilteredVenues} />
             </div>
 
+            {/* Main list */}
             <div style={{ width: "74%", flex: 1 }}>
-              <ListResult
-                venues={filteredVenues}
-                sortBy={sortBy}
-                onSortChange={handleSort}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-              />
+              {status === "loading" ? (
+                <div className="text-center my-5">
+                  <Spinner animation="border" />
+                  <p className="mt-3">Đang tìm kiếm nhà hàng phù hợp...</p>
+                </div>
+              ) : error ? (
+                <p className="text-danger text-center my-5">{error}</p>
+              ) : filteredVenues.length > 0 ? (
+                <ListResult
+                  venues={currentVenues}
+                  sortBy={sortBy}
+                  onSortChange={handleSort}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredVenues.length}
+                />
+              ) : (
+                <p className="text-center my-5 text-muted">
+                  Không tìm thấy nhà hàng nào phù hợp.
+                </p>
+              )}
             </div>
           </div>
         </div>

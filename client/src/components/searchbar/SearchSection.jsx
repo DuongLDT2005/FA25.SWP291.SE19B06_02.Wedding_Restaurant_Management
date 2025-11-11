@@ -5,60 +5,82 @@ import LocationInput from "./LocationInput";
 import DateInput from "./DateInput";
 import EventTypeSelect from "./EventTypeSelect";
 import TablesSelect from "./TablesSelection";
-import { Search } from "lucide-react";
 import TimeSelect from "./TimeSelect";
-import "../../styles/SearchBarStyles.css"
+import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import "../../styles/SearchBarStyles.css";
+
 export default function SearchSection({ noOverlap = false }) {
-  const { getQueryString, performSearch, state } = useSearchForm();
+  const { getQueryString, performSearch } = useSearchForm();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      // gọi API và lưu kết quả vào redux (performSearch đã làm việc đó)
-      await performSearch(); // có thể truyền override nếu cần
+      // 🟢 Gọi API tìm kiếm (nếu cần lưu Redux)
+      await performSearch();
+
+      // 🟢 Lấy query string từ hook
       const q = getQueryString();
-      navigate(`/search?${q}`);
+      console.log("Navigating to:", `/searchresult?${q}`);
+
+      // 🟢 Điều hướng đến trang kết quả
+      navigate(`/searchresult?${q}`);
     } catch (err) {
-      // hiển thị lỗi đơn giản
-      console.error("Search error", err);
-      // bạn có thể show toast hoặc message UI
+      console.error("❌ Search error:", err);
+      // Nếu có lỗi khi fetch, vẫn điều hướng để hiển thị thông báo ở trang SearchResult
+      const q = getQueryString();
+      navigate(`/searchresult?${q}`);
     }
   };
 
   return (
-    <section style={{
-      position: "relative",
-      zIndex: 5,
-      marginTop: noOverlap ? "20px" : "-70px",
-    }}>
+    <section
+      style={{
+        position: "relative",
+        zIndex: 5,
+        marginTop: noOverlap ? "20px" : "-70px",
+      }}
+    >
       <Container fluid style={{ padding: "0 50px", maxWidth: "1200px" }}>
-        <Form onSubmit={handleSubmit} className="bg-white rounded-3 shadow p-4">
-          {/* Hàng input */}
+        <Form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-3 shadow p-4"
+        >
           <Row className="g-1 align-items-end">
+            {/* Vị trí */}
             <Col xs={12} md={6} lg={3}>
               <LocationInput />
             </Col>
 
+            {/* Loại tiệc */}
             <Col xs={12} md={6} lg={2}>
               <EventTypeSelect />
             </Col>
 
+            {/* Số bàn */}
             <Col xs={12} md={6} lg={1}>
               <TablesSelect />
             </Col>
 
+            {/* Ngày */}
             <Col xs={12} md={6} lg={2}>
               <DateInput />
             </Col>
 
+            {/* Giờ bắt đầu & kết thúc */}
             <Col xs={12} md={6} lg={3}>
               <TimeSelect />
             </Col>
 
-            {/* Nút Tìm kiếm cùng hàng */}
-            <Col xs={12} md={6} lg={1} className="text-center d-flex justify-content-center">
+            {/* Nút tìm kiếm */}
+            <Col
+              xs={12}
+              md={6}
+              lg={1}
+              className="text-center d-flex justify-content-center"
+            >
               <Button
                 type="submit"
                 variant="danger"

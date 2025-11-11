@@ -1,144 +1,118 @@
 import React from "react";
-import {
-  StarFill,
-  GeoAltFill,
-  PeopleFill,
-  Percent,
-} from "react-bootstrap-icons";
+import { useNavigate } from "react-router-dom"; // 👈 thêm dòng này
+import { StarFill, GeoAltFill, PeopleFill } from "react-bootstrap-icons";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "../../../styles/ProductCardStyle.css";
 
-const formatVND = (n) =>
-  new Intl.NumberFormat("vi-VN").format(
-    Number(String(n).replace(/[^\d]/g, ""))
-  );
-
-const priceRangeFromPrice = (priceStr) => {
-  const base = Number(String(priceStr).replace(/[^\d]/g, "")) || 0;
-  if (!base) return null;
-  const min = Math.round(base * 0.9);
-  const max = Math.round(base * 1.1);
-  return { min, max };
-};
-
-const tablesFromCapacity = (capacityStr) => {
-  const match = String(capacityStr || "").match(/(\d+)\s*-\s*(\d+)/);
-  if (match) {
-    const lo = Math.round(Number(match[1]) / 10);
-    const hi = Math.round(Number(match[2]) / 10);
-    return `${lo}–${hi} bàn`;
-  }
-  return capacityStr ? `${capacityStr} bàn` : "—";
-};
+const formatVND = (n) => new Intl.NumberFormat("vi-VN").format(Number(n) || 0);
 
 export default function ProductCard({ venue }) {
-  const promo =
-    venue.promotion ||
-    (Array.isArray(venue.promotions) && venue.promotions.length
-      ? venue.promotions[0]
-      : venue.discount
-      ? `Mã ${venue.discount}`
-      : null);
+  const navigate = useNavigate(); // 👈 dùng để chuyển trang
 
-  const range =
-    venue.priceMin && venue.priceMax
-      ? { min: venue.priceMin, max: venue.priceMax }
-      : priceRangeFromPrice(venue.price);
+  const {
+    restaurantID,
+    name,
+    thumbnailURL,
+    avgRating,
+    address,
+    halls = [],
+    restauranteventtypes = [],
+  } = venue;
 
-  const fakeOldMin = Math.round(range?.min * 1.1);
-  const fakeOldMax = Math.round(range?.max * 1.1);
+  // ✅ loại sự kiện (vd: Tiệc cưới)
+  const eventType = restauranteventtypes?.[0]?.eventType?.name || "Sự kiện";
+
+  // ✅ giá thấp nhất & sức chứa lớn nhất
+  const minPrice = halls.length ? Math.min(...halls.map((h) => Number(h.price))) : 0;
+  const maxCapacity = halls.length ? Math.max(...halls.map((h) => h.maxTable)) : null;
+
+  // ✅ khi click card → điều hướng tới trang chi tiết
+  const handleClick = () => {
+    navigate(`/restaurants/${restaurantID}`);
+  };
 
   return (
-    <div className="card border-0 shadow-sm mb-4 venue-card">
+    <div
+      className="card border-0 shadow-sm mb-4 venue-card"
+      onClick={handleClick}
+      style={{
+        cursor: "pointer",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "scale(1.01)";
+        e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.1)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.05)";
+      }}
+    >
       <div className="row g-0">
-        {/* Cột ảnh */}
+        {/* Ảnh */}
         <div className="col-md-4">
           <div className="p-3 h-100 d-flex align-items-center">
-            <div className="image-container w-100">
-              <img src={venue.image} alt={venue.name} className="venue-image" />
-            </div>
+            <img
+              src={
+                thumbnailURL ||
+                venue.restaurantimages?.[0]?.imageURL ||
+                "/default-image.jpg"
+              }
+              alt={name}
+              className="venue-image"
+              style={{
+                borderRadius: "8px",
+                width: "100%",
+                height: "200px",
+                objectFit: "cover",
+              }}
+            />
           </div>
         </div>
 
-        {/* Cột nội dung */}
+        {/* Nội dung */}
         <div className="col-md-8">
           <div className="card-body d-flex flex-column h-100 p-3">
-            {/* Header */}
             <div className="d-flex justify-content-between align-items-start mb-2">
-              <h3 className="venue-title me-3">{venue.name}</h3>
-              {venue.rating != null && (
+              <h3 className="venue-title me-3">{name}</h3>
+              {avgRating && (
                 <div className="rating-badge flex-shrink-0">
-                  <StarFill size={16} />
-                  <span>{venue.rating}</span>
+                  <StarFill size={16} color="#E11D48" />
+                  <span>{Number(avgRating).toFixed(1)}</span>
                 </div>
               )}
             </div>
 
-            {/* Địa điểm */}
-            {venue.location && (
+            <p
+              className="text-muted mb-2"
+              style={{ fontSize: 14, fontStyle: "italic" }}
+            >
+              {eventType}
+            </p>
+
+            {address?.fullAddress && (
               <div className="location-text mb-2">
-                <GeoAltFill size={14} />
-                <span>{venue.location}</span>
+                <GeoAltFill size={14} color="#E11D48" />
+                <span style={{ marginLeft: 6 }}>{address.fullAddress}</span>
               </div>
             )}
 
-            {/* Badge khuyến mãi - HIGHLIGHT */}
-            {promo && (
+            {maxCapacity && (
               <div className="mb-3">
-                <span className="promo-badge">
-                  <span className="promo-icon">
-                    <img
-                      src="https://ik.imagekit.io/tvlk/image/imageResource/2024/11/26/1732635982113-3a6b6412ef32ce9edf2f58095a8954b4.png?tr=h-24,q-75,w-24"
-                      alt="Khuyến mãi"
-                      className="gear-image"
-                      onError={(e) => {
-                        // Fallback nếu ảnh lỗi
-                        e.target.style.display = "none";
-                        e.target.nextSibling.style.display = "inline";
-                      }}
-                    />
-                    {/* Fallback text nếu ảnh không load */}
-                    <span style={{ display: "none" }}></span>
-                  </span>
-                  <span>{promo}</span>
-                </span>
+                <PeopleFill size={16} className="text-secondary" />
+                <span className="text-secondary ms-2">Sức chứa tối đa:</span>
+                <strong className="text-dark ms-1">{maxCapacity} bàn</strong>
               </div>
             )}
 
-            {/* Sức chứa */}
-            <div className="mb-3">
-              <span className="capacity-badge">
-                <PeopleFill size={16} className="text-secondary" />
-                <span className="text-secondary">Sức chứa:</span>
-                <strong className="text-dark">
-                  {tablesFromCapacity(venue.capacityTables || venue.capacity)}
-                </strong>
-              </span>
-            </div>
-
-            {/* Footer: Giá + Nút */}
             <div className="mt-auto">
-              <div className="row align-items-end g-3">
-                <div className="col-12 col-md-7">
-                  {range ? (
-                    <>
-                      <p className="price-current">
-                        {formatVND(range.min)} – {formatVND(range.max)} VND
-                      </p>
-                      <p className="price-old">
-                        {formatVND(fakeOldMin)} – {formatVND(fakeOldMax)} VND
-                      </p>
-                    </>
-                  ) : (
-                    <p className="price-current">Liên hệ báo giá</p>
-                  )}
-                </div>
-                <div className="col-12 col-md-5 text-md-end">
-                  <button className="detail-btn w-100 w-md-auto">
-                    Xem chi tiết
-                  </button>
-                </div>
-              </div>
+              {minPrice ? (
+                <p className="price-current fw-bold text-danger">
+                  Giá từ: {formatVND(minPrice)} VND
+                </p>
+              ) : (
+                <p className="text-muted">Liên hệ để biết giá</p>
+              )}
             </div>
           </div>
         </div>

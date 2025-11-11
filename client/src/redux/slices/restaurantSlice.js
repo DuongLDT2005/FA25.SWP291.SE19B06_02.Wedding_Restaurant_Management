@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import * as restaurantService from "../../../services/restaurantService";
+import * as restaurantService from "../../services/restaurantService";
 
-/* helper */
+/* Helper: xử lý thông báo lỗi gọn gàng */
 const getErrorMessage = (err) => {
   if (!err) return "Unknown error";
   if (typeof err === "string") return err;
@@ -10,7 +10,8 @@ const getErrorMessage = (err) => {
   return JSON.stringify(err);
 };
 
-/* Async thunks */
+/* ====== Async Thunks ====== */
+
 export const fetchRestaurants = createAsyncThunk(
   "restaurants/fetchAll",
   async (_, { rejectWithValue }) => {
@@ -40,7 +41,11 @@ export const performSearchRestaurants = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const data = await restaurantService.searchRestaurants(params);
-      return data;
+
+      // ✅ backend trả về { restaurants: [...] }
+      if (data?.restaurants) return data.restaurants;
+      if (Array.isArray(data)) return data;
+      return data?.results ?? [];
     } catch (err) {
       return rejectWithValue(getErrorMessage(err));
     }
@@ -71,13 +76,14 @@ export const createRestaurant = createAsyncThunk(
   }
 );
 
-/* Slice */
+/* ====== Slice ====== */
+
 const initialState = {
   list: [],
   featured: [],
   current: null,
   searchResults: [],
-  status: "idle",
+  status: "idle", // idle | loading | succeeded | failed
   error: null,
 };
 
@@ -95,7 +101,7 @@ const restaurantSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // fetch all
+      /* ========== FETCH ALL ========== */
       .addCase(fetchRestaurants.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -103,14 +109,13 @@ const restaurantSlice = createSlice({
       .addCase(fetchRestaurants.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.list = action.payload || [];
-        state.error = null;
       })
       .addCase(fetchRestaurants.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload ?? action.error?.message;
       })
 
-      // fetch by id
+      /* ========== FETCH BY ID ========== */
       .addCase(fetchRestaurantById.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -118,31 +123,31 @@ const restaurantSlice = createSlice({
       .addCase(fetchRestaurantById.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.current = action.payload ?? null;
-        state.error = null;
       })
       .addCase(fetchRestaurantById.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload ?? action.error?.message;
       })
 
-      // search
+      /* ========== SEARCH RESTAURANTS ========== */
       .addCase(performSearchRestaurants.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(performSearchRestaurants.fulfilled, (state, action) => {
         state.status = "succeeded";
-        // backend might return { results, meta } or an array
-        if (Array.isArray(action.payload)) state.searchResults = action.payload;
-        else state.searchResults = action.payload?.results ?? [];
-        state.error = null;
+        // ✅ chuẩn backend { restaurants: [...] }
+        state.searchResults = Array.isArray(action.payload)
+          ? action.payload
+          : [];
       })
       .addCase(performSearchRestaurants.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload ?? action.error?.message;
+        state.searchResults = [];
       })
 
-      // featured
+      /* ========== FEATURED ========== */
       .addCase(fetchFeaturedRestaurants.pending, (state) => {
         state.status = "loading";
         state.error = null;
@@ -150,23 +155,20 @@ const restaurantSlice = createSlice({
       .addCase(fetchFeaturedRestaurants.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.featured = action.payload || [];
-        state.error = null;
       })
       .addCase(fetchFeaturedRestaurants.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload ?? action.error?.message;
       })
 
-      // create
+      /* ========== CREATE ========== */
       .addCase(createRestaurant.pending, (state) => {
         state.status = "loading";
         state.error = null;
       })
       .addCase(createRestaurant.fulfilled, (state, action) => {
         state.status = "succeeded";
-        // append created restaurant if backend returns it
         if (action.payload) state.list.unshift(action.payload);
-        state.error = null;
       })
       .addCase(createRestaurant.rejected, (state, action) => {
         state.status = "failed";
@@ -175,10 +177,18 @@ const restaurantSlice = createSlice({
   },
 });
 
+/* ====== Selectors ====== */
+
 export const { clearCurrent, clearError } = restaurantSlice.actions;
 
 export const selectRestaurants = (state) => state.restaurants?.list ?? [];
-export const selectFeaturedRestaurants = (state) => state.restaurants?.featured ?? [];
-export const selectCurrentRestaurant = (state) => state.restaurants?.current ?? null;
-export const selectSearchResults = (state) => state.restaurants?.searchResults ?? [];
+export const selectFeaturedRestaurants = (state) =>
+  state.restaurants?.featured ?? [];
+export const selectCurrentRestaurant = (state) =>
+  state.restaurants?.current ?? null;
+export const selectSearchResults = (state) =>
+  state.restaurants?.searchResults ?? [];
+export const selectStatus = (state) => state.restaurants?.status ?? "idle";
+export const selectError = (state) => state.restaurants?.error ?? null;
+
 export default restaurantSlice.reducer;
