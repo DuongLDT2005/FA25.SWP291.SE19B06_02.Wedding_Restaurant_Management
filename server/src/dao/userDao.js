@@ -1,305 +1,232 @@
-import db from '../config/db.js';
-import User from '../models/User.js';
-import UserList from '../models/UserList.js';
-import RestaurantPartner from '../models/RestaurantPartner.js';
-import Customer from '../models/Customer.js';
-import { userRole, userStatus } from '../models/User.js';
-import { negoStatus } from '../models/RestaurantPartner.js';
-import { coupleRole } from '../models/Customer.js';
+import db from "../config/db.js";
+import {
+  userRole,
+  userStatus,
+  negoStatus,
+  coupleRole,
+} from "../models/enums/UserStatus.js";
+import { bitToNumber } from "../utils/convert/bitUtils.js";
+import { toDTO, toDTOs } from "../utils/convert/dto.js";
 
-function bitToNumber(bitValue) {
-    // Convert BIT buffer to number
-    return Buffer.isBuffer(bitValue) ? bitValue[0] : bitValue;
-}
+// db (from config/db.js) exports: { sequelize, user, restaurantpartner, customer, ... }
+const {
+  sequelize,
+  user: UserModel,
+  restaurantpartner: RestaurantPartnerModel,
+  customer: CustomerModel,
+} = db;
 
 class UserDAO {
-    static async getAllUsers() {
-        const [rows] = await db.query(`
-            SELECT u.userID, u.fullName, u.email, u.phone, u.password, u.role, u.status, u.createdAt,
-                   o.licenseUrl, o.status AS ownerStatus, o.commissionRate,
-                   c.partnerName, c.weddingRole
-            FROM User u
-            LEFT JOIN RestaurantPartner o ON u.userID = o.restaurantPartnerID
-            LEFT JOIN Customer c ON u.userID = c.customerID
-        `);
-        const userList = new UserList();
-        rows.forEach(row => {
-            let user;
-            const status = bitToNumber(row.status);
-            if (row.role === userRole.owner) {
-                user = new RestaurantPartner(
-                    row.userID,
-                    row.email,
-                    row.fullName,
-                    row.phone,
-                    row.password,
-                    row.role,
-                    status,
-                    row.createdAt,
-                    row.licenseUrl,
-                    bitToNumber(row.ownerStatus),
-                    row.commissionRate
-                );
-            } else if (row.role === userRole.customer) {
-                user = new Customer(
-                    row.userID,
-                    row.email,
-                    row.fullName,
-                    row.phone,
-                    row.password,
-                    row.role,
-                    status,
-                    row.createdAt,
-                    row.partnerName,
-                    row.weddingRole
-                );
-            } else {
-                user = new User(
-                    row.userID,
-                    row.email,
-                    row.fullName,
-                    row.phone,
-                    row.password,
-                    row.role,
-                    status,
-                    row.createdAt
-                );
-            }
-            userList.addUser(user);
+  static async getAllUsers() {
+    const users = await UserModel.findAll({
+      include: [
+        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: CustomerModel, as: "customer" },
+      ],
+    });
+
+    return toDTOs(users);
+  }
+
+  static async getUserById(id) {
+    const user = await UserModel.findByPk(id, {
+      include: [
+        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: CustomerModel, as: "customer" },
+      ],
+    });
+    return user ? user.get({ plain: true }) : null;
+  }
+
+  static async createOwner(data) {
+    const { email, fullName, phone, password, licenseUrl } = data;
+    const t = await sequelize.transaction();
+
+    try {
+      const createdUser = await UserModel.create(
+        {
+          email,
+          fullName,
+          phone,
+          password,
+          role: userRole.owner,
+          status: userStatus.active,
+        },
+        { transaction: t }
+      );
+
+      await RestaurantPartnerModel.create(
+        {
+          restaurantPartnerID: createdUser.userID,
+          licenseUrl: licenseUrl || "",
+          status: negoStatus.pending,
+          commissionRate: null,
+        },
+        { transaction: t }
+      );
+
+      await t.commit();
+      const result = await this.getUserById(createdUser.userID);
+      return result;
+    } catch (error) {
+      await t.rollback();
+      console.error("❌ createOwner failed:", error);
+      throw error;
+    }
+  }
+
+  static async createCustomer(data) {
+    const { email, fullName, phone, password, partnerName, weddingRole } = data;
+
+    // Dùng transaction nhưng chờ commit hoàn tất
+    const t = await sequelize.transaction();
+
+    try {
+      const createdUser = await UserModel.create(
+        {
+          email,
+          fullName,
+          phone,
+          password,
+          role: userRole.customer,
+          status: userStatus.active,
+        },
+        { transaction: t }
+      );
+
+      await CustomerModel.create(
+        {
+          customerID: createdUser.userID,
+          partnerName: partnerName || "",
+          weddingRole: weddingRole || coupleRole.other,
+        },
+        { transaction: t }
+      );
+
+      // 👉 chỉ chạy sau khi transaction COMMIT thành công
+      let result;
+      t.afterCommit(async () => {
+        result = await this.getUserById(createdUser.userID);
+      });
+
+      await t.commit();
+
+      // Trả về user sau khi commit
+      return await this.getUserById(createdUser.userID);
+    } catch (error) {
+      await t.rollback();
+      console.error("❌ createCustomer failed:", error);
+      throw error;
+    }
+  }
+
+  static async updateStatusUser(id, status) {
+    const valid = status === 1;
+    const [affected] = await UserModel.update(
+      { status: valid },
+      { where: { userID: id } }
+    );
+    if (affected === 0) throw new Error("User not found or status not updated");
+    return affected > 0;
+  }
+
+  static async updateUserInfo(id, updates) {
+    // updates may contain user fields and owner/customer specific fields
+    const user = await UserModel.findByPk(id);
+    if (!user) throw new Error("User not found");
+
+    const {
+      fullName,
+      phone,
+      password,
+      role,
+      status,
+      licenseUrl,
+      negotiationStatus,
+      commissionRate,
+      partnerName,
+      weddingRole,
+    } = updates;
+
+    await user.update({
+      fullName: fullName ?? user.fullName,
+      phone: phone ?? user.phone,
+      password: password ?? user.password,
+      role: role ?? user.role,
+      status: typeof status !== "undefined" ? status === 1 : user.status,
+    });
+
+    if ((role ?? user.role) === userRole.owner) {
+      // upsert restaurant partner
+      const rp = await RestaurantPartnerModel.findByPk(id);
+      if (rp) {
+        await rp.update({
+          licenseUrl: licenseUrl ?? rp.licenseUrl,
+          status:
+            typeof negotiationStatus !== "undefined"
+              ? negotiationStatus
+              : rp.status,
+          commissionRate:
+            typeof commissionRate !== "undefined"
+              ? commissionRate
+              : rp.commissionRate,
         });
-        return userList;
+      } else {
+        await RestaurantPartnerModel.create({
+          restaurantPartnerID: id,
+          licenseUrl: licenseUrl || "",
+          status: negotiationStatus ?? negoStatus.pending,
+          commissionRate: commissionRate || null,
+        });
+      }
     }
 
-    static async getUserById(id) {
-        const [rows] = await db.query(`
-            SELECT u.userID, u.fullName, u.email, u.phone, u.password, u.role, u.status, u.createdAt,
-                   o.licenseUrl, o.status AS ownerStatus, o.commissionRate,
-                   c.partnerName, c.weddingRole
-            FROM User u
-            LEFT JOIN RestaurantPartner o ON u.userID = o.restaurantPartnerID
-            LEFT JOIN Customer c ON u.userID = c.customerID
-            WHERE u.userID = ?
-        `, [id]);
-        if (rows.length === 0) return null;
-        const row = rows[0];
-        const status = bitToNumber(row.status);
-        if (row.role === userRole.owner) {
-            return new RestaurantPartner(
-                row.userID,
-                row.email,
-                row.fullName,
-                row.phone,
-                row.password,
-                row.role,
-                status,
-                row.createdAt,
-                row.licenseUrl,
-                bitToNumber(row.ownerStatus),
-                row.commissionRate
-            );
-        } else if (row.role === userRole.customer) {
-            return new Customer(
-                row.userID,
-                row.email,
-                row.fullName,
-                row.phone,
-                row.password,
-                row.role,
-                status,
-                row.createdAt,
-                row.partnerName,
-                row.weddingRole
-            );
-        } else {
-            return new User(
-                row.userID,
-                row.email,
-                row.fullName,
-                row.phone,
-                row.password,
-                row.role,
-                status,
-                row.createdAt
-            );
-        }
+    if ((role ?? user.role) === userRole.customer) {
+      const cu = await CustomerModel.findByPk(id);
+      if (cu) {
+        await cu.update({
+          partnerName: partnerName ?? cu.partnerName,
+          weddingRole: weddingRole ?? cu.weddingRole,
+        });
+      } else {
+        await CustomerModel.create({
+          customerID: id,
+          partnerName: partnerName || "",
+          weddingRole: weddingRole || coupleRole.other,
+        });
+      }
     }
 
-    static async createOwner(data) {
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
+    return this.getUserById(id);
+  }
 
-            const { email, fullName, phone, password, licenseUrl } = data;
-            // Insert into User table with role owner (1)
-            const [userResult] = await connection.query(
-                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-                [email, fullName, phone, password, userRole.owner, Buffer.from([userStatus.active])]
-            );
-            const userID = userResult.insertId;
+  static async deleteUser(id) {
+    await RestaurantPartnerModel.destroy({
+      where: { restaurantPartnerID: id },
+    });
+    await CustomerModel.destroy({ where: { customerID: id } });
+    const affected = await UserModel.destroy({ where: { userID: id } });
+    return affected > 0;
+  }
 
-            // Insert into RestaurantPartner table
-            await connection.query(
-                'INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate) VALUES (?, ?, ?, ?)',
-                [userID, licenseUrl || '', Buffer.from([negoStatus.pending]), null]
-            );
-
-            await connection.commit();
-            return new RestaurantPartner(userID, email, fullName, phone, password, userRole.owner, userStatus.active, new Date(), licenseUrl, negoStatus.pending, null);
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
-        }
-    }
-
-    static async createCustomer(data) {
-        const connection = await db.getConnection();
-        try {
-            await connection.beginTransaction();
-
-            const { email, fullName, phone, password, partnerName, weddingRole } = data;
-            // Insert into User table
-            const [userResult] = await connection.query(
-                'INSERT INTO User (email, fullName, phone, password, role, status) VALUES (?, ?, ?, ?, ?, ?)',
-                [email, fullName, phone, password, userRole.customer, Buffer.from([userStatus.active])]
-            );
-            const userID = userResult.insertId;
-
-            // Insert into Customer table
-            await connection.query(
-                'INSERT INTO Customer (customerID, partnerName, weddingRole) VALUES (?, ?, ?)',
-                [userID, partnerName || '', weddingRole || 0]
-            );
-
-            await connection.commit();
-            return new Customer(userID, email, fullName, phone, password, userRole.customer, userStatus.active, new Date(), partnerName, weddingRole);
-        } catch (error) {
-            await connection.rollback();
-            throw error;
-        } finally {
-            connection.release();
-        }
-    }
-
-    static async updateStatusUser(id, status) {
-        // Only allow 0 or 1 for BIT(1)
-        const validStatus = status === 1 ? 1 : 0;
-        const [result] = await db.query(
-            'UPDATE User SET status = ? WHERE userID = ?',
-            [Buffer.from([validStatus]), id]
-        );
-        if (result.affectedRows === 0) {
-            throw new Error('User not found or status not updated');
-        }
-        return result.affectedRows > 0;
-    }
-
-    static async updateUserInfo(email, user) {
-        const { fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate, partnerName, weddingRole } = user;
-
-        // Fetch the existing user data
-        const [existingUserRows] = await db.query('SELECT * FROM User WHERE email = ?', [email]);
-        if (existingUserRows.length === 0) {
-            throw new Error('User not found');
-        }
-        const existingUser = existingUserRows[0];
-
-        // Use existing values if new values are not provided
-        const updatedEmail = email || existingUser.email;
-        const updatedFullName = fullName || existingUser.fullName;
-        const updatedPhone = phone || existingUser.phone;
-        const updatedPassword = password || existingUser.password;
-        const updatedRole = role || existingUser.role;
-        const updatedStatus = typeof status !== 'undefined' ? Buffer.from([status === 1 ? 1 : 0]) : existingUser.status;
-
-        // Update User table
-        await db.query(
-            'UPDATE User SET email = ?, fullName = ?, phone = ?, password = ?, role = ?, status = ? WHERE userID = ?',
-            [updatedEmail, updatedFullName, updatedPhone, updatedPassword, updatedRole, updatedStatus, existingUser.userID]
-        );
-
-        // Update Owner table if the user is an owner
-        if (role === userRole.owner) {
-            await db.query(
-                'UPDATE RestaurantPartner SET licenseUrl = ?, status = ?, commissionRate = ? WHERE restaurantPartnerID = ?',
-                [licenseUrl || '', typeof negotiationStatus !== 'undefined' ? Buffer.from([negotiationStatus]) : 0, commissionRate || 0, id]
-            );
-            return new RestaurantPartner(id, email, fullName, phone, password, role, status, licenseUrl, negotiationStatus, commissionRate);
-        }
-
-        // Update Customer table if the user is a customer
-        if (role === userRole.customer) {
-            await db.query(
-                'UPDATE Customer SET partnerName = ?, weddingRole = ? WHERE customerID = ?',
-                [partnerName || '', weddingRole || 0, email]
-            );
-            return new Customer(existingUser.id, email, fullName, phone, password, role, status, partnerName, weddingRole);
-        }
-
-        // Return updated User object for other roles
-        return new User(existingUser.id, email, fullName, phone, password, role, status);
-    }
-
-    static async deleteUser(id) {
-        // Delete from RestaurantPartner table if the user is a restaurant partner
-        await db.query('DELETE FROM RestaurantPartner WHERE restaurantPartnerID = ?', [id]);
-
-        // Delete from Customer table if the user is a customer
-        await db.query('DELETE FROM Customer WHERE customerID = ?', [id]);
-
-        // Finally, delete from User table
-        const [result] = await db.query('DELETE FROM User WHERE userID = ?', [id]);
-        return result.affectedRows > 0;
-    }
-
-    static async findByEmail(email) {
-        const [users] = await db.query('SELECT * FROM User WHERE email = ?', [email]);
-        if (users.length === 0) return null;
-
-        const userRow = users[0];
-        const { userID, role } = userRow;
-        const status = bitToNumber(userRow.status);
-
-        if (role === userRole.customer) {
-            const [customerRows] = await db.query('SELECT * FROM Customer WHERE customerID = ?', [userID]);
-            if (customerRows.length > 0) {
-                const customerRow = customerRows[0];
-                return new Customer(
-                    userID,
-                    userRow.email,
-                    userRow.fullName,
-                    userRow.phone,
-                    userRow.password,
-                    userRow.role,
-                    status,
-                    userRow.createdAt,
-                    customerRow.partnerName,
-                    customerRow.weddingRole
-                );
-            }
-        } else if (role === userRole.owner) {
-            const [ownerRows] = await db.query('SELECT * FROM RestaurantPartner WHERE restaurantPartnerID = ?', [userID]);
-            if (ownerRows.length > 0) {
-                const ownerRow = ownerRows[0];
-                return new RestaurantPartner(
-                    userID,
-                    userRow.email,
-                    userRow.fullName,
-                    userRow.phone,
-                    userRow.password,
-                    userRow.role,
-                    status,
-                    userRow.createdAt,
-                    ownerRow.licenseUrl,
-                    bitToNumber(ownerRow.status),
-                    ownerRow.commissionRate
-                );
-            }
-        }
-
-        return null;
-    }
+  static async findByEmail(email, raw = false) {
+    const user = await UserModel.findOne({ where: { email } });
+    return raw ? user : toDTO(user);
+  }
+  static async getCustomers() {
+    const customers = await UserModel.findAll({
+      where: { role: userRole.customer },
+      include: [{ model: CustomerModel, as: "customer" }],
+    });
+    return toDTOs(customers);
+  }
+  static async getOwners() {
+    const owners = await UserModel.findAll({
+      where: { role: userRole.owner },
+      include: [{ model: RestaurantPartnerModel, as: "restaurantpartner" }],
+    });
+    return toDTOs(owners);
+  }
 }
 
 export default UserDAO;

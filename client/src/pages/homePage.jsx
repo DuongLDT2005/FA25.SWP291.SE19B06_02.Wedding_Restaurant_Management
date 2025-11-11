@@ -1,7 +1,7 @@
 import React from "react";
-import "../styles/homePageStyles.css"
-import SearchBar from "../components/SearchBar";
-import Header from "../components/Header";
+import "../styles/homePageStyles.css";
+import SearchBar from "../components/searchbar/SearchBar";
+import Header from "../components/header/Header";
 import Footer from "../components/Footer";
 import ContentHomePage from "./ContentHomePage";
 import ScrollToTopButton from "../components/ScrollToTopButton";
