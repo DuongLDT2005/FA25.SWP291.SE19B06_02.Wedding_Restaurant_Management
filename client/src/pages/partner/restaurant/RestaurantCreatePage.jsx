@@ -3,15 +3,23 @@ import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import PartnerLayout from "../../../layouts/PartnerLayout";
+import useAuth from "../../../hooks/useAuth";
+import { createRestaurant, addRestaurantImage } from "../../../services/restaurantService";
+import { uploadImageToCloudinary } from "../../../services/uploadServices";
 
 export default function CreateRestaurantPage() {
+    const { user } = useAuth();
     const [newRestaurant, setNewRestaurant] = useState({
+        // Will be filled at submit time; keep safe defaults in case user not loaded yet
+        restaurantPartnerID: "",
         name: "",
         phone: "",
         email: "",
         description: "",
         thumbnailURL: "",
         imageURLs: [],
+        thumbnailFile: null,
+        imageFiles: [],
         address: {
             number: "",
             street: "",
@@ -39,7 +47,7 @@ export default function CreateRestaurantPage() {
         const file = e.target.files[0];
         if (file) {
             const previewUrl = URL.createObjectURL(file);
-            setNewRestaurant((prev) => ({ ...prev, thumbnailURL: previewUrl }));
+            setNewRestaurant((prev) => ({ ...prev, thumbnailURL: previewUrl, thumbnailFile: file }));
         }
     };
 
@@ -49,6 +57,7 @@ export default function CreateRestaurantPage() {
         setNewRestaurant((prev) => ({
             ...prev,
             imageURLs: [...prev.imageURLs, ...newPreviews],
+            imageFiles: [...prev.imageFiles, ...files],
         }));
     };
 
@@ -70,12 +79,51 @@ export default function CreateRestaurantPage() {
         }
     };
 
-    const handleCreate = () => {
-        const fullAddress = `${newRestaurant.address.number} ${newRestaurant.address.street}, ${newRestaurant.address.ward}`;
-        const dataToSave = { ...newRestaurant, fullAddress };
-        console.log("Creating restaurant:", dataToSave);
-        alert("Tạo nhà hàng thành công!");
-        // TODO: Gọi API để thêm nhà hàng mới (gửi dataToSave)
+    const handleCreate = async () => {
+        try {
+            if (!user) throw new Error("Bạn cần đăng nhập");
+                        // Backend association alias is 'restaurantpartner' (lowercase). Login / me may return only basic user without association.
+                        // Try all possible shapes.
+                        const restaurantPartnerID = user?.restaurantpartner?.restaurantPartnerID
+                            || user?.restaurantPartnerID
+                            || user?.restaurantPartner?.restaurantPartnerID;
+            if (!restaurantPartnerID) throw new Error("Thiếu thông tin Partner ID");
+
+            // Upload thumbnail if file provided
+            let thumbnailURL = newRestaurant.thumbnailURL;
+            if (newRestaurant.thumbnailFile) {
+                thumbnailURL = await uploadImageToCloudinary(newRestaurant.thumbnailFile);
+            }
+
+            const payload = {
+                name: newRestaurant.name,
+                description: newRestaurant.description,
+                phone: newRestaurant.phone || null,
+                thumbnailURL,
+                restaurantPartnerID,
+                address: {
+                    number: newRestaurant.address.number,
+                    street: newRestaurant.address.street,
+                    ward: newRestaurant.address.ward,
+                },
+            };
+
+            const created = await createRestaurant(payload);
+
+            // Upload additional images sequentially
+            for (const f of newRestaurant.imageFiles) {
+                try {
+                    const url = await uploadImageToCloudinary(f);
+                    await addRestaurantImage(created.restaurantID, url);
+                } catch (e) {
+                    console.warn("Upload/add image failed", e);
+                }
+            }
+
+            alert("Tạo nhà hàng thành công!");
+        } catch (err) {
+            alert(err.message || "Tạo nhà hàng thất bại");
+        }
     };
 
     const fullAddressPreview = `${newRestaurant.address.number} ${newRestaurant.address.street}, ${newRestaurant.address.ward}`.trim();

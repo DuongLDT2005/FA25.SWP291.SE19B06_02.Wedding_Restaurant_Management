@@ -70,8 +70,14 @@ class BookingDAO {
     const rows = await BookingModel.findAll({
       where,
       include: [
-        // include customer and its associated user
-        { model: CustomerModel, as: 'customer', include: [{ model: UserModel, as: 'user' }] },
+        {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [
+            { model: UserModel, as: 'user', attributes: { exclude: ['password'] } }
+          ]
+        },
         { model: EventTypeModel, as: 'eventType' },
         {
           model: HallModel,

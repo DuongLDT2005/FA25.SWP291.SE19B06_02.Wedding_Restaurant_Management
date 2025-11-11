@@ -27,7 +27,7 @@ const ServiceList = ({ restaurant }) => {
     <div>
       <h4
         className="section-title mb-3"
-        style={{ color: "#993344", fontWeight: "bold", fontSize: "1.6rem" }}
+        style={{ color: "#e11d48", fontWeight: "bold", fontSize: "1.6rem" }}
       >
         Dịch vụ
       </h4>
@@ -43,7 +43,7 @@ const ServiceList = ({ restaurant }) => {
               borderRadius: "10px",
               padding: "0.75rem 1rem",
               backgroundColor: "#f8eef2",
-              color: "#993344",
+              color: "#e11d48",
               fontWeight: "bold",
               fontSize: "1rem",
               boxShadow: "0 3px 6px rgba(0,0,0,0.08)",
@@ -91,10 +91,10 @@ const ServiceList = ({ restaurant }) => {
                     e.currentTarget.style.boxShadow = "0 2px 6px rgba(0,0,0,0.03)";
                   }}
                 >
-                  <span style={{ color: "#993344", fontWeight: "500" }}>
+                  <span style={{ color: "#e11d48", fontWeight: "500" }}>
                     {idx + 1}. {service.name}
                   </span>
-                  <span style={{ fontWeight: "bold", color: "#993344" }}>
+                  <span style={{ fontWeight: "bold", color: "#e11d48" }}>
                     {parseFloat(service.price).toLocaleString()} VND / {service.unit ?? "-"}
                   </span>
                 </div>

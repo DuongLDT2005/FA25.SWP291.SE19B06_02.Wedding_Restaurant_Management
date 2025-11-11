@@ -11,7 +11,7 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
 
   return (
     <div>
-      <h4 className="section-title mb-4" style={{ color: "#993344" }}>
+      <h4 className="section-title mb-4" style={{ color: "#e11d48" }}>
         Đánh giá
       </h4>
 
@@ -33,7 +33,7 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
                     width: "40px",
                     height: "40px",
                     borderRadius: "50%",
-                    backgroundColor: "#993344",
+                    backgroundColor: "#e11d48",
                     color: "#fff",
                     display: "flex",
                     alignItems: "center",
@@ -53,7 +53,7 @@ const ReviewList = ({ reviews, pageSize = 3 }) => {
                     {review.customerName}
                   </h5>
                   <div className="d-flex align-items-center mb-2">
-                    <RatingStars rating={review.rating} color="#993344" />
+                    <RatingStars rating={review.rating} color="#e11d48" />
                     <span
                       className="text-muted ms-2"
                       style={{ fontSize: "0.85rem" }}

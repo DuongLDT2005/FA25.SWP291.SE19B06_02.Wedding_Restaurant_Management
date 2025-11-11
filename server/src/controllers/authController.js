@@ -1,4 +1,5 @@
 import AuthServices from "../services/AuthServices.js";
+import UserService from "../services/userServices.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 class AuthController {
@@ -182,10 +183,22 @@ class AuthController {
     }
   }
   static async getCurrentUser(req, res) {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const id = req.user.userId || req.user.userID || req.user.sub;
+      if (!id) return res.status(400).json({ error: "Invalid token payload" });
+      // Return full user profile with associations (restaurantpartner/customer)
+      const fullUser = await UserService.getUserById(id);
+      if (!fullUser) return res.status(404).json({ error: "User not found" });
+      // Hide sensitive
+      if (fullUser.password) delete fullUser.password;
+      res.json({ user: fullUser });
+    } catch (err) {
+      console.error("getCurrentUser error:", err);
+      res.status(500).json({ error: "Internal server error" });
     }
-    res.json({ user: req.user });
   }
 }
 export default AuthController;

@@ -115,7 +115,7 @@ function BookingListPage() {
   return (
     <>
       <Header />
-      <div style={{ 
+      <div style={{
         background: '#ffffff',
         minHeight: '100vh',
         paddingTop: '40px',
@@ -148,7 +148,7 @@ function BookingListPage() {
               </div>
             </Col>
           </Row>
-          
+
           <Row>
             <Col lg={10} md={10} xs={12} className="offset-lg-1 offset-md-1">
               <div>
@@ -182,8 +182,8 @@ function BookingListPage() {
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
                     </div>
-                    <p style={{ 
-                      fontSize: '1.25rem', 
+                    <p style={{
+                      fontSize: '1.25rem',
                       color: '#1f2937',
                       fontWeight: '600',
                       marginBottom: '8px'
@@ -207,14 +207,14 @@ function BookingListPage() {
                       transition: 'all 0.3s ease',
                       background: '#ffffff'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(225, 29, 72, 0.12)'
-                      e.currentTarget.style.borderColor = 'rgba(225, 29, 72, 0.3)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)'
-                      e.currentTarget.style.borderColor = '#f3f4f6'
-                    }}>
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(225, 29, 72, 0.12)'
+                        e.currentTarget.style.borderColor = 'rgba(225, 29, 72, 0.3)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)'
+                        e.currentTarget.style.borderColor = '#f3f4f6'
+                      }}>
                       <BookingCard
                         booking={b}
                         onConfirm={handleConfirm}

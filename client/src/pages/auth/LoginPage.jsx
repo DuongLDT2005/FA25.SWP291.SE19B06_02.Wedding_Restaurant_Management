@@ -38,6 +38,7 @@ export default function LoginPage() {
   const [forgotEmailError, setForgotEmailError] = useState("");
 
   const { login, forgotPassword } = useAuth();
+
   const navigate = useNavigate();
 
   const emailIsValid = (e) =>
@@ -78,7 +79,7 @@ export default function LoginPage() {
           navigate("/partner");
           break;
         default: // customer
-          navigate("/customer/bookings");
+          navigate("/");  
       }
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");

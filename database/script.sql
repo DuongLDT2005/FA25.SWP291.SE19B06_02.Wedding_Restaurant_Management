@@ -11,7 +11,6 @@ CREATE TABLE User (
     password VARCHAR(255) NOT NULL,
     avatarURL VARCHAR(255) DEFAULT NULL,
     role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
-    role TINYINT UNSIGNED NOT NULL, -- 0: CUSTOMER, 1: RESTAURANT_PARTNER, 2: ADMIN
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     status BIT DEFAULT 1 -- 0: INACTIVE, 1: ACTIVE
 );
@@ -19,7 +18,6 @@ CREATE TABLE User (
 -- Table Customer
 CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
-    weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     weddingRole TINYINT UNSIGNED NOT NULL, -- 0: BRIDE, 1: GROOM, 2: OTHER
     partnerName VARCHAR(255),
     FOREIGN KEY (customerID) REFERENCES User(userID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -135,7 +133,7 @@ CREATE TABLE Menu (
 -- Table DishCategory
 CREATE TABLE DishCategory (
     categoryID INT AUTO_INCREMENT PRIMARY KEY,
-    restaurantID INT NOT NULL.
+    restaurantID INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     requiredQuantity INT DEFAULT 1 CHECK(requiredQuantity > 0),
     status BIT DEFAULT 1, -- 0: INACTIVE, 1: ACTIVE
@@ -227,26 +225,30 @@ CREATE TABLE PromotionService (
 -- Table Booking
 CREATE TABLE Booking (
     bookingID INT AUTO_INCREMENT PRIMARY KEY,
-    customerID INT NOT NULL,
-    eventTypeID INT NOT NULL,
+    customerID INT NULL,
+    eventTypeID INT NULL,
     hallID INT NOT NULL,
-    menuID INT NOT NULL,
-    eventDate DATE NOT NULL,
+    menuID INT NULL,
+	eventDate DATE NOT NULL,
     startTime TIME NOT NULL,
     endTime TIME NOT NULL,
     tableCount INT DEFAULT 1 CHECK(tableCount > 0),
     specialRequest VARCHAR(255),
-    status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0: PENDING, 1: ACCEPTED, 2: REJECTED, 3: CONFIRMED, 4: DEPOSITED, 5: EXPIRED, 6: CANCELLED, 7: COMPLETED
-    originalPrice DECIMAL(15,2) NOT NULL,
+    status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0: PENDING, 1: ACCEPTED, 2: REJECTED, 3: CONFIRMED, 4: DEPOSITED, 5: EXPIRED, 6: CANCELLED, 7: COMPLETED, 8: MANUAL_BLOCKED
+    originalPrice DECIMAL(15,2) DEFAULT 0,
     discountAmount DECIMAL(15,2) DEFAULT 0,
-    VAT DECIMAL(15,2) NOT NULL,
-    totalAmount DECIMAL(15,2) NOT NULL,
+    VAT DECIMAL(15,2) DEFAULT 0,
+    totalAmount DECIMAL(15,2) DEFAULT 0,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    isChecked BIT DEFAULT 0, -- 0: UNCHECKED, 1: CHECKED
-    FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON UPDATE CASCADE ON DELETE CASCADE
+    isChecked BIT DEFAULT 0,
+    FOREIGN KEY (customerID) REFERENCES Customer(customerID) 
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) 
+        ON UPDATE CASCADE ON DELETE SET NULL,
+    FOREIGN KEY (hallID) REFERENCES Hall(hallID) 
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (menuID) REFERENCES Menu(menuID) 
+        ON UPDATE CASCADE ON DELETE SET NULL
 );
 
 -- Table BookingDish
@@ -576,68 +578,3 @@ INSERT INTO Amenity (name) VALUES
 ('Thảm đỏ lối vào'),
 ('Hoa tươi bàn tiệc cơ bản'),
 ('Thực đơn in sẵn trên bàn');
-
--- Insert EventType
-INSERT INTO EventType (name) VALUES
-('Tiệc cưới'),
-('Tiệc sinh nhật'),
-('Tiệc công ty'),
-('Tiệc tất niên'),
-('Tiệc khai trương'),
-('Lễ kỷ niệm'),
-('Liên hoan'),
-('Sự kiện');
-
-
-
--- 2️⃣ Tạo User cho Customer
-INSERT INTO User (email, fullName, phone, password, role)
-VALUES ('customer1@test.com', 'Khách Hàng Test', '0123456789', '123456', 0);
-SET @customerUserID = LAST_INSERT_ID();
-
-INSERT INTO Customer (customerID, weddingRole, partnerName)
-VALUES (@customerUserID, 0, 'Bạn Đời Test');
-
--- 3️⃣ Tạo User cho Restaurant Partner
-INSERT INTO User (email, fullName, phone, password, role)
-VALUES ('gonthinh7@gmail.com', 'Nhà Hàng Thịnh', '0988888888', '123456', 1);
-SET @partnerUserID = LAST_INSERT_ID();
-
-INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate)
-VALUES (@partnerUserID, 'license.pdf', 3, 0.10);
-
--- 4️⃣ Address
-INSERT INTO Address (number, street, ward)
-VALUES ('12', 'Lê Lợi', 'Phường 5');
-SET @addressID = LAST_INSERT_ID();
-
--- 5️⃣ Restaurant
-INSERT INTO Restaurant (restaurantPartnerID, name, description, hallCount, addressID, thumbnailURL)
-VALUES (@partnerUserID, 'Nhà Hàng Hoa Sen', 'Nhà hàng chuyên tổ chức tiệc cưới sang trọng.', 1, @addressID, 'https://dummyimage.com/600x400');
-SET @restaurantID = LAST_INSERT_ID();
-
--- 6️⃣ Hall
-INSERT INTO Hall (restaurantID, name, description, minTable, maxTable, area, price)
-VALUES (@restaurantID, 'Sảnh A', 'Sảnh chính rộng rãi.', 10, 30, 500, 10000000);
-SET @hallID = LAST_INSERT_ID();
-
--- 7️⃣ Menu
-INSERT INTO Menu (restaurantID, name, price, imageURL)
-VALUES (@restaurantID, 'Menu Tiệc Cưới Đặc Biệt', 5000000, 'https://dummyimage.com/300x300');
-SET @menuID = LAST_INSERT_ID();
-
-
-select * From User;
-select * From event;
-SELECT * FROM Menu;
-
-SELECT hallID, name, price FROM Hall;
-SELECT menuID, menuName, pricePerTable FROM Menu;
-
-
-Use weddingrestaurantmanagement;
-('VAT_RATE', '0.10', 'Finance', 'Thuế giá trị gia tăng mặc định 10%'),
-('BOOKING_DEPOSIT_PERCENTAGE', '0.30', 'Booking', 'Tỷ lệ tiền cọc khi khách đặt tiệc');
--- ('SUPPORT_EMAIL', 'support@weddingvenue.vn', 'System', 'Email liên hệ hiển thị trong hệ thống', 1);
-
-

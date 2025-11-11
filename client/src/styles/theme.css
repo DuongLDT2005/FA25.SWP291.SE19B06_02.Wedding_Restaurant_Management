@@ -1,4 +1,4 @@
-:root {
+/* :root {
   --theme-primary:#993344;
   --theme-primary-rgb:153,51,68;
   --theme-primary-dark:#7a2a2a;
@@ -22,4 +22,4 @@
 
 .nav-pills .nav-link.active, .nav-pills .show>.nav-link{background:var(--theme-primary);} 
 
-.badge-theme{background:var(--theme-primary);}
+.badge-theme{background:var(--theme-primary);} */

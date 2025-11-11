@@ -1,4 +1,5 @@
 import { Dropdown } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { User, List, LogOut } from "lucide-react";
 
 export default function ProfileMenu({ user, onLogout }) {
@@ -32,7 +33,8 @@ export default function ProfileMenu({ user, onLogout }) {
           Hồ sơ
         </Dropdown.Item>
         <Dropdown.Item
-          href="#"
+          as={Link}
+          to="/customer/bookings"
           className="d-flex align-items-center gap-2 py-2 px-3 text-dark"
           style={{ transition: "background 0.2s" }}
         >

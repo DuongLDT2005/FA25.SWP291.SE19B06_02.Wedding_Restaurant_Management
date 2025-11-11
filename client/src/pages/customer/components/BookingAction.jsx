@@ -26,11 +26,11 @@ export default function BookingActions({
         )}
         {status === BookingStatus.ACCEPTED && (
           <>
-            <Button variant="success" onClick={onConfirm} size="sm" className="flex-grow-1">
+            <Button variant="success" onClick={onConfirm} size="sm" className="flex-grow-1 text-white" >
               <i className="bi bi-check-circle me-1"></i>
               Xác nhận
             </Button>
-            <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
+            <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1 text-white" >
               <i className="bi bi-x-circle me-1"></i>
               Hủy
             </Button>
@@ -89,11 +89,11 @@ export default function BookingActions({
 
       {status === BookingStatus.ACCEPTED && (
         <>
-          <Button variant="success" onClick={onConfirm} className="flex-grow-1">
+          <Button variant="success" onClick={onConfirm} className="flex-grow-1" style={{ color: "white !important" }}>
             <i className="bi bi-check-circle me-2"></i>
             Xác nhận
           </Button>
-          <Button variant="danger" onClick={onCancel} className="flex-grow-1">
+          <Button variant="danger" onClick={onCancel} className="flex-grow-1" style={{ color: "white !important" }}>
             <i className="bi bi-x-circle me-2"></i>
             Hủy
           </Button>
@@ -112,7 +112,7 @@ export default function BookingActions({
 
       {status === BookingStatus.CONFIRMED && (
         <>
-          <Button variant="primary" onClick={onTransfer} className="flex-grow-1">
+          <Button variant="primary" onClick={onTransfer} >
             <i className="bi bi-credit-card me-2"></i>
             Đặt cọc
           </Button>
