@@ -10,6 +10,7 @@ import {
   faLock,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const PRIMARY = "#D81C45";
 const SAMPLE_PDF_URL =
@@ -17,6 +18,11 @@ const SAMPLE_PDF_URL =
 
 export default function ContractTab({ booking }) {
   const navigate = useNavigate();
+  const user = useSelector((state) => state?.auth?.user);
+  const roleString = String(
+    user?.role || user?.userRole || user?.type || ""
+  ).toLowerCase();
+  const isCustomer = roleString.includes("customer");
   // Nếu partner chưa upload hợp đồng, dùng PDF mẫu
   const initialPdfUrl =
     booking?.contract?.pdfUrl ||
@@ -64,9 +70,9 @@ export default function ContractTab({ booking }) {
   };
 
   const handleDownload = () => {
-    // Nếu chưa thanh toán thì chuyển qua trang thanh toán
-    if (!hasPaid) {
-      navigate(`/payment/${booking?.bookingID}`);
+    // Khách hàng không được tải hợp đồng
+    if (isCustomer) {
+      alert("Khách hàng chỉ được xem hợp đồng, không thể tải xuống.");
       return;
     }
 
@@ -115,7 +121,8 @@ export default function ContractTab({ booking }) {
                   position: "relative",
                 }}
               >
-                {!hasPaid && (
+                {/* Partner có thể yêu cầu đặt cọc để tải, nhưng khách vẫn xem được */}
+                {!hasPaid && !isCustomer && (
                   <div
                     style={{
                       position: "absolute",
@@ -194,64 +201,58 @@ export default function ContractTab({ booking }) {
               <Card.Body className="d-flex flex-column justify-content-center align-items-center">
                 {hasContract ? (
                   <>
-                    {hasPaid ? (
-                      <Button
-                        variant="danger"
-                        className="w-100 mb-3"
-                        style={{
-                          backgroundColor: "#D81C45",
-                          border: "none",
-                          borderRadius: "25px",
-                        }}
-                        onClick={handleDownload}
-                      >
-                        <div className="text-white">
-                        <FontAwesomeIcon icon={faDownload} className="me-2 " />
-                        Tải xuống hợp đồng
-                        </div>        
-                      </Button>
-                    ) : (
-                      <>
-                        <Alert
-                          variant="warning"
-                          className="w-100 mb-3 text-center"
-                        >
-                          <FontAwesomeIcon icon={faLock} className="me-2" />
-                          <strong>Yêu cầu đặt cọc</strong>
-                          <br />
-                          <small>
-                            Vui lòng đặt cọc để tải hợp đồng về
-                          </small>
-                        </Alert>
+                    {!isCustomer ? (
+                      hasPaid ? (
                         <Button
-                          variant="success"
+                          variant="danger"
                           className="w-100 mb-3"
                           style={{
+                            backgroundColor: "#D81C45",
+                            border: "none",
                             borderRadius: "25px",
                           }}
-                          onClick={handleGoToPayment}
+                          onClick={handleDownload}
                         >
-                          <FontAwesomeIcon
-                            icon={faCreditCard}
-                            className="me-2"
-                          />
-                          Đặt cọc ngay
+                          <div className="text-white">
+                            <FontAwesomeIcon icon={faDownload} className="me-2 " />
+                            Tải xuống hợp đồng
+                          </div>
                         </Button>
-                        <Button
-                          variant="outline-secondary"
-                          className="w-100"
-                          style={{
-                            borderRadius: "25px",
-                          }}
-                          disabled
-                        >
-                          <FontAwesomeIcon
-                            icon={faDownload}
-                            className="me-2"
-                          />
-                          Tải xuống hợp đồng
-                        </Button>
-                      </>
+                      ) : (
+                        <>
+                          <Alert
+                            variant="warning"
+                            className="w-100 mb-3 text-center"
+                          >
+                            <FontAwesomeIcon icon={faLock} className="me-2" />
+                            <strong>Yêu cầu đặt cọc</strong>
+                            <br />
+                            <small>Vui lòng đặt cọc để tải hợp đồng về</small>
+                          </Alert>
+                          <Button
+                            variant="success"
+                            className="w-100 mb-3"
+                            style={{ borderRadius: "25px" }}
+                            onClick={handleGoToPayment}
+                          >
+                            <FontAwesomeIcon icon={faCreditCard} className="me-2" />
+                            Đặt cọc ngay
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            className="w-100"
+                            style={{ borderRadius: "25px" }}
+                            disabled
+                          >
+                            <FontAwesomeIcon icon={faDownload} className="me-2" />
+                            Tải xuống hợp đồng
+                          </Button>
+                        </>
+                      )
+                    ) : (
+                      <Alert variant="info" className="w-100 mb-0 text-center">
+                        Khách hàng có thể xem hợp đồng tại đây, nhưng không thể tải xuống.
+                      </Alert>
                     )}
                   </>
                 ) : (
@@ -263,8 +264,8 @@ export default function ContractTab({ booking }) {
                   </Alert>
                 )}
 
-                {/* Cho phép khách hàng thêm hợp đồng sau khi đã thanh toán */}
-                {hasPaid && (
+                {/* Chỉ partner được tải lên hợp đồng */}
+                {!isCustomer && hasPaid && (
                   <>
                     <label
                       htmlFor="upload-contract"

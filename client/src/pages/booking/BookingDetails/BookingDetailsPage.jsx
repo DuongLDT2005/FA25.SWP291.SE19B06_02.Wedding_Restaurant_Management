@@ -9,7 +9,7 @@ import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ScrollToTopButton from "../../../components/ScrollToTopButton";
 import "../../../styles/BookingDetailsStyles.css"; // optional extra styles
-
+import { restaurants } from "../../restaurant/ListingRestaurant";
 
 const PRIMARY = "#D81C45";
 
@@ -21,67 +21,105 @@ const formatDate = (dateString) => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 };
-export const mockBooking = (bookingId, restaurantData = null) => ({
-    bookingID: bookingId,
-    customer: { fullName: "Nguyễn Văn A", phone: "0123456789", email: "customer@email.com" },
-    restaurant: { 
-      name: restaurantData?.restaurantName || "Quảng Đại Gold", 
-      address: restaurantData?.restaurantAddress || "8 30 Tháng 4, Hải Châu, Đà Nẵng" 
-    },
-    hall: restaurantData?.selectedHall 
-      ? { 
-          name: restaurantData.selectedHall.hallName, 
-          capacity: restaurantData.selectedHall.capacity, 
-          area: restaurantData.selectedHall.area 
-        } 
-      : { name: "Sảnh Hoa Hồng", capacity: 500, area: 600 },
-    eventType: "Tiệc cưới",
-    eventDate: "2024-12-25",
-    startTime: "18:00",
-    endTime: "22:00",
-    tableCount: 20,
-    specialRequest: "Trang trí hoa hồng đỏ",
-    status: 0,
-    acceptedAt: null, 
-    originalPrice: 50000000,
-    discountAmount: 5000000,
-    VAT: 4500000,
-    totalAmount: 49500000,
-    createdAt: new Date().toISOString(),
-    menu: { 
-      name: "Menu Truyền Thống", 
-      price: 2500000, 
-      categories: [
-        { 
-          name: "Món khai vị", 
-          dishes: [
-            { id: 1, name: "Gỏi ngó sen tôm thịt", price: 450000 },
-            { id: 2, name: "Súp cua gà xé", price: 400000 }
-          ] 
-        }, 
-        { 
-          name: "Món chính", 
-          dishes: [
-            { id: 3, name: "Gà hấp lá chanh", price: 650000 },
-            { id: 4, name: "Bò nướng tiêu đen", price: 750000 },
-            { id: 5, name: "Cá hấp xì dầu", price: 700000 }
-          ] 
-        }, 
-        { 
-          name: "Tráng miệng", 
-          dishes: [
-            { id: 6, name: "Chè hạt sen long nhãn", price: 250000 }
-          ] 
-        }
-      ] 
-    },
-    services: [
-      { name: "Trang trí hoa tươi", quantity: 1, price: 5000000 },
-      { name: "Ban nhạc sống", quantity: 1, price: 8000000 }
-    ],
-    payments: [],
-    contract: { content: "Hợp đồng dịch vụ tiệc cưới...", status: 0, signedAt: null }
-  });
+export const mockBooking = (bookingId, restaurantData = null) => {
+    // 🔹 Tìm restaurant tương ứng
+    const selectedRestaurant =
+      restaurants.find(
+        (r) =>
+          r.name === restaurantData?.restaurantName ||
+          r.name === "Quảng Đại Gold"
+      ) || restaurants[0];
+  
+    // 🔹 Lấy hall
+    const selectedHall =
+      restaurantData?.selectedHall ||
+      (selectedRestaurant.halls?.length ? selectedRestaurant.halls[0] : null);
+  
+    // 🔹 Lấy menu
+    const selectedMenu =
+      restaurantData?.selectedMenu ||
+      (selectedRestaurant.menus?.length ? selectedRestaurant.menus[0] : null);
+  
+    // 🔹 Lấy services (nếu có)
+    const selectedServices =
+      selectedRestaurant.services?.length > 0
+        ? selectedRestaurant.services.map((s) => ({
+            name: s.name || "Dịch vụ không tên",
+            quantity: 1,
+            price: s.price || 0,
+          }))
+        : [
+            { name: "Trang trí hoa tươi", quantity: 1, price: 5000000 },
+            { name: "Ban nhạc sống", quantity: 1, price: 8000000 },
+          ];
+  
+    // 🔹 Build dữ liệu booking đồng bộ
+    return {
+      bookingID: bookingId,
+      customer: {
+        fullName: "Nguyễn Văn A",
+        phone: "0123456789",
+        email: "customer@email.com",
+      },
+      restaurant: {
+        name: selectedRestaurant.name,
+        address:
+          selectedRestaurant.address?.fullAddress ||
+          restaurantData?.restaurantAddress ||
+          "Chưa có địa chỉ",
+      },
+      hall: selectedHall
+        ? {
+            name: selectedHall.name,
+            capacity: selectedHall.capacity || 0,
+            area: selectedHall.area || 0,
+          }
+        : { name: "Sảnh tiêu chuẩn", capacity: 300, area: 500 },
+  
+      eventType: "Tiệc cưới",
+      eventDate: "2024-12-25",
+      startTime: "18:00",
+      endTime: "22:00",
+      tableCount: 20,
+      specialRequest: "Trang trí hoa hồng đỏ",
+      status: 0,
+      acceptedAt: null,
+  
+      // 🔹 Lấy menu đúng từ restaurant
+      menu: selectedMenu
+        ? {
+            name: selectedMenu.name,
+            price: selectedMenu.price,
+            categories: selectedMenu.categories.map((cat) => ({
+              name: cat.name,
+              dishes: cat.dishes.map((d) => ({
+                id: d.id,
+                name: d.name,
+                price: d.price || 0,
+              })),
+            })),
+          }
+        : {
+            name: "Menu mặc định",
+            price: 2500000,
+            categories: [],
+          },
+  
+      services: selectedServices,
+  
+      originalPrice: 50000000,
+      discountAmount: 5000000,
+      VAT: 4500000,
+      totalAmount: 49500000,
+      createdAt: new Date().toISOString(),
+      payments: [],
+      contract: {
+        content: "Hợp đồng dịch vụ tiệc cưới...",
+        status: 0,
+        signedAt: null,
+      },
+    };
+  };
   
 export default function BookingDetailsPage() {
     const { bookingId } = useParams();
@@ -208,7 +246,7 @@ export default function BookingDetailsPage() {
                 };
                 setBooking(updatedBooking);
                 sessionStorage.setItem("currentBooking", JSON.stringify(updatedBooking));
-                alert("Đã xác nhận thành công! Xin vui lòng đợi để bên partner có thể xét duyệt.");
+                alert("Đã xác nhận thành công!");
             } catch (error) {
                 console.error("Error confirming booking:", error);
                 alert("Có lỗi xảy ra khi xác nhận. Vui lòng thử lại.");
@@ -319,7 +357,7 @@ export default function BookingDetailsPage() {
                                     <Nav.Item>
                                         <Nav.Link eventKey="overview" style={{ color: PRIMARY, fontWeight: 600 }}>Tổng quan</Nav.Link>
                                     </Nav.Item>
-                                    {(booking.status >= 1 || isApproved || paymentCompleted) && (
+                                    {(booking.status >= 0 || isApproved || paymentCompleted) && (
                                         <>
                                             <Nav.Item>
                                                 <Nav.Link eventKey="contract" style={{ color: PRIMARY, fontWeight: 600 }}>Hợp đồng</Nav.Link>
