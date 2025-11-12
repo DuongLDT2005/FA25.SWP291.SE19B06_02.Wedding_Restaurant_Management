@@ -6,13 +6,13 @@ const { amenity, sequelize, restaurantamenities } = db;
 class AmenityDAO {
     static async getAll() {
         const rows = await amenity.findAll({
-            attributes: ['amenityID', 'name', 'description']
+            attributes: ['amenityID', 'name']
         });
         return toDTOs(rows);
     }
     static async getByID(amenityID) {
         const r = await amenity.findByPk(amenityID, {
-            attributes: ['amenityID', 'name', 'description']
+            attributes: ['amenityID', 'name']
         });
         return toDTO(r);
     }
@@ -33,9 +33,24 @@ class AmenityDAO {
                     [Op.in]: amenityIDs
                 }
             },
-            attributes: ['amenityID', 'name', 'description']
+            attributes: ['amenityID', 'name']
         });
         return toDTOs(rows);
+    }
+    static async addAmenity(name, description) {
+        const a = await amenity.create({ name, description });
+        return toDTO(a);
+    }
+
+    static async addAmenityToRestaurant(restaurantID, amenityID) {
+        // ignore duplicates by finding or creating
+        const [link, created] = await restaurantamenities.findOrCreate({ where: { restaurantID, amenityID }, defaults: { restaurantID, amenityID } });
+        return !!link;
+    }
+
+    static async removeAmenityFromRestaurant(restaurantID, amenityID) {
+        const count = await restaurantamenities.destroy({ where: { restaurantID, amenityID } });
+        return count > 0;
     }
 }
 export default AmenityDAO;

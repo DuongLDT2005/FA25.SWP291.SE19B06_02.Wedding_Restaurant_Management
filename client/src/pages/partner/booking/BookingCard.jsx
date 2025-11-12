@@ -16,7 +16,8 @@ export default function BookingCard({
   onViewDetail,
   onMarkChecked,
   onReject,
-  activeTab, // 👈 thêm props để biết tab hiện tại
+  onAccept,
+  activeTab, // tab hiện tại để quyết định nút
 }) {
   const {
     bookingID,
@@ -91,28 +92,61 @@ export default function BookingCard({
       <div className="d-flex flex-column align-items-stretch gap-2 mt-3">
 
         {/* ✅ chỉ hiện 2 nút này nếu tab là pending và booking chưa checked */}
-        {activeTab === "pending" && !checked ? (
+        {activeTab === "pending" && !checked && (
           <>
             <Button
-              variant="success"
-              className="py-2 rounded-3 text-white"
-              onClick={() => onMarkChecked(bookingID)}
+              variant="outline-success"
+              className="py-2 rounded-3"
+              onClick={() => onMarkChecked?.(bookingID)}
             >
               Đánh dấu đã kiểm tra
             </Button>
             <Button
+              variant="success"
+              className="py-2 rounded-3 text-white"
+              onClick={() => onAccept?.(bookingID)}
+            >
+              Chấp nhận
+            </Button>
+            <Button
               variant="danger"
               className="py-2 rounded-3 text-white"
-              onClick={() => onReject(bookingID)}
+              onClick={() => onReject?.(bookingID)}
             >
               Từ chối
             </Button>
           </>
-        ) : checked ? (
-          <Badge bg="secondary" className="px-3 py-2 align-self-center">
-            Đã kiểm tra
-          </Badge>
-        ) : null}
+        )}
+        {activeTab === "checked" && (
+          <>
+            <Badge bg="secondary" className="px-3 py-2 align-self-center">
+              Đã kiểm tra
+            </Badge>
+            <Button
+              variant="success"
+              className="py-2 rounded-3 text-white"
+              onClick={() => onAccept?.(bookingID)}
+            >
+              Chấp nhận
+            </Button>
+            <Button
+              variant="danger"
+              className="py-2 rounded-3 text-white"
+              onClick={() => onReject?.(bookingID)}
+            >
+              Từ chối
+            </Button>
+          </>
+        )}
+        {activeTab === "confirmed" && (
+          <Badge bg="success" className="px-3 py-2 align-self-center">Đã xác nhận / Đặt cọc</Badge>
+        )}
+        {activeTab === "done" && (
+          <Badge bg="primary" className="px-3 py-2 align-self-center">Hoàn tất / Hủy</Badge>
+        )}
+        {activeTab === "rejected" && (
+          <Badge bg="danger" className="px-3 py-2 align-self-center">Từ chối</Badge>
+        )}
         <Button
           variant="outline-secondary"
           className="py-2 rounded-3"

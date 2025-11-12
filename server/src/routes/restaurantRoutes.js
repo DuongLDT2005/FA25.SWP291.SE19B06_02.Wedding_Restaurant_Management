@@ -1,6 +1,5 @@
 import express from "express";
 import RestaurantController from "../controllers/RestaurantController.js";
-
 const router = express.Router();
 
 router.get("/", RestaurantController.getAll);
@@ -16,4 +15,6 @@ router.patch("/:id/status", RestaurantController.changeRestaurantStatus);
 router.post("/:id/images", RestaurantController.addImage);
 router.delete("/images/:imageID", RestaurantController.deleteImage);
 
+// Top booked restaurants (mounted at /api/restaurants/top-booked)
+router.get("/top-booked", RestaurantController.getTopBookedRestaurants);
 export default router;

@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Alert } from "react-bootstrap";
 import AppLayout from "../../../layouts/PartnerLayout";
-import { initialRestaurants } from "./RestaurantListPage";
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { getRestaurantById } from "../../../services/restaurantService";
 
 // Import từng tab component
 import RestaurantProfile from "./RestaurantProfile";
@@ -15,10 +16,44 @@ import PromotionListPage from "./PromotionListPage";
 export default function RestaurantDetail() {
   const { id } = useParams();
   const restaurantId = parseInt(id, 10);
-  const restaurant = initialRestaurants.find(r => r.id === restaurantId);
+  const [restaurant, setRestaurant] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    let ignore = false;
+    async function load() {
+      setLoading(true); setError("");
+      try {
+        const data = await getRestaurantById(restaurantId);
+        if (!ignore) setRestaurant(data);
+      } catch (e) {
+        if (!ignore) setError(e.message || "Không thể tải nhà hàng");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => { ignore = true; };
+  }, [id, restaurantId]);
 
   const [activeTab, setActiveTab] = useState("profile"); // <-- quản lý active tab
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="mt-3 text-center text-muted">Đang tải...</div>
+      </AppLayout>
+    );
+  }
+  if (error) {
+    return (
+      <AppLayout>
+        <Alert variant="danger" className="mt-3">{error}</Alert>
+      </AppLayout>
+    );
+  }
   if (!restaurant) {
     return (
       <AppLayout>

@@ -105,6 +105,8 @@ function initModels(sequelize) {
   dish.hasMany(dishmenu, { as: "dishmenus", foreignKey: "dishID"});
   dish.belongsTo(dishcategory, { as: "category", foreignKey: "categoryID"});
   dishcategory.hasMany(dish, { as: "dishes", foreignKey: "categoryID"});
+  dishcategory.belongsTo(restaurant, { as: "restaurant", foreignKey: "restaurantID"});
+  restaurant.hasMany(dishcategory, { as: "dishcategories", foreignKey: "restaurantID"});
   booking.belongsTo(eventtype, { as: "eventType", foreignKey: "eventTypeID"});
   eventtype.hasMany(booking, { as: "bookings", foreignKey: "eventTypeID"});
   restauranteventtype.belongsTo(eventtype, { as: "eventType", foreignKey: "eventTypeID"});

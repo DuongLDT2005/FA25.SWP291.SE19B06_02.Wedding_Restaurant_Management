@@ -26,11 +26,29 @@ export const getCurrentUser = async () => {
 
 /* -------------------- LOGOUT -------------------- */
 export const logout = async () => {
-  const res = await fetch(`${API_URL}/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!res.ok) throw new Error("Đăng xuất thất bại");
+  try {
+    const res = await fetch(`${API_URL}/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    // Nếu backend chưa có endpoint logout, ta vẫn xử lý local
+    if (!res.ok) {
+      console.warn("[authService] Logout API không khả dụng hoặc trả lỗi, dùng fallback local.");
+    }
+
+    // Xóa token local nếu có
+    localStorage.removeItem("token");
+
+    // Không ném lỗi để frontend không crash
+    return { message: "Đăng xuất thành công (local fallback)" };
+  } catch (err) {
+    console.warn("[authService] Lỗi logout:", err.message);
+
+    // Dù lỗi cũng vẫn xóa token để user thực sự đăng xuất
+    localStorage.removeItem("token");
+    return { message: "Đăng xuất thành công (local fallback)" };
+  }
 };
 
 /* -------------------- FORGOT PASSWORD -------------------- */
@@ -56,7 +74,7 @@ export const verifyOtp = async ({ email, otp }) => {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.message || "Xác minh OTP thất bại");
-  return data; // trả về { message, tempToken }
+  return data; // { message, tempToken }
 };
 
 /* -------------------- RESET PASSWORD -------------------- */
@@ -78,7 +96,7 @@ export const signUpPartner = async ({ name, email, password, phone, licenseUrl }
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      fullName: name, // backend field name là fullName
+      fullName: name,
       email,
       password,
       phone,

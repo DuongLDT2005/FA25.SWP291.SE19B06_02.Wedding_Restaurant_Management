@@ -1,6 +1,6 @@
 import RestaurantDAO from "../dao/RestaurantDAO.js";
 import RestaurantImageDAO from "../dao/RestaurantImageDAO.js";
-
+import BookingDAO from "../dao/BookingDAO.js";
 class RestaurantService {
   static async getAll() {
     return await RestaurantDAO.getAll();
@@ -18,11 +18,15 @@ class RestaurantService {
     return await RestaurantDAO.getByID(restaurantID);
   }
 
+  static async getSummaryByID(restaurantID) {
+    return await RestaurantDAO.getSummaryByID(restaurantID);
+  }
+
   static async create(data) {
     if (!data || typeof data !== 'object') {
       throw new Error("Invalid payload");
     }
-    const { name, restaurantPartnerID, address, thumbnailURL } = data;
+    const { name, restaurantPartnerID, address, thumbnailURL, phone } = data;
     if (!name || !restaurantPartnerID) {
       throw new Error("Restaurant name and restaurantPartnerID are required");
     }
@@ -36,10 +40,20 @@ class RestaurantService {
     if (!number || !street || !ward) {
       throw new Error("address.number, address.street and address.ward are required");
     }
+    if (phone !== undefined && phone !== null && typeof phone !== 'string') {
+      throw new Error('phone must be a string');
+    }
     return await RestaurantDAO.createRestaurant(data);
   }
 
   static async update(restaurantID, data){
+    // validate phone if present
+    if (data && Object.prototype.hasOwnProperty.call(data, 'phone')) {
+      const phone = data.phone;
+      if (phone !== null && phone !== undefined && typeof phone !== 'string') {
+        throw new Error('phone must be a string');
+      }
+    }
     return await RestaurantDAO.updateRestaurant(restaurantID, data);
   }
 
@@ -60,6 +74,13 @@ class RestaurantService {
 
   static async search(filter){
     return await RestaurantDAO.search(filter);
+  }
+  static async getTopBookedRestaurants() {
+    const result = await BookingDAO.getTopBookedRestaurants();
+    // from result get restaurant details can add cron job to cache this later
+    const restaurantIDs = result.map(r => r.restaurantID);
+    const restaurants = await Promise.all(restaurantIDs.map(id => RestaurantDAO.getByID(id)));
+    return restaurants;
   }
 }
 

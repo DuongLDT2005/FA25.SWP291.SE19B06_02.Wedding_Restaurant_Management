@@ -5,19 +5,23 @@ import ServiceSelector from "./ServiceSelector";
 import PromotionBadge from "./PromotionBadge";
 import useBooking from "../../../hooks/useBooking";
 
-const BookingInfoSection = () => {
-  const { booking, setBookingField, setMenu } = useBooking();
+const BookingInfoSection = ({ menus = [], services = [] }) => {
+  const { booking, setBookingField, setMenu, setDishes } = useBooking();
   const { bookingInfo, menu } = booking;
 
   return (
-    <section className="p-4 border rounded-xl bg-white shadow-sm">
-      <h2 className="font-semibold mb-3">Booking Information</h2>
-      <div className="grid grid-cols-2 gap-4">
-        <input name="restaurant" placeholder="Restaurant" value={bookingInfo.restaurant} disabled />
-        <input name="hall" placeholder="Hall" value={bookingInfo.hall} disabled />
+    <section className="p-3 border rounded-lg bg-white shadow-sm text-sm" style={{ fontSize: "0.95rem" }}>
+      <h2 className="font-semibold mb-3" style={{ fontSize: "1.05rem" }}>Booking Information</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input name="restaurant" placeholder="Restaurant" value={bookingInfo.restaurant} disabled className="form-control bg-gray-50" />
+        <input name="hall" placeholder="Hall" value={bookingInfo.hall} disabled className="form-control bg-gray-50" />
         <div>
           <label className="small">Ngày</label>
-          <DateInput />
+          <DateInput
+            value={bookingInfo.date}
+            onChange={(v) => setBookingField("date", v)}
+            labelText="Ngày tổ chức"
+          />
         </div>
         <div>
           <label className="small">Số bàn</label>
@@ -27,6 +31,7 @@ const BookingInfoSection = () => {
             min={1}
             value={bookingInfo.tables}
             onChange={(e) => setBookingField("tables", Math.max(1, Number(e.target.value || 1)))}
+            className="form-control"
           />
         </div>
 
@@ -34,7 +39,7 @@ const BookingInfoSection = () => {
           <label className="small">Loại sự kiện</label>
           <select
             name="eventType"
-            className="input"
+            className="form-select"
             value={bookingInfo.eventType}
             onChange={(e) => setBookingField("eventType", e.target.value)}
           >
@@ -49,17 +54,20 @@ const BookingInfoSection = () => {
         <div>
           <label className="small">Thực đơn</label>
           <MenuSelectorModal
-            menus={[]} // backend menus can be passed or MenuSelectorModal can fetch itself
+            menus={menus}
             onSelect={(selection) => {
               // selection: { menu, dishes }
-              // MenuSelectorModal previously passed menu name; prefer to accept menu object
-              // here assume selection.menu is object or name; set simple object
-              setMenu(selection.menu || { name: selection.menu, price: selection.price || 0 });
+              const pickedMenu = selection.menu;
+              const menuObj = typeof pickedMenu === 'string' ? { name: pickedMenu } : pickedMenu;
+              setMenu(menuObj);
+              // flatten dish names across categories
+              const dishNames = Object.values(selection.dishes || {}).flat();
+              setDishes(dishNames.map((d, idx) => ({ id: idx + 1, name: d })));
             }}
           />
         </div>
 
-        <ServiceSelector />
+        <ServiceSelector services={services} />
         <PromotionBadge />
       </div>
     </section>

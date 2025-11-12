@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import BookingDAO from '../dao/BookingDAO.js';
-import { notifyByStatusById } from './BookingNotificationService.js';
+import { notifyByStatusById } from './Booking/BookingNotificationService.js';
 
 /**
  * Thiết lập Cron Job để kiểm tra các booking đã hết hạn.
@@ -22,14 +22,8 @@ export function setupExpirationChecker({ days = 2 } = {}) {
                 if (!ids.length) break;
                 const affected = await BookingDAO.expireByIds(ids, { setChecked: true });
                 total += affected;
-                // Gửi mail cho partner cho các booking này
-                for (const id of ids) {
-                    try {
-                        await notifyByStatusById(id, 'EXPIRED');
-                    } catch (e) {
-                        console.error(`Gửi mail EXPIRED thất bại cho booking #${id}:`, e?.message || e);
-                    }
-                }
+                // Partner emails are disabled; no per-booking notification will be sent here.
+                // If in future we want to notify customers for EXPIRED, call notifyByStatusById here.
                 if (ids.length < batchSize) break;
             }
             console.log(`Hoàn thành. Đã cập nhật ${total} booking (CONFIRMED -> EXPIRED) và gửi thông báo.`);

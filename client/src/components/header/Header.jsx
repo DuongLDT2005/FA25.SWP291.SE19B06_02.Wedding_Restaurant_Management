@@ -7,7 +7,7 @@ import "../../styles/HeaderStyles.css";
 import { Link, useLocation } from "react-router-dom";
 
 export default function Header() {
-  const { user, handleLogout } = useAuth();
+  const { user, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
@@ -60,7 +60,7 @@ export default function Header() {
     <Navbar
       expand="md"
       fixed="top"
-      className={`py-2 transition-all ${transparent ? "bg-transparent" : "bg-white shadow-lg"}`}
+      className={`py-2 transition-all ${transparent ? "bg-transparent" : "bg-white shadow-sm"}`}
       style={{
         zIndex: 999,
         transition: "all 0.3s ease",
@@ -81,7 +81,7 @@ export default function Header() {
           {user ? (
             <>
               <NotificationDropdown dark={!transparent} notifications={notifications} />
-              <ProfileMenu dark={!transparent} user={user} onLogout={handleLogout} />
+              <ProfileMenu dark={!transparent} user={user} onLogout={logout} />
             </>
           ) : (
             <>

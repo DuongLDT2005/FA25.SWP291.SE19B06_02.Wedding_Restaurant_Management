@@ -1,4 +1,3 @@
-import { Container } from "react-bootstrap";
 import Header from "../components/header/Header";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTopButton";

@@ -4,15 +4,20 @@ const {dish} = db;
 
 class DishDAO {
     static async getByRestaurantID(restaurantID) {
-        const rows = await dish.findAll({ where: { restaurantID }, attributes: ['dishID','restaurantID','name','description','price','imageURL'] });
+        const rows = await dish.findAll({
+            where: { restaurantID },
+            attributes: ['dishID','restaurantID','categoryID','name','description','price','imageURL']
+        });
         return toDTOs(rows);
     }
     static async getByID(dishID) {
-        const r = await dish.findByPk(dishID, { attributes: ['dishID','restaurantID','name','description','price','imageURL'] });
+        const r = await dish.findByPk(dishID, {
+            attributes: ['dishID','restaurantID','categoryID','name','description','price','imageURL']
+        });
         return toDTO(r);
     }
-    static async addDish(restaurantID, name, description, price, imageURL) {
-        const d = await dish.create({ restaurantID, name, description, price, imageURL });
+    static async addDish(restaurantID,categoryID, name, description, price, imageURL,) {
+        const d = await dish.create({ restaurantID, categoryID, name, description, price, imageURL });
         return toDTO(d);
     }
     
