@@ -41,7 +41,7 @@ import AdminReportListPage from "../pages/admin/management/report/ReportList";
 import AdminNotificationPage from "../pages/admin/notification/AdminNotificationPage";
 import AdminSettingsPage from "../pages/admin/setting/AdminSettingPage";
 
-import BookingListPage from "../pages/customer/BookingListPage";
+import BookingListPage from "../pages/customer/bookingForm/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
