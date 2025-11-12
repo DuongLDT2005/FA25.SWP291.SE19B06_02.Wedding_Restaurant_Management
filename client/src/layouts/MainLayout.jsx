@@ -9,7 +9,7 @@ export default function MainLayout({ children }) {
   return (
     <div className="min-vh-100">
       <Header />
-      <main role="main" style={{ paddingTop: 88, paddingBottom: 32 }}>
+      <main role="main" style={{ paddingTop: 82, paddingBottom: 50 }}>
         {children}
       </main>
 

@@ -117,7 +117,9 @@ export default function LoginPage() {
         callback: async (response) => {
           // 🧩 Nếu user hủy popup hoặc không có mã code
           if (!response.code) {
-            console.log("Người dùng đã hủy đăng nhập Google hoặc popup bị đóng.");
+            console.log(
+              "Người dùng đã hủy đăng nhập Google hoặc popup bị đóng."
+            );
             toast.info("Đăng nhập Google đã bị hủy.");
             return;
           }
@@ -159,12 +161,19 @@ export default function LoginPage() {
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
-          backgroundColor: "#fefaf9",
+          backgroundColor: "#fff",
           paddingTop: "50px",
           paddingBottom: "50px",
         }}
       >
-        <Container>
+        <Container
+          fluid
+          style={{
+            maxWidth: "1200px",
+            paddingLeft: "60px",
+            paddingRight: "60px",
+          }}
+        >
           <Row
             style={{
               minHeight: "500px",
@@ -179,14 +188,21 @@ export default function LoginPage() {
               style={{
                 backgroundColor: "#E11D48",
                 color: "#fefaf9",
-                padding: "100px 40px 0px 40px",
+                padding: "50px 40px 40px 40px",
               }}
             >
-              <h1 style={{ fontSize: "50px", marginBottom: "10px", fontWeight: "700" }}>
-                Welcome back!
+              <h1
+                style={{
+                  fontSize: "50px",
+                  marginBottom: "10px",
+                  fontWeight: "700",
+                }}
+              >
+                Chào mừng!
               </h1>
               <p style={{ fontSize: "18px", margin: "0", lineHeight: "1.5" }}>
-                Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại LifEvent.com.
+                Đăng nhập để tiếp tục đặt tiệc và khám phá ưu đãi tại
+                LifEvent.com.
               </p>
             </Col>
 
@@ -205,12 +221,18 @@ export default function LoginPage() {
               </h1>
 
               {globalError && (
-                <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+                <Alert
+                  variant="danger"
+                  style={{ marginBottom: "12px", fontSize: "14px" }}
+                >
                   {globalError}
                 </Alert>
               )}
               {info && (
-                <Alert variant="success" style={{ marginBottom: "12px", fontSize: "14px" }}>
+                <Alert
+                  variant="success"
+                  style={{ marginBottom: "12px", fontSize: "14px" }}
+                >
                   {info}
                 </Alert>
               )}
@@ -242,19 +264,23 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Mật khẩu"
                     />
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        right: "12px",
-                        transform: "translateY(-50%)",
-                        cursor: "pointer",
-                        color: "#777",
-                      }}
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                    </span>
+                    {!passwordError && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          right: "12px",
+                          transform: "translateY(-50%)",
+                          cursor: "pointer",
+                          color: "#777",
+                        }}
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        <FontAwesomeIcon
+                          icon={showPassword ? faEyeSlash : faEye}
+                        />
+                      </span>
+                    )}
                   </div>
                   <Form.Control.Feedback type="invalid">
                     {passwordError}
@@ -324,22 +350,45 @@ export default function LoginPage() {
                 ></div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "center", margin: "10px 0" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  margin: "10px 0",
+                }}
+              >
                 <Button
-                  variant="light"
+                  onClick={handleGoogleLogin}
                   style={{
                     width: "45px",
                     height: "45px",
                     padding: "0",
                     borderRadius: "50%",
                     border: "1px solid #ddd",
+                    backgroundColor: "#fff",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    transition: "0.2s ease",
                   }}
-                  onClick={handleGoogleLogin}
+                  onMouseEnter={(e) => {
+                    e.target.style.border = "1px solid #E11D48";
+                    e.target.style.boxShadow =
+                      "0px 0px 6px rgba(225, 29, 72, 0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.border = "1px solid #ddd";
+                    e.target.style.boxShadow = "none";
+                  }}
                 >
                   <img
                     src="https://developers.google.com/identity/images/g-logo.png"
                     alt="Google logo"
-                    style={{ width: "24px", height: "24px" }}
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      pointerEvents: "none",
+                    }}
                   />
                 </Button>
               </div>
@@ -398,12 +447,18 @@ export default function LoginPage() {
             Nhập email để nhận đường dẫn đặt lại mật khẩu.
           </p>
           {forgotGlobalError && (
-            <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+            <Alert
+              variant="danger"
+              style={{ marginBottom: "12px", fontSize: "14px" }}
+            >
               {forgotGlobalError}
             </Alert>
           )}
           {forgotEmailError && (
-            <Alert variant="danger" style={{ marginBottom: "12px", fontSize: "14px" }}>
+            <Alert
+              variant="danger"
+              style={{ marginBottom: "12px", fontSize: "14px" }}
+            >
               {forgotEmailError}
             </Alert>
           )}
@@ -416,7 +471,13 @@ export default function LoginPage() {
                 placeholder="you@example.com"
               />
             </Form.Group>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+              }}
+            >
               <Button variant="secondary" onClick={() => setShowForgot(false)}>
                 Hủy
               </Button>

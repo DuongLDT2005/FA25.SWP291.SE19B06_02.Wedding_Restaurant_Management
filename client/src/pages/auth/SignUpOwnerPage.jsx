@@ -36,7 +36,8 @@ function SignUpForOwner() {
 
     const phoneRegex = /^0\d{9}$/;
     if (!phoneRegex.test(form.phoneNumber)) {
-      e.phoneNumber = "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số.";
+      e.phoneNumber =
+        "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số.";
     }
 
     const emailRegex = /^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/;
@@ -62,15 +63,15 @@ function SignUpForOwner() {
   };
 
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0]
-    setFile(selectedFile)
+    const selectedFile = event.target.files[0];
+    setFile(selectedFile);
     if (selectedFile) {
       setErrors((prev) => {
         const next = { ...prev };
         delete next.licenseUrl;
         return next;
       });
-    };
+    }
   };
 
   const handleSubmit = async (ev) => {
@@ -120,7 +121,14 @@ function SignUpForOwner() {
 
   return (
     <AuthLayout>
-      <Container fluid className="p-0" style={{ minHeight: "100vh" }}>
+      <Container
+        style={{
+          maxWidth: "1200px",
+          paddingLeft: "50px",
+          paddingRight: "50px",
+          minHeight: "100vh",
+        }}
+      >
         <style>{`
           .signup-wrapper {
             display: grid;
@@ -139,11 +147,11 @@ function SignUpForOwner() {
           .signup-slogan {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: flex-start;
             background: #E11D48;
             color: #fefaf9;
-            padding: 80px 100px 80px 60px;
+            padding: 40px 80px 60px 60px;
             border-radius: 15px 0 0 15px;
             text-align: left;
           }
@@ -265,16 +273,32 @@ function SignUpForOwner() {
           }
         `}</style>
 
-        <div className="signup-wrapper" style={{ maxWidth: "900px", width: "100%", margin: "40px auto 20px" }}>
+        <div
+          className="signup-wrapper"
+          style={{
+            maxWidth: "1400px",
+            width: "100%",
+            margin: "40px auto 20px",
+          }}
+        >
           <div className="signup-slogan">
             <h2>Chào mừng!</h2>
             <p>
-              Hãy để mọi người biết về nhà hàng của bạn và thu hút khách hàng tiềm năng. Đăng ký ngay để bắt đầu hành
-              trình kinh doanh ẩm thực thành công của bạn cùng chúng tôi!
+              Hãy để mọi người biết về nhà hàng của bạn và thu hút khách hàng
+              tiềm năng. Đăng ký ngay để bắt đầu hành trình kinh doanh ẩm thực
+              thành công của bạn cùng chúng tôi!
             </p>
           </div>
 
-          <div className="signup-form-container">
+          <div
+            className="signup-form-container"
+            style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: "15px",
+              fontWeight: 400,
+              color: "#333",
+            }}
+          >
             <h1>Đăng Ký Chủ Nhà Hàng</h1>
             <form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
@@ -284,9 +308,13 @@ function SignUpForOwner() {
                   name="name"
                   placeholder="Họ và tên"
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className={`form-control signup-input ${errors.name ? "is-invalid" : ""}`}
+                  className={`form-control signup-input ${
+                    errors.name ? "is-invalid" : ""
+                  }`}
                 />
-                {errors.name && <div className="error-message">{errors.name}</div>}
+                {errors.name && (
+                  <div className="error-message">{errors.name}</div>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -297,10 +325,16 @@ function SignUpForOwner() {
                   placeholder="Số điện thoại"
                   maxLength={10}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  onInput={(e) => (e.target.value = e.target.value.replace(/\D/g, ""))}
-                  className={`form-control signup-input ${errors.phoneNumber ? "is-invalid" : ""}`}
+                  onInput={(e) =>
+                    (e.target.value = e.target.value.replace(/\D/g, ""))
+                  }
+                  className={`form-control signup-input ${
+                    errors.phoneNumber ? "is-invalid" : ""
+                  }`}
                 />
-                {errors.phoneNumber && <div className="error-message">{errors.phoneNumber}</div>}
+                {errors.phoneNumber && (
+                  <div className="error-message">{errors.phoneNumber}</div>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -310,9 +344,13 @@ function SignUpForOwner() {
                   name="email"
                   placeholder="Email"
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className={`form-control signup-input ${errors.email ? "is-invalid" : ""}`}
+                  className={`form-control signup-input ${
+                    errors.email ? "is-invalid" : ""
+                  }`}
                 />
-                {errors.email && <div className="error-message">{errors.email}</div>}
+                {errors.email && (
+                  <div className="error-message">{errors.email}</div>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -321,12 +359,24 @@ function SignUpForOwner() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     value={form.password}
-                    className={`form-control ${errors.password ? "is-invalid" : ""}`}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Mật khẩu"
+                    className={`form-control ${
+                      errors.password ? "is-invalid" : ""
+                    }`}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                    placeholder="Mật khẩu"
                   />
-                  <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </span>
+                  {!errors.password && (
+                    <span
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      <FontAwesomeIcon
+                        icon={showPassword ? faEyeSlash : faEye}
+                      />
+                    </span>
+                  )}
                 </div>
                 {errors.password && (
                   <div className="error-message">{errors.password}</div>
@@ -339,30 +389,91 @@ function SignUpForOwner() {
                     name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     value={form.confirmPassword}
-                    className={`form-control ${errors.confirmPassword ? "is-invalid" : ""}`}
-                    onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+                    className={`form-control ${
+                      errors.confirmPassword ? "is-invalid" : ""
+                    }`}
+                    onChange={(e) =>
+                      setForm({ ...form, confirmPassword: e.target.value })
+                    }
                     placeholder="Xác nhận mật khẩu"
                   />
-                  <span className="toggle-password" onClick={() => setShowPassword(!showPassword)}>
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </span>
+                  {!errors.confirmPassword && (
+                    <span
+                      className="toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      <FontAwesomeIcon
+                        icon={showPassword ? faEyeSlash : faEye}
+                      />
+                    </span>
+                  )}
                 </div>
-                {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
+                {errors.confirmPassword && (
+                  <div className="error-message">{errors.confirmPassword}</div>
+                )}
               </Form.Group>
 
               <Form.Group className="mb-3">
                 <label htmlFor="licenseUrl" className="form-label">
                   <p className="mb-2">Upload giấy phép cá nhân</p>
                 </label>
-                <input
-                  type="file"
-                  id="licenseUrl"
-                  name="licenseUrl"
-                  className={`form-control ${errors.licenseUrl ? "is-invalid" : ""}`}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
-                {errors.licenseUrl && <div className="error-message">{errors.licenseUrl}</div>}
+                <div style={{ position: "relative", width: "100%" }}>
+                  <label
+                    htmlFor="licenseUrl"
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 18px",
+                      backgroundColor: "#fff",
+                      border: "1.5px solid #ddd",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontWeight: "500",
+                      fontSize: "15px",
+                      color: "#555",
+                      transition: "0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.border = "1.5px solid #E11D48";
+                      e.target.style.color = "#E11D48";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.border = "1.5px solid #ddd";
+                      e.target.style.color = "#555";
+                    }}
+                  >
+                    Choose File
+                  </label>
+
+                  <span
+                    style={{
+                      marginLeft: "12px",
+                      fontSize: "14px",
+                      color: "#777",
+                    }}
+                  >
+                    {file ? file.name : "No file chosen"}
+                  </span>
+
+                  <input
+                    type="file"
+                    id="licenseUrl"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      top: 0,
+                      width: "100%",
+                      height: "100%",
+                      opacity: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                </div>
+
+                {errors.licenseUrl && (
+                  <div className="error-message">{errors.licenseUrl}</div>
+                )}
               </Form.Group>
 
               <button type="submit" className="signup-btn">
@@ -384,7 +495,7 @@ function SignUpForOwner() {
         </div>
       </Container>
     </AuthLayout>
-  )
+  );
 }
 
-export default SignUpForOwner
+export default SignUpForOwner;
