@@ -37,16 +37,29 @@ class RestaurantDAO {
         maxPrice,
       });
 
-      // Ép kiểu an toàn
-      const numCapacity = capacity ? Number(capacity) : null;
-      const numMinPrice = minPrice ? Number(minPrice) : null;
-      const numMaxPrice = maxPrice ? Number(maxPrice) : null;
+      // ⚠️ Nếu tất cả điều kiện đều rỗng thì bỏ qua
+      if (
+        (!location || location.trim() === "") &&
+        (!eventType || eventType.trim() === "") &&
+        (!capacity || isNaN(Number(capacity))) &&
+        (!date || date.trim() === "")
+      ) {
+        console.warn("⚠️ Bỏ qua request rỗng hoặc thiếu capacity/date/location/eventType");
+        return [];
+      }
 
-      // 1️⃣ Lấy danh sách sảnh đã được đặt trong khung thời gian này
+      const numCapacity =
+        capacity && !isNaN(Number(capacity)) ? Number(capacity) : null;
+      const numMinPrice =
+        minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : null;
+      const numMaxPrice =
+        maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : null;
+
+      // 1️⃣ Lấy danh sách sảnh đã được đặt
       const bookedHalls = await booking.findAll({
         where: {
           eventDate: date,
-          status: { [Op.notIn]: [2, 6, 7] }, // loại bỏ booking bị hủy, hoàn tất, ...
+          status: { [Op.notIn]: [2, 6, 7] },
           [Op.or]: [
             {
               [Op.and]: [
@@ -68,29 +81,23 @@ class RestaurantDAO {
       const bookedHallIDs = bookedHalls.map((b) => b.hallID);
       console.log("🚫 Booked hall IDs:", bookedHallIDs);
 
-      // 2️⃣ Thiết lập điều kiện lọc sảnh
+      // 2️⃣ Điều kiện lọc sảnh
       const hallCondition = {};
 
-      // ép kiểu an toàn
-      const cap = capacity ? Number(capacity) : null;
-      const min = minPrice ? Number(minPrice) : null;
-      const max = maxPrice ? Number(maxPrice) : null;
-
-      if (!isNaN(cap) && cap > 0) {
-        hallCondition.maxTable = { [Op.gte]: cap };
+      if (numCapacity && numCapacity > 0) {
+        hallCondition.maxTable = { [Op.gte]: numCapacity };
       }
 
       if (bookedHallIDs.length > 0) {
         hallCondition.hallID = { [Op.notIn]: bookedHallIDs };
       }
 
-      // lọc giá
-      if (!isNaN(min) && !isNaN(max) && min > 0 && max > 0) {
-        hallCondition.price = { [Op.between]: [min, max] };
-      } else if (!isNaN(min) && min > 0) {
-        hallCondition.price = { [Op.gte]: min };
-      } else if (!isNaN(max) && max > 0) {
-        hallCondition.price = { [Op.lte]: max };
+      if (numMinPrice && numMaxPrice && numMinPrice > 0 && numMaxPrice > 0) {
+        hallCondition.price = { [Op.between]: [numMinPrice, numMaxPrice] };
+      } else if (numMinPrice && numMinPrice > 0) {
+        hallCondition.price = { [Op.gte]: numMinPrice };
+      } else if (numMaxPrice && numMaxPrice > 0) {
+        hallCondition.price = { [Op.lte]: numMaxPrice };
       }
 
       console.log("🏛️ hallCondition:", hallCondition);
@@ -123,7 +130,7 @@ class RestaurantDAO {
               : {}),
           },
         ],
-        required: !!eventType, // chỉ join bắt buộc khi có filter eventType
+        required: !!eventType,
       };
 
       // 5️⃣ Truy vấn chính
@@ -143,7 +150,8 @@ class RestaurantDAO {
             model: hall,
             as: "halls",
             required: true,
-            where: hallCondition,
+            where:
+              Object.keys(hallCondition).length > 0 ? hallCondition : undefined,
           },
           includeEventType,
           {
@@ -152,25 +160,33 @@ class RestaurantDAO {
             attributes: ["imageURL"],
           },
         ],
-        subQuery: false, // ✅ thêm dòng này
+        subQuery: false,
       });
 
-      console.log(`✅ Found ${restaurants.length} restaurant(s)`);
+      console.log(
+        `✅ Found ${restaurants.length} restaurant(s) before JS filter`
+      );
 
-      // Nếu không có kết quả, log rõ lý do
-      if (restaurants.length === 0) {
-        console.log("⚠️ No restaurant matched your criteria.");
-      }
+      // 6️⃣ Lọc JS theo capacity
+      const filteredRestaurants =
+        numCapacity && numCapacity > 0
+          ? restaurants.filter((r) =>
+              r.halls?.some((h) => Number(h.maxTable) >= numCapacity)
+            )
+          : restaurants;
 
-      return restaurants;
+      console.log(
+        `✅ After JS-level filter: ${filteredRestaurants.length} restaurant(s)`
+      );
+
+      return filteredRestaurants;
     } catch (error) {
       console.error("❌ Error in RestaurantDAO.search:", error);
       throw error;
     }
   }
 
-  // ------------------ Các hàm phụ trợ khác ------------------
-
+  // ------------------ Các hàm phụ trợ ------------------
   static async getAll() {
     return await restaurant.findAll({
       include: [

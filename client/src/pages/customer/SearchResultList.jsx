@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
@@ -7,91 +7,129 @@ import FilterResult from "./components/FilterResult";
 import ListResult from "./components/ListResult";
 import { useRestaurant } from "../../hooks/useRestaurant";
 
+/**
+ * ✅ SearchResultList
+ * - Gọi API tìm kiếm 1 lần duy nhất khi URL thay đổi
+ * - Chỉ cập nhật kết quả khi Redux báo `status = succeeded`
+ * - Lọc local qua FilterResult (không gọi lại backend)
+ */
 const SearchResultList = () => {
   const { search, searchResults, status, error } = useRestaurant();
-
   const [filteredVenues, setFilteredVenues] = useState([]);
   const [sortBy, setSortBy] = useState("recommended");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   const locationHook = useLocation();
+  const queryParams = new URLSearchParams(locationHook.search);
+  const params = Object.fromEntries(queryParams.entries());
 
-  // ✅ Dùng useMemo để đảm bảo params ổn định (tránh re-render vô ích)
-  const params = useMemo(() => {
-    const queryParams = new URLSearchParams(locationHook.search);
-    return {
-      location: queryParams.get("location") || null,
-      eventType: queryParams.get("eventType") || null,
-      capacity: queryParams.get("tables")
-        ? Number(queryParams.get("tables"))
-        : null, // ✅ chuyển sang number, tránh null
-      date: queryParams.get("date") || null,
-      startTime: queryParams.get("startTime") || null,
-      endTime: queryParams.get("endTime") || null,
-      minPrice: queryParams.get("minPrice") || null,
-      maxPrice: queryParams.get("maxPrice") || null,
-    };
+  // ⚙️ Ngăn gọi API nhiều lần
+  const hasFetched = useRef(false);
+
+  // 🧠 Reset flag mỗi khi query (URL) đổi
+  useEffect(() => {
+    hasFetched.current = false;
   }, [locationHook.search]);
 
-  // 🧠 1️⃣ Gọi search() khi query thay đổi, chỉ khi params thực sự có location hoặc eventType
+  // 🧠 Fetch search result duy nhất một lần khi có param hợp lệ
   useEffect(() => {
     const fetchResults = async () => {
-      if (!params.location && !params.eventType) return; // tránh gọi dư
+      if (hasFetched.current) return; // chặn gọi trùng
+
+      const normalizedParams = {
+        location: params.location || null,
+        eventType: params.eventType || null,
+        capacity:
+          params.tables && !isNaN(Number(params.tables))
+            ? Number(params.tables)
+            : null,
+        date: params.date || null,
+        startTime: params.startTime || null,
+        endTime: params.endTime || null,
+        minPrice: params.minPrice || null,
+        maxPrice: params.maxPrice || null,
+      };
+
+      // Nếu thiếu hết các thông tin chính → không fetch
+      if (
+        !normalizedParams.location &&
+        !normalizedParams.eventType &&
+        !normalizedParams.capacity &&
+        !normalizedParams.date
+      ) {
+        console.log("⚠️ Thiếu dữ kiện tìm kiếm, bỏ qua API call");
+        return;
+      }
+
+      hasFetched.current = true;
+      console.log("🚀 [SearchResultList] Fetching:", normalizedParams);
+
       try {
-        console.log("🚀 [SearchResultList] Trigger search with params:", params);
-        await search(params);
+        await search(normalizedParams);
       } catch (err) {
-        console.error("❌ [SearchResultList] Error in search:", err);
+        console.error("❌ Search error:", err);
       }
     };
 
     fetchResults();
-  }, [params, search]);
+  }, [locationHook.search]);
 
-  // 🧠 2️⃣ Khi Redux có dữ liệu => cập nhật filteredVenues
+  // ✅ Khi Redux có kết quả thì hiển thị ra filteredVenues
   useEffect(() => {
     if (status === "succeeded" && Array.isArray(searchResults)) {
-      console.log("✅ [SearchResultList] Redux đã cập nhật:", searchResults);
+      console.log("✅ Cập nhật filteredVenues:", searchResults.length);
       setFilteredVenues(searchResults);
-    } else if (status === "loading") {
-      console.log("⏳ [SearchResultList] Đang load dữ liệu...");
-    } else if (status === "failed") {
-      console.error("❌ [SearchResultList] Tải thất bại:", error);
+      setCurrentPage(1);
     }
-  }, [status, searchResults, error]);
+  }, [status, searchResults]);
 
-  // 🧠 3️⃣ Sắp xếp
+  // 🔄 Hàm sort dữ liệu local
   const handleSort = (value) => {
     setSortBy(value);
     if (!filteredVenues?.length) return;
 
     const sorted = [...filteredVenues];
-    if (value === "price-low") sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
-    if (value === "price-high") sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
-    if (value === "rating") sorted.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
+    switch (value) {
+      case "price-low":
+        sorted.sort((a, b) => (a.halls?.[0]?.price || 0) - (b.halls?.[0]?.price || 0));
+        break;
+      case "price-high":
+        sorted.sort((a, b) => (b.halls?.[0]?.price || 0) - (a.halls?.[0]?.price || 0));
+        break;
+      case "rating":
+        sorted.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
+        break;
+      default:
+        break;
+    }
 
     setFilteredVenues(sorted);
     setCurrentPage(1);
   };
 
-  // 📄 Pagination
+  // 🧾 Phân trang
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentVenues = filteredVenues.slice(startIndex, startIndex + itemsPerPage);
+  const currentVenues = filteredVenues.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
-  // 📊 Debug
-  console.log("📊 [SearchResultList] status:", status);
-  console.log("📊 [SearchResultList] params:", params);
-  console.log("📊 [SearchResultList] searchResults:", searchResults);
-  console.log("📊 [SearchResultList] filteredVenues:", filteredVenues);
+  // 💨 Debounce filter update từ FilterResult
+  const filterTimeout = useRef(null);
+  const handleFilter = (filteredList) => {
+    if (filterTimeout.current) clearTimeout(filterTimeout.current);
+    filterTimeout.current = setTimeout(() => {
+      setFilteredVenues(filteredList);
+      setCurrentPage(1);
+    }, 150);
+  };
 
-  // 🧠 4️⃣ Render
   return (
     <MainLayout>
-      {/* Search bar */}
+      {/* 🔍 Thanh tìm kiếm */}
       <div
         style={{
-          width: "100%",
           display: "flex",
           justifyContent: "center",
           marginTop: "16px",
@@ -102,31 +140,37 @@ const SearchResultList = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* 🧭 Nội dung chính */}
       <div style={{ backgroundColor: "#fff", paddingBlock: "40px" }}>
         <div
           style={{
             paddingInline: "50px",
             maxWidth: "1200px",
             margin: "0 auto",
-            boxSizing: "border-box",
           }}
         >
-          <div style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}>
-            {/* Sidebar filter */}
+          <div
+            style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
+          >
+            {/* Bộ lọc bên trái */}
             <div style={{ width: "26%", minWidth: "260px" }}>
-              <FilterResult venues={searchResults || []} onFilter={setFilteredVenues} />
+              <FilterResult
+                venues={searchResults || []}
+                onFilter={handleFilter}
+              />
             </div>
 
-            {/* Main list */}
+            {/* Danh sách kết quả */}
             <div style={{ width: "74%", flex: 1 }}>
               {status === "loading" ? (
                 <div className="text-center my-5">
                   <Spinner animation="border" />
-                  <p className="mt-3">Đang tìm kiếm nhà hàng phù hợp...</p>
+                  <p className="mt-3 text-muted">Đang tìm kiếm nhà hàng phù hợp...</p>
                 </div>
               ) : error ? (
-                <p className="text-danger text-center my-5">{error}</p>
+                <p className="text-danger text-center my-5">
+                  Đã xảy ra lỗi: {error}
+                </p>
               ) : filteredVenues.length > 0 ? (
                 <ListResult
                   venues={currentVenues}

@@ -10,7 +10,7 @@ class RestaurantService {
     return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
   }
 
-  static async getAvailable(){
+  static async getAvailable() {
     return await RestaurantDAO.getAvailable();
   }
 
@@ -19,27 +19,29 @@ class RestaurantService {
   }
 
   static async create(data) {
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       throw new Error("Invalid payload");
     }
     const { name, restaurantPartnerID, address, thumbnailURL } = data;
     if (!name || !restaurantPartnerID) {
       throw new Error("Restaurant name and restaurantPartnerID are required");
     }
-    if (!thumbnailURL || typeof thumbnailURL !== 'string') {
+    if (!thumbnailURL || typeof thumbnailURL !== "string") {
       throw new Error("thumbnailURL is required");
     }
-    if (!address || typeof address !== 'object') {
+    if (!address || typeof address !== "object") {
       throw new Error("address is required with { number, street, ward }");
     }
     const { number, street, ward } = address;
     if (!number || !street || !ward) {
-      throw new Error("address.number, address.street and address.ward are required");
+      throw new Error(
+        "address.number, address.street and address.ward are required"
+      );
     }
     return await RestaurantDAO.createRestaurant(data);
   }
 
-  static async update(restaurantID, data){
+  static async update(restaurantID, data) {
     return await RestaurantDAO.updateRestaurant(restaurantID, data);
   }
 
@@ -47,18 +49,20 @@ class RestaurantService {
     return await RestaurantDAO.toggleRestaurantStatus(id);
   }
 
-  static async addImage(restaurantID, imageURL){
+  static async addImage(restaurantID, imageURL) {
     if (!restaurantID) throw new Error("restaurantID is required");
-    if (!imageURL || typeof imageURL !== 'string') throw new Error("imageURL is required");
+    if (!imageURL || typeof imageURL !== "string")
+      throw new Error("imageURL is required");
     return await RestaurantImageDAO.addImage(restaurantID, imageURL);
   }
 
-  static async deleteImage(imageID){
+  static async deleteImage(imageID) {
     if (!imageID) throw new Error("imageID is required");
     return await RestaurantImageDAO.deleteImage(imageID);
   }
 
-  static async search(filter){
+  static async search(filter) {
+    console.log("🔧 [RestaurantService] Final search filter:", filter);
     return await RestaurantDAO.search(filter);
   }
 }

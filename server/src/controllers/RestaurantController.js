@@ -108,18 +108,31 @@ class RestaurantController {
     }
   }
 
-  // ✅ CẬP NHẬT PHẦN SEARCH (đã decode query string)
+  // ✅ SEARCH FIXED: Map tables → capacity + decode + parse safely
   static async search(req, res) {
     try {
       const query = { ...req.query };
 
-      // ✅ Decode tiếng Việt & ký tự đặc biệt từ URL
+      // Decode các trường có thể bị encode URL
       query.location = decodeURIComponent(query.location || "");
       query.eventType = decodeURIComponent(query.eventType || "");
+
+      // Chuyển đổi kiểu dữ liệu
       query.date = query.date || null;
       query.minPrice = query.minPrice ? Number(query.minPrice) : null;
       query.maxPrice = query.maxPrice ? Number(query.maxPrice) : null;
-      query.capacity = query.tables ? Number(query.tables) : null;
+
+      // ✅ Fix chính: tables -> capacity
+      if (query.tables) {
+        query.capacity = Number(query.tables);
+      } else if (!query.capacity) {
+        query.capacity = null;
+      }
+
+      // Xóa tables cũ để tránh gây nhiễu
+      delete query.tables;
+
+      console.log("🔍 Search filters received:", query);
 
       const data = await RestaurantService.search(query);
       res.json(data);

@@ -11,28 +11,14 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/SearchBarStyles.css";
 
 export default function SearchSection({ noOverlap = false }) {
-  const { getQueryString, performSearch } = useSearchForm();
+  const { getQueryString } = useSearchForm();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      // 🟢 Gọi API tìm kiếm (nếu cần lưu Redux)
-      await performSearch();
-
-      // 🟢 Lấy query string từ hook
-      const q = getQueryString();
-      console.log("Navigating to:", `/searchresult?${q}`);
-
-      // 🟢 Điều hướng đến trang kết quả
-      navigate(`/searchresult?${q}`);
-    } catch (err) {
-      console.error("❌ Search error:", err);
-      // Nếu có lỗi khi fetch, vẫn điều hướng để hiển thị thông báo ở trang SearchResult
-      const q = getQueryString();
-      navigate(`/searchresult?${q}`);
-    }
+    const q = getQueryString();
+    console.log("Navigating to:", `/searchresult?${q}`);
+    navigate(`/searchresult?${q}`);
   };
 
   return (
