@@ -70,17 +70,17 @@ export default function LoginPage() {
       setInfo("Đăng nhập thành công — điều hướng...");
 
       // Điều hướng theo vai trò
-     const role = data?.user?.role;
-            switch (role) {
-              case 2:
-                navigate('/admin/dashboard');
-                break;
-              case 1:
-                navigate('/partner');
-                break;
-              default:
-                navigate('/');
-            }
+      const role = data?.user?.role;
+      switch (role) {
+        case 2:
+          navigate("/admin/dashboard");
+          break;
+        case 1:
+          navigate("/partner");
+          break;
+        default:
+          navigate("/");
+      }
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");
     } finally {
@@ -147,13 +147,13 @@ export default function LoginPage() {
             const role = res.data?.user?.role;
             switch (role) {
               case 2:
-                navigate('/admin/dashboard');
+                navigate("/admin/dashboard");
                 break;
               case 1:
-                navigate('/partner');
+                navigate("/partner");
                 break;
               default:
-                navigate('/customer/bookings');
+                navigate("/customer/bookings");
             }
           } catch (error) {
             console.error("Google login API error:", error);
@@ -174,6 +174,15 @@ export default function LoginPage() {
   // ==========================================================
   return (
     <AuthLayout>
+      <style>
+        {`
+          /* Tắt icon mắt mặc định của Bootstrap */
+          .form-control::-webkit-textfield-decoration-container { display: none !important; }
+          .form-control::-ms-reveal { display: none !important; }
+          .form-control::-ms-clear { display: none !important; }
+  `}
+      </style>
+
       <div
         style={{
           minHeight: "100vh",
@@ -206,7 +215,11 @@ export default function LoginPage() {
               style={{
                 backgroundColor: "#E11D48",
                 color: "#fefaf9",
-                padding: "50px 40px 40px 40px",
+                padding: "50px 40px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center", 
+                alignItems: "flex-start", 
               }}
             >
               <h1
@@ -282,7 +295,6 @@ export default function LoginPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Mật khẩu"
                     />
-                    {!passwordError && (
                       <span
                         style={{
                           position: "absolute",
@@ -298,7 +310,6 @@ export default function LoginPage() {
                           icon={showPassword ? faEyeSlash : faEye}
                         />
                       </span>
-                    )}
                   </div>
                   <Form.Control.Feedback type="invalid">
                     {passwordError}

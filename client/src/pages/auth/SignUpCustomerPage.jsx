@@ -33,16 +33,16 @@ export default function SignUpCustomer() {
   const [openDropdown, setOpenDropdown] = useState(false);
 
   const dropdownStyles = {
-    wrapper: { position: "relative", width: "100%", marginBottom: "18px" },
+    wrapper: { position: "relative", width: "100%", marginBottom: "16px" },
     selectBox: {
-      border: "2px solid #e5e7eb",
-      padding: "12px 16px",
-      borderRadius: "10px",
+      border: "1px solid #ced4da",
+      height: "calc(1.5em + 0.75rem + 2px)", // chiều cao chuẩn Form.Control
+      padding: "0.375rem 0.75rem", // padding chuẩn
+      borderRadius: "0.375rem", // bo chuẩn bootstrap
       backgroundColor: "#fff",
       cursor: "pointer",
-      color: "#5b5959ff",
-      fontWeight: 500,
-      fontSize: "15px",
+      color: "#212529", // màu chữ chuẩn input
+      fontSize: "1rem", // font-size chuẩn input
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
@@ -53,18 +53,20 @@ export default function SignUpCustomer() {
       left: 0,
       width: "100%",
       backgroundColor: "#fff",
-      borderRadius: "12px",
+      border: "1px solid #ced4da",
+      borderRadius: "0.375rem",
       boxShadow: "0px 4px 10px rgba(0,0,0,0.15)",
       overflow: "hidden",
       zIndex: 100,
     },
+
     option: (active) => ({
-      padding: "12px 16px",
+      padding: "0.5rem 0.75rem",
       cursor: "pointer",
-      backgroundColor: active ? "#FFE4EA" : "white",
-      color: active ? "#E11D48" : "#333",
-      transition: "0.2s ease",
-      fontWeight: active ? 600 : 400,
+      backgroundColor: active ? "#FFE4EA" : "#fff",
+      color: active ? "#E11D48" : "#212529",
+      fontSize: "1rem",
+      transition: "0.2s",
     }),
   };
 
@@ -74,6 +76,10 @@ export default function SignUpCustomer() {
     if (!form.fullname.trim()) e.fullname = "Vui lòng nhập họ tên.";
     else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.fullname))
       e.fullname = "Tên không chứa số hoặc kí tự đặc biệt.";
+
+    if (!form.role || form.role.trim() === "") {
+      e.role = "Vui lòng chọn vai trò.";
+    }
 
     if (form.role === "Cô dâu" || form.role === "Chú rể") {
       if (!form.partner.trim()) e.partner = "Vui lòng nhập tên người đồng hành";
@@ -86,7 +92,7 @@ export default function SignUpCustomer() {
     if (!/^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/.test(form.email))
       e.email = "Email không hợp lệ";
     if (!form.password || form.password.length < 6)
-      e.password = "Mật khẩu >= 6 ký tự";
+      e.password = "Mật khẩu nhiều hơn 5 ký tự";
     if (form.confirmPassword !== form.password)
       e.confirmPassword = "Mật khẩu nhập lại không khớp";
 
@@ -183,7 +189,7 @@ export default function SignUpCustomer() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-start",
-                paddingTop: "140px",
+                paddingTop: "200px",
               }}
             >
               <h1
@@ -232,6 +238,15 @@ export default function SignUpCustomer() {
               >
                 Đăng Ký Khách Hàng
               </h2>
+              <style>
+                {`
+                  /* Tắt icon mắt mặc định của Bootstrap */
+                  .form-control::-webkit-textfield-decoration-container { display: none !important; }
+                  .form-control::-ms-reveal { display: none !important; }
+                  .form-control::-ms-clear { display: none !important; }
+  `}
+              </style>
+
               <form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
                   <Form.Control
@@ -275,8 +290,8 @@ export default function SignUpCustomer() {
                               setOpenDropdown(false);
                             }}
                             onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = "#FFF1F4"; 
-                              e.target.style.color = "#E11D48"; 
+                              e.target.style.backgroundColor = "#FFF1F4";
+                              e.target.style.color = "#E11D48";
                             }}
                             onMouseLeave={(e) => {
                               e.target.style.backgroundColor =
@@ -285,7 +300,8 @@ export default function SignUpCustomer() {
                                 form.role === option ? "#E11D48" : "#333";
                             }}
                             style={{
-                              padding: "12px 16px",
+                              height: "calc(1.5em + 0.75rem + 2px)",
+                              padding: "7px 17px",
                               cursor: "pointer",
                               backgroundColor:
                                 form.role === option ? "#FFE4EA" : "white",
@@ -376,8 +392,8 @@ export default function SignUpCustomer() {
                       }
                       isInvalid={!!errors.password}
                       autoComplete="new-password"
+                      style={{ backgroundImage: "none" }}
                     />
-                    {!errors.password && (
                       <span
                         className="toggle-password"
                         onClick={() => setShowPassword(!showPassword)}
@@ -386,7 +402,6 @@ export default function SignUpCustomer() {
                           icon={showPassword ? faEyeSlash : faEye}
                         />
                       </span>
-                    )}
                   </div>
                   <Form.Control.Feedback
                     type="invalid"
@@ -407,8 +422,8 @@ export default function SignUpCustomer() {
                       }
                       isInvalid={!!errors.confirmPassword}
                       autoComplete="new-password"
+                      style={{ backgroundImage: "none" }}
                     />
-                    {!errors.confirmPassword && (
                       <span
                         className="toggle-password"
                         onClick={() =>
@@ -419,7 +434,6 @@ export default function SignUpCustomer() {
                           icon={showConfirmPassword ? faEyeSlash : faEye}
                         />
                       </span>
-                    )}
                   </div>
                   <Form.Control.Feedback
                     type="invalid"
