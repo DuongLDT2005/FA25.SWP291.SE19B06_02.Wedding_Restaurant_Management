@@ -1,16 +1,14 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { Container, Row, Col } from "react-bootstrap"
-import Header from "../../components/header/Header"
-import Footer from "../../components/Footer"
-import BookingCard from "./components/BookingCard"
+import Header from "../../../components/header/Header"
+import Footer from "../../../components/Footer"
+import BookingCard from "../components/BookingCard"
 import { useNavigate } from "react-router-dom"
-import ScrollToTopButton from "../../components/ScrollToTopButton"
+import ScrollToTopButton from "../../../components/ScrollToTopButton"
 // import { bookings as mockBookings } from "./ValueStore" // dùng dữ liệu backend thay mock
-  import { getMyBookings, customerConfirm, customerCancel } from "../../services/bookingService"
-import useAuth from "../../hooks/useAuth"
-import useBooking from "../../hooks/useBooking"
+  import { getMyBookings, customerConfirm, customerCancel } from "../../../services/bookingService"
+import useAuth from "../../../hooks/useAuth"
+import useBooking from "../../../hooks/useBooking"
 import "bootstrap/dist/css/bootstrap.min.css"
 
 function BookingListPage() {
