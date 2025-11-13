@@ -195,17 +195,23 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
   // =========================
   const handleEditToggle = () => {
     if (isEditing) {
-      if (!window.confirm("Thông tin hiện chưa được lưu. Bạn muốn huỷ?")) return;
+      if (!window.confirm("Thông tin chưa lưu, bạn có chắc muốn hủy?")) return;
+
       setEditingData({});
-    } else {
-      setEditingData(JSON.parse(JSON.stringify(localBooking)));
-      setSelectedMenuId("");
-      setSelectedDishes([]);
-      setSelectedServiceIds(displayServices.map((s) => s.id));
+      setIsEditing(false);
+      return;
     }
 
-    setIsEditing(!isEditing);
+    // bật chế độ chỉnh sửa
+    setEditingData(JSON.parse(JSON.stringify(localBooking)));
+    setSelectedMenuId("");
+    setSelectedDishes([]);
+    setSelectedServiceIds(localBooking.services.map((s) => s.id));
+
+    setIsEditing(true);
   };
+
+
 
   // =========================
   //  LƯU THAY ĐỔI
@@ -226,10 +232,18 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
       return;
     }
 
+    if (localBooking.status === 1) {
+      editingData.status = 0;
+    }
+
     setLocalBooking({ ...editingData });
+
     if (onUpdateBooking) {
       onUpdateBooking({ ...editingData });
     }
+
+    sessionStorage.setItem("currentBooking", JSON.stringify(editingData));
+
     alert("Đã lưu thành công!");
     setIsEditing(false);
   };
@@ -252,32 +266,35 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
                 <i className="fas fa-calendar-alt me-2"></i>Thông tin đặt tiệc
               </h5>
 
-              {!isEditing ? (
-                <Button
-                  size="sm"
-                  style={{ backgroundColor: PRIMARY, borderColor: PRIMARY }}
-                  onClick={handleEditToggle}
-                >
-                  Chỉnh sửa
-                </Button>
-              ) : (
-                <div>
+              {/* ====== NÚT THEO STATUS ====== */}
+              {(localBooking.status === 0 || localBooking.status === 1) && (
+                !isEditing ? (
                   <Button
                     size="sm"
-                    className="me-2"
                     style={{ backgroundColor: PRIMARY, borderColor: PRIMARY }}
                     onClick={handleEditToggle}
                   >
-                    Hủy
+                    Chỉnh sửa
                   </Button>
-                  <Button
-                    size="sm"
-                    style={{ backgroundColor: SUCCESS, borderColor: SUCCESS }}
-                    onClick={handleSaveChanges}
-                  >
-                    Lưu
-                  </Button>
-                </div>
+                ) : (
+                  <div>
+                    <Button
+                      size="sm"
+                      className="me-2"
+                      style={{ backgroundColor: PRIMARY, borderColor: PRIMARY }}
+                      onClick={handleEditToggle}
+                    >
+                      Hủy
+                    </Button>
+                    <Button
+                      size="sm"
+                      style={{ backgroundColor: SUCCESS, borderColor: SUCCESS }}
+                      onClick={handleSaveChanges}
+                    >
+                      Lưu
+                    </Button>
+                  </div>
+                )
               )}
             </Card.Header>
 
@@ -571,6 +588,63 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
                 <Col>Tổng cộng:</Col>
                 <Col className="text-end">{formatCurrency(prices.total)}</Col>
               </Row>
+              {/* ====== NÚT XÁC NHẬN & HỦY BOOKING ====== */}
+              {localBooking.status === 1 && !isEditing && (
+                <div className="mt-3">
+
+                  {/* Nút Xác nhận */}
+                  <Button
+                    className="w-100 mb-2"
+                    style={{
+                      backgroundColor: PRIMARY,
+                      borderColor: PRIMARY,
+                      padding: "10px 0",
+                      fontWeight: "600",
+                      borderRadius: "8px"
+                    }}
+                    onClick={() => {
+                      if (!window.confirm("Bạn xác nhận muốn đặt tiệc này chứ?")) return;
+
+                      const updated = { ...localBooking, status: 3 };
+                      setLocalBooking(updated);
+
+                      sessionStorage.setItem("currentBooking", JSON.stringify(updated));
+
+                      alert("Bạn đã xác nhận booking!");
+                    }}
+                  >
+                    Xác nhận đặt tiệc
+                  </Button>
+
+                  {/* Nút Hủy */}
+                  <Button
+                    className="w-100"
+                    style={{
+                      backgroundColor: "white",
+                      color: PRIMARY,
+                      border: `2px solid ${PRIMARY}`,
+                      padding: "10px 0",
+                      fontWeight: "600",
+                      borderRadius: "8px"
+                    }}
+                    onClick={() => {
+                      if (!window.confirm("Bạn có chắc muốn hủy booking?")) return;
+
+                      const updated = { ...localBooking, status: 6 };
+
+                      setLocalBooking(updated);
+                      sessionStorage.setItem("currentBooking", JSON.stringify(updated));
+
+                      if (onUpdateBooking) onUpdateBooking(updated);
+
+                      alert("Bạn đã hủy booking.");
+                    }}
+                  >
+                    Hủy đặt tiệc
+                  </Button>
+                </div>
+              )}
+
             </Card.Body>
           </Card>
 

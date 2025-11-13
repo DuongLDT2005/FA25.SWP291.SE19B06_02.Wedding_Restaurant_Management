@@ -10,15 +10,12 @@ import {
 
 const PRIMARY = "#D81C45";
 
-// PDF mẫu nếu chưa có hợp đồng
 const SAMPLE_PDF_URL =
-  "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+  "https://pdflink.to/26bb5043/";
 
 export default function ContractTab({ booking }) {
-  // Customer luôn là customer trong trang này
   const isCustomer = true;
 
-  // Lấy URL hợp đồng
   const initialPdfUrl =
     booking?.contract?.pdfUrl ||
     booking?.contract?.contractUrl ||
@@ -27,16 +24,13 @@ export default function ContractTab({ booking }) {
   const [pdfUrl] = useState(initialPdfUrl);
   const [pdfName] = useState(booking?.contract?.pdfName || "HopDong.pdf");
 
-  // Khách hàng được tải khi:
-  // status >= 4: Đã đặt cọc
-  const canDownload = booking?.status >= 4;
+  const canDownload = booking?.status === 4;
 
   const handleDownload = () => {
     if (!canDownload) {
-      alert("Bạn cần đặt cọc trước khi tải hợp đồng về!");
+      alert("Bạn cần đặt cọc trước khi tải hợp đồng!");
       return;
     }
-
     const link = document.createElement("a");
     link.href = pdfUrl;
     link.download = pdfName;
@@ -48,7 +42,7 @@ export default function ContractTab({ booking }) {
   };
 
   return (
-    <Card className="custom-contract-card">
+    <Card className="custom-contract-card" style={{ border: "none" }}>
       <Card.Header
         className="d-flex justify-content-between align-items-center"
         style={{
@@ -64,7 +58,7 @@ export default function ContractTab({ booking }) {
 
       <Card.Body>
         <Row>
-          {/* ================= PDF VIEWER ================= */}
+          {/* PDF VIEW */}
           <Col lg={8}>
             <div
               style={{
@@ -75,7 +69,6 @@ export default function ContractTab({ booking }) {
                 background: "#fff",
               }}
             >
-              {/* KHÁCH HÀNG LUÔN ĐƯỢC XEM PDF */}
               <iframe
                 src={pdfUrl}
                 title="Hợp đồng PDF"
@@ -86,62 +79,64 @@ export default function ContractTab({ booking }) {
             </div>
           </Col>
 
-          {/* ================= ACTION BUTTONS ================= */}
+          {/* ACTION PANEL – đã remove border + shadow */}
           <Col lg={4}>
-            <Card className="h-100 shadow-sm">
-              <Card.Body className="d-flex flex-column justify-content-start align-items-center">
+            <Card
+              className="h-100"
+              style={{
+                border: "none",
+                boxShadow: "none",
+                background: "transparent",
+              }}
+            >
+              <Card.Body className="d-flex flex-column align-items-center">
 
-                {/* TRẠNG THÁI: CHƯA ĐẶT CỌC */}
+                {/* =================== CHƯA ĐẶT CỌC =================== */}
                 {!canDownload && (
                   <>
                     <Alert variant="warning" className="w-100 text-center">
                       <strong>Chưa đặt cọc</strong>
                       <br />
-                      Bạn cần đặt cọc để tải hợp đồng xuống.
+                      Bạn cần đặt cọc để tải hợp đồng.
                     </Alert>
 
                     <Button
-                      variant="success"
-                      className="w-100 mb-3"
-                      style={{ borderRadius: "25px" }}
+                      className="w-100 mb-3 py-3"
+                      style={{
+                        backgroundColor: PRIMARY,
+                        border: "none",
+                        borderRadius: "20px",
+                        fontSize: "1.1rem",
+                        fontWeight: "600",
+                        color: "#fff",
+                        letterSpacing: "0.3px",
+                      }}
                       onClick={handleGoToPayment}
                     >
                       <FontAwesomeIcon icon={faCreditCard} className="me-2" />
                       Đặt cọc ngay
                     </Button>
-
-                    <Button
-                      disabled
-                      className="w-100"
-                      style={{ borderRadius: "25px" }}
-                    >
-                      <FontAwesomeIcon icon={faDownload} className="me-2" />
-                      Không thể tải hợp đồng
-                    </Button>
                   </>
                 )}
 
-                {/* TRẠNG THÁI: ĐÃ ĐẶT CỌC → KHÁCH HÀNG TẢI FILE */}
+                {/* =================== ĐÃ ĐẶT CỌC – CÓ THỂ TẢI =================== */}
                 {canDownload && (
-                  <>
-                    <Button
-                      className="w-100 mb-3"
-                      style={{
-                        backgroundColor: PRIMARY,
-                        border: "none",
-                        borderRadius: "25px",
-                      }}
-                      onClick={handleDownload}
-                    >
-                      <FontAwesomeIcon icon={faDownload} className="me-2" />
-                      Tải xuống hợp đồng
-                    </Button>
-
-                    <div className="mt-2 text-muted small text-center">
-                      <i>File hiện tại: </i>
-                      <b>{pdfName}</b>
-                    </div>
-                  </>
+                  <Button
+                    className="w-100 mb-3 py-3"
+                    style={{
+                      backgroundColor: PRIMARY,
+                      border: "none",
+                      borderRadius: "20px",
+                      fontSize: "1.1rem",
+                      fontWeight: "600",
+                      color: "#fff",
+                      letterSpacing: "0.3px",
+                    }}
+                    onClick={handleDownload}
+                  >
+                    <FontAwesomeIcon icon={faDownload} className="me-2" />
+                    Tải xuống hợp đồng
+                  </Button>
                 )}
               </Card.Body>
             </Card>

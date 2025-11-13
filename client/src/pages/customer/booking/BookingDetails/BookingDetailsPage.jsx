@@ -1,4 +1,3 @@
-// BookingDetailsPage.jsx
 import React, { useState, useEffect } from "react";
 import {
   useParams,
@@ -21,10 +20,10 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import OverviewTab from "./components/OverviewTab";
 import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
-import ScrollToTopButton from "../../../components/ScrollToTopButton";
-import "../../../styles/BookingDetailsStyles.css";
-import useBooking from "../../../hooks/useBooking";
-import MainLayout from "../../../layouts/MainLayout";
+import ScrollToTopButton from "../../../../components/ScrollToTopButton";
+import "../../../../styles/BookingDetailsStyles.css";
+import useBooking from "../../../../hooks/useBooking";
+import MainLayout from "../../../../layouts/MainLayout";
 
 const PRIMARY = "#D81C45";
 
@@ -168,13 +167,31 @@ export default function BookingDetailsPage() {
 
   // --- Load data ---
   useEffect(() => {
-    if (!hasLoaded) {
-      const mockData = mockBooking(bookingId || 1);
-      setBooking(mockData);
-      setLoading(false);
-      setHasLoaded(true);
+    if (hasLoaded) return;
+
+    // 1️⃣ Ưu tiên lấy từ sessionStorage
+    const stored = sessionStorage.getItem("currentBooking");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setBooking(parsed);
+        setHasLoaded(true);
+        setLoading(false);
+        return;
+      } catch (err) {
+        console.warn("Cannot parse stored booking");
+      }
     }
+
+    // 2️⃣ Nếu không có → tạo mock và lưu vào storage
+    const mockData = mockBooking(bookingId || 1);
+    sessionStorage.setItem("currentBooking", JSON.stringify(mockData));
+
+    setBooking(mockData);
+    setLoading(false);
+    setHasLoaded(true);
   }, [bookingId, hasLoaded]);
+
 
   // --- Payment state ---
   useEffect(() => {
@@ -227,7 +244,7 @@ export default function BookingDetailsPage() {
 
   return (
     <MainLayout>
-      <div style={{ maxWidth: "1200px", margin: "0 160px" }} className="container-fluid">
+      <div style={{ maxWidth: "1200px", margin: "0 160px" }} className="container-fluid ">
         <Container fluid className="py-4">
           <Card
             className="mb-3"
@@ -297,6 +314,10 @@ export default function BookingDetailsPage() {
                   <Tab.Pane eventKey="overview">
                     <OverviewTab
                       booking={booking}
+                      onUpdateBooking={(updated) => {
+                        setBooking(updated);
+                        sessionStorage.setItem("currentBooking", JSON.stringify(updated));
+                      }}
                       onApprove={handleApprove}
                       onReject={handleReject}
                       isApproved={booking.status === 1}

@@ -8,7 +8,7 @@ import BookingCard from "./components/BookingCard"
 import { useNavigate } from "react-router-dom"
 import ScrollToTopButton from "../../components/ScrollToTopButton"
 // import { bookings as mockBookings } from "./ValueStore" // dùng dữ liệu backend thay mock
-  import { getMyBookings, customerConfirm, customerCancel } from "../../services/bookingService"
+import { getMyBookings, customerConfirm, customerCancel } from "../../services/bookingService"
 import useAuth from "../../hooks/useAuth"
 import useBooking from "../../hooks/useBooking"
 import "bootstrap/dist/css/bootstrap.min.css"
@@ -93,7 +93,7 @@ function BookingListPage() {
         VAT: b.VAT,
         totalAmount: b.totalAmount,
       })
-    } catch {}
+    } catch { }
     sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
     navigate(`/booking/${b.bookingID}`)
   }
@@ -107,7 +107,7 @@ function BookingListPage() {
         VAT: b.VAT,
         totalAmount: b.totalAmount,
       })
-    } catch {}
+    } catch { }
     sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
     navigate(`/booking/${b.bookingID}`)
   }

@@ -44,8 +44,8 @@ import AdminSettingsPage from "../pages/admin/setting/AdminSettingPage";
 import BookingListPage from "../pages/customer/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
-import PaymentPage from "../pages/payment/PaymentPage";
-import BookingDetailsPage from "../pages/booking/BookingDetails/BookingDetailsPage";
+import PaymentPage from "../pages/customer/payment/PaymentPage";
+import BookingDetailsPage from "../pages/customer/booking/BookingDetails/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
 
 function AppRoutes() {
@@ -91,13 +91,13 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<UserList />} />
-        <Route path="/admin/users/:id" element = {<UserDetail/>} />
+        <Route path="/admin/users/:id" element={<UserDetail />} />
         <Route path="/admin/restaurants" element={<AdminRestaurantList />} />
-        <Route path="/admin/restaurants/:id" element = {<AdminRestaurantDetail/>}/>
+        <Route path="/admin/restaurants/:id" element={<AdminRestaurantDetail />} />
         <Route path="/admin/bookings" element={<AdminBookingListPage />} />
         <Route path="/admin/bookings/:bookingId" element={<AdminBookingDetailsPage />} />
         <Route path="/admin/license" element={<AdminLicensePage />} />
-        <Route path="/admin/profile" element= {<AdminProfilePage/>} />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
         <Route path="/admin/payments" element={<AdminPaymentListPage />} />
         <Route path="/admin/payments/:id" element={<AdminPaymentDetail />} />
         <Route path="/admin/reviews" element={<AdminReviewListPage />} />
