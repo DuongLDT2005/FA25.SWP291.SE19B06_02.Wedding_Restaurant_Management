@@ -5,7 +5,11 @@ import {
     fetchRestaurantById,
     performSearchRestaurants,
     fetchFeaturedRestaurants,
+    fetchRestaurantsByPartner,
+    fetchToggleRestaurantStatus,
     createRestaurant,
+    updateRestaurant,
+    addRestaurantImage,
     clearCurrent,
     clearError,
     selectRestaurants,
@@ -27,7 +31,23 @@ export function useRestaurant() {
     const status = useSelector((s) => s.restaurants?.status);
     const error = useSelector((s) => s.restaurants?.error);
 
-    const loadAll = useCallback(async () => {
+    const loadAllPartner = useCallback(async (partnerID) => {
+        const action = await dispatch(fetchRestaurantsByPartner(partnerID));
+        if (action.error) throw action.payload || action.error.message;
+        return action.payload;
+    }, [dispatch]);
+
+    const toggleStatus = useCallback(
+        async ({ restaurantID, newStatus }) => {
+            const action = await dispatch(fetchToggleRestaurantStatus({ restaurantID, newStatus }));
+            if (action.error) throw action.payload || action.error.message;
+            return action.payload;
+        },
+        [dispatch]
+    );
+
+    const loadAll = useCallback(
+    async () => {
         const action = await dispatch(fetchRestaurants());
         if (action.error) throw action.payload || action.error.message;
         return action.payload;
@@ -57,9 +77,27 @@ export function useRestaurant() {
         return action.payload;
     }, [dispatch]);
 
+    const updateOne = useCallback(
+        async ({ id, payload }) => {
+            const action = await dispatch(updateRestaurant({ id, payload }));
+            if (action.error) throw action.payload || action.error.message;
+            return action.payload;
+        },
+        [dispatch]
+    );
+    // create
     const createOne = useCallback(
         async (payload) => {
             const action = await dispatch(createRestaurant(payload));
+            if (action.error) throw action.payload || action.error.message;
+            return action.payload;
+        },
+        [dispatch]
+    );
+
+    const addImage = useCallback(
+        async ({ restaurantID, imageURL }) => {
+            const action = await dispatch(addRestaurantImage({ restaurantID, imageURL }));
             if (action.error) throw action.payload || action.error.message;
             return action.payload;
         },
@@ -78,9 +116,13 @@ export function useRestaurant() {
         error,
         loadAll,
         loadById,
+        updateOne,
+        loadAllPartner,
+        toggleStatus,
         search,
         loadFeatured,
         createOne,
+        addImage,
         clear,
         clearErr,
     };

@@ -1,5 +1,6 @@
 import HallDAO from "../dao/HallDAO.js";
-import HallImageDAO from "../dao/HallImageDao.js";
+import HallImageDAO from "../dao/HallImageDAO.js";
+import BookingDAO from "../dao/BookingDAO.js";
 class HallServices {
     static async createHall(hallData) {
         if (!hallData) {
@@ -66,6 +67,18 @@ class HallServices {
         }
         const success = await HallImageDAO.deleteHallImage(imageID);
         return success;
+    }
+    /**
+     * Check if a hall is available for a given date/time range.
+     * Returns { available: boolean, overlaps: number }
+     */
+    static async isHallAvailable(hallID, eventDate, startTime, endTime) {
+        if (!hallID || !eventDate || !startTime || !endTime) {
+            throw new Error('Missing parameters for availability check');
+        }
+        // Reuse BookingDAO overlap check for blocking statuses
+        const overlaps = await BookingDAO.findOverlapsForBlocking(hallID, eventDate, startTime, endTime);
+        return { available: overlaps.length === 0, overlaps: overlaps.length };
     }
     
 }

@@ -6,7 +6,7 @@ import { notifyByStatusById } from './Booking/BookingNotificationService.js';
  * Thiết lập Cron Job để kiểm tra các booking đã hết hạn.
  * Chạy tác vụ này mỗi 1 giờ (vào phút 0 của mỗi giờ: 00:00, 01:00, 02:00, ...)
  */
-export function setupExpirationChecker({ days = 2 } = {}) {
+export function setupExpirationChecker({ days = 3 } = {}) {
     // Cron string '0 * * * *': phút (0), giờ (*), ngày trong tháng (*), tháng (*), ngày trong tuần (*)
     cron.schedule('0 * * * *', async () => {
         const jobStartTime = new Date();

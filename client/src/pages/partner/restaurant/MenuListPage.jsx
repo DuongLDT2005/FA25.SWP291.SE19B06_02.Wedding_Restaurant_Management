@@ -1,21 +1,32 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CrudSection from "../../../layouts/CrudSection";
 import MenuDetailPage from "./MenuDetailPage";
 import MenuCreatePage from "./MenuCreatePage";
-import mock from "../../../mock/partnerMock";
+import { useParams } from "react-router-dom";
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
 
 export default function MenuListPage({ readOnly = false }) {
   const [activeMenu, setActiveMenu] = useState(null);
   const [creating, setCreating] = useState(false);
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const restaurantID = useMemo(() => Number(paramRestaurantID || paramId) || undefined, [paramId, paramRestaurantID]);
 
-  const [menus, setMenus] = useState(
-    mock.menu.map((m) => ({
-      id: m.menuID,
+  const { menus, loadMenusByRestaurant, updateOneMenu } = useAdditionRestaurant();
+
+  useEffect(() => {
+    if (restaurantID) {
+      loadMenusByRestaurant(restaurantID).catch(() => {});
+    }
+  }, [restaurantID, loadMenusByRestaurant]);
+
+  const rows = useMemo(() => {
+    return (menus || []).map((m) => ({
+      id: m.menuID ?? m.id,
       name: m.name,
-      price: m.price.toLocaleString("vi-VN") + " ₫",
-      status: m.status === 1 ? "active" : "inactive",
-    }))
-  );
+      price: (Number(m.price) || 0).toLocaleString("vi-VN") + " ₫",
+      status: Number(m.status) === 1 ? "active" : "inactive",
+    }));
+  }, [menus]);
 
   const columns = [
     { key: "name", label: "Tên thực đơn" },
@@ -28,13 +39,14 @@ export default function MenuListPage({ readOnly = false }) {
     { value: "inactive", label: "Ngừng hoạt động" },
   ];
 
-  const handleToggleStatus = (id, activate) => {
+  const handleToggleStatus = async (id, activate) => {
     if (readOnly) return;
-    setMenus((prev) =>
-      prev.map((m) =>
-        m.id === id ? { ...m, status: activate ? "active" : "inactive" } : m
-      )
-    );
+    try {
+      await updateOneMenu({ id, payload: { status: activate ? 1 : 0 } });
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      alert(`Đổi trạng thái thực đơn thất bại: ${e?.message || e}`);
+    }
   };
 
   return (
@@ -45,7 +57,7 @@ export default function MenuListPage({ readOnly = false }) {
             Chế độ chỉ xem: không thể tạo mới thực đơn.
           </div>
         ) : (
-          <MenuCreatePage onBack={() => setCreating(false)} />
+          <MenuCreatePage onBack={() => setCreating(false)} restaurantID={restaurantID} />
         )
       ) : activeMenu ? (
         <MenuDetailPage menu={activeMenu} onBack={() => setActiveMenu(null)} readOnly={readOnly} />
@@ -53,11 +65,11 @@ export default function MenuListPage({ readOnly = false }) {
         <CrudSection
           title="Menu"
           columns={columns}
-          data={menus}
+          data={rows}
           filters={filters}
           onRowClick={(row) => {
-            const fullMenu = mock.menu.find((m) => m.menuID === row.id);
-            setActiveMenu(fullMenu);
+            const full = (menus || []).find((m) => (m.menuID ?? m.id) === row.id);
+            setActiveMenu(full || row);
           }}
           onToggleStatus={handleToggleStatus}
           onCreate={() => !readOnly && setCreating(true)}

@@ -45,8 +45,8 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/amenities", amenityRoutes);
 app.use("/api/eventtypes", eventTypeRoutes);
 // Nested restaurant-scoped mounts (non-breaking: keep top-level mounts)
-app.use("/api/restaurants/:restaurantId/amenities", amenityRoutes);
-app.use("/api/restaurants/:restaurantId/eventtypes", eventTypeRoutes);
+// app.use("/api/restaurants/:restaurantId/amenities", amenityRoutes);
+// app.use("/api/restaurants/:restaurantId/eventtypes", eventTypeRoutes);
 app.use("/api/bankaccounts", bankAccountRoutes);
 app.use("/api/menus", menuRoutes);
 app.use("/api/dishes", dishRoutes);

@@ -42,14 +42,25 @@ class EventTypeDAO {
         return toDTO(e);
     }
 
-    static async addEventTypeToRestaurant(restaurantID, eventTypeID) {
-        const [link, created] = await restauranteventtype.findOrCreate({ where: { restaurantID, eventTypeID }, defaults: { restaurantID, eventTypeID } });
-        return !!link;
-    }
 
     static async removeEventTypeFromRestaurant(restaurantID, eventTypeID) {
         const count = await restauranteventtype.destroy({ where: { restaurantID, eventTypeID } });
         return count > 0;
+    }
+
+    /**
+     * Replace all event types linked to a restaurant with the provided set.
+     */
+    static async setEventTypesForRestaurant(restaurantID, eventTypeIDs = []) {
+        // normalize and unique IDs
+        const ids = Array.from(new Set((eventTypeIDs || []).map((x) => Number(x)).filter((x) => Number.isInteger(x))));
+        return await sequelize.transaction(async (t) => {
+            await restauranteventtype.destroy({ where: { restaurantID }, transaction: t });
+            if (ids.length === 0) return true;
+            const rows = ids.map((eventTypeID) => ({ restaurantID, eventTypeID }));
+            await restauranteventtype.bulkCreate(rows, { transaction: t, ignoreDuplicates: true });
+            return true;
+        });
     }
 }
 export default EventTypeDAO;

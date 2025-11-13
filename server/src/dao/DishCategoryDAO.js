@@ -4,23 +4,39 @@ const { dishcategory } = db;
 
 class DishCategoryDAO {
     static async getAll() {
-        const rows = await dishcategory.findAll({ attributes: ['dishCategoryID', 'name', 'description', 'restaurantID'] });
+        const rows = await dishcategory.findAll({
+            attributes: ['categoryID', 'name', 'requiredQuantity', 'status', 'restaurantID']
+        });
         return toDTOs(rows);
     }
-    static async getByID(dishCategoryID) {
-        const r = await dishcategory.findByPk(dishCategoryID, { attributes: ['dishCategoryID', 'name', 'description', 'restaurantID'] });
+
+    static async getByID(categoryID) {
+        const r = await dishcategory.findByPk(categoryID, {
+            attributes: ['categoryID', 'name', 'requiredQuantity', 'status', 'restaurantID']
+        });
         return toDTO(r);
     }
-    static async addDishCategory(name, description, restaurantID) {
-        const dc = await dishcategory.create({ name, description, restaurantID });
+
+    static async getByRestaurantID(restaurantID) {
+        const rows = await dishcategory.findAll({
+            where: { restaurantID },
+            attributes: ['categoryID', 'name', 'requiredQuantity', 'status', 'restaurantID']
+        });
+        return toDTOs(rows);
+    }
+
+    static async addDishCategory({ name, restaurantID, requiredQuantity = 1, status = true }) {
+        const dc = await dishcategory.create({ name, restaurantID, requiredQuantity, status });
         return toDTO(dc);
     }
-    static async updateDishCategory(dishCategoryID, dishCategoryData) {
-        const [count] = await dishcategory.update(dishCategoryData, { where: { dishCategoryID } });
+
+    static async updateDishCategory(categoryID, dishCategoryData) {
+        const [count] = await dishcategory.update(dishCategoryData, { where: { categoryID } });
         return count > 0;
     }
-    static async deleteDishCategory(dishCategoryID) {
-        const count = await dishcategory.destroy({ where: { dishCategoryID } });
+
+    static async deleteDishCategory(categoryID) {
+        const count = await dishcategory.destroy({ where: { categoryID } });
         return count > 0;
     }
 }

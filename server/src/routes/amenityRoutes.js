@@ -12,10 +12,4 @@ router.get('/', AmenityController.listAll);
 router.post('/', authMiddleware, ensureAdmin, AmenityController.create);
 
 // Partner: assign/unassign amenity to their restaurant
-router.post('/assign', authMiddleware, ensurePartner, AmenityController.assign);
-router.post('/unassign', authMiddleware, ensurePartner, AmenityController.unassign);
-
-// List amenities for a restaurant
-router.get('/restaurant/:restaurantID', AmenityController.listForRestaurant);
-
 export default router;

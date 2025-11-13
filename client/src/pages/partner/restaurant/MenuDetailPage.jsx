@@ -1,86 +1,133 @@
-// File: src/pages/partner/Restaurant/MenuDetailPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button, Card, Form, Row, Col, Image, ListGroup, Badge, Alert } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import mock from "../../../mock/partnerMock";
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
+import { uploadImageToCloudinary } from "../../../services/uploadServices";
 
-export default function MenuDetailPage({ menu: propMenu, onBack }) {
-  const mockMenu = propMenu || mock.menu?.[0] || {
-    menuID: 1,
-    restaurantID: 1,
-    name: "Menu Tiệc Cưới A",
-    price: 3500000,
-    imageURL: "",
-    status: 1,
-    dishes: [1, 2, 5, 6, 7],
-  };
-
-  const [menu, setMenu] = useState(mockMenu);
+export default function MenuDetailPage({ menu: propMenu, onBack, readOnly = false }) {
+  const [menu, setMenu] = useState(() => ({ ...propMenu }));
   const [isEditing, setIsEditing] = useState(false);
   const [warning, setWarning] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const restaurantID = useMemo(() => Number(propMenu?.restaurantID) || undefined, [propMenu]);
+
+  const {
+    dishes,
+    dishCategories,
+    status,
+    error,
+    loadDishesByRestaurant,
+    loadDishCategoriesByRestaurant,
+    updateOneMenu,
+  } = useAdditionRestaurant();
 
   useEffect(() => {
-    if (propMenu) setMenu(propMenu);
+    // Normalize incoming dishes to an array of IDs for consistent handling
+    const incoming = { ...propMenu };
+    if (Array.isArray(incoming.dishes)) {
+      incoming.dishes = incoming.dishes.map((d) => (typeof d === 'object' && d !== null ? d.dishID : d));
+    }
+    setMenu(incoming);
   }, [propMenu]);
 
-  const dishesForRestaurant = mock.dish.filter(d => d.restaurantID === menu.restaurantID);
-  const categories = mock.dishCategories || [];
+  useEffect(() => {
+    if (!restaurantID) return;
+    loadDishCategoriesByRestaurant(restaurantID).catch(() => {});
+    loadDishesByRestaurant(restaurantID).catch(() => {});
+  }, [restaurantID, loadDishCategoriesByRestaurant, loadDishesByRestaurant]);
 
-  const handleChange = e => {
+  const grouped = useMemo(() => {
+    const cats = (dishCategories || [])
+      .filter((c) => Number(c.status) === 1)
+      .slice()
+      .sort((a, b) => Number(b.status) - Number(a.status));
+    const byCat = {};
+    (dishes || [])
+      .filter((d) => Number(d.status) === 1)
+      .forEach((d) => {
+        const key = d.categoryID;
+        if (!byCat[key]) byCat[key] = [];
+        byCat[key].push(d);
+      });
+    return { cats, byCat };
+  }, [dishCategories, dishes]);
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setMenu(prev => ({ ...prev, [name]: value }));
+    setMenu((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleStatusChange = e => {
-    setMenu(prev => ({ ...prev, status: Number(e.target.value) }));
+  const handleStatusChange = (e) => {
+    setMenu((prev) => ({ ...prev, status: Number(e.target.value) }));
   };
 
-  const handleDishToggle = dishID => {
-    setMenu(prev => {
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const url = await uploadImageToCloudinary(file);
+      setMenu((prev) => ({ ...prev, imageURL: url }));
+    } catch (err) {
+      // eslint-disable-next-line no-alert
+      alert(`Tải ảnh thất bại: ${err?.message || err}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDishToggle = (dishID) => {
+    setMenu((prev) => {
       const selected = prev.dishes || [];
-      if (selected.includes(dishID)) {
-        return { ...prev, dishes: selected.filter(id => id !== dishID) };
-      } else {
-        return { ...prev, dishes: [...selected, dishID] };
-      }
+      if (selected.includes(dishID)) return { ...prev, dishes: selected.filter((id) => id !== dishID) };
+      return { ...prev, dishes: [...selected, dishID] };
     });
   };
 
-  const handleImageChange = e => {
-    const file = e.target.files[0];
-    if (file) {
-      const preview = URL.createObjectURL(file);
-      setMenu(prev => ({ ...prev, imageURL: preview }));
-    }
-  };
-
-  const handleDeleteImage = () => {
-    if (window.confirm("Bạn có chắc muốn xóa ảnh này không?")) {
-      setMenu(prev => ({ ...prev, imageURL: "" }));
-    }
-  };
-
-  const handleSave = () => {
-    const missing = categories.reduce((acc, cat) => {
+  const validateRequired = () => {
+    const missing = (grouped.cats || []).reduce((acc, cat) => {
       const selectedInCat = (menu.dishes || [])
-        .map(id => mock.dish.find(d => d.dishID === id))
-        .filter(d => d && d.categoryID === cat.categoryID);
-      if (selectedInCat.length < cat.requiredQuantity) {
-        acc.push(`${cat.name} (thiếu ${cat.requiredQuantity - selectedInCat.length} món)`);
-      }
+        .map((id) => (dishes || []).find((d) => d.dishID === id))
+        .filter((d) => d && d.categoryID === cat.categoryID);
+      const need = Number(cat.requiredQuantity) || 0;
+      if (selectedInCat.length < need) acc.push(`${cat.name} (thiếu ${need - selectedInCat.length} món)`);
       return acc;
     }, []);
-
-    if (missing.length > 0) {
+    if (missing.length) {
       setWarning(`Chưa đủ món trong các nhóm: ${missing.join(", ")}`);
-      return;
+      return false;
     }
-
     setWarning("");
-    console.log("Saving menu:", menu);
-    alert("Lưu thành công (mock)");
-    setIsEditing(false);
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (readOnly) return;
+    if (!validateRequired()) return;
+    try {
+      setSaving(true);
+      await updateOneMenu({
+        id: menu.menuID ?? menu.id,
+        payload: {
+          name: menu.name,
+          price: Number(menu.price) || 0,
+          status: Number(menu.status) === 1 ? 1 : 0,
+          imageURL: menu.imageURL,
+          dishIDs: Array.isArray(menu.dishes)
+            ? menu.dishes.map((x) => (typeof x === 'object' && x !== null ? x.dishID : x))
+            : [],
+        },
+      });
+      // eslint-disable-next-line no-alert
+      alert("Đã lưu menu.");
+      setIsEditing(false);
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      alert(`Cập nhật thất bại: ${e?.message || e}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -95,7 +142,7 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
           >
             {isEditing ? "Hủy" : "← Quay lại"}
           </Button>
-          {!isEditing && (
+          {!isEditing && !readOnly && (
             <Button variant="primary" onClick={() => setIsEditing(true)}>
               Chỉnh sửa
             </Button>
@@ -104,30 +151,34 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
       </div>
 
       {isEditing && warning && (
-        <Alert variant="warning" className="py-2">
-          ⚠️ {warning}
-        </Alert>
+        <Alert variant="warning" className="py-2">⚠️ {warning}</Alert>
+      )}
+      {isEditing && status === "loading" && (
+        <Alert variant="info" className="py-2">Đang tải dữ liệu món và nhóm món…</Alert>
+      )}
+      {isEditing && error && (
+        <Alert variant="danger" className="py-2">Lỗi: {String(error)}</Alert>
       )}
 
       <Form>
-        {isEditing && (
+        {isEditing ? (
           <>
             <Form.Group className="mb-3">
               <Form.Label>Tên menu</Form.Label>
-              <Form.Control name="name" value={menu.name} onChange={handleChange} />
+              <Form.Control name="name" value={menu.name || ""} onChange={handleChange} />
             </Form.Group>
 
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Giá (VNĐ)</Form.Label>
-                  <Form.Control type="number" name="price" value={menu.price} onChange={handleChange} />
+                  <Form.Control type="number" name="price" value={menu.price || ""} onChange={handleChange} />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Trạng thái</Form.Label>
-                  <Form.Select value={menu.status} onChange={handleStatusChange}>
+                  <Form.Select value={Number(menu.status) === 1 ? 1 : 0} onChange={handleStatusChange}>
                     <option value={1}>Đang hoạt động</option>
                     <option value={0}>Ngừng hoạt động</option>
                   </Form.Select>
@@ -135,65 +186,45 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
               </Col>
             </Row>
 
-            <Form.Group className="mb-4">
+            <Form.Group className="mb-3">
               <Form.Label>Hình ảnh menu</Form.Label>
-              <Form.Control type="file" accept="image/*" onChange={handleImageChange} />
-              {menu.imageURL && (
-                <div className="text-center mt-3">
-                  <div className="position-relative d-inline-block" style={{ borderRadius: "10px", overflow: "hidden" }}>
-                    <Image
-                      src={menu.imageURL}
-                      rounded
-                      fluid
-                      style={{ maxHeight: "200px", width: "auto", objectFit: "cover", display: "block" }}
-                    />
-                    <Button
-                      onClick={handleDeleteImage}
-                      style={{
-                        position: "absolute",
-                        top: "6px",
-                        right: "6px",
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        backgroundColor: "rgba(0,0,0,0.6)",
-                        color: "white",
-                        border: "none",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faTimes} size="sm" />
+              <Form.Control type="file" accept="image/*" onChange={handleImageFile} disabled={uploading} />
+              {menu.imageURL ? (
+                <div className="mt-3">
+                  <Image src={menu.imageURL} alt="preview" fluid rounded style={{ maxHeight: 200, objectFit: "cover" }} />
+                  <div className="mt-2">
+                    <Button variant="outline-danger" size="sm" onClick={() => setMenu({ ...menu, imageURL: "" })} disabled={uploading}>
+                      Xóa ảnh
                     </Button>
                   </div>
                 </div>
+              ) : (
+                <small className="text-muted">Chưa chọn ảnh</small>
               )}
             </Form.Group>
 
-            {/* --- Chọn món ăn theo category --- */}
-            {categories.map(cat => {
-              const dishesInCat = dishesForRestaurant.filter(d => d.categoryID === cat.categoryID);
-              const selectedInCat = (menu.dishes || []).filter(id => {
-                const dish = mock.dish.find(d => d.dishID === id);
-                return dish?.categoryID === cat.categoryID;
-              });
-              const isFull = selectedInCat.length >= cat.requiredQuantity;
-
+            {/* Chọn món theo nhóm - Ẩn phần món nếu menu đang ngừng hoạt động */}
+            {Number(menu.status) === 0 ? (
+              <Alert variant="secondary" className="py-2">Menu đang ngừng hoạt động — danh sách món không hiển thị.</Alert>
+            ) : (grouped.cats || []).map((cat) => {
+              const dishesInCat = (grouped.byCat[cat.categoryID] || []).slice().sort((a,b)=>Number(b.status)-Number(a.status));
+              const selectedInCat = (menu.dishes || [])
+                .map((id) => (dishes || []).find((d) => d.dishID === id))
+                .filter((d) => d && d.categoryID === cat.categoryID);
+              const isFull = selectedInCat.length >= (Number(cat.requiredQuantity) || 0);
               return (
                 <div key={cat.categoryID} className="mb-4">
                   <h5 className="d-flex align-items-center justify-content-between">
                     <span>
-                      {cat.name}{" "}
+                      {cat.name} {" "}
                       <Badge bg={isFull ? "success" : "warning"}>
-                        yêu cầu: {cat.requiredQuantity} | đã chọn: {selectedInCat.length}
+                        yêu cầu: {Number(cat.requiredQuantity) || 0} | đã chọn: {selectedInCat.length}
                       </Badge>
                     </span>
                   </h5>
                   <Row>
-                    {dishesInCat.length ? dishesInCat.map(dish => {
-                      const isSelected = menu.dishes?.includes(dish.dishID);
+                    {dishesInCat.length ? dishesInCat.map((dish) => {
+                      const isSelected = (menu.dishes || []).includes(dish.dishID);
                       return (
                         <Col md={3} key={dish.dishID} className="mb-3">
                           <Card
@@ -213,7 +244,7 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
                               <Form.Check
                                 type="checkbox"
                                 checked={isSelected}
-                                onChange={e => {
+                                onChange={(e) => {
                                   e.stopPropagation();
                                   handleDishToggle(dish.dishID);
                                 }}
@@ -230,12 +261,9 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
               );
             })}
 
-            <Button variant="success" onClick={handleSave}>Lưu</Button>
+            <Button variant="success" onClick={handleSave} disabled={saving || uploading}>{saving || uploading ? "Đang lưu…" : "Lưu"}</Button>
           </>
-        )}
-
-        {/* --- Xem chi tiết menu --- */}
-        {!isEditing && (
+        ) : (
           <>
             <Row className="mb-3">
               <Col md={4}>
@@ -247,21 +275,23 @@ export default function MenuDetailPage({ menu: propMenu, onBack }) {
               </Col>
               <Col md={8}>
                 <h4>{menu.name}</h4>
-                <p><strong>Giá:</strong> {menu.price.toLocaleString("vi-VN")} ₫</p>
-                <p><strong>Trạng thái:</strong> {menu.status === 1 ? "Đang hoạt động" : "Ngừng hoạt động"}</p>
+                <p><strong>Giá:</strong> {Number(menu.price || 0).toLocaleString("vi-VN")} ₫</p>
+                <p><strong>Trạng thái:</strong> {Number(menu.status) === 1 ? "Đang hoạt động" : "Ngừng hoạt động"}</p>
               </Col>
             </Row>
 
-            {categories.map(cat => {
+            {/* Hiển thị danh sách món theo nhóm - ẩn khi menu inactive */}
+            {Number(menu.status) === 0 ? (
+              <div className="alert alert-secondary py-2">Menu đang ngừng hoạt động — không hiển thị danh sách món.</div>
+            ) : (grouped.cats || []).map((cat) => {
               const dishesInCategory = (menu.dishes || [])
-                .map(id => mock.dish.find(d => d.dishID === id))
-                .filter(d => d && d.categoryID === cat.categoryID);
-
+                .map((id) => (dishes || []).find((d) => d.dishID === id))
+                .filter((d) => d && d.categoryID === cat.categoryID);
               return (
                 <div key={cat.categoryID} className="mb-3">
-                  <h6>{cat.name} <Badge bg="secondary">Yêu cầu: {cat.requiredQuantity}</Badge></h6>
+                  <h6>{cat.name} <Badge bg="secondary">Yêu cầu: {Number(cat.requiredQuantity) || 0}</Badge></h6>
                   <ListGroup>
-                    {dishesInCategory.length ? dishesInCategory.map(dish => (
+                    {dishesInCategory.length ? dishesInCategory.map((dish) => (
                       <ListGroup.Item key={dish.dishID} className="d-flex align-items-center">
                         <Image
                           src={dish.imageURL || "https://via.placeholder.com/100?text=No+Image"}

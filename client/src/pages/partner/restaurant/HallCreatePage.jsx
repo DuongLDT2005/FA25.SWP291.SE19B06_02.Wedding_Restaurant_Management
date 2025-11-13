@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { useParams } from "react-router-dom";
+import { useHall } from "../../../hooks/useHall";
+import { uploadImageToCloudinary } from "../../../services/uploadServices";
 
 export default function HallCreate({ onBack }) {
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const restaurantID = useMemo(() => Number(paramRestaurantID || paramId) || undefined, [paramId, paramRestaurantID]);
+  const { createOne, addImageToHall, loadByRestaurant, status } = useHall();
+
   const [profile, setProfile] = useState({
     name: "",
     description: "",
-    capacity: "",
+    minTable: "",
+    maxTable: "",
     area: "",
     price: "",
     status: true,
@@ -16,6 +24,8 @@ export default function HallCreate({ onBack }) {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -32,12 +42,57 @@ export default function HallCreate({ onBack }) {
       ...prev,
       imageURLs: [...prev.imageURLs, ...newPreviews],
     }));
+    setSelectedFiles((prev) => [...prev, ...files]);
   };
 
-  const handleSave = () => {
-    console.log("Tạo mới hall:", profile);
-    alert("Tạo hall thành công!");
-    // TODO: gọi API tạo mới hall
+
+  const handleSave = async () => {
+    if (!restaurantID) {
+      alert("Không tìm thấy restaurantID từ URL. Không thể tạo sảnh.");
+      return;
+    }
+    const payload = {
+      restaurantID,
+      name: profile.name?.trim(),
+      description: profile.description?.trim() || "",
+  minTable: Number(profile.minTable) || 0,
+  maxTable: Number(profile.maxTable) || 0,
+      area: Number(profile.area) || 0,
+      price: Number(profile.price) || 0,
+      status: !!profile.status,
+    };
+
+    if (!payload.name) {
+      alert("Vui lòng nhập tên sảnh.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const created = await createOne(payload);
+
+      // Upload selected files to Cloudinary and attach URLs
+      if (created?.hallID && selectedFiles.length) {
+        for (const file of selectedFiles) {
+          try {
+            const url = await uploadImageToCloudinary(file);
+            await addImageToHall({ hallID: created.hallID, imageURL: url });
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn("Upload/add image failed:", e);
+          }
+        }
+      }
+
+  // refresh list to ensure latest data reflects without manual reload
+  try { if (restaurantID) await loadByRestaurant(restaurantID); } catch {}
+  alert("Tạo hall thành công!");
+      if (onBack) onBack();
+    } catch (err) {
+      alert(`Tạo hall thất bại: ${err?.message || err}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleViewImage = (url) => {
@@ -74,18 +129,20 @@ export default function HallCreate({ onBack }) {
               name="name"
               value={profile.name}
               onChange={handleChange}
+              disabled={saving || status === "loading"}
             />
           </Form.Group>
 
           <Row className="mb-3">
             <Col md={4}>
-              <Form.Group controlId="hallCapacity">
-                <Form.Label>Sức chứa (khách)</Form.Label>
+              <Form.Group controlId="hallMinTable">
+                <Form.Label>Số bàn tối thiểu</Form.Label>
                 <Form.Control
                   type="number"
-                  name="capacity"
-                  value={profile.capacity}
+                  name="minTable"
+                  value={profile.minTable}
                   onChange={handleChange}
+                  disabled={saving || status === "loading"}
                 />
               </Form.Group>
             </Col>
@@ -97,10 +154,21 @@ export default function HallCreate({ onBack }) {
                   name="area"
                   value={profile.area}
                   onChange={handleChange}
+                  disabled={saving || status === "loading"}
                 />
               </Form.Group>
             </Col>
             <Col md={4}>
+              <Form.Group controlId="hallMaxTable">
+                <Form.Label>Số bàn tối đa</Form.Label>
+                <Form.Control
+                  type="number"
+                  name="maxTable"
+                  value={profile.maxTable}
+                  onChange={handleChange}
+                  disabled={saving || status === "loading"}
+                />
+              </Form.Group>
               <Form.Group controlId="hallPrice">
                 <Form.Label>Giá thuê (₫)</Form.Label>
                 <Form.Control
@@ -108,6 +176,7 @@ export default function HallCreate({ onBack }) {
                   name="price"
                   value={profile.price}
                   onChange={handleChange}
+                  disabled={saving || status === "loading"}
                 />
               </Form.Group>
             </Col>
@@ -121,12 +190,13 @@ export default function HallCreate({ onBack }) {
               name="description"
               value={profile.description}
               onChange={handleChange}
+              disabled={saving || status === "loading"}
             />
           </Form.Group>
 
           <Form.Group className="mb-4" controlId="hallImages">
             <Form.Label>Hình ảnh</Form.Label>
-            <Form.Control type="file" multiple accept="image/*" onChange={handleImagesChange} />
+            <Form.Control type="file" multiple accept="image/*" onChange={handleImagesChange} disabled={saving || status === "loading"} />
             <Row className="mt-3">
               {profile.imageURLs.length > 0 ? (
                 profile.imageURLs.map((img, idx) => (
@@ -160,6 +230,7 @@ export default function HallCreate({ onBack }) {
                           alignItems: "center",
                           justifyContent: "center",
                         }}
+                        disabled={saving || status === "loading"}
                       >
                         <FontAwesomeIcon icon={faTimes} size="sm" />
                       </Button>
@@ -174,8 +245,8 @@ export default function HallCreate({ onBack }) {
             </Row>
           </Form.Group>
 
-          <Button variant="primary" onClick={handleSave}>
-            Tạo mới
+          <Button variant="primary" onClick={handleSave} disabled={saving || status === "loading"}>
+            {saving || status === "loading" ? "Đang tạo..." : "Tạo mới"}
           </Button>
 
           <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">

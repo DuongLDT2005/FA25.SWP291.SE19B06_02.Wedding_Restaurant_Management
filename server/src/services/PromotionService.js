@@ -4,28 +4,81 @@ import db from '../config/db.js';
 
 class PromotionService {
   static async createPromotionForPartner(actorUserId, data) {
-    const { title, description, discountPercentage, startDate, endDate, restaurantID, discountType, serviceIDs } = data;
+    const {
+      // Accept both old and new FE keys
+      title,
+      name,
+      description,
+      discountPercentage,
+      discountValue,
+      startDate,
+      endDate,
+      restaurantID,
+      discountType, // can be number (0/1) or string ("Percent"/"Free")
+      serviceIDs,
+      minTable,
+      status,
+    } = data;
+
     if (!restaurantID) throw new Error('restaurantID required');
     const r = await RestaurantDAO.getByID(restaurantID);
     if (!r) throw new Error('Restaurant not found');
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
 
-    return await PromotionDAO.addPromotion(title, description, discountPercentage, startDate, endDate, restaurantID, discountType, serviceIDs);
+    // Normalize to model fields
+    const promotionName = (name ?? title ?? '').trim();
+    if (!promotionName) throw new Error('name required');
+    if (!startDate || !endDate) throw new Error('startDate and endDate are required');
+
+    // discountType: 0 -> Percent, 1 -> Free
+    let dt;
+    if (typeof discountType === 'string') {
+      dt = discountType === 'Free' ? 1 : 0;
+    } else if (typeof discountType === 'number') {
+      dt = discountType;
+    } else {
+      dt = 0;
+    }
+    const dv = typeof discountValue !== 'undefined' ? discountValue : (typeof discountPercentage !== 'undefined' ? discountPercentage : null);
+
+    return await PromotionDAO.addPromotion({
+      restaurantID,
+      name: promotionName,
+      description: description ?? null,
+      minTable: typeof minTable !== 'undefined' ? minTable : 0,
+      discountType: dt,
+      discountValue: dv,
+      startDate,
+      endDate,
+      status: typeof status !== 'undefined' ? !!status : true,
+      serviceIDs: Array.isArray(serviceIDs) ? serviceIDs : [],
+    });
   }
 
   static async updateForPartner(actorUserId, promotionID, patch) {
     const existing = await PromotionDAO.getByID(promotionID);
     if (!existing) throw new Error('Promotion not found');
-    // ensure this promotion is linked to a restaurant owned by actorUserId
-    const { restaurantpromotion } = db;
-    const link = await restaurantpromotion.findOne({ where: { promotionID } });
-    if (!link) throw new Error('Promotion not linked to any restaurant');
-    const restaurantID = link.restaurantID;
+    // ensure this promotion belongs to a restaurant owned by actorUserId
+    const restaurantID = existing.restaurantID;
     const r = await RestaurantDAO.getByID(restaurantID);
     if (!r) throw new Error('Restaurant not found');
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
 
-    const ok = await PromotionDAO.updatePromotion(promotionID, patch);
+    // Normalize patch keys similarly
+    const normalized = { ...patch };
+    if (normalized.title && !normalized.name) {
+      normalized.name = normalized.title;
+      delete normalized.title;
+    }
+    if (typeof normalized.discountType === 'string') {
+      normalized.discountType = normalized.discountType === 'Free' ? 1 : 0;
+    }
+    if (typeof normalized.discountPercentage !== 'undefined' && typeof normalized.discountValue === 'undefined') {
+      normalized.discountValue = normalized.discountPercentage;
+      delete normalized.discountPercentage;
+    }
+
+    const ok = await PromotionDAO.updatePromotion(promotionID, normalized);
     if (!ok) throw new Error('Update failed');
     return await PromotionDAO.getByID(promotionID);
   }
@@ -33,10 +86,7 @@ class PromotionService {
   static async deleteForPartner(actorUserId, promotionID) {
     const existing = await PromotionDAO.getByID(promotionID);
     if (!existing) throw new Error('Promotion not found');
-    const { restaurantpromotion } = db;
-    const link = await restaurantpromotion.findOne({ where: { promotionID } });
-    if (!link) throw new Error('Promotion not linked to any restaurant');
-    const restaurantID = link.restaurantID;
+    const restaurantID = existing.restaurantID;
     const r = await RestaurantDAO.getByID(restaurantID);
     if (!r) throw new Error('Restaurant not found');
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
@@ -48,6 +98,10 @@ class PromotionService {
 
   static async listForRestaurant(restaurantID) {
     return await PromotionDAO.getPromotionsByRestaurantID(restaurantID);
+  }
+
+  static async listServicesForPromotion(promotionID) {
+    return await PromotionDAO.getServicesByPromotionID(promotionID);
   }
 }
 

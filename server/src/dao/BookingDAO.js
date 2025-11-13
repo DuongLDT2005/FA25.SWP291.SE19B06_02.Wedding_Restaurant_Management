@@ -174,6 +174,23 @@ class BookingDAO {
     return toDTOs(rows);
   }
 
+  // Find overlapping bookings for blocking/availability checks. Includes deposited, manual blocked, and confirmed.
+  static async findOverlapsForBlocking(hallID, eventDate, startTime, endTime) {
+    const rows = await BookingModel.findAll({
+      where: {
+        hallID,
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.MANUAL_BLOCKED] },
+        eventDate,
+        [Op.and]: [
+          { startTime: { [Op.lt]: endTime } },
+          { endTime: { [Op.gt]: startTime } }
+        ]
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
+  }
+
   // Find bookings for a customer on a specific date
   static async findByCustomerAndDate(customerID, eventDate) {
     const rows = await BookingModel.findAll({ where: { customerID, eventDate }, order: [['createdAt', 'DESC']] });
