@@ -120,19 +120,6 @@ export default function AdminSideBar() {
             ]}
           />
 
-          <SidebarItem
-            to="/admin/notifications"
-            label="Thông báo"
-            icon={<Bell size={18} />}
-            collapsed={collapsed}
-          />
-
-          <SidebarItem
-            to="/admin/settings"
-            label="Cài đặt"
-            icon={<Settings size={18} />}
-            collapsed={collapsed}
-          />
         </Nav>
       </div>
     </div>

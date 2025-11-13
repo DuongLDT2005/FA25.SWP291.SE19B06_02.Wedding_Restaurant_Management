@@ -9,23 +9,19 @@ import {
   Badge,
   Modal,
 } from "react-bootstrap";
-import axios from "axios";
+import axios from "../../../../api/axios";
 import AdminLayout from "../../../../layouts/AdminLayout";
 
 export default function AdminLicensePage() {
   const [activeTab, setActiveTab] = useState("approved");
 
-  // API data
   const [approvedPartners, setApprovedPartners] = useState([]);
   const [pendingPartners, setPendingPartners] = useState([]);
 
-  // Modal
   const [showModal, setShowModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
 
-  // ===========================
-  // 🔥 Load Approved + Pending
-  // ===========================
+  // Load partner lists
   useEffect(() => {
     loadApprovedPartners();
     loadPendingPartners();
@@ -33,7 +29,7 @@ export default function AdminLicensePage() {
 
   const loadApprovedPartners = async () => {
     try {
-      const res = await axios.get("/api/admin/partners/approved");
+      const res = await axios.get("/admin/users/partners/approved");
       if (res.data?.success) {
         setApprovedPartners(res.data.data || []);
       }
@@ -44,7 +40,7 @@ export default function AdminLicensePage() {
 
   const loadPendingPartners = async () => {
     try {
-      const res = await axios.get("/api/admin/partners/pending");
+      const res = await axios.get("/admin/users/partners/pending");
       if (res.data?.success) {
         setPendingPartners(res.data.data || []);
       }
@@ -53,9 +49,7 @@ export default function AdminLicensePage() {
     }
   };
 
-  // ===========================
-  // 🔥 Approve partner
-  // ===========================
+  // Approve
   const handleApprove = (partner) => {
     setSelectedPartner(partner);
     setShowModal(true);
@@ -65,9 +59,10 @@ export default function AdminLicensePage() {
     if (!selectedPartner) return;
 
     try {
-      await axios.put(`/api/admin/partners/${selectedPartner.userID}/approve`);
+      await axios.put(
+        `/admin/users/partners/${selectedPartner.userID}/approve`
+      );
 
-      // Reload list
       loadApprovedPartners();
       loadPendingPartners();
 
@@ -80,14 +75,12 @@ export default function AdminLicensePage() {
     setShowModal(false);
   };
 
-  // ===========================
-  // 🔥 Reject partner
-  // ===========================
+  // Reject
   const handleReject = async (id) => {
     if (!window.confirm("❌ Bạn chắc chắn muốn từ chối đối tác này?")) return;
 
     try {
-      await axios.put(`/api/admin/partners/${id}/reject`);
+      await axios.put(`/admin/users/partners/${id}/reject`);
       loadPendingPartners();
       alert("🚫 Đã từ chối đối tác.");
     } catch (err) {
@@ -97,7 +90,7 @@ export default function AdminLicensePage() {
   };
 
   const handleChat = (partner) => {
-    alert(`💬 Sẽ mở chat với ${partner.fullName} (đang phát triển).`);
+    alert(`💬 Chat với ${partner.fullName} (dev sau)`);
   };
 
   return (
@@ -109,14 +102,12 @@ export default function AdminLicensePage() {
           onSelect={(k) => setActiveTab(k)}
           className="mb-4"
         >
-          {/* ==========================
-              TAB 1: PENDING
-          ========================== */}
+          {/* PENDING */}
           <Tab eventKey="pending" title="Đang chờ phê duyệt">
             {pendingPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
                 <i className="fas fa-check-circle fa-3x text-success mb-3"></i>
-                <p>Không có đối tác nào đang chờ phê duyệt.</p>
+                <p>Không có đối tác đang chờ.</p>
               </div>
             ) : (
               <Row className="g-4">
@@ -126,9 +117,7 @@ export default function AdminLicensePage() {
                       <Card.Body>
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
-                            <h5 className="fw-semibold mb-1">
-                              {p.fullName}
-                            </h5>
+                            <h5 className="fw-semibold mb-1">{p.fullName}</h5>
                             <p className="text-muted small mb-0">{p.email}</p>
                           </div>
                           <Badge bg="warning" text="dark">
@@ -138,7 +127,7 @@ export default function AdminLicensePage() {
 
                         <div className="small text-muted mb-2">
                           <strong>📞</strong> {p.phone} <br />
-                          <strong>📄 License:</strong> {p.restaurantpartner?.licenseUrl}
+                          <strong>📄 License:</strong> {p.partner?.licenseUrl}
                         </div>
 
                         <div className="d-flex justify-content-between">
@@ -175,14 +164,12 @@ export default function AdminLicensePage() {
             )}
           </Tab>
 
-          {/* ==========================
-              TAB 2: APPROVED
-          ========================== */}
+          {/* APPROVED */}
           <Tab eventKey="approved" title="Đối tác đã hợp tác">
             {approvedPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
                 <i className="fas fa-user-slash fa-3x text-secondary mb-3"></i>
-                <p>Chưa có đối tác nào được phê duyệt.</p>
+                <p>Chưa có đối tác được phê duyệt.</p>
               </div>
             ) : (
               <Row className="g-4">
@@ -201,11 +188,11 @@ export default function AdminLicensePage() {
                         <div className="small text-muted mb-3">
                           <strong>📞</strong> {p.phone} <br />
                           <strong>📄 License:</strong>{" "}
-                          {p.restaurantpartner?.licenseUrl}
+                          {p.partner?.licenseUrl}
                           <br />
                           <strong>💰 Hoa hồng:</strong>{" "}
                           <span className="fw-semibold text-primary">
-                            {(p.restaurantpartner?.commissionRate * 100).toFixed(
+                            {(p.partner?.commissionRate * 100).toFixed(
                               0
                             ) || 0}
                             %
@@ -226,9 +213,7 @@ export default function AdminLicensePage() {
           </Tab>
         </Tabs>
 
-        {/* ==========================
-            MODAL CONFIRM APPROVAL
-        ========================== */}
+        {/* MODAL */}
         <Modal
           show={showModal}
           onHide={() => setShowModal(false)}
@@ -236,18 +221,17 @@ export default function AdminLicensePage() {
           backdrop="static"
         >
           <Modal.Header closeButton>
-            <Modal.Title>Xác nhận phê duyệt đối tác</Modal.Title>
+            <Modal.Title>Xác nhận phê duyệt</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             {selectedPartner && (
               <>
                 <p>
-                  Bạn có chắc chắn muốn phê duyệt hợp tác với{" "}
+                  Bạn có chắc chắn muốn phê duyệt{" "}
                   <strong>{selectedPartner.fullName}</strong>?
                 </p>
                 <p className="text-muted small">
-                  Sau khi phê duyệt, bạn có thể mở khung <b>Đàm phán</b> để trao
-                  đổi và thống nhất tỷ lệ hoa hồng.
+                  Sau khi phê duyệt, đối tác sẽ có quyền đăng nhà hàng.
                 </p>
               </>
             )}

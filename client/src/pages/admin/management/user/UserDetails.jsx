@@ -28,7 +28,7 @@ export default function UserDetail() {
       setError(null);
       try {
         // 1) Lấy thông tin user
-        const userRes = await axios.get(`/admin/${id}`);
+        const userRes = await axios.get(`/admin/users/${id}`);
         const userData = userRes.data;
         if (!mounted) return;
         setUser(userData);

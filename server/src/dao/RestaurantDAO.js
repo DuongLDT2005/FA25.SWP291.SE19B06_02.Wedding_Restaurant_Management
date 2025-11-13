@@ -9,6 +9,8 @@ const {
   restaurantimage,
   restauranteventtype,
   eventtype,
+  restaurantpartner,
+  user,
 } = db;
 
 class RestaurantDAO {
@@ -44,7 +46,9 @@ class RestaurantDAO {
         (!capacity || isNaN(Number(capacity))) &&
         (!date || date.trim() === "")
       ) {
-        console.warn("⚠️ Bỏ qua request rỗng hoặc thiếu capacity/date/location/eventType");
+        console.warn(
+          "⚠️ Bỏ qua request rỗng hoặc thiếu capacity/date/location/eventType"
+        );
         return [];
       }
 
@@ -188,32 +192,64 @@ class RestaurantDAO {
 
   // ------------------ Các hàm phụ trợ ------------------
   static async getAll() {
-    return await restaurant.findAll({
+    const data = await restaurant.findAll({
       include: [
         { model: address, as: "address" },
         { model: hall, as: "halls" },
         { model: restaurantimage, as: "restaurantimages" },
-      ],
-    });
-  }
 
-  static async getByID(id) {
-    return await restaurant.findByPk(id, {
-      include: [
-        { model: address, as: "address" },
-        { model: hall, as: "halls" },
-        { model: restaurantimage, as: "restaurantimages" },
+        // restaurant → restaurantpartner
         {
-          model: restauranteventtype,
-          as: "restauranteventtypes",
-          include: [{ model: eventtype, as: "eventType" }],
+          model: restaurantpartner,
+          as: "partner",
+          include: [
+            // restaurantpartner → user
+            {
+              model: user,
+              as: "owner",
+              attributes: ["fullName", "email", "phone"],
+            },
+          ],
         },
       ],
     });
+
+    return data.map((r) => ({
+      ...r.get({ plain: true }),
+      status: Number(r.status),
+    }));
+  }
+
+  static async getByID(id) {
+    const res = await restaurant.findByPk(id, {
+      include: [
+        { model: address, as: "address" },
+        { model: hall, as: "halls" },
+        { model: restaurantimage, as: "restaurantimages" },
+
+        {
+          model: restaurantpartner,
+          as: "partner",
+          include: [
+            {
+              model: user,
+              as: "owner",
+              attributes: ["fullName", "email", "phone"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!res) return null;
+
+    return {
+      ...res.get({ plain: true }),
+      status: Number(res.status),
+    };
   }
 
   static async getByPartnerID(partnerID) {
-    console.log(">>> DAO nhận partnerID:", partnerID, typeof partnerID);
     return await restaurant.findAll({
       where: { restaurantPartnerID: Number(partnerID) },
       include: [

@@ -12,8 +12,8 @@ class UserController {
 
   static async getOwners(req, res) {
     try {
-      const userList = await UserService.getAllOwners();
-      res.json(userList);
+      const owners = await UserService.getAllOwners();
+      res.json(owners);
     } catch (error) {
       console.error("Error fetching owners:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -22,8 +22,8 @@ class UserController {
 
   static async getCustomers(req, res) {
     try {
-      const userList = await UserService.getAllCustomers();
-      res.json(userList);
+      const customers = await UserService.getAllCustomers();
+      res.json(customers);
     } catch (error) {
       console.error("Error fetching customers:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -69,55 +69,54 @@ class UserController {
   static async updateUserStatus(req, res) {
     try {
       const { status } = req.body;
-      const userId = req.params.id; // Get user ID from URL params
-      if (!status) {
+      const userId = req.params.id;
+
+      // CHỈ check null hoặc undefined
+      if (status == null) {
         return res.status(400).json({ error: "Status is required" });
       }
-      if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-      }
+
       const updatedUser = await UserService.updateUserStatus(userId, status);
-      res.json(updatedUser);
+      return res.json({ success: true, data: updatedUser });
     } catch (error) {
       console.error("Error updating user status:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
+
   static async getPendingPartners(req, res) {
     try {
-      const users = await UserService.getPendingPartners();
-      res.json(users);
+      const list = await UserService.getPendingPartners();
+      res.json({ success: true, data: list });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ success: false, error: err.message });
     }
   }
 
   static async getApprovedPartners(req, res) {
     try {
-      const partners = await UserService.getApprovedPartners();
-      res.json({ success: true, data: partners });
-    } catch (error) {
-      res.status(500).json({ success: false, error: error.message });
+      const list = await UserService.getApprovedPartners();
+      res.json({ success: true, data: list });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
   }
 
   static async approvePartner(req, res) {
     try {
-      const { id } = req.params;
-      const updated = await UserService.approvePartner(id);
+      const updated = await UserService.approvePartner(req.params.id);
       res.json({ success: true, data: updated });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ success: false, error: err.message });
     }
   }
 
   static async rejectPartner(req, res) {
     try {
-      const { id } = req.params;
-      const updated = await UserService.rejectPartner(id);
+      const updated = await UserService.rejectPartner(req.params.id);
       res.json({ success: true, data: updated });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ success: false, error: err.message });
     }
   }
 }

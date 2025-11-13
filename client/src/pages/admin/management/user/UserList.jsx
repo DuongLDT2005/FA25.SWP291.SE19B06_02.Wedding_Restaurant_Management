@@ -9,17 +9,15 @@ export default function UserList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  // 🟦 Fetch users từ DB
   useEffect(() => {
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("/admin");
+      const res = await axios.get("/admin/users");
       console.log("📌 Users from API:", res.data);
-
-      setUsers(res.data);
+      setUsers(res.data || []);
     } catch (err) {
       console.error("Lỗi tải users:", err);
     }
@@ -46,7 +44,7 @@ export default function UserList() {
     if (!window.confirm(confirmMsg)) return;
 
     try {
-      await axios.post(`/api/admin/update/status/${id}`, {
+      await axios.post(`/admin/users/update/status/${id}`, {
         status: currentStatus === 1 ? 0 : 1,
       });
       fetchUsers();

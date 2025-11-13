@@ -20,7 +20,7 @@ class UserDAO {
   static async getAllUsers() {
     const users = await UserModel.findAll({
       include: [
-        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: RestaurantPartnerModel, as: "partner" },
         { model: CustomerModel, as: "customer" },
       ],
     });
@@ -31,7 +31,7 @@ class UserDAO {
   static async getUserById(id) {
     const user = await UserModel.findByPk(id, {
       include: [
-        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: RestaurantPartnerModel, as: "partner" },
         { model: CustomerModel, as: "customer" },
       ],
     });
@@ -233,7 +233,7 @@ class UserDAO {
       include: [
         {
           model: RestaurantPartnerModel,
-          as: "restaurantpartner",
+          as: "partner",
           where: { status },
           required: true,
         },
@@ -251,7 +251,7 @@ class UserDAO {
       include: [
         {
           model: restaurantpartner,
-          as: "restaurantpartner",
+          as: "partner",
           where: { status: 3 }, // 3 = approved
           required: true,
         },

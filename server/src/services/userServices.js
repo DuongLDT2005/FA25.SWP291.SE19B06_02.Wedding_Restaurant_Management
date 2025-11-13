@@ -1,93 +1,101 @@
 import UserDAO from "../dao/userDao.js";
+import db from "../config/db.js";
+
+const { user, restaurantpartner } = db;
 
 class UserService {
+  // --------------------
+  // USER CRUD
+  // --------------------
   static async createOwner(ownerData) {
-    const newOwner = await UserDAO.createOwner(ownerData);
-    return newOwner;
+    return await UserDAO.createOwner(ownerData);
   }
 
   static async createCustomer(customerData) {
-    const newCustomer = await UserDAO.createCustomer(customerData);
-    return newCustomer;
+    return await UserDAO.createCustomer(customerData);
   }
 
   static async updateUser(id, userData) {
-    if (!userData || !id) {
-      throw new Error("User data or User ID cannot be null");
-    }
-    const updatedUser = await UserDAO.updateUserInfo(id, userData);
-    return updatedUser;
+    if (!userData || !id) throw new Error("User data or ID missing");
+    return await UserDAO.updateUserInfo(id, userData);
   }
 
   static async getAllUsers() {
-    const users = await UserDAO.getAllUsers();
-    return users;
+    return await UserDAO.getAllUsers();
   }
 
   static async deleteUser(userId) {
-    if (!userId) {
-      throw new Error("User ID cannot be null");
-    }
-    await UserDAO.deleteUser(userId);
+    if (!userId) throw new Error("User ID cannot be null");
+    return await UserDAO.deleteUser(userId);
   }
 
   static async getAllCustomers() {
-    const customers = await UserDAO.getCustomers();
-    return customers;
+    return await UserDAO.getCustomers();
   }
 
   static async getAllOwners() {
-    const owners = await UserDAO.getOwners();
-    return owners;
+    return await UserDAO.getOwners();
   }
 
   static async getUserById(userId) {
-    if (!userId) {
-      throw new Error("User ID cannot be null");
-    }
-    const user = await UserDAO.getUserById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return user;
+    if (!userId) throw new Error("User ID cannot be null");
+    return await UserDAO.getUserById(userId);
   }
 
   static async updateUserStatus(userId, status) {
-    if (!userId) {
-      throw new Error("User ID cannot be null");
-    }
-    const updatedUser = await UserDAO.updateStatusUser(userId, status);
-    return updatedUser;
+    if (!userId) throw new Error("User ID cannot be null");
+    return await UserDAO.updateStatusUser(userId, status);
   }
+
+  // --------------------
+  // PARTNER / OWNER LICENSE LOGIC
+  // --------------------
+
+  /** 🟡 Đối tác đang chờ phê duyệt */
   static async getPendingPartners() {
     return await user.findAll({
       where: { role: 1 },
       include: [
         {
           model: restaurantpartner,
-          as: "restaurantpartner",
-          where: { status: 3 }, // 3 = pending
+          as: "partner", // <-- alias đúng
+          where: { status: 1 }, // 1 = pending
+          required: true,
         },
       ],
     });
   }
 
+  /** 🟢 Đối tác đã phê duyệt */
   static async getApprovedPartners() {
-    return UserDAO.getApprovedPartners();
+    return await user.findAll({
+      where: { role: 1 },
+      include: [
+        {
+          model: restaurantpartner,
+          as: "partner",
+          where: { status: 3 }, // approved
+          required: true,
+        },
+      ],
+    });
   }
 
-  static async approvePartner(partnerID) {
+  /** ✔ Approve */
+  static async approvePartner(userID) {
     return await restaurantpartner.update(
-      { status: 1 }, // approved
-      { where: { restaurantPartnerID: partnerID } }
+      { status: 3 },
+      { where: { restaurantPartnerID: userID } }
     );
   }
 
-  static async rejectPartner(partnerID) {
+  /** ❌ Reject */
+  static async rejectPartner(userID) {
     return await restaurantpartner.update(
       { status: 4 }, // rejected
-      { where: { restaurantPartnerID: partnerID } }
+      { where: { restaurantPartnerID: userID } }
     );
   }
 }
+
 export default UserService;

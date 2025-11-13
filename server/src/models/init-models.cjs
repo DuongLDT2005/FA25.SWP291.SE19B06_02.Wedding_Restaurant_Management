@@ -151,7 +151,7 @@ function initModels(sequelize) {
   restaurantpartner.hasMany(bankaccount, { as: "bankaccounts", foreignKey: "restaurantPartnerID"});
   payouts.belongsTo(restaurantpartner, { as: "restaurantPartner", foreignKey: "restaurantPartnerId"});
   restaurantpartner.hasMany(payouts, { as: "payouts", foreignKey: "restaurantPartnerId"});
-  restaurant.belongsTo(restaurantpartner, { as: "restaurantPartner", foreignKey: "restaurantPartnerID"});
+  restaurant.belongsTo(restaurantpartner, { as: "partner", foreignKey: "restaurantPartnerID"});
   restaurantpartner.hasMany(restaurant, { as: "restaurants", foreignKey: "restaurantPartnerID"});
   report.belongsTo(review, { as: "review", foreignKey: "reviewID"});
   review.hasMany(report, { as: "reports", foreignKey: "reviewID"});
@@ -159,14 +159,14 @@ function initModels(sequelize) {
   service.hasMany(bookingservice, { as: "bookingservices", foreignKey: "serviceID"});
   promotionservice.belongsTo(service, { as: "service", foreignKey: "serviceID"});
   service.hasMany(promotionservice, { as: "promotionservices", foreignKey: "serviceID"});
-  customer.belongsTo(user, {foreignKey: "customerID",targetKey: "userID",as: "user"});
-  user.hasOne(customer, {foreignKey: "customerID",sourceKey: "userID",as: "customer"});  
+  customer.belongsTo(user, {foreignKey: "customerID",as: "user"});
+  user.hasOne(customer, {foreignKey: "customerID",as: "customer"});  
   payouts.belongsTo(user, { as: "releasedBy_user", foreignKey: "releasedBy"});
   user.hasMany(payouts, { as: "payouts", foreignKey: "releasedBy"});
   report.belongsTo(user, { as: "user", foreignKey: "userID"});
   user.hasMany(report, { as: "reports", foreignKey: "userID"});
-  restaurantpartner.belongsTo(user, { as: "restaurantPartner", foreignKey: "restaurantPartnerID"});
-  user.hasOne(restaurantpartner, { as: "restaurantpartner", foreignKey: "restaurantPartnerID"});
+  restaurantpartner.belongsTo(user, { as: "owner", foreignKey: "restaurantPartnerID" });
+  user.hasOne(restaurantpartner, { as: "partner", foreignKey: "restaurantPartnerID" });
   systemsetting.belongsTo(user, { as: "createdBy_user", foreignKey: "createdBy"});
   user.hasMany(systemsetting, { as: "systemsettings", foreignKey: "createdBy"});
   systemsetting.belongsTo(user, { as: "updatedBy_user", foreignKey: "updatedBy"});
