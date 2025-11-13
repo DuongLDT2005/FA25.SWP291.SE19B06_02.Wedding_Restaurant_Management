@@ -49,6 +49,17 @@ class PromotionController {
       res.status(400).json({ error: err.message });
     }
   }
+
+  static async services(req, res) {
+    try {
+      const id = req.params.id;
+      const rows = await PromotionService.listServicesForPromotion(id);
+      res.json(rows);
+    } catch (err) {
+      console.error('Promotion services error', err);
+      res.status(400).json({ error: err.message });
+    }
+  }
 }
 
 export default PromotionController;

@@ -1,5 +1,4 @@
 const API_URL = "/api/restaurants";
-
 export const getRestaurants = async () => {
   const res = await fetch(`${API_URL}`, {
     method: "GET",

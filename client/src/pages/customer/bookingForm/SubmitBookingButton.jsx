@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import useBooking from "../../../hooks/useBooking";
 import useAuth from "../../../hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getEventTypes } from "../../../services/eventTypeService";
+import { getEventTypes } from "../../../services/eventTypeAndAmenityService";
 
 const SubmitBookingButton = () => {
   const { submit, recalcPrice, booking } = useBooking();

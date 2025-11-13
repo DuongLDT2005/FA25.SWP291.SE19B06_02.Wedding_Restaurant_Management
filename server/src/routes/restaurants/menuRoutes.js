@@ -11,5 +11,7 @@ router.delete('/:id', authMiddleware, ensurePartner, MenuController.delete);
 
 // Public: list menus by restaurant
 router.get('/restaurant/:restaurantId', MenuController.listByRestaurant);
+// Public: get one menu with dishes
+router.get('/:id', MenuController.getById);
 
 export default router;

@@ -6,34 +6,21 @@ const { promotion, sequelize, restaurantpromotion, promotionservice, service } =
 class PromotionDAO {
     static async getAll() {
         const rows = await promotion.findAll({
-            attributes: ['promotionID', 'title', 'description', 'discountPercentage', 'startDate', 'endDate']
+            attributes: ['promotionID', 'restaurantID', 'name', 'description', 'minTable', 'discountType', 'discountValue', 'startDate', 'endDate', 'status']
         });
         return toDTOs(rows);
     }
     static async getByID(promotionID) {
         const r = await promotion.findByPk(promotionID, {
-            attributes: ['promotionID', 'title', 'description', 'discountPercentage', 'startDate', 'endDate']
+            attributes: ['promotionID', 'restaurantID', 'name', 'description', 'minTable', 'discountType', 'discountValue', 'startDate', 'endDate', 'status']
         });
         return toDTO(r);
     }
     static async getPromotionsByRestaurantID(restaurantID) {
-        // First, find all promotionIDs linked to the given restaurantID
-        const promotionLinks = await restaurantpromotion.findAll({
-            where: { restaurantID },
-            attributes: ['promotionID']
-        });
-        const promotionIDs = promotionLinks.map(link => link.promotionID);
-        if (promotionIDs.length === 0) {
-            return [];
-        }
-        // Now, fetch all promotions with these promotionIDs
+        // Prefer direct column filter on promotion table
         const rows = await promotion.findAll({
-            where: {
-                promotionID: {
-                    [Op.in]: promotionIDs
-                }
-            },
-            attributes: ['promotionID', 'title', 'description', 'discountPercentage', 'startDate', 'endDate']
+            where: { restaurantID },
+            attributes: ['promotionID', 'restaurantID', 'name', 'description', 'minTable', 'discountType', 'discountValue', 'startDate', 'endDate', 'status']
         });
         return toDTOs(rows);
     }
@@ -54,28 +41,20 @@ class PromotionDAO {
                     [Op.in]: serviceIDs
                 }
             },
-            attributes: ['serviceID', 'name', 'description', 'price']
+            attributes: ['serviceID', 'restaurantID', 'eventTypeID', 'name', 'price', 'unit', 'status']
         });
         return toDTOs(rows);
     }
-    static async addPromotion(title, description, discountPercentage, startDate, endDate, restaurantID, discountType = null, serviceIDs = []) {
+    static async addPromotion({ name, description = null, discountType = 0, discountValue = null, startDate, endDate, restaurantID, status = true, minTable = 0, serviceIDs = [] }) {
         const t = await sequelize.transaction();
         try {
             const p = await promotion.create(
-                { title, description, discountPercentage, startDate, endDate, discountType },
+                { restaurantID, name, description, minTable, discountType, discountValue, startDate, endDate, status },
                 { transaction: t }
             );
 
-            // always link promotion to the creating restaurant (if provided)
-            if (restaurantID) {
-                await restaurantpromotion.create(
-                    { promotionID: p.promotionID, restaurantID },
-                    { transaction: t }
-                );
-            }
-
             // if discountType is "Free", link the promotion to the provided services
-            if (discountType === 'Free' && Array.isArray(serviceIDs) && serviceIDs.length > 0) {
+            if (Number(discountType) === 1 && Array.isArray(serviceIDs) && serviceIDs.length > 0) {
                 const links = serviceIDs.map(serviceID => ({ promotionID: p.promotionID, serviceID }));
                 await promotionservice.bulkCreate(links, { transaction: t });
             }
@@ -84,12 +63,15 @@ class PromotionDAO {
 
             return {
                 promotionID: p.promotionID,
-                title: p.title,
+                name: p.name,
                 description: p.description,
-                discountPercentage: p.discountPercentage,
-                discountType: p.discountType ?? discountType,
+                minTable: p.minTable,
+                discountValue: p.discountValue,
+                discountType: p.discountType,
                 startDate: p.startDate,
-                endDate: p.endDate
+                endDate: p.endDate,
+                status: p.status,
+                restaurantID: p.restaurantID,
             };
         } catch (err) {
             await t.rollback();

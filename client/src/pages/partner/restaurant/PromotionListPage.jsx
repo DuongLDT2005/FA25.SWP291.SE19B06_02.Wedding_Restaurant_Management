@@ -1,24 +1,45 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CrudSection from "../../../layouts/CrudSection";
 import PromotionDetailPage from "./PromotionDetailPage";
 import PromotionCreatePage from "./PromotionCreatePage.jsx";
-import mock from "../../../mock/partnerMock";
+import { useParams } from "react-router-dom";
+import { usePromotion } from "../../../hooks/usePromotion";
 
 export default function PromotionListPage({ readOnly = false }) {
   const [activePromotion, setActivePromotion] = useState(null);
   const [creating, setCreating] = useState(false);
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const restaurantID = useMemo(() => Number(paramRestaurantID || paramId) || undefined, [paramId, paramRestaurantID]);
 
-  const [promotions, setPromotions] = useState(
-    mock.promotions.map((p) => ({
-      id: p.promotionID,
-      name: p.name,
-      description: p.description,
-      minTable: p.minTable,
-      discount:
-        p.discountType === 0 ? `${p.discountValue}%` : "Miễn phí dịch vụ",
-      date: `${p.startDate} - ${p.endDate}`,
-      status: p.status === 1 ? "active" : "inactive",
-    }))
+  const { list, status, loadByRestaurant, updateOne } = usePromotion();
+  const [togglingId, setTogglingId] = useState(null);
+
+  useEffect(() => {
+    if (restaurantID) {
+      loadByRestaurant(restaurantID).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.warn("Load promotions failed:", e);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantID]);
+
+  const promotions = useMemo(
+    () =>
+      (list || []).map((p) => {
+        const isFree = p.discountType === 1 || p.discountType === "Free";
+        const percent = typeof p.discountValue !== "undefined" ? p.discountValue : p.discountPercentage;
+        return {
+          id: p.promotionID ?? p.id,
+          name: p.title || p.name,
+          description: p.description,
+          minTable: p.minTable ?? "-",
+          discount: isFree ? "Miễn phí dịch vụ" : (typeof percent !== "undefined" ? `${percent}%` : "-"),
+          date: p.startDate && p.endDate ? `${p.startDate} - ${p.endDate}` : "-",
+          status: (typeof p.status !== "undefined" ? (p.status ? "active" : "inactive") : "active"),
+        };
+      }),
+    [list]
   );
 
   const columns = [
@@ -34,13 +55,19 @@ export default function PromotionListPage({ readOnly = false }) {
     { value: "inactive", label: "Ngừng hoạt động" },
   ];
 
-  const handleToggleStatus = (id, activate) => {
-    if (readOnly) return;
-    setPromotions((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, status: activate ? "active" : "inactive" } : p
-      )
-    );
+  const handleToggleStatus = async (id, activate) => {
+    if (readOnly || !restaurantID) return;
+    setTogglingId(id);
+    try {
+      await updateOne({ id, payload: { status: !!activate } });
+      // hard refresh list to ensure filters and layout update correctly
+      await loadByRestaurant(restaurantID);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("Toggle promotion status failed:", e);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   return (
@@ -66,8 +93,9 @@ export default function PromotionListPage({ readOnly = false }) {
           data={promotions}
           filters={filters}
           onRowClick={(row) => {
-            const full = mock.promotions.find((p) => p.promotionID === row.id);
-            setActivePromotion(full);
+            // find full object from store list
+            const full = (list || []).find((p) => (p.promotionID ?? p.id) === row.id);
+            setActivePromotion(full || row);
           }}
           onToggleStatus={handleToggleStatus}
           onCreate={() => !readOnly && setCreating(true)}

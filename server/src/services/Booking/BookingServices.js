@@ -167,8 +167,8 @@ class BookingService {
     const end = new Date(`1970-01-01T${endTime}`);
     if (start >= end) throw new Error('Invalid time range: startTime must be before endTime.');
 
-    // Check overlapping bookings for the hall
-    const overlapping = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+  // Check overlapping bookings for the hall (consider deposited, manual blocked, confirmed)
+  const overlapping = await BookingDAO.findOverlapsForBlocking(hallID, eventDate, startTime, endTime);
     if (overlapping.length > 0) throw new Error('This hall is already booked for the selected time range.');
 
     // If actorPartnerID provided, ensure partner owns the hall's restaurant
@@ -191,6 +191,11 @@ class BookingService {
       tableCount,
       specialRequest,
       status: BookingStatus.MANUAL_BLOCKED,
+      // Ensure non-null monetary fields for manual bookings
+      originalPrice: 0,
+      discountAmount: 0,
+      VAT: 0,
+      totalAmount: 0,
     };
 
     const created = await BookingDAO.createBooking(bookingData, { dishIDs: [], services: [], promotionIDs: [] });

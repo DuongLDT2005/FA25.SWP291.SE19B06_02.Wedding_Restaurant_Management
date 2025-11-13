@@ -7,12 +7,24 @@ const { menu, dishmenu, dish, sequelize } = db;
 
 export default class MenuDAO {
     // CRUD for Menu
-    static async getByRestaurantID(restaurantID, { onlyActive } = {}) {
+    static async getByRestaurantID(restaurantID, { onlyActive, includeDishes = false } = {}) {
         const where = { restaurantID };
         if (onlyActive) where.status = true;
+
+        const include = [];
+        if (includeDishes) {
+            include.push({
+                model: dish,
+                as: 'dishes',
+                attributes: ['dishID','restaurantID','name','imageURL','categoryID'],
+                through: { attributes: [] }
+            });
+        }
+
         const rows = await menu.findAll({
             where,
             attributes: ['menuID','restaurantID','name','price','imageURL','status'],
+            include,
             order: [['menuID','ASC']]
         });
         return toDTOs(rows);
@@ -61,12 +73,50 @@ export default class MenuDAO {
     }
 
     static async updateMenu(menuID, patch) {
-        const { name, price, imageURL, status } = patch;
-        const [count] = await menu.update(
-            { name, price, imageURL, status },
-            { where: { menuID } }
-        );
-        return count > 0;
+        const { name, price, imageURL, status, dishIDs } = patch || {};
+
+        return await sequelize.transaction(async (t) => {
+            // Update core fields only if provided, avoid overwriting with undefined
+            const toUpdate = {};
+            if (name !== undefined) toUpdate.name = name;
+            if (price !== undefined) toUpdate.price = price;
+            if (imageURL !== undefined) toUpdate.imageURL = imageURL;
+            if (status !== undefined) toUpdate.status = status;
+
+            if (Object.keys(toUpdate).length > 0) {
+                await menu.update(toUpdate, { where: { menuID }, transaction: t });
+            }
+
+            // Sync dishes if dishIDs is provided (even empty array means clear)
+            if (dishIDs !== undefined) {
+                // Get menu to retrieve restaurantID for validation
+                const m = await menu.findByPk(menuID, { attributes: ['menuID','restaurantID'], transaction: t });
+                if (!m) throw new Error('Menu not found');
+
+                // Validate dishes belong to the same restaurant
+                if (Array.isArray(dishIDs) && dishIDs.length > 0) {
+                    const rows = await dish.findAll({
+                        where: { dishID: { [Op.in]: dishIDs }, restaurantID: m.restaurantID },
+                        attributes: ['dishID'],
+                        transaction: t
+                    });
+                    const foundIDs = new Set(rows.map(r => r.dishID));
+                    const missing = dishIDs.filter(id => !foundIDs.has(id));
+                    if (missing.length) {
+                        throw new Error(`Some dishes do not belong to restaurant ${m.restaurantID}: [${missing.join(', ')}]`);
+                    }
+                }
+
+                // Clear existing links and insert new ones
+                await dishmenu.destroy({ where: { menuID }, transaction: t });
+                if (Array.isArray(dishIDs) && dishIDs.length > 0) {
+                    const bulk = dishIDs.map(dishID => ({ menuID, dishID }));
+                    await dishmenu.bulkCreate(bulk, { transaction: t, ignoreDuplicates: true });
+                }
+            }
+
+            return true;
+        });
     }
 
     static async deleteMenu(menuID) {

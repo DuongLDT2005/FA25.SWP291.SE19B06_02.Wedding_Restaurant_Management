@@ -6,18 +6,24 @@ const { service, sequelize, restauranteventtype, restau } = db;
 class ServiceDAO {
     static async getAll() {
         const rows = await service.findAll({
-            attributes: ['serviceID', 'name', 'description', 'price']
+            attributes: ['serviceID', 'restaurantID', 'eventTypeID', 'name', 'price', 'unit', 'status']
         });
         return toDTOs(rows);
     }
     static async getByID(serviceID) {
         const r = await service.findByPk(serviceID, {
-            attributes: ['serviceID', 'name', 'description', 'price']
+            attributes: ['serviceID', 'restaurantID', 'eventTypeID', 'name', 'price', 'unit', 'status']
         });
         return toDTO(r);
     }
-    static async addService(name, description, price) {
-        const s = await service.create({ name, description, price });
+    static async addService(name, price, unit = null, status = true, restaurantID = null, eventTypeID = null) {
+        // Kept for backward compatibility (not used by partner flow). Description field removed.
+        const payload = { name, price };
+        if (unit !== null) payload.unit = unit;
+        if (typeof status !== 'undefined') payload.status = status;
+        if (restaurantID !== null) payload.restaurantID = restaurantID;
+        if (eventTypeID !== null) payload.eventTypeID = eventTypeID;
+        const s = await service.create(payload);
         return toDTO(s);
     }
     static async updateService(serviceID, serviceData) {
@@ -48,12 +54,12 @@ class ServiceDAO {
                     [Op.in]: serviceIDs
                 }
             },
-            attributes: ['serviceID', 'name', 'description', 'price']
+            attributes: ['serviceID', 'restaurantID', 'eventTypeID', 'name', 'price', 'unit', 'status']
         });
         return toDTOs(rows);
     }
     static async getByRestaurantID(restaurantID) {
-        const rows = await service.findAll({ where: { restaurantID }, attributes: ['serviceID', 'name', 'description', 'price'] });
+        const rows = await service.findAll({ where: { restaurantID }, attributes: ['serviceID', 'restaurantID', 'eventTypeID', 'name', 'price', 'unit', 'status'] });
         return toDTOs(rows);
     }
 }

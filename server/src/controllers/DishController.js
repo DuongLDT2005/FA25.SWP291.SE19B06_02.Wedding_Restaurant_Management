@@ -1,5 +1,12 @@
 import DishService from '../services/DishService.js';
 
+function formatSequelizeError(err) {
+  if (err && /^Sequelize/.test(err.name) && Array.isArray(err.errors) && err.errors.length) {
+    return err.errors.map(e => e.message || `${e.path} ${e.type}`).join('; ');
+  }
+  return err?.message || 'Unknown error';
+}
+
 class DishController {
   static async create(req, res) {
     try {
@@ -9,7 +16,7 @@ class DishController {
       res.status(201).json(created);
     } catch (err) {
       console.error('Dish create error', err);
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: formatSequelizeError(err) });
     }
   }
 
@@ -22,7 +29,7 @@ class DishController {
       res.json(updated);
     } catch (err) {
       console.error('Dish update error', err);
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: formatSequelizeError(err) });
     }
   }
 
@@ -35,7 +42,7 @@ class DishController {
       res.json({ success: true });
     } catch (err) {
       console.error('Dish delete error', err);
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: formatSequelizeError(err) });
     }
   }
 
@@ -46,7 +53,7 @@ class DishController {
       res.json(rows);
     } catch (err) {
       console.error('Dish list error', err);
-      res.status(400).json({ error: err.message });
+      res.status(400).json({ error: formatSequelizeError(err) });
     }
   }
 }

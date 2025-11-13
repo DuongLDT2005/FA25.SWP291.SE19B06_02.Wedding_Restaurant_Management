@@ -103,5 +103,19 @@ class HallController {
             res.status(500).json({ error: 'Internal server error' });
         }
     }
+    static async getAvailability(req, res) {
+        try {
+            const { date: eventDate, startTime, endTime } = req.query;
+            const hallID = req.params.id;
+            if (!eventDate || !startTime || !endTime) {
+                return res.status(400).json({ error: 'Missing date/startTime/endTime' });
+            }
+            const result = await HallServices.isHallAvailable(hallID, eventDate, startTime, endTime);
+            res.json(result);
+        } catch (error) {
+            console.error('Error checking hall availability:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 }
 export default HallController;

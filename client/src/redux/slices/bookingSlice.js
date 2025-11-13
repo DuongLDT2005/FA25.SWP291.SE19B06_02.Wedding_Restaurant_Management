@@ -13,6 +13,45 @@ export const submitBooking = createAsyncThunk(
   }
 );
 
+// Partner: load bookings owned by current partner
+export const loadPartnerBookings = createAsyncThunk(
+  "booking/partner/load",
+  async ({ detailed = true } = {}, { rejectWithValue }) => {
+    try {
+      const data = await bookingService.getPartnerBookings({ detailed });
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
+// Partner: accept a booking
+export const acceptBookingByPartner = createAsyncThunk(
+  "booking/partner/accept",
+  async (bookingID, { rejectWithValue }) => {
+    try {
+      const res = await bookingService.partnerAccept(bookingID);
+      return { bookingID, res };
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
+// Partner: reject a booking
+export const rejectBookingByPartner = createAsyncThunk(
+  "booking/partner/reject",
+  async ({ bookingID, reason = "Partner rejected" }, { rejectWithValue }) => {
+    try {
+      const res = await bookingService.partnerReject(bookingID, reason);
+      return { bookingID, res };
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
 // Simple mock promotions builder for fallback/testing
 const buildMockPromotions = (params = {}) => {
   const tables = Number(params?.tables || 0);
@@ -58,6 +97,10 @@ const initialState = {
   financial: { originalPrice: 0, discountAmount: 0, VAT: 0, totalAmount: 0 },
   status: "idle",
   error: null,
+  // Partner view state
+  partnerRows: [],
+  partnerStatus: "idle",
+  partnerError: null,
 };
 
 const bookingSlice = createSlice({
@@ -157,6 +200,22 @@ const bookingSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
+    // Partner utilities
+    setPartnerRows(state, action) {
+      state.partnerRows = Array.isArray(action.payload) ? action.payload : [];
+    },
+    markCheckedLocal(state, action) {
+      const id = action.payload;
+      state.partnerRows = (state.partnerRows || []).map((x) =>
+        x.bookingID === id ? { ...x, isChecked: 1, checked: 1 } : x
+      );
+    },
+    updateRowLocal(state, action) {
+      const { bookingID, patch } = action.payload || {};
+      state.partnerRows = (state.partnerRows || []).map((x) =>
+        x.bookingID === bookingID ? { ...x, ...patch } : x
+      );
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -178,6 +237,33 @@ const bookingSlice = createSlice({
       .addCase(fetchPromotions.rejected, (state) => {
         // if rejected (should rarely happen due to fallback), keep existing or clear
         state.promotions = state.promotions || [];
+      })
+      // Partner list
+      .addCase(loadPartnerBookings.pending, (state) => {
+        state.partnerStatus = "loading";
+        state.partnerError = null;
+      })
+      .addCase(loadPartnerBookings.fulfilled, (state, action) => {
+        state.partnerStatus = "succeeded";
+        state.partnerRows = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(loadPartnerBookings.rejected, (state, action) => {
+        state.partnerStatus = "failed";
+        state.partnerError = action.payload ?? action.error?.message;
+      })
+      // Accept booking
+      .addCase(acceptBookingByPartner.fulfilled, (state, action) => {
+        const id = action.payload?.bookingID;
+        state.partnerRows = (state.partnerRows || []).map((x) =>
+          x.bookingID === id ? { ...x, status: 1 } : x
+        );
+      })
+      // Reject booking
+      .addCase(rejectBookingByPartner.fulfilled, (state, action) => {
+        const id = action.payload?.bookingID;
+        state.partnerRows = (state.partnerRows || []).map((x) =>
+          x.bookingID === id ? { ...x, status: 2 } : x
+        );
       });
   },
 });
@@ -196,6 +282,9 @@ export const {
   setFinancial,
   hydrateFromDTO,
   clearError,
+  setPartnerRows,
+  markCheckedLocal,
+  updateRowLocal,
 } = bookingSlice.actions;
 
 export const selectBooking = (state) => state.booking ?? initialState;

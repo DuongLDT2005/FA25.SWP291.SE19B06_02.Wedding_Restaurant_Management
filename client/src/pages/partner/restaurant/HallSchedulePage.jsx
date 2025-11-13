@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
-import mock from "../../../mock/partnerMock";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import PartnerLayout from "../../../layouts/PartnerLayout";
+import { useParams } from "react-router-dom";
+import { useHall } from "../../../hooks/useHall";
+import useAuth from "../../../hooks/useAuth";
+import { useRestaurant } from "../../../hooks/useRestaurant";
+import api from "../../../api/axios";
 
 const TIME_SLOTS = [
   { label: "Buổi trưa (10:30 - 14:00)", startTime: "10:30", endTime: "14:00" },
@@ -9,30 +13,94 @@ const TIME_SLOTS = [
 ];
 
 export default function HallSchedulePage() {
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const initialFromRoute = useMemo(
+    () => Number(paramRestaurantID || paramId) || undefined,
+    [paramId, paramRestaurantID]
+  );
+
+  const { list: hallsFromHook, loadByRestaurant, status, updateStatus } = useHall();
+  const { user } = useAuth();
+  const { list: restaurants, status: restaurantsStatus, loadAllPartner } = useRestaurant();
+
+  const [selectedRestaurantID, setSelectedRestaurantID] = useState(initialFromRoute || null);
+
   const today = new Date().toISOString().slice(0, 10);
   const initialSlot = TIME_SLOTS[0];
 
   const [selectedDate, setSelectedDate] = useState(today);
   const [startTime, setStartTime] = useState(initialSlot.startTime);
   const [endTime, setEndTime] = useState(initialSlot.endTime);
-  const [selectedRestaurantID, setSelectedRestaurantID] = useState(
-    mock.restaurants[0]?.restaurantID ?? null
-  );
-  const [bookings, setBookings] = useState(mock.bookings);
+  const [bookings, setBookings] = useState([]);
+  const [availabilityMap, setAvailabilityMap] = useState({}); // { [hallID]: boolean }
 
-  const restaurant =
-    mock.restaurants.find((r) => r.restaurantID === selectedRestaurantID) || {
-      halls: [],
-      name: "",
-    };
-  const halls = restaurant.halls || [];
+  // fetch partner restaurants when user is ready
+  useEffect(() => {
+    if (!user) return;
+    const partnerID = user?.userID || null;
+    if (!partnerID) return;
+    if (!restaurants || restaurants.length === 0) {
+      loadAllPartner(partnerID).catch(() => {});
+    }
+  }, [user, restaurants, loadAllPartner]);
+
+  // default selected restaurant (route wins, else first in list)
+  useEffect(() => {
+    if (selectedRestaurantID) return; // already selected (from route or prior)
+    if (Array.isArray(restaurants) && restaurants.length > 0) {
+      setSelectedRestaurantID(restaurants[0].restaurantID);
+    }
+  }, [selectedRestaurantID, restaurants]);
+
+  // fetch halls whenever selected restaurant changes
+  useEffect(() => {
+    if (selectedRestaurantID) {
+      loadByRestaurant(selectedRestaurantID).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.warn("Load halls failed:", e);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRestaurantID]);
+
+  const halls = hallsFromHook || [];
+
+  // Fetch availability for current date/time across all halls
+  const refreshAvailability = useCallback(async () => {
+    if (!selectedDate || !startTime || !endTime || !Array.isArray(halls) || halls.length === 0) {
+      setAvailabilityMap({});
+      return;
+    }
+    try {
+      const entries = await Promise.all(
+        halls.map(async (hall) => {
+          try {
+            const res = await api.get(`/halls/${hall.hallID}/availability`, {
+              params: { date: selectedDate, startTime, endTime },
+            });
+            const available = !!(res?.data?.available);
+            return [hall.hallID, available];
+          } catch (e) {
+            // On error, assume available to avoid false busy states
+            return [hall.hallID, true];
+          }
+        })
+      );
+      setAvailabilityMap(Object.fromEntries(entries));
+    } catch (_) {
+      setAvailabilityMap({});
+    }
+  }, [halls, selectedDate, startTime, endTime]);
 
   const [displayHalls, setDisplayHalls] = useState([]);
 
   const computeOccupied = useCallback(
     (date, sTime, eTime) =>
       halls.map((hall) => {
-        const occupied = bookings.some(
+        // Backend says not available -> occupied
+        const notAvailable = availabilityMap[hall.hallID] === false;
+        // Local manual booking made in this session (fallback)
+        const locallyBlocked = bookings.some(
           (b) =>
             b.hallID === hall.hallID &&
             b.eventDate === date &&
@@ -40,9 +108,10 @@ export default function HallSchedulePage() {
             b.endTime === eTime &&
             b.status === 1
         );
+        const occupied = notAvailable || locallyBlocked;
         return { ...hall, occupied };
       }),
-    [halls, bookings]
+    [halls, bookings, availabilityMap]
   );
 
   // Init / update display halls when dependencies change
@@ -50,25 +119,47 @@ export default function HallSchedulePage() {
     setDisplayHalls(computeOccupied(selectedDate, startTime, endTime));
   }, [computeOccupied, selectedDate, startTime, endTime]);
 
-  const handleSearch = () => {
+  // Refresh availability whenever halls or filters change
+  useEffect(() => {
+    refreshAvailability();
+  }, [refreshAvailability]);
+
+  const handleSearch = async () => {
+    await refreshAvailability();
     setDisplayHalls(computeOccupied(selectedDate, startTime, endTime));
   };
 
-  const handleSetOccupied = (hallID) => {
-    const newBooking = {
-      bookingID: Date.now(),
-      hallID,
-      eventDate: selectedDate,
-      status: 1,
-      customerID: null,
-      menuID: null,
-      startTime,
-      endTime,
-    };
-    setBookings((prev) => [...prev, newBooking]);
-    setDisplayHalls((prev) =>
-      prev.map((h) => (h.hallID === hallID ? { ...h, occupied: true } : h))
-    );
+  const handleSetOccupied = async (hallID) => {
+    try {
+      // Create manual booking to block the hall slot
+      const payload = {
+        hallID,
+        eventDate: selectedDate,
+        startTime,
+        endTime,
+        tableCount: 1,
+        specialRequest: "Manual block via schedule",
+      };
+      const res = await api.post(`/bookings/manual`, payload);
+      const created = res?.data?.data || null;
+      const bookingID = created?.bookingID || Date.now();
+      const newBooking = {
+        bookingID,
+        hallID,
+        eventDate: selectedDate,
+        status: 1, // local flag to mark occupied in this UI
+        customerID: null,
+        menuID: null,
+        startTime,
+        endTime,
+      };
+      setBookings((prev) => [...prev, newBooking]);
+      setDisplayHalls((prev) =>
+        prev.map((h) => (h.hallID === hallID ? { ...h, occupied: true } : h))
+      );
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || "Không thể đánh dấu bận. Vui lòng thử lại.");
+    }
   };
 
   const handleSetAvailable = (hallID) => {
@@ -105,21 +196,26 @@ export default function HallSchedulePage() {
   return (
     <PartnerLayout>
       <div className="p-3">
-        <h3>Lịch sử dụng sảnh - {restaurant.name}</h3>
+        <h3>Lịch sử sử dụng sảnh</h3>
 
         <Row className="mb-3 g-3">
-          <Col md={3}>
+          <Col md={4}>
             <Form.Group>
               <Form.Label>Chọn nhà hàng:</Form.Label>
               <Form.Select
                 value={selectedRestaurantID ?? ""}
-                onChange={(e) => setSelectedRestaurantID(Number(e.target.value))}
+                onChange={(e) => setSelectedRestaurantID(Number(e.target.value) || null)}
+                disabled={restaurantsStatus === 'loading'}
               >
-                {mock.restaurants.map((r) => (
-                  <option key={r.restaurantID} value={r.restaurantID}>
-                    {r.name}
-                  </option>
-                ))}
+                {Array.isArray(restaurants) && restaurants.length > 0 ? (
+                  restaurants.map((r) => (
+                    <option key={r.restaurantID} value={r.restaurantID}>
+                      {r.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">{restaurantsStatus === 'loading' ? "Đang tải..." : "Không có nhà hàng"}</option>
+                )}
               </Form.Select>
             </Form.Group>
           </Col>
@@ -157,7 +253,8 @@ export default function HallSchedulePage() {
           <thead>
             <tr>
               <th>Sảnh</th>
-              <th>Trạng thái</th>
+              <th>Đang sử dụng</th>
+              <th>Trạng thái hoạt động</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -173,25 +270,47 @@ export default function HallSchedulePage() {
                   )}
                 </td>
                 <td>
-                  {hall.occupied ? (
-                    <Button
-                      size="sm"
-                      variant="success"
-                      className="text-white"
-                      onClick={() => handleSetAvailable(hall.hallID)}
-                    >
-                      Đánh dấu trống
-                    </Button>
+                  {hall.status ? (
+                    <span className="badge bg-success">Hoạt động</span>
                   ) : (
+                    <span className="badge bg-secondary">Ngừng</span>
+                  )}
+                </td>
+                <td>
+                  <div className="d-flex gap-2">
+                    {hall.occupied ? (
+                      <Button
+                        size="sm"
+                        variant="success"
+                        className="text-white"
+                        onClick={() => handleSetAvailable(hall.hallID)}
+                      >
+                        Đánh dấu trống
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        className="text-white"
+                        onClick={() => handleSetOccupied(hall.hallID)}
+                      >
+                        Đánh dấu bận
+                      </Button>
+                    )}
                     <Button
                       size="sm"
-                      variant="danger"
-                      className="text-white"
-                      onClick={() => handleSetOccupied(hall.hallID)}
+                      variant={hall.status ? "secondary" : "primary"}
+                      onClick={() => {
+                        const next = !hall.status;
+                        updateStatus({ id: hall.hallID, status: next }).catch((e) => {
+                          // eslint-disable-next-line no-console
+                          console.warn("Toggle hall status failed:", e);
+                        });
+                      }}
                     >
-                      Đánh dấu bận
+                      {hall.status ? "Ngừng" : "Kích hoạt"}
                     </Button>
-                  )}
+                  </div>
                 </td>
               </tr>
             ))}

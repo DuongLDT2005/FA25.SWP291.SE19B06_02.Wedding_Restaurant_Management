@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { updateRestaurant, addRestaurantImage, deleteRestaurantImage } from "../../../services/restaurantService";
+import { deleteRestaurantImage } from "../../../services/restaurantService";
 import { uploadImageToCloudinary } from "../../../services/uploadServices";
-
+import { useRestaurant } from "../../../hooks/useRestaurant";
+import { useNavigate } from "react-router-dom";
 export default function RestaurantProfile(props) {
-
+  const { updateOne, addImage } = useRestaurant();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     name: "",
     phone: "",
@@ -97,15 +99,17 @@ export default function RestaurantProfile(props) {
           street: profile.address.street,
           ward: profile.address.ward,
         },
+        // send selected event type IDs to backend
+        eventTypes: Array.isArray(profile.eventTypes) ? profile.eventTypes : [],
       };
-      await updateRestaurant(restaurantID, payload);
+      const updated = await updateOne({ id: restaurantID, payload });
 
       // Upload new images (only newly added previews with files)
       if (profile.imageFiles?.length) {
         for (const f of profile.imageFiles) {
           try {
             const url = await uploadImageToCloudinary(f);
-            await addRestaurantImage(restaurantID, url);
+            await addImage({ restaurantID, imageURL: url });
           } catch (e) {
             console.warn("Upload image failed", e);
           }
@@ -117,6 +121,7 @@ export default function RestaurantProfile(props) {
     } catch (e) {
       alert(e.message || "Lưu thất bại");
     }
+    navigate("/partner/restaurants");
   };
 
   const handleViewImage = (url) => {

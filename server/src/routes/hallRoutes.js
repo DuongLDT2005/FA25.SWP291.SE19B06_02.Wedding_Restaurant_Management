@@ -5,6 +5,7 @@ const router = Router();
 
 router.post("/", HallController.createHall);
 router.get("/:id", HallController.getHallById);
+router.get("/:id/availability", HallController.getAvailability);
 router.put("/:id", HallController.updateHall);
 router.delete("/:id", HallController.deleteHall);
 router.get("/restaurant/:restaurantId", HallController.getHallsByRestaurantId);

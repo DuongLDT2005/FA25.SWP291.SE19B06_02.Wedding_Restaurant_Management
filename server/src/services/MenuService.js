@@ -10,7 +10,9 @@ class MenuService {
     if (!r) throw new Error('Restaurant not found');
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
 
-    return await MenuDAO.createMenu({ restaurantID, name, price, imageURL, status, dishIDs });
+    const created = await MenuDAO.createMenu({ restaurantID, name, price, imageURL, status, dishIDs });
+    // Return with dishes included so FE has menuID and dishIDs context
+    return await MenuDAO.getByID(created.menuID, { includeDishes: true });
   }
 
   static async updateMenuForPartner(actorUserId, menuID, patch) {
@@ -22,7 +24,8 @@ class MenuService {
     if (String(r.restaurantPartnerID) !== String(actorUserId)) throw new Error('Not authorized');
 
     await MenuDAO.updateMenu(menuID, patch);
-    return await MenuDAO.getByID(menuID);
+    // Return with dishes included for convenience after update
+    return await MenuDAO.getByID(menuID, { includeDishes: true });
   }
 
   static async deleteMenuForPartner(actorUserId, menuID) {
@@ -35,8 +38,12 @@ class MenuService {
     return await MenuDAO.deleteMenu(menuID);
   }
 
-  static async listByRestaurant(restaurantID) {
-    return await MenuDAO.getByRestaurantID(restaurantID, { onlyActive: false });
+  static async listByRestaurant(restaurantID, { onlyActive = false, includeDishes = true } = {}) {
+    return await MenuDAO.getByRestaurantID(restaurantID, { onlyActive, includeDishes });
+  }
+
+  static async getById(menuID, { includeDishes = true } = {}) {
+    return await MenuDAO.getByID(menuID, { includeDishes });
   }
 }
 

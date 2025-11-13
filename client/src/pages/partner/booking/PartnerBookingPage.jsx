@@ -3,7 +3,7 @@ import { Tabs, Tab, Form, Row, Col } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import PartnerLayout from "../../../layouts/PartnerLayout";
 import BookingCard from "./BookingCard";
-import { getPartnerBookings, partnerReject, partnerAccept } from "../../../services/bookingService";
+import { useBooking } from "../../../hooks/useBooking";
 
 const TIME_SLOTS = [
   { label: "Buổi trưa (10:30 - 14:00)", startTime: "10:30", endTime: "14:00" },
@@ -12,46 +12,40 @@ const TIME_SLOTS = [
 
 export default function PartnerBookingPage() {
   const navigate = useNavigate();
+  const {
+    partnerBookings,
+    partnerStatus,
+    partnerError,
+    loadPartnerBookings,
+    acceptByPartner,
+    rejectByPartner,
+    markCheckedLocal,
+  } = useBooking();
   const [activeTab, setActiveTab] = useState("pending");
   const [restaurantFilter, setRestaurantFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [timeFilter, setTimeFilter] = useState(""); // will store startTime like "10:30"
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [rows, setRows] = useState([]);
+  const loading = partnerStatus === 'loading';
+  const error = partnerError || "";
   const restaurants = useMemo(() => {
     // derive restaurant options from bookings
     const map = new Map();
-    for (const b of rows) {
+    for (const b of (partnerBookings || [])) {
       const r = b.hall?.restaurant || b.restaurant;
       if (r?.restaurantID && !map.has(r.restaurantID)) {
         map.set(r.restaurantID, { restaurantID: r.restaurantID, name: r.name });
       }
     }
     return Array.from(map.values());
-  }, [rows]);
+  }, [partnerBookings]);
 
   useEffect(() => {
-    let ignore = false;
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getPartnerBookings({ detailed: true });
-        if (!ignore) setRows(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!ignore) setError(e.message || "Không thể tải danh sách booking");
-      } finally {
-        if (!ignore) setLoading(false);
-      }
-    }
-    load();
-    return () => { ignore = true; };
-  }, []);
+    loadPartnerBookings({ detailed: true });
+  }, [loadPartnerBookings]);
 
   // --- Chuẩn bị dữ liệu booking có đầy đủ thông tin ---
   const bookings = useMemo(() => {
-    return rows.map((b) => {
+    return (partnerBookings || []).map((b) => {
       const r = b.hall?.restaurant || b.restaurant || {};
       const h = b.hall || {};
       const m = b.menu || {};
@@ -71,7 +65,7 @@ export default function PartnerBookingPage() {
         totalAmount: b.totalAmount ?? 0,
       };
     });
-  }, [rows]);
+  }, [partnerBookings]);
 
   // --- Lọc dữ liệu theo tab và filter ---
   const filteredBookings = useMemo(() => {
@@ -109,14 +103,13 @@ export default function PartnerBookingPage() {
   const handleMarkChecked = async (bookingID) => {
     if (!window.confirm("Đánh dấu booking này đã được kiểm tra?")) return;
     // Optional: call backend to mark checked if endpoint exists, else only update UI
-    setRows((prev) => prev.map((x) => x.bookingID === bookingID ? { ...x, isChecked: 1 } : x));
+    markCheckedLocal(bookingID);
   };
 
   const handleReject = async (bookingID) => {
     if (!window.confirm("Bạn có chắc muốn từ chối booking này?")) return;
     try {
-      await partnerReject(bookingID, 'Partner rejected');
-      setRows((prev) => prev.map((x) => x.bookingID === bookingID ? { ...x, status: 2 } : x));
+      await rejectByPartner(bookingID, 'Partner rejected');
     } catch (e) {
       alert(e.message || 'Từ chối thất bại');
     }
@@ -125,9 +118,8 @@ export default function PartnerBookingPage() {
   const handleAccept = async (bookingID) => {
     if (!window.confirm("Xác nhận chấp nhận booking này?")) return;
     try {
-      await partnerAccept(bookingID);
-      setRows(prev => prev.map(x => x.bookingID === bookingID ? { ...x, status: 1 } : x));
-      // status 1 => Đã xác nhận
+      await acceptByPartner(bookingID);
+      // status update handled via slice
     } catch (e) {
       alert(e.message || 'Chấp nhận thất bại');
     }

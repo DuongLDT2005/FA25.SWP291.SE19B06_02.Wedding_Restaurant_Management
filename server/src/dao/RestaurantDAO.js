@@ -6,6 +6,9 @@ import DishDAO from './DishDAO.js';
 import PromotionDAO from './PromotionDAO.js';
 import ServiceDAO from './ServiceDAO.js';
 import HallDAO from './HallDAO.js';
+import AmenityDAO from './AmenityDAO.js';
+import EventTypeDAO from './EventTypeDAO.js';
+import HallImageDAO from './HallImageDAO.js';
 
 // Models from init-models.cjs
 const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
@@ -78,20 +81,30 @@ class RestaurantDAO {
     const r = await restaurant.findByPk(restaurantID, {
       attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [
-        { model: address, as: 'address', attributes: ['fullAddress'] },
+        { model: address, as: 'address', attributes: ['number','street','ward','fullAddress'] },
         { model: restaurantimage, as: 'restaurantimages', attributes: ['imageID','imageURL'] }
       ]
     });
     if (!r) return null;
     const dto = toDTO(r);
-    // fetch related collections (menus, dishes, promotions, services)
-    const [menus, dishes, promotions, services, halls] = await Promise.all([
+    // fetch related collections (menus, dishes, promotions, services, halls, amenities, eventTypes)
+    const [menus, dishes, promotions, services, halls, amenities, eventTypes] = await Promise.all([
       MenuDAO.getByRestaurantID(restaurantID).catch(() => []),
       DishDAO.getByRestaurantID(restaurantID).catch(() => []),
       PromotionDAO.getPromotionsByRestaurantID(restaurantID).catch(() => []),
       ServiceDAO.getByRestaurantID(restaurantID).catch(() => []),
-      HallDAO.getHallsByRestaurantId(restaurantID).catch(() => [])
+      HallDAO.getHallsByRestaurantId(restaurantID).catch(() => []),
+      AmenityDAO.getAmenitiesByRestaurantID(restaurantID).catch(() => []),
+      EventTypeDAO.getAllByRestaurantID(restaurantID).catch(() => []),
     ]);
+
+    // attach images per hall
+    const hallsWithImages = await Promise.all(
+      (halls || []).map(async (h) => {
+        const images = await HallImageDAO.getByHallId(h.hallID).catch(() => []);
+        return { ...h, images };
+      })
+    );
 
     return {
       restaurantID: dto.restaurantID,
@@ -103,13 +116,20 @@ class RestaurantDAO {
       phone: dto.phone || null,
       thumbnailURL: dto.thumbnailURL,
       status: dto.status,
-      address: dto.address?.fullAddress || null,
+      address: dto.address ? {
+        number: dto.address.number || null,
+        street: dto.address.street || null,
+        ward: dto.address.ward || null,
+        fullAddress: dto.address.fullAddress || null,
+      } : null,
       images: (dto.restaurantimages || []).map(img => ({ imageID: img.imageID, imageURL: img.imageURL })),
       menus,
       dishes,
       promotions,
       services,
-      halls
+      halls: hallsWithImages,
+      amenities,
+      eventTypes,
     };
   }
 

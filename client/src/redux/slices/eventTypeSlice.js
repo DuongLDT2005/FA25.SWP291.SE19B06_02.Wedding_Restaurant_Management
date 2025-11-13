@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { getEventTypes } from "../../services/eventTypeService";
+import { getEventTypes, getAmenities } from "../../services/eventTypeAndAmenityService";
 
 export const fetchEventTypes = createAsyncThunk(
   "eventType/fetchEventTypes",
@@ -9,17 +9,30 @@ export const fetchEventTypes = createAsyncThunk(
   }
 );
 
+export const fetchAmenities = createAsyncThunk(
+  "eventType/fetchAmenities",
+  async () => {
+    const data = await getAmenities();
+    return data;
+  }
+);
+
 const eventTypeSlice = createSlice({
   name: "eventType",
   initialState: {
     items: [],
+    amenities: [],
     loading: false,
-    error: null
+    amenitiesLoading: false,
+    error: null,
+    amenitiesError: null
   },
-  extraReducers: builder => {
+  extraReducers: (builder) => {
     builder
-      .addCase(fetchEventTypes.pending, state => {
+      // event types
+      .addCase(fetchEventTypes.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchEventTypes.fulfilled, (state, action) => {
         state.loading = false;
@@ -28,8 +41,22 @@ const eventTypeSlice = createSlice({
       .addCase(fetchEventTypes.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+      })
+
+      // amenities
+      .addCase(fetchAmenities.pending, (state) => {
+        state.amenitiesLoading = true;
+        state.amenitiesError = null;
+      })
+      .addCase(fetchAmenities.fulfilled, (state, action) => {
+        state.amenitiesLoading = false;
+        state.amenities = action.payload;
+      })
+      .addCase(fetchAmenities.rejected, (state, action) => {
+        state.amenitiesLoading = false;
+        state.amenitiesError = action.error.message;
       });
-  }
+  },
 });
 
 export default eventTypeSlice.reducer;

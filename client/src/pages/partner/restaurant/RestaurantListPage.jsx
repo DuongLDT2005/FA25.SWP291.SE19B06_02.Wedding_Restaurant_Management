@@ -4,13 +4,11 @@ import { Card, Button, Row, Col, Form, InputGroup } from 'react-bootstrap';
 import AppLayout from "../../../layouts/PartnerLayout";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
-import { getRestaurantsByPartner, toggleRestaurantStatus } from "../../../services/restaurantService";
-
-
+import { useRestaurant } from "../../../hooks/useRestaurant";
 // Removed mock initialRestaurants; data now loaded from backend
 const RestaurantCard = (props) => {
   const navigate = useNavigate();
-
+  // card-level actions handled via props
   const handleClick = () => {
     const confirmChange = window.confirm(
       `Bạn có chắc muốn ${props.r.status ? "ngừng hoạt động" : "kích hoạt lại"} nhà hàng "${props.r.name}" không?`
@@ -46,32 +44,20 @@ const RestaurantCard = (props) => {
 const RestaurantsPage = () => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [restaurants, setRestaurants] = useState([]);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
+  const { list, status, error, loadAllPartner, toggleStatus } = useRestaurant();
+  // console.log(loadAllPartner(user?.userID));
+  // Fetch partner-specific restaurants when user & partnerID ready
   useEffect(() => {
-    let ignore = false;
-    async function load() {
-      if (!user) return; // wait for auth
-      const partnerID = user?.restaurantPartnerID || user?.restaurantPartner?.restaurantPartnerID;
-      if (!partnerID) return;
-      setLoading(true);
-      setError("");
-      try {
-        const data = await getRestaurantsByPartner(partnerID);
-        if (!ignore) setRestaurants(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (!ignore) setError(e.message || "Không thể tải danh sách nhà hàng");
-      } finally {
-        if (!ignore) setLoading(false);
-      }
+    if (!user) return;
+    const partnerID = user?.userID || null;
+    if (!partnerID) return;
+    // only fetch if list is empty (avoid refetch spam on re-renders)
+    if (!list || list.length === 0) {
+      loadAllPartner(partnerID).catch(() => {/* error handled via slice */});
     }
-    load();
-    return () => { ignore = true; };
-  }, [user]);
+  }, [user, list, loadAllPartner]);
 
   const handleAddRestaurant = () => {
     navigate("/partner/restaurants/new");
@@ -80,13 +66,17 @@ const RestaurantsPage = () => {
     const ok = window.confirm("Bạn có chắc muốn đổi trạng thái nhà hàng này?");
     if (!ok) return;
     try {
-      await toggleRestaurantStatus(id);
-      setRestaurants(prev => prev.map(r => r.restaurantID === id ? { ...r, status: !r.status } : r));
+      const current = list.find(r => r.restaurantID === id);
+      const newStatus = current ? !current.status : true;
+      await toggleStatus({ restaurantID: id, newStatus });
+      // optimistic UI update if slice doesn't patch immediately
+      // (Optional: if slice already updates, this can be removed)
+      // NOTE: Since we're relying on Redux list, we skip local state update.
     } catch (e) {
       alert(e.message || "Đổi trạng thái thất bại");
     }
   };
-  const filteredRestaurants = restaurants.filter(r => {
+  const filteredRestaurants = (list || []).filter(r => {
     const matchesSearch = (r.name || '').toLowerCase().includes(search.toLowerCase());
     const statusStr = r.status ? 'active' : 'inactive';
     const matchesFilter = filter === "all" || statusStr === filter;
@@ -139,13 +129,13 @@ const RestaurantsPage = () => {
       </div>
 
       <Row xs={1} md={2} lg={3} className="g-4">
-        {loading && (
+        {status === 'loading' && (
           <div className="text-center text-muted">Đang tải...</div>
         )}
-        {!loading && error && (
+        {status === 'failed' && error && (
           <div className="text-center text-danger">{error}</div>
         )}
-        {!loading && !error && filteredRestaurants.map(r => (
+        {status !== 'loading' && !error && filteredRestaurants.map(r => (
           <Col key={r.restaurantID}>
             <RestaurantCard r={r} onToggleStatus={handleToggleStatus} />
           </Col>

@@ -70,9 +70,17 @@ export default function LoginPage() {
       setInfo("Đăng nhập thành công — điều hướng...");
 
       // Điều hướng theo vai trò
-      if (data.role === "ADMIN") navigate("/admin/dashboard");
-      else if (data.role === "RESTAURANT_PARTNER") navigate("/partner");
-      else navigate("/");
+     const role = data?.user?.role;
+            switch (role) {
+              case 2:
+                navigate('/admin/dashboard');
+                break;
+              case 1:
+                navigate('/partner');
+                break;
+              default:
+                navigate('/');
+            }
     } catch (err) {
       setGlobalError(err.message || "Đăng nhập thất bại");
     } finally {

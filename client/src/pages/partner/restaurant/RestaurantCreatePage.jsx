@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, Image, Modal, Spinner } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import PartnerLayout from "../../../layouts/PartnerLayout";
 import useAuth from "../../../hooks/useAuth";
-import { createRestaurant, addRestaurantImage } from "../../../services/restaurantService";
+import { useRestaurant } from "../../../hooks/useRestaurant";
 import { uploadImageToCloudinary } from "../../../services/uploadServices";
 
 export default function CreateRestaurantPage() {
     const { user } = useAuth();
+    const { createOne, addImage } = useRestaurant();
+    const [submitting, setSubmitting] = useState(false);
     // Helper: revoke object URL if it's a blob URL to avoid memory leaks
     const revokeIfBlob = (url) => {
         try {
@@ -27,9 +29,9 @@ export default function CreateRestaurantPage() {
         email: "",
         description: "",
         thumbnailURL: "",
-        imageURLs: [],
         thumbnailFile: null,
-        imageFiles: [],
+        // Keep images as unified items to avoid desync between URLs and Files
+        imageItems: [], // [{ file, url }]
         address: {
             number: "",
             street: "",
@@ -66,12 +68,11 @@ export default function CreateRestaurantPage() {
     };
 
     const handleImagesChange = (e) => {
-        const files = Array.from(e.target.files);
-        const newPreviews = files.map((file) => URL.createObjectURL(file));
+        const files = Array.from(e.target.files || []);
+        const items = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
         setNewRestaurant((prev) => ({
             ...prev,
-            imageURLs: [...prev.imageURLs, ...newPreviews],
-            imageFiles: [...prev.imageFiles, ...files],
+            imageItems: [...(prev.imageItems || []), ...items],
         }));
     };
 
@@ -87,17 +88,12 @@ export default function CreateRestaurantPage() {
                 revokeIfBlob(url);
                 setNewRestaurant((prev) => ({ ...prev, thumbnailURL: "", thumbnailFile: null }));
             } else {
-                // Find the index of the preview URL and remove the corresponding file as well
+                // Remove by URL from unified image items and revoke the blob
                 setNewRestaurant((prev) => {
-                    const idx = prev.imageURLs.findIndex((img) => img === url);
-                    if (idx !== -1) {
-                        revokeIfBlob(prev.imageURLs[idx]);
-                        const newURLs = prev.imageURLs.filter((_, i) => i !== idx);
-                        const newFiles = prev.imageFiles.filter((_, i) => i !== idx);
-                        return { ...prev, imageURLs: newURLs, imageFiles: newFiles };
-                    }
-                    // Fallback: just filter URL if not found (shouldn't happen)
-                    return { ...prev, imageURLs: prev.imageURLs.filter((img) => img !== url) };
+                    const remain = (prev.imageItems || []).filter((it) => it.url !== url);
+                    // Revoke all matching blob URLs
+                    (prev.imageItems || []).forEach((it) => { if (it.url === url) revokeIfBlob(it.url); });
+                    return { ...prev, imageItems: remain };
                 });
             }
         }
@@ -105,6 +101,8 @@ export default function CreateRestaurantPage() {
 
     const handleCreate = async () => {
         try {
+            if (submitting) return; // prevent duplicate submits
+            setSubmitting(true);
             if (!user) throw new Error("Bạn cần đăng nhập");
                         // Backend association alias is 'restaurantpartner' (lowercase). Login / me may return only basic user without association.
                         // Try all possible shapes.
@@ -132,13 +130,13 @@ export default function CreateRestaurantPage() {
                 },
             };
 
-            const created = await createRestaurant(payload);
+            const created = await createOne(payload);
 
-            // Upload additional images sequentially
-            for (const f of newRestaurant.imageFiles) {
+            // Upload additional images sequentially (only items still present)
+            for (const it of (newRestaurant.imageItems || [])) {
                 try {
-                    const url = await uploadImageToCloudinary(f);
-                    await addRestaurantImage(created.restaurantID, url);
+                    const url = await uploadImageToCloudinary(it.file);
+                    await addImage({ restaurantID: created.restaurantID, imageURL: url });
                 } catch (e) {
                     console.warn("Upload/add image failed", e);
                 }
@@ -148,7 +146,7 @@ export default function CreateRestaurantPage() {
 
             // Cleanup object URLs to avoid memory leaks
             revokeIfBlob(newRestaurant.thumbnailURL);
-            newRestaurant.imageURLs.forEach(revokeIfBlob);
+            (newRestaurant.imageItems || []).forEach((it) => revokeIfBlob(it.url));
 
             // Reset form state after successful creation
             setNewRestaurant({
@@ -158,17 +156,19 @@ export default function CreateRestaurantPage() {
                 email: "",
                 description: "",
                 thumbnailURL: "",
-                imageURLs: [],
                 thumbnailFile: null,
-                imageFiles: [],
+                imageItems: [],
                 address: { number: "", street: "", ward: "" },
             });
         } catch (err) {
             alert(err.message || "Tạo nhà hàng thất bại");
+        } finally {
+            setSubmitting(false);
         }
     };
 
     const fullAddressPreview = `${newRestaurant.address.number} ${newRestaurant.address.street}, ${newRestaurant.address.ward}`.trim();
+    const imagesCount = (newRestaurant.imageItems || []).length;
 
     return (
         <PartnerLayout>
@@ -347,7 +347,12 @@ export default function CreateRestaurantPage() {
 
                         {/* --- Ảnh khác --- */}
                         <Form.Group className="mb-4" controlId="restaurantImages">
-                            <Form.Label>Hình ảnh khác</Form.Label>
+                            <Form.Label>
+                                Hình ảnh khác
+                                <span className="ms-2 text-muted" style={{ fontSize: "0.9rem" }}>
+                                    (Đã chọn: {imagesCount})
+                                </span>
+                            </Form.Label>
                             <Form.Control
                                 type="file"
                                 multiple
@@ -355,14 +360,14 @@ export default function CreateRestaurantPage() {
                                 onChange={handleImagesChange}
                             />
                             <Row className="mt-3">
-                                {newRestaurant.imageURLs.length > 0 ? (
-                                    newRestaurant.imageURLs.map((img, idx) => (
+                                {(newRestaurant.imageItems && newRestaurant.imageItems.length > 0) ? (
+                                    newRestaurant.imageItems.map((it, idx) => (
                                         <Col md={3} key={idx} className="mb-3 text-center">
                                             <div style={{ position: "relative" }}>
                                                 <Image
-                                                    src={img}
+                                                    src={it.url}
                                                     thumbnail
-                                                    onClick={() => handleViewImage(img)}
+                                                    onClick={() => handleViewImage(it.url)}
                                                     style={{
                                                         width: "100%",
                                                         height: "150px",
@@ -372,7 +377,7 @@ export default function CreateRestaurantPage() {
                                                     }}
                                                 />
                                                 <Button
-                                                    onClick={() => handleDeleteImage(img)}
+                                                    onClick={() => handleDeleteImage(it.url)}
                                                     style={{
                                                         position: "absolute",
                                                         top: "6px",
@@ -403,8 +408,22 @@ export default function CreateRestaurantPage() {
                             </Row>
                         </Form.Group>
 
-                        <Button variant="primary" onClick={handleCreate}>
-                            Tạo nhà hàng
+                        <Button variant="primary" onClick={handleCreate} disabled={submitting}>
+                            {submitting ? (
+                                <>
+                                    <Spinner
+                                        as="span"
+                                        animation="border"
+                                        size="sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                        className="me-2"
+                                    />
+                                    Đang tạo...
+                                </>
+                            ) : (
+                                "Tạo nhà hàng"
+                            )}
                         </Button>
 
                         {/* --- Modal xem ảnh --- */}

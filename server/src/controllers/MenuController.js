@@ -42,10 +42,25 @@ class MenuController {
   static async listByRestaurant(req, res) {
     try {
       const restaurantID = req.params.restaurantId;
-      const rows = await MenuService.listByRestaurant(restaurantID);
+      const onlyActive = String(req.query.onlyActive || '').trim() === '1' || String(req.query.active || '').trim() === '1';
+      const includeDishes = (req.query.includeDishes === undefined) ? true : String(req.query.includeDishes).trim() === '1';
+      const rows = await MenuService.listByRestaurant(restaurantID, { onlyActive, includeDishes });
       res.json(rows);
     } catch (err) {
       console.error('Menu list error', err);
+      res.status(400).json({ error: err.message });
+    }
+  }
+
+  static async getById(req, res) {
+    try {
+      const id = req.params.id;
+      const includeDishes = (req.query.includeDishes === undefined) ? true : String(req.query.includeDishes).trim() === '1';
+      const m = await MenuService.getById(id, { includeDishes });
+      if (!m) return res.status(404).json({ error: 'Not found' });
+      res.json(m);
+    } catch (err) {
+      console.error('Menu get error', err);
       res.status(400).json({ error: err.message });
     }
   }

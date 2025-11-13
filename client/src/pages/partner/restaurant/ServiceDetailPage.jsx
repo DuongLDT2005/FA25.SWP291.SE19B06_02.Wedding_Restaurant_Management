@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Card, Row, Col, Badge, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,11 +9,19 @@ import {
   faEdit,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
+import { useEventType } from "../../../hooks/useEventType";
 
-export default function ServiceDetailPage({ service, eventTypes = [], onBack }) {
+export default function ServiceDetailPage({ service, eventTypes = [], onBack, readOnly = false }) {
   // --- Khai báo hook TRƯỚC ---
   const [isEditing, setIsEditing] = useState(false);
   const [editedService, setEditedService] = useState(service || {});
+  const { updateOneService } = useAdditionRestaurant();
+  const { items: allEventTypes, loadAll: loadAllEventTypes } = useEventType();
+
+  useEffect(() => {
+    loadAllEventTypes().catch(() => {});
+  }, [loadAllEventTypes]);
 
   // --- Nếu chưa có dữ liệu thì return sau ---
   if (!service) return null;
@@ -33,10 +41,25 @@ export default function ServiceDetailPage({ service, eventTypes = [], onBack }) 
     setEditedService((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    console.log("Cập nhật dịch vụ:", editedService);
-    setIsEditing(false);
-    alert("✅ Dịch vụ đã được cập nhật!");
+  const handleSave = async () => {
+    if (readOnly) return;
+    try {
+      const id = editedService.serviceID || editedService.id;
+      if (!id) return;
+      const payload = {
+        name: String(editedService.name || "").trim(),
+        price: Number(editedService.price) || 0,
+        unit: String(editedService.unit || "").trim(),
+        eventTypeID: editedService.eventTypeID ? Number(editedService.eventTypeID) : null,
+        status: Number(editedService.status) === 1 ? 1 : 0,
+      };
+      const updated = await updateOneService({ id, payload });
+      setEditedService(updated || payload);
+      setIsEditing(false);
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      alert(e?.message || "Cập nhật thất bại");
+    }
   };
 
   return (
@@ -49,7 +72,7 @@ export default function ServiceDetailPage({ service, eventTypes = [], onBack }) 
           </Button>
 
           {!isEditing ? (
-            <Button variant="primary" onClick={() => setIsEditing(true)}>
+            <Button variant="primary" onClick={() => !readOnly && setIsEditing(true)} disabled={readOnly}>
               <FontAwesomeIcon icon={faEdit} /> Chỉnh sửa
             </Button>
           ) : (
@@ -118,8 +141,8 @@ export default function ServiceDetailPage({ service, eventTypes = [], onBack }) 
                   handleChange("eventTypeID", parseInt(e.target.value))
                 }
               >
-                {eventTypes.map((et) => (
-                  <option key={et.eventTypeID} value={et.eventTypeID}>
+                {(eventTypes?.length ? eventTypes : allEventTypes).map((et) => (
+                  <option key={et.eventTypeID ?? et.id} value={et.eventTypeID ?? et.id}>
                     {et.name}
                   </option>
                 ))}
