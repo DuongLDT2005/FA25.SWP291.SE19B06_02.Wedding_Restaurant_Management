@@ -36,6 +36,15 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
     });
   };
 
+  // Kiểm tra tất cả category đã đủ món chưa
+  const allCategoriesSelected = () => {
+    if (!selectedMenu) return false;
+    return selectedMenu.categories.every((cat) => {
+      const current = selectedDishes[cat.name] || [];
+      return current.length === cat.limit;
+    });
+  };
+
   // Hoàn tất chọn
   const handleConfirm = () => {
     onSelect({
@@ -50,7 +59,6 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
       <Button
         variant="outline-danger"
         onClick={() => setShow(true)}
-        style={{ borderColor: primaryColor, color: primaryColor }}
       >
         {selectedMenu ? selectedMenu.name : "Chọn thực đơn"}
       </Button>
@@ -78,7 +86,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
                     <div className="text-muted small">{menu.description}</div>
                   </div>
                   <span style={{ color: primaryColor, fontWeight: "500" }}>
-                    {menu.price}₫/người
+                    {menu.price}₫/ bàn
                   </span>
                 </ListGroup.Item>
               ))}
@@ -106,7 +114,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
                           fontSize: "12px",
                         }}
                       >
-                        Chọn tối đa {cat.limit}
+                        Số lượng phải chọn: {cat.limit}
                       </Badge>
                     </Accordion.Header>
                     <Accordion.Body>
@@ -114,7 +122,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
                         const current = selectedDishes[cat.name] || [];
                         const isChecked = current.includes(dish);
                         const disabled =
-                          !isChecked && current.length >= cat.limit;
+                          !isChecked && current.length == cat.limit;
                         return (
                           <Form.Check
                             key={dish}
@@ -154,7 +162,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
               backgroundColor: primaryColor,
               border: "none",
             }}
-            disabled={!selectedMenu}
+            disabled={!selectedMenu || !allCategoriesSelected()}
             onClick={handleConfirm}
           >
             Xác nhận lựa chọn
