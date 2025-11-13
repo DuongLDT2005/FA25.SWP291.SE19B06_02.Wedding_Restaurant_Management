@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
+import { Row, Col, Form, Badge, Table } from "react-bootstrap";
 import useBooking from "../../../hooks/useBooking";
 
 const DEFAULT_SERVICES = [
-  { id: "mc", name: "MC", price: 500000 },
-  { id: "photo", name: "Photographer", price: 1500000 },
-  { id: "decoration", name: "Decoration", price: 1000000 },
-  { id: "music", name: "Live Music", price: 1200000 },
+  { serviceID: 1, name: "MC", price: 500000.00, unit: "sự kiện", status: 1 },
+  { serviceID: 2, name: "Photographer", price: 1500000.00, unit: "sự kiện", status: 1 },
+  { serviceID: 3, name: "Decoration", price: 1000000.00, unit: "sự kiện", status: 1 },
+  { serviceID: 4, name: "Live Music", price: 1200000.00, unit: "sự kiện", status: 1 },
 ];
 
 export default function ServiceSelector({ services = [] }) {
@@ -14,8 +15,10 @@ export default function ServiceSelector({ services = [] }) {
   const list = services && services.length > 0 ? services : DEFAULT_SERVICES;
 
   return (
-    <div>
-      <label className="small">Dịch vụ (tùy chọn)</label>
+    <div className="mt-3">
+      <Row className="mb-2 align-items-center">
+        <Col xs={5} className="fw-semibold">Dịch vụ (tùy chọn)</Col>
+      </Row>
       <div className="flex gap-2 flex-wrap mt-1">
         {list.map((svc) => {
           const active = selectedIds.has(svc.id);
