@@ -1,8 +1,37 @@
 import PayosServices from "../services/payment/PayosServices.js";
 import BookingServices from "../services/Booking/BookingServices.js";
-import paymentStatus from "../models/enums/BookingStatus.js";
+import PaymentService from "../services/payment/PaymentServices.js";
 
 class PaymentController {
+  // ==============================
+  // Generic Payment CRUD endpoints
+  // ==============================
+  static async createPayment(req, res) {
+    try {
+      const data = req.body || {};
+      // Basic validation
+      if (typeof data.amount === "undefined") {
+        return res.status(400).json({ success: false, message: "amount is required" });
+      }
+      const created = await PaymentService.createPayment(data);
+      return res.status(201).json({ success: true, data: created });
+    } catch (err) {
+      console.error("[PaymentController] ❌ createPayment:", err);
+      return res.status(400).json({ success: false, message: err?.message || String(err) });
+    }
+  }
+
+  static async getPaymentsByBooking(req, res) {
+    try {
+      const { bookingID } = req.params;
+      const rows = await PaymentService.getPaymentsByBooking(bookingID);
+      return res.status(200).json({ success: true, data: rows });
+    } catch (err) {
+      console.error("[PaymentController] ❌ getPaymentsByBooking:", err);
+      return res.status(400).json({ success: false, message: err?.message || String(err) });
+    }
+  }
+
   /**
    * Tạo link thanh toán đặt cọc PayOS
    * @route POST /api/payments/deposit/:bookingID
@@ -65,11 +94,7 @@ class PaymentController {
       // Kiểm tra trạng thái thành công từ PayOS
       if (status === "PAID" || status === "SUCCESS" || data?.status_code === "00") {
         // 1️⃣ Cập nhật payment record
-        await BookingServices.updatePaymentStatusByOrderCode(
-          orderCode,
-          paymentStatus.status.SUCCESS,
-          transactionID
-        );
+        await BookingServices.updatePaymentStatusByOrderCode(orderCode, 2, transactionID);
 
         // 2️⃣ Cập nhật trạng thái booking -> DEPOSITED
         await BookingServices.deposit(orderCode);
@@ -80,10 +105,7 @@ class PaymentController {
           message: "Payment successful and booking updated",
         });
       } else if (status === "CANCELLED" || status === "FAILED") {
-        await BookingServices.updatePaymentStatusByOrderCode(
-          orderCode,
-          paymentStatus.status.FAILED
-        );
+        await BookingServices.updatePaymentStatusByOrderCode(orderCode, 3);
         return res.status(200).json({
           success: true,
           message: "Payment failed/cancelled, status updated",

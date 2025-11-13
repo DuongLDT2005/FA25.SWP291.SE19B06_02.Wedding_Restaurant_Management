@@ -28,7 +28,7 @@ router.patch('/:id/partner/accept', authenticateJWT, ensurePartner, (req, res, n
   req.body = req.body || {};
   req.body.status = BookingStatus.ACCEPTED;
   next();
-}, BookingController.updateBookingStatus);
+}, BookingController.acceptByPartner);
 
 // Generic status change endpoint (use role-based checks in controller)
 router.put('/:id/status', authenticateJWT, BookingController.updateBookingStatus);
@@ -43,7 +43,7 @@ router.patch('/:id/customer/cancel', authenticateJWT, ensureCustomer, (req, res,
   req.body = req.body || {};
   req.body.status = BookingStatus.CANCELLED;
   next();
-}, BookingController.updateBookingStatus);
+}, BookingController.rejectByPartner);
 
 router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res, next) => {
   req.body = req.body || {};

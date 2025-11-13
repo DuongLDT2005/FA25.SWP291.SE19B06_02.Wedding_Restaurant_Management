@@ -109,7 +109,10 @@ class RestaurantController {
   }
   static async getTopBookedRestaurants(req, res) {
     try {
-      const restaurants = await RestaurantService.getTopBookedRestaurants();
+      console.log("Received request for top booked restaurants with query:", req.query);
+      const lim = Number(req.query?.limit);
+      const limit = Number.isFinite(lim) && lim > 0 ? lim : undefined;
+      const restaurants = await RestaurantService.getTopBookedRestaurants(limit);
       res.json(restaurants);
     } catch (err) {
       res.status(500).json({ message: 'Error fetching top booked restaurants', error: err.message });

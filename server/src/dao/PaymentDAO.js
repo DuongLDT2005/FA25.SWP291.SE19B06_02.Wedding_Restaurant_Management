@@ -1,6 +1,6 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
-import paymentStatus from "../utils/paymentStatus.js";
+import {paymentStatus} from "../models/enums/paymentStatus.js";
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { payment: PaymentModel, sequelize } = db;
 

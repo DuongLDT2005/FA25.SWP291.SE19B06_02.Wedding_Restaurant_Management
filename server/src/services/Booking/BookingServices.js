@@ -214,7 +214,7 @@ class BookingService {
   /** ✅ GET ONE */
   async getBookingById(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
-    return BookingDAO.getBookingById(bookingID);
+    return BookingDAO.getBookingDetails(bookingID);
   }
 
   /** ✅ GET BY CUSTOMER */
@@ -313,7 +313,7 @@ class BookingService {
 
     return result;
   }
-
+  
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
     if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
