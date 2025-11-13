@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Tabs,
   Tab,
@@ -9,88 +9,95 @@ import {
   Badge,
   Modal,
 } from "react-bootstrap";
+import axios from "axios";
 import AdminLayout from "../../../../layouts/AdminLayout";
 
 export default function AdminLicensePage() {
-  const [activeTab, setActiveTab] = useState("pending");
+  const [activeTab, setActiveTab] = useState("approved");
 
-  // Danh sách đối tác chờ phê duyệt
-  const [pendingPartners, setPendingPartners] = useState([
-    {
-      id: 1,
-      name: "Trần Thị B",
-      email: "tranb@example.com",
-      phone: "0901234567",
-      restaurantName: "Hoa Hồng Palace",
-      licenseFile: "Giấy phép kinh doanh 12345.pdf",
-      appliedDate: "2025-11-04",
-      note: "Chuyên tổ chức tiệc cưới và sự kiện cao cấp.",
-    },
-    {
-      id: 2,
-      name: "Phạm Minh Khang",
-      email: "khangp@example.com",
-      phone: "0932123123",
-      restaurantName: "Golden Lotus",
-      licenseFile: "Giấy phép GoldenLotus.pdf",
-      appliedDate: "2025-11-02",
-      note: "Có kinh nghiệm phục vụ sự kiện ngoài trời.",
-    },
-  ]);
+  // API data
+  const [approvedPartners, setApprovedPartners] = useState([]);
+  const [pendingPartners, setPendingPartners] = useState([]);
 
-  // Danh sách đối tác đã hợp tác
-  const [approvedPartners] = useState([
-    {
-      id: 3,
-      name: "Lê Văn C",
-      email: "levanc@example.com",
-      phone: "0912345678",
-      restaurantName: "Sunshine Wedding Hall",
-      joinedDate: "2025-10-15",
-      commissionRate: 0.15,
-    },
-    {
-      id: 4,
-      name: "Nguyễn Hồng D",
-      email: "hongd@example.com",
-      phone: "0909876543",
-      restaurantName: "Moonlight Garden",
-      joinedDate: "2025-09-22",
-      commissionRate: 0.12,
-    },
-  ]);
-
+  // Modal
   const [showModal, setShowModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
 
+  // ===========================
+  // 🔥 Load Approved + Pending
+  // ===========================
+  useEffect(() => {
+    loadApprovedPartners();
+    loadPendingPartners();
+  }, []);
+
+  const loadApprovedPartners = async () => {
+    try {
+      const res = await axios.get("/api/admin/partners/approved");
+      if (res.data?.success) {
+        setApprovedPartners(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("❌ Load approved failed:", err);
+    }
+  };
+
+  const loadPendingPartners = async () => {
+    try {
+      const res = await axios.get("/api/admin/partners/pending");
+      if (res.data?.success) {
+        setPendingPartners(res.data.data || []);
+      }
+    } catch (err) {
+      console.error("❌ Load pending failed:", err);
+    }
+  };
+
+  // ===========================
+  // 🔥 Approve partner
+  // ===========================
   const handleApprove = (partner) => {
     setSelectedPartner(partner);
     setShowModal(true);
   };
 
-  const confirmApproval = () => {
-    if (selectedPartner) {
-      alert(`✅ Đã phê duyệt đối tác ${selectedPartner.name}.`);
-      setPendingPartners((prev) =>
-        prev.filter((p) => p.id !== selectedPartner.id)
-      );
+  const confirmApproval = async () => {
+    if (!selectedPartner) return;
+
+    try {
+      await axios.put(`/api/admin/partners/${selectedPartner.userID}/approve`);
+
+      // Reload list
+      loadApprovedPartners();
+      loadPendingPartners();
+
+      alert(`✅ Đã phê duyệt đối tác ${selectedPartner.fullName}`);
+    } catch (err) {
+      console.error(err);
+      alert("❌ Lỗi khi phê duyệt đối tác.");
     }
+
     setShowModal(false);
   };
 
-  const handleReject = (id) => {
-    const partner = pendingPartners.find((p) => p.id === id);
-    if (
-      window.confirm(`❌ Từ chối yêu cầu hợp tác của ${partner.name}?`)
-    ) {
-      setPendingPartners((prev) => prev.filter((p) => p.id !== id));
+  // ===========================
+  // 🔥 Reject partner
+  // ===========================
+  const handleReject = async (id) => {
+    if (!window.confirm("❌ Bạn chắc chắn muốn từ chối đối tác này?")) return;
+
+    try {
+      await axios.put(`/api/admin/partners/${id}/reject`);
+      loadPendingPartners();
+      alert("🚫 Đã từ chối đối tác.");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Lỗi khi từ chối.");
     }
   };
 
   const handleChat = (partner) => {
-    alert(
-      `💬 Mở cửa sổ đàm phán với ${partner.name} (tính năng chat sẽ được phát triển sau).`
-    );
+    alert(`💬 Sẽ mở chat với ${partner.fullName} (đang phát triển).`);
   };
 
   return (
@@ -102,7 +109,9 @@ export default function AdminLicensePage() {
           onSelect={(k) => setActiveTab(k)}
           className="mb-4"
         >
-          {/* ========== TAB 1: ĐANG CHỜ PHÊ DUYỆT ========== */}
+          {/* ==========================
+              TAB 1: PENDING
+          ========================== */}
           <Tab eventKey="pending" title="Đang chờ phê duyệt">
             {pendingPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
@@ -112,12 +121,14 @@ export default function AdminLicensePage() {
             ) : (
               <Row className="g-4">
                 {pendingPartners.map((p) => (
-                  <Col md={6} lg={4} key={p.id}>
+                  <Col md={6} lg={4} key={p.userID}>
                     <Card className="border-0 shadow-sm h-100 rounded-4">
                       <Card.Body>
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
-                            <h5 className="fw-semibold mb-1">{p.name}</h5>
+                            <h5 className="fw-semibold mb-1">
+                              {p.fullName}
+                            </h5>
                             <p className="text-muted small mb-0">{p.email}</p>
                           </div>
                           <Badge bg="warning" text="dark">
@@ -127,17 +138,8 @@ export default function AdminLicensePage() {
 
                         <div className="small text-muted mb-2">
                           <strong>📞</strong> {p.phone} <br />
-                          <strong>🏛️</strong> {p.restaurantName}
+                          <strong>📄 License:</strong> {p.restaurantpartner?.licenseUrl}
                         </div>
-
-                        <p className="small mb-2">
-                          <strong>📄 Hồ sơ:</strong>{" "}
-                          <a href="#" className="text-decoration-none">
-                            {p.licenseFile}
-                          </a>
-                        </p>
-
-                        <p className="text-muted small mb-3">{p.note}</p>
 
                         <div className="d-flex justify-content-between">
                           <Button
@@ -152,7 +154,7 @@ export default function AdminLicensePage() {
                             variant="outline-danger"
                             size="sm"
                             className="rounded-pill px-3"
-                            onClick={() => handleReject(p.id)}
+                            onClick={() => handleReject(p.userID)}
                           >
                             <i className="fas fa-times me-1"></i> Từ chối
                           </Button>
@@ -166,10 +168,6 @@ export default function AdminLicensePage() {
                           </Button>
                         </div>
                       </Card.Body>
-                      <Card.Footer className="text-muted small text-end">
-                        Nộp ngày:{" "}
-                        {new Date(p.appliedDate).toLocaleDateString("vi-VN")}
-                      </Card.Footer>
                     </Card>
                   </Col>
                 ))}
@@ -177,7 +175,9 @@ export default function AdminLicensePage() {
             )}
           </Tab>
 
-          {/* ========== TAB 2: ĐÃ HỢP TÁC ========== */}
+          {/* ==========================
+              TAB 2: APPROVED
+          ========================== */}
           <Tab eventKey="approved" title="Đối tác đã hợp tác">
             {approvedPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
@@ -187,35 +187,34 @@ export default function AdminLicensePage() {
             ) : (
               <Row className="g-4">
                 {approvedPartners.map((p) => (
-                  <Col md={6} lg={4} key={p.id}>
+                  <Col md={6} lg={4} key={p.userID}>
                     <Card className="border-0 shadow-sm rounded-4 h-100">
                       <Card.Body>
                         <div className="d-flex justify-content-between align-items-start mb-2">
                           <div>
-                            <h5 className="fw-semibold mb-1">{p.name}</h5>
+                            <h5 className="fw-semibold mb-1">{p.fullName}</h5>
                             <p className="text-muted small mb-0">{p.email}</p>
                           </div>
                           <Badge bg="success">Đã hợp tác</Badge>
                         </div>
 
                         <div className="small text-muted mb-3">
-                          <strong>🏛️</strong> {p.restaurantName}
+                          <strong>📞</strong> {p.phone} <br />
+                          <strong>📄 License:</strong>{" "}
+                          {p.restaurantpartner?.licenseUrl}
                           <br />
-                          <strong>📞</strong> {p.phone}
-                          <br />
-                          <strong>📅</strong>{" "}
-                          {new Date(p.joinedDate).toLocaleDateString("vi-VN")}
+                          <strong>💰 Hoa hồng:</strong>{" "}
+                          <span className="fw-semibold text-primary">
+                            {(p.restaurantpartner?.commissionRate * 100).toFixed(
+                              0
+                            ) || 0}
+                            %
+                          </span>
                         </div>
 
                         <div className="border-top pt-2 mt-2 small">
-                          <p className="mb-1">
-                            <strong>💰 Tỷ lệ hoa hồng:</strong>{" "}
-                            <span className="fw-semibold text-primary">
-                              {(p.commissionRate * 100).toFixed(0)}%
-                            </span>
-                          </p>
                           <p className="text-muted mb-0">
-                            Thỏa thuận giữa đối tác và admin.
+                            Đối tác đã hoàn tất đàm phán.
                           </p>
                         </div>
                       </Card.Body>
@@ -227,7 +226,9 @@ export default function AdminLicensePage() {
           </Tab>
         </Tabs>
 
-        {/* Modal xác nhận phê duyệt */}
+        {/* ==========================
+            MODAL CONFIRM APPROVAL
+        ========================== */}
         <Modal
           show={showModal}
           onHide={() => setShowModal(false)}
@@ -242,7 +243,7 @@ export default function AdminLicensePage() {
               <>
                 <p>
                   Bạn có chắc chắn muốn phê duyệt hợp tác với{" "}
-                  <strong>{selectedPartner.name}</strong>?
+                  <strong>{selectedPartner.fullName}</strong>?
                 </p>
                 <p className="text-muted small">
                   Sau khi phê duyệt, bạn có thể mở khung <b>Đàm phán</b> để trao

@@ -227,6 +227,50 @@ class UserDAO {
     });
     return toDTOs(owners);
   }
+  static async getPartnersByStatus(status) {
+    const users = await UserModel.findAll({
+      where: { role: 1 }, // partner
+      include: [
+        {
+          model: RestaurantPartnerModel,
+          as: "restaurantpartner",
+          where: { status },
+          required: true,
+        },
+      ],
+    });
+
+    return users.map((u) => u.get({ plain: true }));
+  }
+
+  static async getApprovedPartners() {
+    const { user, restaurantpartner } = db;
+
+    const rows = await user.findAll({
+      where: { role: 1 }, // role = 1 => partner/owner
+      include: [
+        {
+          model: restaurantpartner,
+          as: "restaurantpartner",
+          where: { status: 3 }, // 3 = approved
+          required: true,
+        },
+      ],
+    });
+
+    return rows.map((r) => r.get({ plain: true }));
+  }
+
+  static async updatePartnerStatus(userID, status) {
+    const affected = await RestaurantPartnerModel.update(
+      { status },
+      { where: { restaurantPartnerID: userID } }
+    );
+
+    if (affected[0] === 0) throw new Error("Partner not found");
+
+    return true;
+  }
 }
 
 export default UserDAO;

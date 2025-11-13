@@ -1,76 +1,85 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import AdminLayout from "../../../../layouts/AdminLayout";
-import { usersMock } from "../../../../mock/partnerMock";
+import axios from "../../../../api/axios";
 
 export default function UserList() {
-  const [users, setUsers] = useState(usersMock);
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
 
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.status === 1).length;
-  const newUsers = users.filter((u) => {
-    const diff =
-      (new Date() - new Date(u.createdAt)) / (1000 * 60 * 60 * 24);
-    return diff <= 7;
-  }).length;
+  // 🟦 Fetch users từ DB
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("/admin");
+      console.log("📌 Users from API:", res.data);
+
+      setUsers(res.data);
+    } catch (err) {
+      console.error("Lỗi tải users:", err);
+    }
+  };
 
   const getRoleName = (role) =>
     role === 0 ? "Khách hàng" : role === 1 ? "Đối tác" : "Admin";
 
   const filteredUsers = users.filter((u) => {
-    const matchName = u.fullName
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+    const matchName = u.fullName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus =
       statusFilter === "all" ||
       (statusFilter === "active" ? u.status === 1 : u.status === 0);
-    const matchRole =
-      roleFilter === "all" || u.role.toString() === roleFilter;
+    const matchRole = roleFilter === "all" || u.role.toString() === roleFilter;
     return matchName && matchStatus && matchRole;
   });
 
-  const toggleStatus = (id) => {
-    const user = users.find((u) => u.userID === id);
-    if (!user) return;
-
+  const toggleStatus = async (id, currentStatus) => {
     const confirmMsg =
-      user.status === 1
+      currentStatus === 1
         ? "Bạn có chắc muốn KHÓA tài khoản này không?"
         : "Bạn có chắc muốn MỞ KHÓA tài khoản này không?";
 
-    if (window.confirm(confirmMsg)) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.userID === id ? { ...u, status: u.status === 1 ? 0 : 1 } : u
-        )
-      );
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await axios.post(`/api/admin/update/status/${id}`, {
+        status: currentStatus === 1 ? 0 : 1,
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error("Lỗi cập nhật trạng thái:", err);
     }
   };
 
   return (
     <AdminLayout title="Quản lý người dùng">
       <div className="container py-4">
-        {/* === 1️⃣ Hàng thống kê === */}
+        {/* Statistic cards */}
         <div className="row g-4 mb-4">
           {[
             {
               title: "Tổng người dùng",
-              value: totalUsers,
+              value: users.length,
               color: "text-primary",
               icon: "bi bi-people",
             },
             {
               title: "Đang hoạt động",
-              value: activeUsers,
+              value: users.filter((u) => u.status === 1).length,
               color: "text-success",
               icon: "bi bi-check-circle",
             },
             {
               title: "Mới trong 7 ngày",
-              value: newUsers,
+              value: users.filter((u) => {
+                const diff =
+                  (new Date() - new Date(u.createdAt)) / (1000 * 60 * 60 * 24);
+                return diff <= 7;
+              }).length,
               color: "text-info",
               icon: "bi bi-clock-history",
             },
@@ -89,7 +98,7 @@ export default function UserList() {
           ))}
         </div>
 
-        {/* === 2️⃣ Bộ lọc === */}
+        {/* Filters */}
         <div className="card shadow-sm border-0 mb-4">
           <div className="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div className="d-flex flex-wrap align-items-center gap-3">
@@ -136,7 +145,7 @@ export default function UserList() {
           </div>
         </div>
 
-        {/* === 3️⃣ Danh sách người dùng === */}
+        {/* User Cards */}
         <div className="row g-4">
           {filteredUsers.map((user) => (
             <div className="col-md-4" key={user.userID}>
@@ -177,7 +186,7 @@ export default function UserList() {
                       className={`btn btn-sm text-white ${
                         user.status === 1 ? "btn-danger" : "btn-success"
                       }`}
-                      onClick={() => toggleStatus(user.userID)}
+                      onClick={() => toggleStatus(user.userID, user.status)}
                     >
                       {user.status === 1 ? "Khóa" : "Mở khóa"}
                     </button>

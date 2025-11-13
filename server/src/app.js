@@ -9,6 +9,7 @@ import aiSuggestRoutes from "./routes/aiSuggestRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
 import amenityRoutes from "./routes/AmenityRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 const app = express();
 
@@ -30,5 +31,6 @@ app.use("/api/ai", aiSuggestRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/amenities", amenityRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 export default app;

@@ -213,8 +213,9 @@ class RestaurantDAO {
   }
 
   static async getByPartnerID(partnerID) {
+    console.log(">>> DAO nhận partnerID:", partnerID, typeof partnerID);
     return await restaurant.findAll({
-      where: { restaurantPartnerID: partnerID },
+      where: { restaurantPartnerID: Number(partnerID) },
       include: [
         { model: address, as: "address" },
         { model: hall, as: "halls" },

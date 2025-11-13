@@ -32,7 +32,7 @@ import AdminRestaurantDetail from "../pages/admin/management/restaurant/AdminRes
 import AdminBookingListPage from "../pages/admin/booking/AdminBookingListPage";
 import AdminBookingDetailsPage from "../pages/admin/booking/AdminBookingDetailsPage";
 import AdminProfilePage from "../pages/admin/Profile";
-import AdminLicensePage from "../pages/admin/management/license/AdminiLicensePage";
+import AdminLicensePage from "../pages/admin/management/license/AdminLicensePage";
 import AdminRestaurantList from "../pages/admin/management/restaurant/AdminRestaurantList";
 import AdminPaymentListPage from "../pages/admin/management/payment/AdminPaymentListPage";
 import AdminPaymentDetail from "../pages/admin/management/payment/AdminPaymentDetail";

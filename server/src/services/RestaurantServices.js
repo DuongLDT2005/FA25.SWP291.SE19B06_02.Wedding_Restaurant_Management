@@ -7,7 +7,8 @@ class RestaurantService {
   }
 
   static async getByPartnerID(restaurantPartnerID) {
-    return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
+    if (!restaurantPartnerID) throw new Error("Missing partnerID");
+    return await RestaurantDAO.getByPartnerID(Number(restaurantPartnerID));
   }
 
   static async getAvailable() {
