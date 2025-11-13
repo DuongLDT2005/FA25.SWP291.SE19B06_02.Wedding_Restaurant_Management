@@ -16,8 +16,8 @@ const SubmitBookingButton = () => {
     setLoading(true);
     try {
       recalcPrice();
-  const restaurantId = location?.state?.restaurantId;
-  const hallId = location?.state?.hallId || booking?.bookingInfo?.hallID;
+      const restaurantId = location?.state?.restaurantId;
+      const hallId = location?.state?.hallId || booking?.bookingInfo?.hallID;
 
       // Derive customerID
       const customerID = user?.customerID || user?.userID || user?.id || null;
@@ -29,7 +29,7 @@ const SubmitBookingButton = () => {
         const name = (booking?.bookingInfo?.eventType || "").trim().toLowerCase();
         const found = ets.find((et) => String(et.name || "").trim().toLowerCase() === name);
         if (found) eventTypeID = found.eventTypeID || found.id;
-      } catch {}
+      } catch { }
 
       // Ensure menuID
       const menuID = booking?.menu?.menuID || booking?.menu?.id || null;
@@ -95,15 +95,18 @@ const SubmitBookingButton = () => {
   };
 
   return (
-    <div className="flex justify-end my-4">
+    <div className="d-flex justify-content-end my-3">
       <button
-        onClick={handleSubmit}
+        type="button"
+        className="border-0 text-white px-3 py-2 fw-medium"
         disabled={loading}
-        className="px-7 py-2 rounded-md font-medium transition-colors border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 hover:border-red-400 disabled:opacity-60"
+        onClick={handleSubmit}
+        style={{ borderRadius: "0.375rem", backgroundColor: "#e11d48" }}
       >
         {loading ? "Đang gửi..." : "Gửi yêu cầu đặt chỗ"}
       </button>
     </div>
+
   );
 };
 

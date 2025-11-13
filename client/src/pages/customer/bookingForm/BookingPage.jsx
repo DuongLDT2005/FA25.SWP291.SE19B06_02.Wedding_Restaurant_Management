@@ -4,8 +4,10 @@ import BookingForm from "./BookingForm";
 import PriceSummaryPanel from "./PriceSummaryPanel";
 import SubmitBookingButton from "./SubmitBookingButton";
 import useBooking from "../../../hooks/useBooking";
+import MainLayout from "../../../layouts/MainLayout";
 import { useRestaurant as useRestaurantData } from "../../../hooks/useRestaurantData";
 import { restaurantDetail as mockRestaurant } from "../../restaurant/restaurantDetails/RestaurantDetailsPage";
+import { Col, Row } from "react-bootstrap";
 
 const BookingPage = () => {
   const location = useLocation();
@@ -49,28 +51,23 @@ const BookingPage = () => {
       setBookingField("hall", chosen?.name || "");
       // Store hallID as well for later submit payload
       if (chosen) setBookingField("hallID", chosen.hallID ?? chosen.id);
-    } catch {}
+    } catch { }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurant, selectedHallId]);
 
   return (
-    <div className="container" style={{ maxWidth: "1000px" }}>
-      <div className="space-y-5">
-        <div className="booking-page grid grid-cols-3 gap-4">
-        <div className="col-span-2">
-          <BookingForm menus={menus} services={services} />
-        </div>
-        <div className="col-span-1">
-          <PriceSummaryPanel />
-        </div>
-        </div>
-
-        {/* Bottom action bar */}
-        <div className="flex justify-end">
-          <SubmitBookingButton />
-        </div>
-      </div>
-    </div>
+    <MainLayout>
+      <main className="container mx-auto px-4 py-12 space-y-12">
+        <Row>
+          <Col xs={12} md={6} lg={7} >
+            <BookingForm menus={menus} services={services} />
+          </Col>
+          <Col xs={12} md={6} lg={5} >
+            <PriceSummaryPanel />
+          </Col>
+        </Row>
+      </main>
+    </MainLayout >
   );
 };
 

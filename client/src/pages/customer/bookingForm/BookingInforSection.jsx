@@ -1,18 +1,86 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import DateInput from "../../../components/searchbar/DateInput";
 import MenuSelectorModal from "./MenuSelectorModal";
 import ServiceSelector from "./ServiceSelector";
 import PromotionBadge from "./PromotionBadge";
 import useBooking from "../../../hooks/useBooking";
-
+import { Badge, Button, Col, Form, Row, Table } from "react-bootstrap";
+import ServiceSelectorModal from "./ServiceSelectorModal";
+import SpecialRequestSection from "./SpecialRequestSection";
 const BookingInfoSection = ({ menus = [], services = [] }) => {
-  const { booking, setBookingField, setMenu, setDishes } = useBooking();
+  const { booking, setBookingField, setMenu, setDishes, setServices } = useBooking();
   const { bookingInfo, menu } = booking;
+  const [menuPreview, setMenuPreview] = useState(null);
+  const [dishesPreview, setDishesPreview] = useState({});
+  const [showMenuPreview, setShowMenuPreview] = useState(false);
+  const [showServicePreview, setShowServicePreview] = useState(false);
+  useEffect(() => {
+    if (!bookingInfo) return;
+
+    // đưa tất cả field vào state một lần
+    setBookingField("restaurant", bookingInfo.restaurant);
+    setBookingField("hall", bookingInfo.hall);
+    setBookingField("date", bookingInfo.date);
+    setBookingField("startTime", bookingInfo.startTime);
+    setBookingField("endTime", bookingInfo.endTime);
+    setBookingField("tables", bookingInfo.tables);
+    setBookingField("eventType", bookingInfo.eventType);
+  }, [bookingInfo]);
+
+  const eventType = booking?.bookingInfo?.eventType ?? "";
+  const filteredServices = useMemo(() => {
+    if (!Array.isArray(services) || !eventType) return services || [];
+    return services.filter((s) => {
+      // service may declare applicable event types in different keys
+      const allowed = s.eventTypes || s.applicableEventTypes || s.applicable || null;
+      if (!allowed) return true; // if service has no restriction, show it
+      // allowed can be array or comma-separated string
+      if (Array.isArray(allowed)) return allowed.includes(eventType);
+      if (typeof allowed === "string") return allowed.split(",").map(x => x.trim()).includes(eventType);
+      return true;
+    });
+  }, [services, eventType]);
 
   return (
-    <section className="p-3 border rounded-lg bg-white shadow-sm text-sm" style={{ fontSize: "0.95rem" }}>
-      <h2 className="font-semibold mb-3" style={{ fontSize: "1.05rem" }}>Booking Information</h2>
-      <div className="grid grid-cols-2 gap-3">
+    <section className="p-4 border rounded bg-white shadow-sm text-sm" style={{ fontSize: "0.95rem" }}>
+      <h3 className="fw-bold mb-3" style={{ color: "#e11d48" }}>
+        Chi tiết đặt chỗ
+      </h3>
+      <div className="mb-3">
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Nhà hàng</Col>
+          <Col>{bookingInfo.restaurant}</Col>
+        </Row>
+
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Sảnh</Col>
+          <Col>{bookingInfo.hall}</Col>
+        </Row>
+
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Ngày diễn ra</Col>
+          <Col>{bookingInfo.date}</Col>
+        </Row>
+
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Thời gian</Col>
+          <Col>
+            {bookingInfo.startTime} - {bookingInfo.endTime}
+          </Col>
+        </Row>
+
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Loại sự kiện</Col>
+          <Col>{bookingInfo.eventType}</Col>
+        </Row>
+
+        <Row className="mb-2">
+          <Col xs={5} className="fw-semibold">Số bàn</Col>
+          <Col>{bookingInfo.tables}</Col>
+        </Row>
+      </div>
+
+      {/* <div className="grid grid-cols-2 gap-3">
         <input name="restaurant" placeholder="Restaurant" value={bookingInfo.restaurant} disabled className="form-control bg-gray-50" />
         <input name="hall" placeholder="Hall" value={bookingInfo.hall} disabled className="form-control bg-gray-50" />
         <div>
@@ -49,27 +117,138 @@ const BookingInfoSection = ({ menus = [], services = [] }) => {
             <option>Hội thảo</option>
             <option>Tiệc công ty</option>
           </select>
-        </div>
+        </div> */}
 
-        <div>
-          <label className="small">Thực đơn</label>
-          <MenuSelectorModal
-            menus={menus}
-            onSelect={(selection) => {
-              // selection: { menu, dishes }
-              const pickedMenu = selection.menu;
-              const menuObj = typeof pickedMenu === 'string' ? { name: pickedMenu } : pickedMenu;
-              setMenu(menuObj);
-              // flatten dish names across categories
-              const dishNames = Object.values(selection.dishes || {}).flat();
-              setDishes(dishNames.map((d, idx) => ({ id: idx + 1, name: d })));
-            }}
-          />
-        </div>
+      <div className="mb-3">
+        <Row className="mb-2 align-items-center">
+          <Col xs={5} className="fw-semibold">
+            Thực đơn
+          </Col>
+          <Col className="d-flex justify-content-end gap-2">
+            <MenuSelectorModal
+              menus={menus}
+              onSelect={(selection) => {
+                // selection: { menu, dishes }
+                const pickedMenu = selection.menu;
+                const menuObj = typeof pickedMenu === 'string' ? { name: pickedMenu } : pickedMenu;
+                setMenu(menuObj);
+                setMenuPreview(menuObj);
+                // flatten dish names across categories
+                const dishNames = Object.values(selection.dishes || {}).flat();
+                setDishes(dishNames.map((d, idx) => ({ id: idx + 1, name: d })));
+                const dishesObj = {};
+                Object.keys(selection.dishes).forEach(cat => {
+                  dishesObj[cat] = selection.dishes[cat];
+                });
+                setDishesPreview(dishesObj);
+              }}
+            />
+            {menuPreview && (
+              <Button variant="outline-secondary" size="sm" onClick={() => setShowMenuPreview((s) => !s)}>
+                {showMenuPreview ? "Ẩn chi tiết" : "Xem chi tiết"}
+              </Button>
+            )}
 
-        <ServiceSelector services={services} />
-        <PromotionBadge />
+          </Col>
+        </Row>
+        {/* Bảng hiển thị realtime từ state tạm */}
+        {showMenuPreview && menuPreview && (
+          <div className="mt-3">
+            <Table striped bordered hover size="sm" responsive>
+              <thead className="table-dark">
+                <tr>
+                  <th>Danh mục</th>
+                  <th>Món ăn</th>
+                  <th>Số lượng yêu cầu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {menuPreview.categories.map((cat) => {
+                  const catDishes = dishesPreview[cat.name] || [];
+                  return (
+                    <tr key={cat.name}>
+                      <td className="fw-semibold">{cat.name}</td>
+                      <td>
+                        {catDishes.length > 0
+                          ? catDishes.map((d, idx) => (
+                            <Badge
+                              key={idx}
+                              bg="info"
+                              text="dark"
+                              pill
+                              className="me-1 mb-1"
+                            >
+                              {d}
+                            </Badge>
+                          ))
+                          : <span className="text-muted">Chưa chọn</span>}
+                      </td>
+                      <td>{cat.limit}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          </div>
+        )}
       </div>
+      <div className="mb-3">
+        <Row className="mb-2 align-items-center">
+          <Col xs={5} className="fw-semibold">Dịch vụ</Col>
+          <Col className="d-flex justify-content-end gap-2">
+            <ServiceSelectorModal
+              services={filteredServices}
+              onSelect={(payload) => {
+                const svcList = (payload?.services || []).map((s) => ({
+                  id: s.id,
+                  serviceID: s.serviceID,
+                  name: s.name,
+                  price: s.price,
+                  quantity: Number(s.quantity || 1),
+                  unit: s.unit,
+                }));
+                setServices(svcList);
+              }}
+            />
+            {filteredServices.length === 0 && (
+              <div className="text-muted small mt-2">Không có dịch vụ bổ sung phù hợp với loại sự kiện này.</div>
+            )}
+            {booking.services.length > 0 && (
+              <Button variant="outline-secondary" size="sm" onClick={() => setShowServicePreview((s) => !s)}>
+                {showServicePreview ? "Ẩn chi tiết" : "Xem chi tiết"}
+              </Button>
+            )}
+          </Col>
+        </Row>
+
+        {showServicePreview && booking.services && booking.services.length > 0 && (
+          <div className="mt-3">
+            <Table striped bordered hover size="sm" responsive>
+              <thead className="table-dark">
+                <tr>
+                  <th>Dịch vụ</th>
+                  <th>Số lượng</th>
+                  <th>Đơn giá</th>
+                  <th>Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {booking.services.map((s) => (
+                  <tr key={s.id}>
+                    <td>{s.name}</td>
+                    <td>{s.quantity ?? 1}</td>
+                    <td>{(s.price || 0).toLocaleString()}₫/ {s.unit}</td>
+                    <td>{((s.price || 0) * (s.quantity || 1)).toLocaleString()}₫</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        )}
+      </div>
+      {/* <ServiceSelector services={services} /> */}
+      <PromotionBadge />
+      <SpecialRequestSection />
     </section>
   );
 };

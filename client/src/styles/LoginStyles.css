@@ -214,13 +214,13 @@
     margin-bottom: 12px;
 }
 
-.modal input {
+/* .modal input {
     width: 90%;
     margin-bottom: 12px;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
-}
+} */
 
 .modal-actions {
     display: flex;
