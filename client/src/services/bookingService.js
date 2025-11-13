@@ -170,3 +170,14 @@ export async function getAllBookings() {
   if (!res.ok) throw new Error(json?.message || 'Fetch bookings failed');
   return Array.isArray(json?.data) ? json.data : [];
 }
+
+/**
+ * Lấy chi tiết booking theo ID
+ * Backend: GET /api/bookings/:id (trả { success, data })
+ */
+export async function getBookingById(bookingID) {
+  const res = await fetch(`${API_URL}/${bookingID}`, { credentials: 'include', headers: { Accept: 'application/json' } });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.message || 'Fetch booking detail failed');
+  return json?.data ?? json;
+}

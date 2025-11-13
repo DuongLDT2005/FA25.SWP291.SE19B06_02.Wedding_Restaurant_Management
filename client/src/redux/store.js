@@ -7,6 +7,7 @@ import eventTypeReducer from "./slices/eventTypeSlice";
 import restaurantsReducer from "./slices/restaurantSlice";
 import hallsReducer from "./slices/hallSlice";
 import additionRestaurantReducer from "./slices/additionRestaurantSlice";
+import paymentReducer from "./slices/paymentSlice";
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -17,6 +18,7 @@ const store = configureStore({
     restaurants: restaurantsReducer,
     halls: hallsReducer,
     additionRestaurant: additionRestaurantReducer,
+    payment: paymentReducer,
   },
 })
 

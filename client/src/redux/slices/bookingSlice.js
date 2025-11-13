@@ -52,6 +52,19 @@ export const rejectBookingByPartner = createAsyncThunk(
   }
 );
 
+// Load full detail by ID for detail page
+export const loadBookingDetail = createAsyncThunk(
+  "booking/detail/load",
+  async (bookingID, { rejectWithValue }) => {
+    try {
+      const data = await bookingService.getBookingById(bookingID);
+      return data;
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
 // Simple mock promotions builder for fallback/testing
 const buildMockPromotions = (params = {}) => {
   const tables = Number(params?.tables || 0);
@@ -101,6 +114,10 @@ const initialState = {
   partnerRows: [],
   partnerStatus: "idle",
   partnerError: null,
+  // Detail view state
+  detail: null,
+  detailStatus: "idle",
+  detailError: null,
 };
 
 const bookingSlice = createSlice({
@@ -251,12 +268,28 @@ const bookingSlice = createSlice({
         state.partnerStatus = "failed";
         state.partnerError = action.payload ?? action.error?.message;
       })
+      // Load detail for page
+      .addCase(loadBookingDetail.pending, (state) => {
+        state.detailStatus = "loading";
+        state.detailError = null;
+      })
+      .addCase(loadBookingDetail.fulfilled, (state, action) => {
+        state.detailStatus = "succeeded";
+        state.detail = action.payload || null;
+      })
+      .addCase(loadBookingDetail.rejected, (state, action) => {
+        state.detailStatus = "failed";
+        state.detailError = action.payload ?? action.error?.message;
+      })
       // Accept booking
       .addCase(acceptBookingByPartner.fulfilled, (state, action) => {
         const id = action.payload?.bookingID;
         state.partnerRows = (state.partnerRows || []).map((x) =>
           x.bookingID === id ? { ...x, status: 1 } : x
         );
+        if (state.detail && state.detail.bookingID === id) {
+          state.detail = { ...state.detail, status: 1 };
+        }
       })
       // Reject booking
       .addCase(rejectBookingByPartner.fulfilled, (state, action) => {
@@ -264,6 +297,9 @@ const bookingSlice = createSlice({
         state.partnerRows = (state.partnerRows || []).map((x) =>
           x.bookingID === id ? { ...x, status: 2 } : x
         );
+        if (state.detail && state.detail.bookingID === id) {
+          state.detail = { ...state.detail, status: 2 };
+        }
       });
   },
 });

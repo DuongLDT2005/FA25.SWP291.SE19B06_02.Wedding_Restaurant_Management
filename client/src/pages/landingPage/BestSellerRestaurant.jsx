@@ -80,9 +80,9 @@ export default function BestSellerRestaurant() {
 
     useEffect(() => {
         let mounted = true;
-        (async () => {
+    (async () => {
             try {
-                const res = await getTopBookedRestaurants();
+        const res = await getTopBookedRestaurants({ limit: 8 });
                 const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
                 if (!mounted || arr.length === 0) return;
                 // normalize to RestaurantCard shape

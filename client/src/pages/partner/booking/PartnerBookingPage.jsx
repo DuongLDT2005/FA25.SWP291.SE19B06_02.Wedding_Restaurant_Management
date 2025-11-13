@@ -19,7 +19,7 @@ export default function PartnerBookingPage() {
     loadPartnerBookings,
     acceptByPartner,
     rejectByPartner,
-    markCheckedLocal,
+    loadBookingDetail,
   } = useBooking();
   const [activeTab, setActiveTab] = useState("pending");
   const [restaurantFilter, setRestaurantFilter] = useState("");
@@ -61,7 +61,8 @@ export default function PartnerBookingPage() {
         fullName: c.fullName || c.name || "Ẩn danh",
         phone: c.phone || "Không có",
         email: c.email || "Không có",
-        checked: b.isChecked ?? b.checked ?? 0,
+        // normalize checked to 0/1 for stable comparisons
+        checked: Number(b.isChecked ?? b.checked ?? 0),
         totalAmount: b.totalAmount ?? 0,
       };
     });
@@ -73,19 +74,28 @@ export default function PartnerBookingPage() {
 
     switch (activeTab) {
       case "pending":
-        data = bookings.filter((b) => b.status === 0 && b.checked === 0);
-        break;
-      case "checked":
-        data = bookings.filter((b) => b.status === 0 && b.checked === 1);
+        // Chỉ lọc theo trạng thái chờ xử lý
+        data = bookings.filter((b) => b.status === 0);
         break;
       case "confirmed":
+        // Đã xác nhận: ACCEPTED(1) + CONFIRMED(3)
         data = bookings.filter((b) => [1, 3].includes(b.status));
         break;
+      case "deposited":
+        // Đã cọc: DEPOSITED(4)
+        data = bookings.filter((b) => b.status === 4);
+        break;
+      case "alreadyBooked":
+        // Đã chặn tay: MANUAL_BLOCKED(8)
+        data = bookings.filter((b) => b.status === 8);
+        break;
       case "done":
-        data = bookings.filter((b) => [2, 4].includes(b.status));
+        // Đã hoàn tất / Hủy: COMPLETED(7), CANCELLED(6)
+        data = bookings.filter((b) => [7, 6].includes(b.status));
         break;
       case "rejected":
-        data = bookings.filter((b) => b.status === 5);
+        // Từ chối: REJECTED(2)
+        data = bookings.filter((b) => b.status === 2);
         break;
       default:
         data = bookings;
@@ -95,16 +105,11 @@ export default function PartnerBookingPage() {
       (b) =>
         (!restaurantFilter || b.restaurantID === Number(restaurantFilter)) &&
         (!dateFilter || b.eventDate === dateFilter) &&
-        (!timeFilter || b.startTime >= timeFilter)
+        (!timeFilter || (b.startTime || "").slice(0, 5) >= timeFilter)
     );
   }, [activeTab, restaurantFilter, dateFilter, timeFilter, bookings]);
 
   // --- Hành động ---
-  const handleMarkChecked = async (bookingID) => {
-    if (!window.confirm("Đánh dấu booking này đã được kiểm tra?")) return;
-    // Optional: call backend to mark checked if endpoint exists, else only update UI
-    markCheckedLocal(bookingID);
-  };
 
   const handleReject = async (bookingID) => {
     if (!window.confirm("Bạn có chắc muốn từ chối booking này?")) return;
@@ -125,8 +130,12 @@ export default function PartnerBookingPage() {
     }
   };
 
-  const handleView = (bookingID) => {
-    navigate(`/partner/bookings/${bookingID}`);
+  const handleView = async (bookingObj) => {
+    const id = bookingObj?.bookingID ?? bookingObj;
+    // Kích hoạt load chi tiết qua hooks; không chờ cũng được để điều hướng nhanh
+    try { loadBookingDetail(id); } catch {}
+    // Truyền kèm object để trang chi tiết dùng ngay trong lúc đợi detail
+    navigate(`/partner/bookings/${id}` , { state: { booking: bookingObj } });
   };
 
   // current selected label for select (fallback to empty)
@@ -145,9 +154,11 @@ export default function PartnerBookingPage() {
           className="mb-3"
           justify
         >
+          <Tab eventKey="all" title="Tất cả" />
           <Tab eventKey="pending" title="Chờ xử lý" />
-          <Tab eventKey="checked" title="Đã kiểm tra" />
-          <Tab eventKey="confirmed" title="Đã xác nhận / Đã cọc" />
+          <Tab eventKey="confirmed" title="Đã xác nhận" />
+          <Tab eventKey="deposited" title="Đã cọc" />
+          <Tab eventKey="alreadyBooked" title="Đã chặn" />
           <Tab eventKey="done" title="Đã hoàn tất / Hủy" />
           <Tab eventKey="rejected" title="Từ chối" />
         </Tabs>
@@ -209,8 +220,8 @@ export default function PartnerBookingPage() {
                 <BookingCard
                   booking={b}
                   activeTab={activeTab}
-                  onViewDetail={handleView}
-                  onMarkChecked={handleMarkChecked}
+                  // Gửi luôn object b sang detail qua navigate state
+                  onViewDetail={() => handleView(b)}
                   onReject={handleReject}
                   onAccept={handleAccept}
                 />
