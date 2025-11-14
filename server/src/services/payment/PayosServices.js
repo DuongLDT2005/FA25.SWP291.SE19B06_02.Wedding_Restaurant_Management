@@ -61,10 +61,10 @@ class PayosServices {
     // --- 2. Tính tổng tiền hợp lệ ---
     const amount = toVndInt(
       booking.depositAmount ??
-        booking.totalAmount ??
-        Number(booking.originalPrice || 0) -
-          Number(booking.discountAmount || 0) +
-          Number(booking.VAT || 0)
+      booking.totalAmount ??
+      Number(booking.originalPrice || 0) -
+      Number(booking.discountAmount || 0) +
+      Number(booking.VAT || 0)
     );
 
     // --- 3. Chuẩn bị thông tin mô tả ---
@@ -73,7 +73,7 @@ class PayosServices {
       booking?.restaurantName ||
       "Nhà hàng";
     const hallName = booking?.hall?.name || booking?.hallName || "Sảnh";
-//    const description = `Đặt cọc đơn đặt tiệc #${bookingID} - ${restaurantName}`;
+    //    const description = `Đặt cọc đơn đặt tiệc #${bookingID} - ${restaurantName}`;
     const description = `Đặt cọc`;
 
 
@@ -128,7 +128,7 @@ class PayosServices {
       const verified = payos.webhooks.verify(webhookData);
       return verified;
     } catch (err) {
-      console.error("[PayOS] ❌ Webhook verification failed:", err.message);
+      console.error("[PayOS] Webhook verification failed:", err.message);
       return null;
     }
   }
