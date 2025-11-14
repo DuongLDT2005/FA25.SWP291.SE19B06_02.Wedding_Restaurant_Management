@@ -190,5 +190,16 @@ class AuthServices {
     deleteOtpByEmail(email);
     return true;
   }
+
+   getCurrentUser = async () => {
+  const token = localStorage.getItem("token");
+
+  return axios.get("http://localhost:3000/api/auth/me", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+};
+
 }
 export default AuthServices;

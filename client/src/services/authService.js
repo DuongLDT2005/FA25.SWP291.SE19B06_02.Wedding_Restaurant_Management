@@ -34,7 +34,7 @@ export const logout = async () => {
 
     // Nếu backend chưa có endpoint logout, ta vẫn xử lý local
     if (!res.ok) {
-      console.warn("[authService] Logout API không khả dụng hoặc trả lỗi, dùng fallback local.");
+      console.warn("[] Logout API không khả dụng hoặc trả lỗi, dùng fallback local.");
     }
 
     // Xóa token local nếu có
@@ -43,7 +43,7 @@ export const logout = async () => {
     // Không ném lỗi để frontend không crash
     return { message: "Đăng xuất thành công (local fallback)" };
   } catch (err) {
-    console.warn("[authService] Lỗi logout:", err.message);
+    console.warn("[] Lỗi logout:", err.message);
 
     // Dù lỗi cũng vẫn xóa token để user thực sự đăng xuất
     localStorage.removeItem("token");
