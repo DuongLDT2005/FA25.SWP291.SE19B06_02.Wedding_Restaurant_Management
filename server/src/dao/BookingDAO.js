@@ -162,7 +162,7 @@ class BookingDAO {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
-        status: BookingStatus.DEPOSITED, 
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -173,13 +173,12 @@ class BookingDAO {
     });
     return toDTOs(rows);
   }
-
-  // Find overlapping bookings for blocking/availability checks. Includes deposited, manual blocked, and confirmed.
-  static async findOverlapsForBlocking(hallID, eventDate, startTime, endTime) {
+  static async searchHallAvailable(hallID, eventDate, startTime, endTime) {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
-        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.MANUAL_BLOCKED] },
+        // capacity will larger and equal, 
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -265,6 +264,12 @@ class BookingDAO {
     const rows = await BookingModel.findAll({
       include: [
         {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
+        {
           model: HallModel,
           as: 'hall',
           include: [{
@@ -292,7 +297,12 @@ class BookingDAO {
     if (!partnerID) return [];
     const rows = await BookingModel.findAll({
       include: [
-        { model: CustomerModel, as: 'customer' },
+      {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
         { model: EventTypeModel, as: 'eventType' },
         {
           model: HallModel,

@@ -109,8 +109,13 @@ export default function SignUpCustomer() {
         // success -> redirect to login
         navigate("/login");
       } catch (err) {
-        // show error (backend message or generic)
-        alert(err?.message || String(err));
+        // Handle specific errors
+        if (err?.message === "Email đã tồn tại") {
+          setErrors({ email: "Email đã tồn tại" });
+        } else {
+          // For other errors, set form error
+          setErrors({ form: err?.message || String(err) });
+        }
       }
     }
   };
@@ -446,6 +451,18 @@ export default function SignUpCustomer() {
                 >
                   Đăng Ký
                 </Button>
+                {errors.form && (
+                  <div
+                    style={{
+                      color: "red",
+                      fontSize: "20px",
+                      marginBottom: "10px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {errors.form}
+                  </div>
+                )}
               </form>
 
               <div

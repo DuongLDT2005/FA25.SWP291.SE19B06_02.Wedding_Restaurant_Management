@@ -8,6 +8,7 @@ import {
   deleteDishCategory,
   // menus
   fetchMenusByRestaurant,
+  fetchMenuById,
   createMenu,
   updateMenu,
   deleteMenu,
@@ -18,6 +19,7 @@ import {
   deleteDish,
   // promotions
   fetchPromotionsByRestaurant,
+  fetchPromotions,
   createPromotion,
   updatePromotion,
   deletePromotion,
@@ -99,6 +101,15 @@ export function useAdditionRestaurant() {
     return action.payload; // deleted id
   }, [dispatch]);
 
+  const loadMenuById = useCallback(async (menuId) => {
+    const action = await dispatch(fetchMenuById(menuId));
+    if (action.error) throw action.payload || action.error.message;
+    return action.payload;
+  }, [dispatch]);
+
+  // Load menu details with dishes (alias for loadMenuById)
+  const loadMenuDetails = loadMenuById;
+
   // Dishes
   const loadDishesByRestaurant = useCallback(async (restaurantId) => {
     const action = await dispatch(fetchDishesByRestaurant(restaurantId));
@@ -127,6 +138,12 @@ export function useAdditionRestaurant() {
   // Promotions
   const loadPromotionsByRestaurant = useCallback(async (restaurantId) => {
     const action = await dispatch(fetchPromotionsByRestaurant(restaurantId));
+    if (action.error) throw action.payload || action.error.message;
+    return action.payload;
+  }, [dispatch]);
+
+  const loadPromotions = useCallback(async (params) => {
+    const action = await dispatch(fetchPromotions(params));
     if (action.error) throw action.payload || action.error.message;
     return action.payload;
   }, [dispatch]);
@@ -192,6 +209,7 @@ export function useAdditionRestaurant() {
     removeOneDishCategory,
     // menus
     loadMenusByRestaurant,
+    loadMenuById,
     createOneMenu,
     updateOneMenu,
     removeOneMenu,
@@ -202,6 +220,7 @@ export function useAdditionRestaurant() {
     removeOneDish,
     // promotions
     loadPromotionsByRestaurant,
+    loadPromotions,
     createOnePromotion,
     updateOnePromotion,
     removeOnePromotion,

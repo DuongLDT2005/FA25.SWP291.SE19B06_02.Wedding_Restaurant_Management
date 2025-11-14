@@ -52,6 +52,16 @@ class UserService {
         return user;
     }
 
+    static async findByEmail(email) {
+        if (!email) {
+            throw new Error('Email cannot be null');
+        }
+        console.log("Finding user by email:", email.trim().toLowerCase());
+        const user = await UserDAO.findByEmail(email.trim().toLowerCase());
+        console.log("User found:", user ? { id: user.userID, email: user.email, role: user.role } : "null");
+        return user;
+    }
+
     static async updateUserStatus(userId, status) {
         if (!userId) {
             throw new Error('User ID cannot be null');

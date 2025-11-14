@@ -22,7 +22,6 @@ router.delete("/:id", BookingController.deleteBooking);
 
 
 
-
 // Partner accept booking
 router.patch('/:id/partner/accept', authenticateJWT, ensurePartner, (req, res, next) => {
   req.body = req.body || {};

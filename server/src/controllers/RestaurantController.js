@@ -118,7 +118,6 @@ class RestaurantController {
       res.status(500).json({ message: 'Error fetching top booked restaurants', error: err.message });
     }
   }
-
 }
 
 export default RestaurantController;

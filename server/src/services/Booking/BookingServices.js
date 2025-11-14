@@ -41,7 +41,7 @@ class BookingService {
     } = data;
 
     // 1️⃣ Validate cơ bản
-    if (!customerID || !eventTypeID || !hallID || !menuID || !eventDate || !startTime || !endTime)
+    if (!customerID || !eventTypeID || !hallID || !menuID || !eventDate || !startTime || !endTime )
       throw new Error("Missing required fields.");
     if (!Number.isInteger(tableCount) || tableCount <= 0)
       throw new Error("Invalid table count.");
@@ -393,7 +393,7 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
-  // take 
+  // get user by customerID from restaurants getBookingsByPartnerId
 }
 
 

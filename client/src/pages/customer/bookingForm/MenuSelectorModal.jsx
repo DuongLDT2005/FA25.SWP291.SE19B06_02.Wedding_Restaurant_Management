@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Button,
   Modal,
@@ -8,11 +8,65 @@ import {
   Badge,
 } from "react-bootstrap";
 
-const MenuSelectorModal = ({ menus = [], onSelect }) => {
+const MenuSelectorModal = ({ menus = [], loadMenuDetails, loadDishCategoriesByRestaurant, restaurantId, onSelect }) => {
   const [show, setShow] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState(null);
   const [selectedDishes, setSelectedDishes] = useState({});
+  const [menuDetails, setMenuDetails] = useState(null);
+  const [loadingMenuDetails, setLoadingMenuDetails] = useState(false);
   const primaryColor = "#E11D48";
+
+  // Load menu details when menu is selected
+  useEffect(() => {
+    if (selectedMenu?.menuID) {
+      setLoadingMenuDetails(true);
+      Promise.all([
+        loadMenuDetails(selectedMenu.menuID),
+        loadDishCategoriesByRestaurant(restaurantId)
+      ])
+        .then(([menuData, categories]) => {
+          // Filter active categories
+          const activeCategories = (categories || []).filter(cat => cat.status === true);
+          
+          // Group dishes by categoryID
+          const dishesByCategory = {};
+          (menuData.dishes || []).forEach(dish => {
+            if (!dishesByCategory[dish.categoryID]) {
+              dishesByCategory[dish.categoryID] = [];
+            }
+            dishesByCategory[dish.categoryID].push(dish.name);
+          });
+          
+          // Assign dishes to categories
+          const categoriesWithDishes = activeCategories.map(cat => ({
+            ...cat,
+            limit: cat.requiredQuantity || 0,
+            dishes: dishesByCategory[cat.categoryID] || []
+          }));
+          
+          // Merge into menuData
+          const menuWithCategories = {
+            ...menuData,
+            categories: categoriesWithDishes
+          };
+          setMenuDetails(menuWithCategories);
+          setLoadingMenuDetails(false);
+        })
+        .catch((error) => {
+          console.error('Error loading menu details or categories:', error);
+          setMenuDetails(null);
+          setLoadingMenuDetails(false);
+        });
+    } else {
+      setMenuDetails(null);
+      setLoadingMenuDetails(false);
+    }
+  }, [selectedMenu?.menuID, loadMenuDetails, loadDishCategoriesByRestaurant, restaurantId]);
+
+  // Reset selected dishes when menu changes
+  useEffect(() => {
+    setSelectedDishes({});
+  }, [selectedMenu]);
 
   // Khi chọn menu
   const handleMenuSelect = (menu) => {
@@ -38,8 +92,8 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
 
   // Kiểm tra tất cả category đã đủ món chưa
   const allCategoriesSelected = () => {
-    if (!selectedMenu) return false;
-    return selectedMenu.categories.every((cat) => {
+    if (!menuDetails?.categories) return false;
+    return menuDetails.categories.every((cat) => {
       const current = selectedDishes[cat.name] || [];
       return current.length === cat.limit;
     });
@@ -48,7 +102,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
   // Hoàn tất chọn
   const handleConfirm = () => {
     onSelect({
-      menu: selectedMenu, // pass full object so price is available
+      menu: menuDetails || selectedMenu, // pass full menu details with dishes
       dishes: selectedDishes,
     });
     setShow(false);
@@ -74,7 +128,7 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
           {/* Nếu chưa chọn menu → hiển thị danh sách menu */}
           {!selectedMenu && (
             <ListGroup>
-              {menus.map((menu) => (
+              {(menus || []).map((menu) => (
                 <ListGroup.Item
                   key={menu.id}
                   action
@@ -97,51 +151,60 @@ const MenuSelectorModal = ({ menus = [], onSelect }) => {
           {selectedMenu && (
             <>
               <h5 className="mb-3" style={{ color: primaryColor }}>
-                {selectedMenu.name}
+                {selectedMenu?.name}
               </h5>
 
-              <Accordion>
-                {selectedMenu.categories.map((cat, idx) => (
-                  <Accordion.Item eventKey={idx.toString()} key={cat.name}>
-                    <Accordion.Header>
-                      {cat.name}{" "}
-                      <Badge
-                        bg="light"
-                        text="dark"
-                        className="ms-2"
-                        style={{
-                          border: `1px solid ${primaryColor}`,
-                          fontSize: "12px",
-                        }}
-                      >
-                        Số lượng phải chọn: {cat.limit}
-                      </Badge>
-                    </Accordion.Header>
-                    <Accordion.Body>
-                      {cat.dishes.map((dish) => {
-                        const current = selectedDishes[cat.name] || [];
-                        const isChecked = current.includes(dish);
-                        const disabled =
-                          !isChecked && current.length == cat.limit;
-                        return (
-                          <Form.Check
-                            key={dish}
-                            type="checkbox"
-                            id={`${cat.name}-${dish}`}
-                            label={dish}
-                            checked={isChecked}
-                            disabled={disabled}
-                            onChange={() =>
-                              handleDishToggle(cat.name, dish, cat.limit)
-                            }
-                            className="mb-2"
-                          />
-                        );
-                      })}
-                    </Accordion.Body>
-                  </Accordion.Item>
-                ))}
-              </Accordion>
+              {loadingMenuDetails ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-danger" role="status">
+                    <span className="visually-hidden">Đang tải...</span>
+                  </div>
+                  <div className="mt-2 text-muted">Đang tải dữ liệu menu...</div>
+                </div>
+              ) : (
+                <Accordion>
+                  {(menuDetails?.categories || []).map((cat, idx) => (
+                    <Accordion.Item eventKey={idx.toString()} key={cat.name}>
+                      <Accordion.Header>
+                        {cat.name}{" "}
+                        <Badge
+                          bg="light"
+                          text="dark"
+                          className="ms-2"
+                          style={{
+                            border: `1px solid ${primaryColor}`,
+                            fontSize: "12px",
+                          }}
+                        >
+                          Số lượng phải chọn: {cat.limit}
+                        </Badge>
+                      </Accordion.Header>
+                      <Accordion.Body>
+                        {(cat.dishes || []).map((dish) => {
+                          const current = selectedDishes[cat.name] || [];
+                          const isChecked = current.includes(dish);
+                          const disabled =
+                            !isChecked && current.length == cat.limit;
+                          return (
+                            <Form.Check
+                              key={dish}
+                              type="checkbox"
+                              id={`${cat.name}-${dish}`}
+                              label={dish}
+                              checked={isChecked}
+                              disabled={disabled}
+                              onChange={() =>
+                                handleDishToggle(cat.name, dish, cat.limit)
+                              }
+                              className="mb-2"
+                            />
+                          );
+                        })}
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  ))}
+                </Accordion>
+              )}
             </>
           )}
         </Modal.Body>

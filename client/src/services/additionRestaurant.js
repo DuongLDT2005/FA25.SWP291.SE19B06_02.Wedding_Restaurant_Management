@@ -61,7 +61,16 @@ export const getMenusByRestaurant = async (restaurantId) => {
 	if (!res.ok) throw data || new Error("Fetch menus failed");
 	return data;
 };
-
+export const getMenusById = async (menuId) => {
+	const res = await fetch(`${MENUS_API}/${menuId}`, {
+		method: "GET",
+		headers: { Accept: "application/json" },
+		credentials: "include",
+	});
+	const data = await parseJson(res, {});
+	if (!res.ok) throw data || new Error("Fetch menu failed");
+	return data;
+};
 // Dishes
 export const createDish = async (payload) => {
 	const res = await fetch(`${DISHES_API}`, {
@@ -156,6 +165,20 @@ export const getPromotionsByRestaurant = async (restaurantId) => {
 	return data;
 };
 
+export const getPromotions = async (params = {}) => {
+	const qp = new URLSearchParams();
+	Object.entries(params).forEach(([k, v]) => {
+		if (v !== undefined && v !== null && v !== "") qp.set(k, String(v));
+	});
+	const res = await fetch(`${PROMOTIONS_API}?${qp.toString()}`, {
+		headers: { Accept: "application/json" },
+		credentials: "include",
+	});
+	const data = await parseJson(res, []);
+	if (!res.ok) throw data || new Error("Fetch promotions failed");
+	return Array.isArray(data) ? data : data?.promotions ?? [];
+};
+
 // Dish Categories
 export const createDishCategory = async (payload) => {
 	const res = await fetch(`${DISH_CATEGORIES_API}`, {
@@ -247,5 +270,24 @@ export const getServicesByRestaurant = async (restaurantId) => {
 	});
 	const data = await parseJson(res, []);
 	if (!res.ok) throw data || new Error("Fetch services failed");
+	return data;
+};
+
+// Promotions
+export const getPromotionsBySearch = async (params = {}) => {
+	const query = new URLSearchParams();
+	if (params.eventType) query.append('eventType', params.eventType);
+	if (params.date) query.append('date', params.date);
+	if (params.tables) query.append('tables', params.tables);
+	if (params.restaurantId) query.append('restaurantId', params.restaurantId);
+	const queryString = query.toString();
+	const url = `${PROMOTIONS_API}${queryString ? `?${queryString}` : ''}`;
+	const res = await fetch(url, {
+		method: "GET",
+		headers: { Accept: "application/json" },
+		credentials: "include",
+	});
+	const data = await parseJson(res, []);
+	if (!res.ok) throw data || new Error("Fetch promotions failed");
 	return data;
 };

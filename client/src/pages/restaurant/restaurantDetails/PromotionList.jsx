@@ -1,14 +1,15 @@
 import React from "react";
 import { Card, Row, Col } from "react-bootstrap";
 import { Gift } from "lucide-react";
-
 const PromotionList = ({ restaurant }) => {
+  const activePromotions = restaurant.promotions?.filter(promo => promo.status === true) || [];
+  
   return (
     <div className="mb-5">
       <h4 className="section-title mb-3" style={{ color: "#f43f5e" }}>Ưu đãi</h4>
       <Row className="g-3">
-        {restaurant.promotions?.length > 0 ? (
-          restaurant.promotions.map((promo) => (
+        {activePromotions.length > 0 ? (
+          activePromotions.map((promo) => (
             <Col key={promo.id} xs={12} sm={6} md={4} lg={4}>
               <Card
                 className="text-white shadow-sm"

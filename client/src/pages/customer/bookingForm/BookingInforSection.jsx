@@ -7,39 +7,50 @@ import useBooking from "../../../hooks/useBooking";
 import { Badge, Button, Col, Form, Row, Table } from "react-bootstrap";
 import ServiceSelectorModal from "./ServiceSelectorModal";
 import SpecialRequestSection from "./SpecialRequestSection";
-const BookingInfoSection = ({ menus = [], services = [] }) => {
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
+const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searchData, promotions }) => {
   const { booking, setBookingField, setMenu, setDishes, setServices } = useBooking();
   const { bookingInfo, menu } = booking;
   const [menuPreview, setMenuPreview] = useState(null);
   const [dishesPreview, setDishesPreview] = useState({});
   const [showMenuPreview, setShowMenuPreview] = useState(false);
   const [showServicePreview, setShowServicePreview] = useState(false);
+
+  const { loadMenuById, loadDishCategoriesByRestaurant } = useAdditionRestaurant();
+
+  // Check if data comes from search (should be locked)
+  const isFromSearch = !!searchData;
+
+  // Local state for editable fields
+  const [date, setDate] = useState(searchData?.date || bookingInfo?.date || "");
+  const [eventType, setEventType] = useState(searchData?.eventType || bookingInfo?.eventType || "");
+  const [tables, setTables] = useState(searchData?.tables || bookingInfo?.tables || 1);
+  // Use hall object passed from props
+  const selectedHall = hall;
+  // Update booking state when local state changes
   useEffect(() => {
-    if (!bookingInfo) return;
+    setBookingField("restaurant", restaurant?.name || "");
+    setBookingField("hall", selectedHall?.name || "");
+    // Only update these fields if not from search (to prevent overriding search data)
+    if (!isFromSearch) {
+      setBookingField("date", date);
+      setBookingField("eventType", eventType);
+      setBookingField("tables", tables);
+    } else {
+      // For search data, set them once
+      setBookingField("date", searchData.date || date);
+      setBookingField("eventType", searchData.eventType || eventType);
+      setBookingField("tables", searchData.tables || tables);
+    }
+  }, [restaurant, selectedHall, date, eventType, tables, setBookingField, isFromSearch, searchData]);
 
-    // đưa tất cả field vào state một lần
-    setBookingField("restaurant", bookingInfo.restaurant);
-    setBookingField("hall", bookingInfo.hall);
-    setBookingField("date", bookingInfo.date);
-    setBookingField("startTime", bookingInfo.startTime);
-    setBookingField("endTime", bookingInfo.endTime);
-    setBookingField("tables", bookingInfo.tables);
-    setBookingField("eventType", bookingInfo.eventType);
-  }, [bookingInfo]);
-
-  const eventType = booking?.bookingInfo?.eventType ?? "";
   const filteredServices = useMemo(() => {
     if (!Array.isArray(services) || !eventType) return services || [];
-    return services.filter((s) => {
-      // service may declare applicable event types in different keys
-      const allowed = s.eventTypes || s.applicableEventTypes || s.applicable || null;
-      if (!allowed) return true; // if service has no restriction, show it
-      // allowed can be array or comma-separated string
-      if (Array.isArray(allowed)) return allowed.includes(eventType);
-      if (typeof allowed === "string") return allowed.split(",").map(x => x.trim()).includes(eventType);
-      return true;
-    });
+    return services.filter((s) => s.eventTypeID == eventType && s.status === true);
   }, [services, eventType]);
+  const filteredMenus = useMemo(() => {
+    return (menus || []).filter(menu => menu.status === true);
+  }, [menus]);
 
   return (
     <section className="p-4 border rounded bg-white shadow-sm text-sm" style={{ fontSize: "0.95rem" }}>
@@ -49,34 +60,61 @@ const BookingInfoSection = ({ menus = [], services = [] }) => {
       <div className="mb-3">
         <Row className="mb-2">
           <Col xs={5} className="fw-semibold">Nhà hàng</Col>
-          <Col>{bookingInfo.restaurant}</Col>
+          <Col>{restaurant?.name}</Col>
         </Row>
 
         <Row className="mb-2">
           <Col xs={5} className="fw-semibold">Sảnh</Col>
-          <Col>{bookingInfo.hall}</Col>
+          <Col>{selectedHall?.name}</Col>
         </Row>
 
-        <Row className="mb-2">
-          <Col xs={5} className="fw-semibold">Ngày diễn ra</Col>
-          <Col>{bookingInfo.date}</Col>
-        </Row>
-
-        <Row className="mb-2">
-          <Col xs={5} className="fw-semibold">Thời gian</Col>
+        <Row className="mb-2 align-items-center">
+          <Col xs={5} className="fw-semibold">
+            Ngày diễn ra {isFromSearch && <span className="text-muted small">(được lock từ tìm kiếm)</span>}
+          </Col>
           <Col>
-            {bookingInfo.startTime} - {bookingInfo.endTime}
+            <DateInput
+              value={date}
+              onChange={isFromSearch ? undefined : setDate}
+              labelText=""
+              disabled={isFromSearch}
+            />
           </Col>
         </Row>
 
-        <Row className="mb-2">
-          <Col xs={5} className="fw-semibold">Loại sự kiện</Col>
-          <Col>{bookingInfo.eventType}</Col>
+        <Row className="mb-2 align-items-center">
+          <Col xs={5} className="fw-semibold">
+            Loại sự kiện {isFromSearch && <span className="text-muted small">(được lock từ tìm kiếm)</span>}
+          </Col>
+          <Col>
+            <Form.Select
+              value={eventType}
+              onChange={isFromSearch ? undefined : (e) => setEventType(e.target.value)}
+              disabled={isFromSearch}
+            >
+              <option value="">Chọn loại sự kiện</option>
+              {(restaurant?.eventTypes || []).map((et) => (
+                <option key={et.eventTypeID || et} value={et.eventTypeID || et}>
+                  {et.name || et}
+                </option>
+              ))}
+            </Form.Select>
+          </Col>
         </Row>
 
-        <Row className="mb-2">
-          <Col xs={5} className="fw-semibold">Số bàn</Col>
-          <Col>{bookingInfo.tables}</Col>
+        <Row className="mb-2 align-items-center">
+          <Col xs={5} className="fw-semibold">
+            Số bàn {isFromSearch && <span className="text-muted small">(được lock từ tìm kiếm)</span>}
+          </Col>
+          <Col>
+            <Form.Control
+              type="number"
+              min={1}
+              value={tables}
+              onChange={isFromSearch ? undefined : (e) => setTables(Math.max(1, Number(e.target.value || 1)))}
+              disabled={isFromSearch}
+            />
+          </Col>
         </Row>
       </div>
 
@@ -126,7 +164,10 @@ const BookingInfoSection = ({ menus = [], services = [] }) => {
           </Col>
           <Col className="d-flex justify-content-end gap-2">
             <MenuSelectorModal
-              menus={menus}
+              menus={filteredMenus}
+              loadMenuDetails={loadMenuById}
+              loadDishCategoriesByRestaurant={loadDishCategoriesByRestaurant}
+              restaurantId={restaurant?.restaurantID}
               onSelect={(selection) => {
                 // selection: { menu, dishes }
                 const pickedMenu = selection.menu;
@@ -247,7 +288,7 @@ const BookingInfoSection = ({ menus = [], services = [] }) => {
         )}
       </div>
       {/* <ServiceSelector services={services} /> */}
-      <PromotionBadge />
+      <PromotionBadge promotions={promotions} tables={searchData.tables} menu={menu} services={booking.services} />
       <SpecialRequestSection />
     </section>
   );

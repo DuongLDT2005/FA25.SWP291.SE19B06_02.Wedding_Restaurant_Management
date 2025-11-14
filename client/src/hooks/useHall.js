@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchHallsByRestaurant,
   fetchHallById,
+  fetchAvailableHalls,
   createHall,
   updateHall,
   deleteHall,
@@ -14,6 +15,7 @@ import {
   clearHallError,
   selectHalls,
   selectCurrentHall,
+  selectAvailableHalls,
 } from "../redux/slices/hallSlice";
 
 /**
@@ -26,6 +28,7 @@ export function useHall() {
   // selectors
   const list = useSelector(selectHalls);
   const current = useSelector(selectCurrentHall);
+  const availableHalls = useSelector(selectAvailableHalls);
   const status = useSelector((s) => s.halls?.status);
   const error = useSelector((s) => s.halls?.error);
   const imagesByHall = useSelector((s) => s.halls?.imagesByHall || {});
@@ -49,6 +52,15 @@ export function useHall() {
   const loadById = useCallback(
     async (id) => {
       const action = await dispatch(fetchHallById(id));
+      if (action.error) throw action.payload || action.error.message;
+      return action.payload;
+    },
+    [dispatch]
+  );
+
+  const loadAvailable = useCallback(
+    async (params = {}) => {
+      const action = await dispatch(fetchAvailableHalls(params));
       if (action.error) throw action.payload || action.error.message;
       return action.payload;
     },
@@ -124,12 +136,14 @@ export function useHall() {
   return {
     list,
     current,
+    availableHalls,
     status,
     error,
     imagesByHall,
     selectImages,
     loadByRestaurant,
     loadById,
+    loadAvailable,
     createOne,
     updateOne,
     removeOne,

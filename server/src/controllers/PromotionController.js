@@ -50,6 +50,18 @@ class PromotionController {
     }
   }
 
+  static async list(req, res) {
+    try {
+      // eventype not used currently
+      const {  date, tables, restaurantId } = req.query;
+      const rows = await PromotionService.listFiltered({ date, tables: tables ? parseInt(tables) : undefined, restaurantId });
+      res.json(rows);
+    } catch (err) {
+      console.error('Promotion list error', err);
+      res.status(400).json({ error: err.message });
+    }
+  }
+
   static async services(req, res) {
     try {
       const id = req.params.id;

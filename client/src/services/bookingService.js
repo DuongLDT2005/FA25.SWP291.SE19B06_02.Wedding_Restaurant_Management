@@ -57,10 +57,10 @@ export async function getPromotions(params = {}) {
  * services: [{ id, name, price }] (fixed price)
  * promotion: { id, type, value } type: percent | fixed
  */
-export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 10, promotion = null }) {
+export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 1, promotion = null }) {
   const guests = (tables || 1) * avgGuestsPerTable;
   const menuTotal = (menu?.price || 0) * guests;
-  const servicesTotal = (services || []).reduce((s, it) => s + (it.price || 0), 0);
+  const servicesTotal = (services || []).reduce((s, it) => s + (parseFloat(it.price) || 0), 0);
   let subtotal = menuTotal + servicesTotal;
   let discount = 0;
   if (promotion) {
