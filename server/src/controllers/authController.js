@@ -1,176 +1,197 @@
 import AuthServices from "../services/AuthServices.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+
 class AuthController {
+
+  /* ===========================================
+      LOGIN NORMAL
+  =========================================== */
   static async login(req, res) {
     try {
       const { email, password } = req.body;
-      if (!email || !password) {
-        return res
-          .status(400)
-          .json({ error: "Email and password are required" });
-      }
-      const { user, token } = await AuthServices.loginWithEmail(
-        email,
-        password
-      );
-      // Remove password before sending user data
+      const { user, token } = await AuthServices.loginWithEmail(email, password);
+
       user.password = undefined;
-      // send user data and token
-      res.json({ user, token });
+      return res.json({ user, token });
+
     } catch (error) {
       console.error("Login error:", error);
-      res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: error.message });
     }
   }
 
+  /* ===========================================
+      GOOGLE LOGIN
+  =========================================== */
   static async googlePopupLogin(req, res) {
-  try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ message: "Thiếu code" });
+    try {
+      const { code } = req.body;
+      if (!code) return res.status(400).json({ message: "Missing code" });
 
-    console.log("Received Google code:", code);
+      // 1) Đổi code lấy access_token
+      const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: "postmessage",
+        grant_type: "authorization_code",
+      });
 
-    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: "postmessage",
-      grant_type: "authorization_code",
-    });
+      const { access_token } = tokenRes.data;
 
-    const { access_token, id_token } = tokenRes.data;
-    console.log("Google token exchange success:", tokenRes.data);
+      // 2) Lấy user profile từ Google
+      const { data: profile } = await axios.get(
+        "https://www.googleapis.com/oauth2/v3/userinfo",
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      );
 
-    // Lấy thông tin user
-    const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    const { email, name, picture } = userInfo.data;
+      const { user, token } = await AuthServices.findOrCreateGoogleUser({
+        email: profile.email,
+        name: profile.name,
+        picture: profile.picture,
+      });
 
-    console.log("Google user info:", userInfo.data);
-
-    // Tìm hoặc tạo user
-    const user = await AuthServices.findOrCreateGoogleUser({
-      email,
-      fullName: name,
-      avatarURL: picture,
-    });
-
-    const token = jwt.sign(
-      { userID: user.userID, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.json({ message: "Đăng nhập Google thành công", user, token });
-  } catch (err) {
-    console.error("Google Sign-In Error:", err.response?.data || err.message);
-    res.status(500).json({
-      message: "Đăng nhập Google thất bại",
-      error: err.response?.data || err.message,
-    });
+      return res.json({ user, token });
+    } catch (error) {
+      console.error("Google login error:", error);
+      return res.status(500).json({ error: "Google login failed" });
+    }
   }
-}
 
-
+  /* ===========================================
+      LOGOUT (BLACKLIST TOKEN)
+  =========================================== */
   static async logout(req, res) {
     try {
-      // Invalidate the token (implementation depends on how you manage tokens)
       await AuthServices.logout(req);
-      res.json({ message: "Logged out successfully" });
+      return res.json({ message: "Logged out successfully" });
     } catch (error) {
       console.error("Logout error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
+
+  /* ===========================================
+      FORGOT PASSWORD (SEND OTP)
+  =========================================== */
   static async forgotPassword(req, res) {
     try {
-      console.log("📩 [ForgotPassword] Body nhận được:", req.body); // 👈 để debug
-      console.log("📩 Content-Type:", req.headers["content-type"]);
-
-      if (!req.body || !req.body.email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-
       const { email } = req.body;
       await AuthServices.forgotPassword(email);
 
-      res.json({ message: "OTP email sent" });
+      return res.json({ message: "OTP email sent" });
     } catch (error) {
       console.error("Forgot password error:", error);
-      res.status(500).json({ error: error.message || "Internal server error" });
-    }
-  }
-  static async verifyOtp(req, res) {
-    try {
-      const { email, otp } = req.body;
-      if (!email || !otp) {
-        return res.status(400).json({ error: "Email and OTP are required" });
-      }
-      await AuthServices.verifyOtp(email, otp);
-      // Generate temporary token for password reset (valid 10 min)
-      const tempToken = jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "10m",
-      });
-      res.status(200).json({ message: "OTP verified successfully", tempToken });
-    } catch (error) {
-      console.error("Verify OTP error:", error);
-      res.status(400).json({ error: error.message });
-    }
-  }
-  static async resetPassword(req, res) {
-    try {
-      const { email, newPassword, tempToken } = req.body;
-      if (!email || !newPassword || !tempToken) {
-        return res.status(400).json({
-          error: "Email, new password, and temporary token are required",
-        });
-      }
-      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
-      if (decoded.email !== email) {
-        return res
-          .status(400)
-          .json({ error: "Invalid token for the provided email" });
-      }
-      await AuthServices.resetPassword(email, newPassword);
-      res.json({ message: "Password reset successfully" });
-    } catch (error) {
-      console.error("Reset password error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-  static async signupCustomer(req, res) {
-    try {
-      const customerData = req.body;
-      if (!customerData) {
-        return res.status(400).json({ error: "Request body cannot be null" });
-      }
-      const newCustomer = await AuthServices.signUpCustomer(customerData);
-      res.status(201).json({
-        message: "Customer created",
-        user: newCustomer || null,
-      });
-    } catch (error) {
-      console.error("Error creating customer:", error);
-      res.status(500).json({ error: error.message || "Internal server error" });
+      return res.status(500).json({ error: error.message });
     }
   }
 
+  /* ===========================================
+      VERIFY OTP
+  =========================================== */
+  static async verifyOtp(req, res) {
+    try {
+      const { email, otp } = req.body;
+
+      await AuthServices.verifyOtp(email, otp);
+
+      const tempToken = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "10m",
+      });
+
+      return res.json({ message: "OTP verified", tempToken });
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      RESET PASSWORD
+  =========================================== */
+  static async resetPassword(req, res) {
+    try {
+      const { email, newPassword, tempToken } = req.body;
+
+      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+      if (decoded.email !== email)
+        return res.status(400).json({ error: "Invalid token" });
+
+      await AuthServices.resetPassword(email, newPassword);
+
+      return res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      SIGN UP CUSTOMER
+  =========================================== */
+  static async signupCustomer(req, res) {
+    try {
+      const user = await AuthServices.signUpCustomer(req.body);
+
+      return res.status(201).json({
+        message: "Customer created",
+        user,
+      });
+    } catch (error) {
+      console.error("Signup customer error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      SIGN UP OWNER (WITH FILE)
+  =========================================== */
   static async signupOwner(req, res) {
     try {
-      const newOwner = await AuthServices.signUpOwner(req.body);
-      return res.status(201).json({ message: "Owner created", user: newOwner });
-    } catch (err) {
-      console.error("Signup owner error:", err.message);
-      return res.status(500).json({ error: err.message });
+      const data = await AuthServices.signUpOwner(req.body, req.file);
+
+      return res.status(201).json(data);
+    } catch (error) {
+      console.error("Signup owner error:", error);
+      return res.status(500).json({ error: error.message });
     }
   }
+
+  /* ===========================================
+      GET CURRENT USER
+  =========================================== */
   static async getCurrentUser(req, res) {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ error: "Unauthorized" });
-    }
-    res.json({ user: req.user });
+
+    return res.json({ user: req.user });
   }
+
+  static async approveOwner(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await AuthServices.approveOwner(id);
+
+      return res.json(result);
+    } catch (error) {
+      console.error("Approve owner error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  static async activateOwner(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await AuthServices.activateOwner(id);
+
+      return res.json(result);
+    } catch (error) {
+      console.error("Activate owner error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
 }
+
 export default AuthController;

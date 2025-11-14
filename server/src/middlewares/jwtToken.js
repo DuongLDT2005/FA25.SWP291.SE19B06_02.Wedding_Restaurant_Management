@@ -53,3 +53,10 @@ export async function authMiddleware(req, res, next) {
     return res.status(401).json({ success: false, message: 'Invalid/expired token' });
   }
 }
+
+export function authorizeAdmin(req, res, next) {
+  if (req.user.role !== 2) {    // role = 2 là admin
+    return res.status(403).json({ error: "Admin only" });
+  }
+  next();
+}

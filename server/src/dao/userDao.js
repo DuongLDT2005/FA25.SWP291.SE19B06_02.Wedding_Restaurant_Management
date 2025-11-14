@@ -5,16 +5,12 @@ import {
   negoStatus,
   coupleRole,
 } from "../models/enums/UserStatus.js";
-import { bitToNumber } from "../utils/convert/bitUtils.js";
 import { toDTO, toDTOs } from "../utils/convert/dto.js";
 
-// db (from config/db.js) exports: { sequelize, user, restaurantpartner, customer, ... }
-const {
-  sequelize,
-  user: UserModel,
-  restaurantpartner: RestaurantPartnerModel,
-  customer: CustomerModel,
-} = db;
+const sequelize = db.sequelize;
+const UserModel = db.user;
+const CustomerModel = db.customer;
+const RestaurantPartnerModel = db.restaurantpartner;
 
 class UserDAO {
   static async getAllUsers() {
@@ -43,6 +39,7 @@ class UserDAO {
     const t = await sequelize.transaction();
 
     try {
+      // 1) Create user
       const createdUser = await UserModel.create(
         {
           email,
@@ -55,19 +52,19 @@ class UserDAO {
         { transaction: t }
       );
 
+      // 2) Create partner
       await RestaurantPartnerModel.create(
         {
           restaurantPartnerID: createdUser.userID,
           licenseUrl: licenseUrl || "",
-          status: negoStatus.pending,
+          status: negoStatus.pending, // ⭐ pending approval
           commissionRate: null,
         },
         { transaction: t }
       );
 
       await t.commit();
-      const result = await this.getUserById(createdUser.userID);
-      return result;
+      return await this.getUserById(createdUser.userID);
     } catch (error) {
       await t.rollback();
       console.error("❌ createOwner failed:", error);
