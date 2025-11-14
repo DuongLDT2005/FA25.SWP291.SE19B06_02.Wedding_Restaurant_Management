@@ -3,18 +3,19 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 
 class AuthController {
-
   /* ===========================================
       LOGIN NORMAL
   =========================================== */
   static async login(req, res) {
     try {
       const { email, password } = req.body;
-      const { user, token } = await AuthServices.loginWithEmail(email, password);
+      const { user, token } = await AuthServices.loginWithEmail(
+        email,
+        password
+      );
 
       user.password = undefined;
       return res.json({ user, token });
-
     } catch (error) {
       console.error("Login error:", error);
       return res.status(401).json({ error: error.message });
@@ -162,8 +163,7 @@ class AuthController {
       GET CURRENT USER
   =========================================== */
   static async getCurrentUser(req, res) {
-    if (!req.user)
-      return res.status(401).json({ error: "Unauthorized" });
+    if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
     return res.json({ user: req.user });
   }
@@ -191,7 +191,14 @@ class AuthController {
       return res.status(400).json({ error: error.message });
     }
   }
-
+  static async getNegotiatingPartners(req, res) {
+    try {
+      const list = await UserService.getNegotiatingPartners();
+      res.json({ success: true, data: list });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }
 
 export default AuthController;

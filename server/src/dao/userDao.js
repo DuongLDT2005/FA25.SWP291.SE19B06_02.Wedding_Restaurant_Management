@@ -47,7 +47,7 @@ class UserDAO {
           phone,
           password,
           role: userRole.owner,
-          status: userStatus.active,
+          status: userStatus.inactive,
         },
         { transaction: t }
       );
@@ -57,7 +57,7 @@ class UserDAO {
         {
           restaurantPartnerID: createdUser.userID,
           licenseUrl: licenseUrl || "",
-          status: negoStatus.pending, // ⭐ pending approval
+          status: negoStatus.pending,
           commissionRate: null,
         },
         { transaction: t }
@@ -86,7 +86,7 @@ class UserDAO {
           phone,
           password,
           role: userRole.customer,
-          status: userStatus.active,
+          status: userStatus.inactive,
         },
         { transaction: t }
       );
@@ -226,7 +226,7 @@ class UserDAO {
   }
   static async getPartnersByStatus(status) {
     const users = await UserModel.findAll({
-      where: { role: 1 }, // partner
+      where: { role: 1 },
       include: [
         {
           model: RestaurantPartnerModel,
@@ -265,7 +265,6 @@ class UserDAO {
     );
 
     if (affected[0] === 0) throw new Error("Partner not found");
-
     return true;
   }
 }

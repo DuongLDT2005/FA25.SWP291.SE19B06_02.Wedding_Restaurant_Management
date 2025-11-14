@@ -220,7 +220,8 @@ class AuthServices {
     if (!partner) throw new Error("Partner not found");
 
     await partner.update({ status: negoStatus.active });
-
+    // ✔ user → active (cho phép login)
+    await db.user.update({ status: 1 }, { where: { userID } });
     return { message: "Owner is now active." };
   }
 }

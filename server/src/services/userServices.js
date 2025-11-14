@@ -52,14 +52,28 @@ class UserService {
   // --------------------
 
   /** 🟡 Đối tác đang chờ phê duyệt */
-  static async getPendingPartners() {
+   static async getPendingPartners() {
     return await user.findAll({
       where: { role: 1 },
       include: [
         {
           model: restaurantpartner,
-          as: "partner", // <-- alias đúng
-          where: { status: 1 }, // 1 = pending
+          as: "partner",
+          where: { status: 0 }, // PENDING
+          required: true,
+        },
+      ],
+    });
+  }
+
+  static async getNegotiatingPartners() {
+    return await user.findAll({
+      where: { role: 1 },
+      include: [
+        {
+          model: restaurantpartner,
+          as: "partner",
+          where: { status: 2 }, // NEGOTIATING
           required: true,
         },
       ],
@@ -74,7 +88,7 @@ class UserService {
         {
           model: restaurantpartner,
           as: "partner",
-          where: { status: 3 }, // approved
+          where: { status: 3 }, // APPROVED
           required: true,
         },
       ],
@@ -84,7 +98,7 @@ class UserService {
   /** ✔ Approve */
   static async approvePartner(userID) {
     return await restaurantpartner.update(
-      { status: 3 },
+      { status: 2 }, // move → negotiating
       { where: { restaurantPartnerID: userID } }
     );
   }
@@ -92,9 +106,20 @@ class UserService {
   /** ❌ Reject */
   static async rejectPartner(userID) {
     return await restaurantpartner.update(
-      { status: 4 }, // rejected
+      { status: 1 }, // rejected
       { where: { restaurantPartnerID: userID } }
     );
+  }
+
+  static async activatePartner(userID) {
+    await restaurantpartner.update(
+      { status: 3 }, // ACTIVE
+      { where: { restaurantPartnerID: userID } }
+    );
+
+    await user.update({ status: 1 }, { where: { userID } });
+
+    return true;
   }
 }
 
