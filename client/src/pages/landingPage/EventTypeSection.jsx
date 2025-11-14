@@ -3,6 +3,14 @@ import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEventTypes } from "../../redux/slices/eventTypeSlice";
 import { PartyPopper } from "lucide-react";
+import anniversaryImg from "../assets/eventtypes/anniversary.jpg";
+import celebrationImg from "../assets/eventtypes/celebration.jpg";
+import eventImg from "../assets/eventtypes/event.jpg";
+import companyImg from "../assets/eventtypes/company.jpg";
+import weddingImg from "../assets/eventtypes/wedding.jpg";
+import openingImg from "../assets/eventtypes/opening.jpg";
+import birthdayImg from "../assets/eventtypes/birthday.jpg";
+import yearendImg from "../assets/eventtypes/yearend.jpg";
 
 const EventTypesSection = () => {
     const dispatch = useDispatch();

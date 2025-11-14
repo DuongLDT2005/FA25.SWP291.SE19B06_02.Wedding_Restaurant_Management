@@ -33,8 +33,8 @@ function SignUpForOwner() {
       e.name = "Tên không chứa số hoặc kí tự đặc biệt.";
 
 
-    const phoneRegex = /^0\d{9}$/;
-    if (!/^[0-9]{9,11}$/.test(form.phone))
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!/^[0-9]{10}$/.test(form.phone))
       e.phone = "Số điện thoại không hợp lệ";
     if (!phoneRegex.test(form.phoneNumber)) {
       e.phoneNumber =
@@ -300,7 +300,7 @@ function SignUpForOwner() {
               color: "#333",
             }}
           >
-            <h1>Đăng Ký Chủ Nhà Hàng</h1>
+            <h1>Đăng Ký Đối Tác Nhà Hàng</h1>
             <form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
                 <input
@@ -458,7 +458,7 @@ function SignUpForOwner() {
                   <input
                     type="file"
                     id="licenseUrl"
-                    accept="image/*"
+                    // accept="image/*"
                     onChange={handleFileChange}
                     style={{
                       position: "absolute",
