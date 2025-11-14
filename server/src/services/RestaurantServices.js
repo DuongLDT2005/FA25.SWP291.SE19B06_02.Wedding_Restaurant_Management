@@ -102,6 +102,13 @@ class RestaurantService {
     // Filter out nulls in case some restaurants were removed or unavailable
     return restaurants.filter(Boolean);
   }
+  static async getTopRatedRestaurants() {
+    const result = await BookingDAO.topRatedRestaurantReview();
+    // from result get restaurant details can add cron job to cache this later
+    const restaurantIDs = result.map(r => r.restaurantID);
+    const restaurants = await Promise.all(restaurantIDs.map(id => RestaurantDAO.getByID(id)));
+    // Filter out nulls in case some restaurants were removed or unavailable
+    return restaurants.filter(Boolean);
+  }
 }
-
 export default RestaurantService;

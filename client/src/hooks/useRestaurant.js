@@ -5,6 +5,7 @@ import {
     fetchRestaurantById,
     performSearchRestaurants,
     fetchFeaturedRestaurants,
+    fetchTopRatedRestaurants,
     fetchRestaurantsByPartner,
     fetchToggleRestaurantStatus,
     createRestaurant,
@@ -14,6 +15,7 @@ import {
     clearError,
     selectRestaurants,
     selectFeaturedRestaurants,
+    selectTopRatedRestaurants,
     selectCurrentRestaurant,
     selectSearchResults,
 } from "../redux/slices/restaurantSlice";
@@ -26,6 +28,7 @@ export function useRestaurant() {
     const dispatch = useDispatch();
     const list = useSelector(selectRestaurants);
     const featured = useSelector(selectFeaturedRestaurants);
+    const topRated = useSelector(selectTopRatedRestaurants);
     const current = useSelector(selectCurrentRestaurant);
     const searchResults = useSelector(selectSearchResults);
     const status = useSelector((s) => s.restaurants?.status);
@@ -77,6 +80,12 @@ export function useRestaurant() {
         return action.payload;
     }, [dispatch]);
 
+    const loadTopRated = useCallback(async (params) => {
+        const action = await dispatch(fetchTopRatedRestaurants(params));
+        if (action.error) throw action.payload || action.error.message;
+        return action.payload;
+    }, [dispatch]);
+
     const updateOne = useCallback(
         async ({ id, payload }) => {
             const action = await dispatch(updateRestaurant({ id, payload }));
@@ -110,6 +119,7 @@ export function useRestaurant() {
     return {
         list,
         featured,
+        topRated,
         current,
         searchResults,
         status,
@@ -121,6 +131,7 @@ export function useRestaurant() {
         toggleStatus,
         search,
         loadFeatured,
+        loadTopRated,
         createOne,
         addImage,
         clear,

@@ -80,6 +80,18 @@ export const fetchFeaturedRestaurants = createAsyncThunk(
     }
   }
 );
+
+export const fetchTopRatedRestaurants = createAsyncThunk(
+  "restaurants/topRated",
+  async (params, { rejectWithValue }) => {
+    try {
+      const data = await restaurantService.getTopRatedRestaurants(params);
+      return data;
+    } catch (err) {
+      return rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
 //update 
 export const updateRestaurant = createAsyncThunk(
   "restaurants/update",
@@ -121,6 +133,7 @@ export const addRestaurantImage = createAsyncThunk(
 const initialState = {
   list: [],
   featured: [],
+  topRated: [],
   current: null,
   searchResults: [],
   status: "idle",
@@ -215,6 +228,21 @@ const restaurantSlice = createSlice({
         state.status = "failed";
         state.error = action.payload ?? action.error?.message;
       })
+
+      // top rated
+      .addCase(fetchTopRatedRestaurants.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchTopRatedRestaurants.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.topRated = action.payload || [];
+        state.error = null;
+      })
+      .addCase(fetchTopRatedRestaurants.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error?.message;
+      })
       // update 
       .addCase(updateRestaurant.pending, (state) => {
         state.status = "loading";
@@ -284,6 +312,7 @@ export const { clearCurrent, clearError } = restaurantSlice.actions;
 
 export const selectRestaurants = (state) => state.restaurants?.list ?? [];
 export const selectFeaturedRestaurants = (state) => state.restaurants?.featured ?? [];
+export const selectTopRatedRestaurants = (state) => state.restaurants?.topRated ?? [];
 export const selectCurrentRestaurant = (state) => state.restaurants?.current ?? null;
 export const selectSearchResults = (state) => state.restaurants?.searchResults ?? [];
 export default restaurantSlice.reducer;

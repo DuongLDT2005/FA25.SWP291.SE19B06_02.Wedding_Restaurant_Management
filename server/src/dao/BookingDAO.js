@@ -457,6 +457,29 @@ class BookingDAO {
     return rows.map((r) => ({ ...r, count: Number(r.cnt ?? r.count ?? 0) }));
   }
 
+  static async topRatedRestaurantReview(limit = 8) {
+    const rows = await sequelize.query(
+      `SELECT r.restaurantID, r.name, AVG(rv.rating) AS avgRating, COUNT(rv.reviewID) AS cnt
+       FROM restaurant r
+       JOIN hall h ON h.restaurantID = r.restaurantID
+       JOIN booking b ON b.hallID = h.hallID
+       JOIN review rv ON rv.bookingID = b.bookingID
+       WHERE r.status = 1
+       GROUP BY r.restaurantID, r.name
+       ORDER BY avgRating DESC, cnt DESC
+       LIMIT :limit`,
+      {
+        replacements: { limit },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return rows.map((r) => ({
+      ...r,
+      avgRating: Number(r.avgRating ?? 0),
+      count: Number(r.cnt ?? 0)
+    }));
+  }
 }
 
 export default BookingDAO;
