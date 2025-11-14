@@ -1,12 +1,12 @@
-import { Link } from "react-router-dom";
 import { uploadImageToCloudinary } from "../../services/uploadServices";
-import React, { useState } from "react";
+import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { Container, Form } from "react-bootstrap";
 import AuthLayout from "../../layouts/MainLayout";
+import "../../styles/AuthStyle.css";
 
 function SignUpForOwner() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ function SignUpForOwner() {
   const [file, setFile] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
+  const [setSubmitting] = useState(false);
 
   // Validate form
   const validateForm = () => {
@@ -147,7 +147,7 @@ function SignUpForOwner() {
           .signup-slogan {
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             align-items: flex-start;
             background: #E11D48;
             color: #fefaf9;
@@ -273,6 +273,14 @@ function SignUpForOwner() {
             text-decoration: underline;
           }
         `}</style>
+        <style>
+          {`
+            /* Tắt icon mắt mặc định của Bootstrap */
+            .form-control::-webkit-textfield-decoration-container { display: none !important; }
+            .form-control::-ms-reveal { display: none !important; }
+            .form-control::-ms-clear { display: none !important; }
+  `}
+        </style>
 
         <div
           className="signup-wrapper"
@@ -368,7 +376,6 @@ function SignUpForOwner() {
                     }
                     placeholder="Mật khẩu"
                   />
-                  {!errors.password && (
                     <span
                       className="toggle-password"
                       onClick={() => setShowPassword(!showPassword)}
@@ -377,7 +384,6 @@ function SignUpForOwner() {
                         icon={showPassword ? faEyeSlash : faEye}
                       />
                     </span>
-                  )}
                 </div>
                 {errors.password && (
                   <div className="error-message">{errors.password}</div>
@@ -398,7 +404,6 @@ function SignUpForOwner() {
                     }
                     placeholder="Xác nhận mật khẩu"
                   />
-                  {!errors.confirmPassword && (
                     <span
                       className="toggle-password"
                       onClick={() => setShowPassword(!showPassword)}
@@ -407,7 +412,6 @@ function SignUpForOwner() {
                         icon={showPassword ? faEyeSlash : faEye}
                       />
                     </span>
-                  )}
                 </div>
                 {errors.confirmPassword && (
                   <div className="error-message">{errors.confirmPassword}</div>
