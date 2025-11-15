@@ -45,7 +45,7 @@ export default function useAuth() {
 
   const fetchCurrentUserFromToken = async (token) => {
     try {
-      const res = await fetch("/api/auth/me", {
+      const res = await fetch("http://localhost:3000/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

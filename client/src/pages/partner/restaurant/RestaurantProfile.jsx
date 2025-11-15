@@ -2,13 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Card, Form, Button, Row, Col, Image, Modal } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { deleteRestaurantImage } from "../../../services/restaurantService";
-import { uploadImageToCloudinary } from "../../../services/uploadServices";
-import { useRestaurant } from "../../../hooks/useRestaurant";
-import { useNavigate } from "react-router-dom";
+
 export default function RestaurantProfile(props) {
-  const { updateOne, addImage } = useRestaurant();
-  const navigate = useNavigate();
+
   const [profile, setProfile] = useState({
     name: "",
     phone: "",
@@ -31,11 +27,11 @@ export default function RestaurantProfile(props) {
     if (props.restaurant) {
       setProfile({
         name: props.restaurant.name || "",
-        phone: props.restaurant.phone || props.restaurant.contactPhone || "",
+        phone: props.restaurant.contactPhone || "",
         email: props.restaurant.contactEmail || "",
         description: props.restaurant.description || "",
         thumbnailURL: props.restaurant.thumbnailURL || "",
-        imageURLs: (props.restaurant.images || props.restaurant.imageURLs || []).map(i => i.imageURL || i),
+        imageURLs: props.restaurant.imageURLs || [],
         address: {
           number: props.restaurant.address?.number || "",
           street: props.restaurant.address?.street || "",
@@ -65,7 +61,7 @@ export default function RestaurantProfile(props) {
     const file = e.target.files[0];
     if (file) {
       const previewUrl = URL.createObjectURL(file);
-      setProfile((prev) => ({ ...prev, thumbnailURL: previewUrl, thumbnailFile: file }));
+      setProfile((prev) => ({ ...prev, thumbnailURL: previewUrl }));
     }
   };
 
@@ -74,54 +70,14 @@ export default function RestaurantProfile(props) {
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setProfile((prev) => ({
       ...prev,
-      imageURLs: [...prev.imageURLs, ...newPreviews],
-      imageFiles: [...(prev.imageFiles || []), ...files],
+      imageUrls: [...prev.imageURLs, ...newPreviews],
     }));
   };
 
-  const handleSave = async () => {
-    try {
-      if (!props.restaurant?.restaurantID) throw new Error("Thiếu restaurantID");
-      const restaurantID = props.restaurant.restaurantID;
-      // Upload thumbnail if changed
-      let thumbnailURL = profile.thumbnailURL;
-      if (profile.thumbnailFile) {
-        thumbnailURL = await uploadImageToCloudinary(profile.thumbnailFile);
-      }
-
-      const payload = {
-        name: profile.name,
-        description: profile.description,
-        phone: profile.phone || null,
-        thumbnailURL,
-        address: {
-          number: profile.address.number,
-          street: profile.address.street,
-          ward: profile.address.ward,
-        },
-        // send selected event type IDs to backend
-        eventTypes: Array.isArray(profile.eventTypes) ? profile.eventTypes : [],
-      };
-      const updated = await updateOne({ id: restaurantID, payload });
-
-      // Upload new images (only newly added previews with files)
-      if (profile.imageFiles?.length) {
-        for (const f of profile.imageFiles) {
-          try {
-            const url = await uploadImageToCloudinary(f);
-            await addImage({ restaurantID, imageURL: url });
-          } catch (e) {
-            console.warn("Upload image failed", e);
-          }
-        }
-        // reset imageFiles after upload
-        setProfile(p => ({ ...p, imageFiles: [] }));
-      }
-      alert("Lưu thành công!");
-    } catch (e) {
-      alert(e.message || "Lưu thất bại");
-    }
-    navigate("/partner/restaurants");
+  const handleSave = () => {
+    console.log("Saving profile:", profile);
+    alert("Lưu thành công!");
+    // TODO: gọi API update
   };
 
   const handleViewImage = (url) => {
@@ -129,20 +85,12 @@ export default function RestaurantProfile(props) {
     setShowModal(true);
   };
 
-  const handleDeleteImage = async (url) => {
-    if (!window.confirm("Bạn có chắc muốn xóa ảnh này không?")) return;
-    // If this image corresponds to an existing DB image object, we need imageID
-    const imgObj = (props.restaurant?.images || []).find(i => i.imageURL === url);
-    try {
-      if (imgObj?.imageID) {
-        await deleteRestaurantImage(imgObj.imageID);
-      }
+  const handleDeleteImage = (url) => {
+    if (window.confirm("Bạn có chắc muốn xóa ảnh này không?")) {
       setProfile((prev) => ({
         ...prev,
         imageURLs: prev.imageURLs.filter((img) => img !== url),
       }));
-    } catch (e) {
-      alert(e.message || "Xóa ảnh thất bại");
     }
   };
 
