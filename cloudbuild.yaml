@@ -5,7 +5,7 @@ steps:
   - 'build'
   - '-t'
   # Đổi tên image/repo theo ý bạn
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
+  - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
   # Dấu "." này có nghĩa là build từ thư mục gốc,
   # sử dụng Dockerfile ở gốc
   - '.' 
@@ -14,7 +14,7 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args:
   - 'push'
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
+  - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
 
 # 3. Deploy image đó lên Cloud Run
 - name: 'gcr.io/google/cloud-sdk'
@@ -23,8 +23,11 @@ steps:
   - 'run'
   - 'deploy'
   - 'my-node-service' # Tên dịch vụ Cloud Run
-  - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
+  - '--image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
   - '--region=asia-southeast1' # Đổi region nếu cần
   - '--platform=managed'
   - '--allow-unauthenticated'
   - '--quiet'
+
+  options:
+  logging: CLOUD_LOGGING_ONLY
