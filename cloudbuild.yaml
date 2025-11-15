@@ -24,7 +24,7 @@ steps:
   - 'deploy'
   - 'my-node-service' # Tên dịch vụ Cloud Run
   - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
-  - '--region=us-central1' # Đổi region nếu cần
+  - '--region=asia-southeast1' # Đổi region nếu cần
   - '--platform=managed'
   - '--allow-unauthenticated'
   - '--quiet'
