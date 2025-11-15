@@ -40,7 +40,7 @@ import AdminReviewListPage from "../pages/admin/management/review/ReviewList";
 import AdminReportListPage from "../pages/admin/management/report/ReportList";
 
 
-import BookingListPage from "../pages/customer/BookingListPage";
+import BookingListPage from "../pages/customer/bookingForm/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
 import PaymentPage from "../pages/payment/PaymentPage";
@@ -82,7 +82,6 @@ function AppRoutes() {
         <Route path="/partner/payouts" element={<PartnerPayoutPage />} />
         <Route path="/partner/reviews" element={<PartnerReviewPage />} />
         <Route path="/partner/notifications" element={<Notification />} />
-
 
         <Route path="/customer/bookings" element={<BookingListPage />} />
         <Route path="/bookingForm" element={<BookingPage />} />

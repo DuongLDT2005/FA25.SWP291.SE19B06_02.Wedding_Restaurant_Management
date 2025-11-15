@@ -1,10 +1,13 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "/api",
+  baseURL: "http://localhost:5000/api",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-// Xoá default Content-Type JSON để axios tự set khi gửi FormData
-instance.defaults.headers.post["Content-Type"] = undefined;
+// Use cookies (HttpOnly) for auth
+instance.defaults.withCredentials = true;
 
 export default instance;

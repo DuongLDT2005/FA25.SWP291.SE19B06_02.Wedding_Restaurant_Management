@@ -20,6 +20,8 @@ import { loginWithGooglePopup } from "../firebase/firebase";
  * - Tự động lấy lại user khi reload (nếu có token)
  * - Xử lý đăng nhập Google + đăng nhập truyền thống
  */
+// Module-level flag to avoid multiple redundant hydrations in dev (StrictMode double mount)
+
 export default function useAuth() {
   const dispatch = useDispatch();
   const { user, isLoading, error, successMessage } = useSelector(
@@ -32,10 +34,12 @@ export default function useAuth() {
   // 1️⃣ Tự động refresh user khi app load lại
   // ======================================================
   useEffect(() => {
+    // Prevent duplicate hydrations (first mount only)
     const token = localStorage.getItem("token");
     if (token) {
-      // gọi helper kiểm tra token hợp lệ
       fetchCurrentUserFromToken(token);
+    } else {
+      dispatch(fetchCurrentUser());
     }
   }, [dispatch]);
 
@@ -83,10 +87,10 @@ export default function useAuth() {
     const action = await dispatch(logoutThunk());
     if (logoutThunk.rejected.match(action))
       throw action.payload || action.error.message;
-
-    // ✅ Xóa token + user
-    localStorage.removeItem("token");
-    dispatch(setUser(null));
+    dispatch(setUser(null)); // đảm bảo xóa user local
+    // Reload page to fully reset client state and pick up cleared HttpOnly cookie
+    // You can change to: window.location.assign('/') if you prefer redirect to home
+    window.location.reload();
   }, [dispatch]);
 
   // ======================================================

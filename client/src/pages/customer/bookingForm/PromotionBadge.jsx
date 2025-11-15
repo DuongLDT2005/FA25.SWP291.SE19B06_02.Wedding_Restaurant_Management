@@ -1,68 +1,80 @@
 import React, { useEffect } from "react";
 import useBooking from "../../../hooks/useBooking";
+import { calculatePrice } from "../../../services/bookingService";
+import { Tag } from "lucide-react";
+import { Badge } from "react-bootstrap";
 
 /**
  * Hiển thị khuyến mãi đang áp dụng + gợi ý promotion kế cận
  * Cho phép áp dụng promotion gợi ý.
  */
-export default function PromotionBadge() {
-  const { booking, applyPromotion, fetchPromotions, recalcPrice, summary } = useBooking();
-
+export default function PromotionBadge({ promotions, tables, menu, services }) {
+  const { booking, applyPromotion, recallPrice } = useBooking();
+  const [appliedPromotions, setAppliedPromotions] = React.useState([]);
+  // Use provided promotions directly
+  const suggestions = promotions || [];
+  // Auto apply the best promotion when promotions list or inputs change
   useEffect(() => {
-    // fetch promotions relevant to current booking info
-    const params = {
-      eventType: booking.bookingInfo.eventType,
-      date: booking.bookingInfo.date,
-      tables: booking.bookingInfo.tables,
-    };
-    fetchPromotions(params).catch(() => {});
+    if (!suggestions.length) return;
+    const base = {menu: menu, tables:tables, services: Array.isArray(services) ? services : [] };
+    let best = suggestions[0];
+    let bestDiscount = 0;
+    // Only consider promotions with discountType 0 for best discount calculation
+    const discountPromotions = suggestions.filter(p => p.discountType === 0);
+    discountPromotions.forEach((p) => {
+      const { discount } = calculatePrice({ ...base, promotion: p });
+      // console.log(`Promotion: ${p.title}, Discount: ${discount}`);
+      if (discount > bestDiscount) {
+        best = p;
+        bestDiscount = discount;
+      }
+    });
+    // apply only if better or not set yet
+    if (best && (!booking.appliedPromotion || booking.appliedPromotion?.id !== best.id)) {
+      applyPromotion(best);
+      // recalc after apply
+      setTimeout(recallPrice, 0);
+    }
+    // Apply all discountType 1 promotions
+    const servicePromotions = suggestions.filter(p => p.discountType === 1);
+    servicePromotions.forEach((p) => {
+      if (!booking.appliedPromotion || !Array.isArray(booking.appliedPromotion) || !booking.appliedPromotion.some(ap => ap.id === p.id)) {
+        applyPromotion(p);
+        setTimeout(recallPrice, 0);
+      }
+    });
+    // Update local applied promotions for display
+    const allApplied = [best, ...servicePromotions].filter(Boolean);
+    setAppliedPromotions(allApplied);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.bookingInfo.eventType, booking.bookingInfo.date, booking.bookingInfo.tables]);
-
-  const suggestions = booking.promotions || [];
+  }, [suggestions, tables, menu, services]);
 
   return (
-    <div>
-      <label className="small">Khuyến mãi</label>
-      <div className="mt-2">
-        {booking.appliedPromotion ? (
-          <div className="p-2 bg-green-50 border rounded">
-            <strong>Đang áp dụng:</strong> {booking.appliedPromotion.title} — giảm{" "}
-            {booking.appliedPromotion.type === "percent" ? `${booking.appliedPromotion.value}%` : `${booking.appliedPromotion.value}₫`}
-          </div>
-        ) : (
-          <div className="text-sm text-muted">Chưa áp dụng khuyến mãi</div>
-        )}
-
-        {suggestions.length > 0 && (
-          <div className="mt-2">
-            <div className="text-xs text-muted mb-1">Gợi ý:</div>
-            <div className="flex gap-2">
-              {suggestions.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="px-3 py-1 rounded bg-yellow-100"
-                  onClick={() => {
-                    applyPromotion(p);
-                    // recalc price after apply
-                    setTimeout(recalcPrice, 0);
-                  }}
-                >
-                  {p.title} {p.type === "percent" ? `- ${p.value}%` : `- ${p.value}₫`}
-                </button>
-              ))}
+    <div className="mt-3">
+      <label className="fw-semibold mb-1">Khuyến mãi</label>
+      {appliedPromotions.length > 0 ? (
+        appliedPromotions.map((promotion, index) => (
+          <div key={promotion.id || index} className="d-flex align-items-center justify-content-between p-2 rounded border border-success bg-gradient-to-r mb-2" style={{ background: "linear-gradient(90deg, #d1fae5, #6ee7b7)" }}>
+            <div className="d-flex align-items-center gap-2">
+              <Tag size={16} className="text-success" />
+              <div>
+                <strong>{promotion.name}</strong>
+                <div className="text-sm text-success">
+                  {promotion.description}
+                </div>
+                <p className="mb-0" style={{ fontSize: "0.75rem", opacity: 0.85 }}>
+                  {promotion.startDate} → {promotion.endDate}
+                </p>
+              </div>
             </div>
+            <Badge bg="success" pill>
+              Áp dụng
+            </Badge>
           </div>
-        )}
-      </div>
-
-      <div className="mt-3 text-sm">
-        <div>Subtotal: {summary.subtotal?.toLocaleString() ?? 0}₫</div>
-        <div>Discount: -{summary.discount?.toLocaleString() ?? 0}₫</div>
-        <div>VAT: {summary.vat?.toLocaleString() ?? 0}₫</div>
-        <div className="font-semibold">Total: {summary.total?.toLocaleString() ?? 0}₫</div>
-      </div>
+        ))
+      ) : (
+        <div className="text-muted">Chưa áp dụng khuyến mãi</div>
+      )}
     </div>
   );
 }

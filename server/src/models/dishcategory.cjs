@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const { default: restaurant } = require('./restaurant.cjs');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('dishcategory', {
     categoryID: {
@@ -21,6 +22,14 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: true
+    },
+    restaurantID: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'restaurant',
+        key: 'restaurantID'
+      }
     }
   }, {
     sequelize,

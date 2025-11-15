@@ -1,8 +1,8 @@
-import axios from "axios";
+import api from "../api/axios";
 
-const API_URL = "http://localhost:5000/eventTypes";
-
+// Backend mounts event type routes at /api/eventtypes
 export const getEventTypes = async () => {
-  const res = await axios.get(API_URL);
-  return res.data;
+  const res = await api.get("/eventtypes");
+  // support either array or wrapped response
+  return Array.isArray(res.data) ? res.data : res.data?.data ?? [];
 };

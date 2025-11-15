@@ -1,57 +1,78 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Container, Row, Col } from "react-bootstrap"
 import Header from "../../components/header/Header"
 import Footer from "../../components/Footer"
 import BookingCard from "./components/BookingCard"
 import { useNavigate } from "react-router-dom"
 import ScrollToTopButton from "../../components/ScrollToTopButton"
-import { bookings as mockBookings } from "./ValueStore"
+// import { bookings as mockBookings } from "./ValueStore" // dùng dữ liệu backend thay mock
+  import { getMyBookings, customerConfirm, customerCancel } from "../../services/bookingService"
+import useAuth from "../../hooks/useAuth"
+import useBooking from "../../hooks/useBooking"
 import "bootstrap/dist/css/bootstrap.min.css"
 
 function BookingListPage() {
   const navigate = useNavigate()
 
-  // Load persisted bookings from sessionStorage and merge with mock
-  let persisted = []
-  try {
-    persisted = JSON.parse(sessionStorage.getItem("customerBookings") || "[]")
-  } catch { }
+  const { user } = useAuth()
+  const { hydrateFromDTO, setFinancial } = useBooking()
+  const [bookingsData, setBookingsData] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const mergedBookings = [
-    ...persisted,
-    ...mockBookings.filter((m) => !persisted.some((p) => p.bookingID === m.bookingID)),
-  ]
+  useEffect(() => {
+    let ignore = false
+    async function load() {
+      setLoading(true)
+      setError("")
+      try {
+        const rows = await getMyBookings()
+        if (!ignore) {
+          // Chuẩn hoá vài trường để BookingCard dùng ổn định (ưu tiên DTO chi tiết từ backend)
+          const normalized = rows.map(r => {
+            const hall = r.hall || { name: r.hallName || "Sảnh", capacity: (r.tableCount || 0) * 10 };
+            const restaurantObj = r.restaurant || hall?.restaurant || null;
+            const restaurant = restaurantObj ? {
+              ...restaurantObj,
+              name: restaurantObj.name || r.restaurantName || "Nhà hàng",
+              fullAddress: restaurantObj.fullAddress || restaurantObj.address || r.restaurantAddress || "",
+              thumbnailURL: restaurantObj.thumbnailURL || restaurantObj.thumbnail || "",
+            } : { name: r.restaurantName || "Nhà hàng", fullAddress: r.restaurantAddress || "", thumbnailURL: "" };
+            const menu = r.menu || { name: r.menuName || "Menu", price: r.pricePerTable || 0 };
+            return { ...r, hall, restaurant, menu };
+          });
+          setBookingsData(normalized)
+        }
+      } catch (e) {
+        if (!ignore) setError(e.message || "Không thể tải danh sách đặt chỗ")
+      } finally {
+        if (!ignore) setLoading(false)
+      }
+    }
+    load()
+    return () => { ignore = true }
+  }, [user?.userID])
 
-  const [bookingsData, setBookingsData] = useState(mergedBookings)
+  // Với dữ liệu thật từ backend, bỏ sessionStorage persist (có thể giữ nếu cần offline cache)
 
-  function persist(updated) {
+  async function handleConfirm(b) {
     try {
-      sessionStorage.setItem("customerBookings", JSON.stringify(updated))
+      await customerConfirm(b.bookingID)
+      setBookingsData(prev => prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 3 } : it))
     } catch (e) {
-      console.warn("Persist bookings failed", e)
+      alert(e.message || 'Xác nhận booking thất bại')
     }
   }
 
-  function handleConfirm(b, note) {
-    setBookingsData((prev) => {
-      const updated = prev.map((it) =>
-        it.bookingID === b.bookingID ? { ...it, status: 1, confirmNote: note || "" } : it,
-      )
-      persist(updated)
-      return updated
-    })
-  }
-
-  function handleCancel(b, note) {
-    setBookingsData((prev) => {
-      const updated = prev.map((it) =>
-        it.bookingID === b.bookingID ? { ...it, status: 2, cancelReason: note || "" } : it,
-      )
-      persist(updated)
-      return updated
-    })
+  async function handleCancel(b, note) {
+    try {
+      await customerCancel(b.bookingID, note)
+      setBookingsData(prev => prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 6, cancelReason: note || '' } : it))
+    } catch (e) {
+      alert(e.message || 'Hủy booking thất bại')
+    }
   }
 
   function handleTransfer(b) {
@@ -63,11 +84,30 @@ function BookingListPage() {
   }
 
   function handleOpenContract(b) {
+    // Đổ dữ liệu chi tiết booking vào Redux để trang chi tiết có thể dùng ngay
+    try {
+      hydrateFromDTO(b)
+      setFinancial({
+        originalPrice: b.originalPrice,
+        discountAmount: b.discountAmount,
+        VAT: b.VAT,
+        totalAmount: b.totalAmount,
+      })
+    } catch {}
     sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
     navigate(`/booking/${b.bookingID}`)
   }
 
   function handleViewContract(b) {
+    try {
+      hydrateFromDTO(b)
+      setFinancial({
+        originalPrice: b.originalPrice,
+        discountAmount: b.discountAmount,
+        VAT: b.VAT,
+        totalAmount: b.totalAmount,
+      })
+    } catch {}
     sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
     navigate(`/booking/${b.bookingID}`)
   }
@@ -112,7 +152,11 @@ function BookingListPage() {
           <Row>
             <Col lg={10} md={10} xs={12} className="offset-lg-1 offset-md-1">
               <div>
-                {bookingsData.length === 0 ? (
+                {loading ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px' }}>Đang tải dữ liệu...</div>
+                ) : error ? (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', color: '#dc2626' }}>{error}</div>
+                ) : bookingsData.length === 0 ? (
                   <div style={{
                     background: '#ffffff',
                     border: '2px dashed #e5e7eb',

@@ -21,6 +21,9 @@ class HallDAO {
             status
         } = hallData;
 
+        // default status to true when not provided (keeps backwards compatibility)
+        const finalStatus = (typeof status === 'boolean') ? status : true;
+
         return await sequelize.transaction(async (t) => {
             const newHall = await hall.create({
                 restaurantID,
@@ -30,7 +33,7 @@ class HallDAO {
                 maxTable: typeof maxTable === 'number' ? maxTable : (typeof capacity === 'number' ? capacity : undefined),
                 area,
                 price,
-                status
+                status: finalStatus
             }, { transaction: t });
 
             // increment hallCount on restaurant
@@ -52,7 +55,7 @@ class HallDAO {
     static async getHallsByRestaurantId(restaurantID) {
         const rows = await hall.findAll({ where: { restaurantID } });
         const dtos = toDTOs(rows);
-        return dtos.map(d => ({ ...d, capacity: d.maxTable }));
+        return dtos.map(d => ({ ...d, maxTable: d.maxTable, capacity: d.maxTable * 10 }));
     }
 
     static async updateHall(hallID, hallData) {

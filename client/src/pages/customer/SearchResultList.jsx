@@ -3,9 +3,10 @@ import { Spinner } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import SearchBar from "../../components/searchbar/SearchSection";
-import FilterResult from "./components/FilterResult";
-import ListResult from "./components/ListResult";
+import FilterResult from "./components/Filter/FilterResult";
+import ListResult from "./components/search/ListResult";
 import { useRestaurant } from "../../hooks/useRestaurant";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 /**
  * ✅ SearchResultList

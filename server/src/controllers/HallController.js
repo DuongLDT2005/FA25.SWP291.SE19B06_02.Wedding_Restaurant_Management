@@ -1,4 +1,5 @@
 import HallServices from "../services/HallServices.js";
+import { normalizeTime } from "../utils/timeUtils.js";
 class HallController {
     static async createHall(req, res) {
         try {
@@ -100,6 +101,75 @@ class HallController {
             res.json({ success: true });
         } catch (error) {
             console.error('Error deleting hall image:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    static async getAvailability(req, res) {
+        try {
+            const { date: eventDate, startTime, endTime } = req.query;
+            const hallID = req.params.id;
+            if (!eventDate || !startTime || !endTime) {
+                return res.status(400).json({ error: 'Missing date/startTime/endTime' });
+            }
+            // Normalize time format
+            const normalizedStartTime = normalizeTime(startTime);
+            const normalizedEndTime = normalizeTime(endTime);
+            const result = await HallServices.isHallAvailable(hallID, eventDate, normalizedStartTime, normalizedEndTime);
+            res.json(result);
+        } catch (error) {
+            console.error('Error checking hall availability:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+    static async getAvailableHalls(req, res) {
+        try {
+            const { date: eventDate, startTime, endTime, restaurantId, maxTable } = req.query;
+            if (!restaurantId) {
+                return res.status(400).json({ error: 'Missing restaurantId' });
+            }
+            if (maxTable && isNaN(parseInt(maxTable))) {
+                return res.status(400).json({ error: 'maxTable must be a number' });
+            }
+            let halls;
+            if (eventDate && startTime && endTime) {
+                console.log('Date/time provided, checking availability for restaurant:', restaurantId);
+                // Normalize time format
+                const normalizedStartTime = normalizeTime(startTime);
+                const normalizedEndTime = normalizeTime(endTime);
+                halls = await HallServices.listAvailableHalls(restaurantId, eventDate, normalizedStartTime, normalizedEndTime, maxTable);
+            } else {
+                console.log('No complete date/time provided, fetching all active halls for restaurant:', restaurantId);
+                halls = await HallServices.getHallsByRestaurantId(restaurantId);
+                // Filter to only active halls
+                halls = halls.filter(hall => hall.status === true);
+                // Filter by maxTable if provided
+                if (maxTable) {
+                    halls = halls.filter(hall => hall.maxTable >= maxTable);
+                }
+            }
+
+            // Load images for each hall
+            const hallsWithImages = await Promise.all(
+                halls.map(async (hall) => {
+                    try {
+                        const images = await HallServices.getHallImages(hall.hallID);
+                        return {
+                            ...hall,
+                            images: images || []
+                        };
+                    } catch (error) {
+                        console.error(`Error loading images for hall ${hall.hallID}:`, error);
+                        return {
+                            ...hall,
+                            images: []
+                        };
+                    }
+                })
+            );
+
+            res.json(hallsWithImages);
+        } catch (error) {
+            console.error('Error fetching available halls:', error);
             res.status(500).json({ error: 'Internal server error' });
         }
     }

@@ -5,11 +5,15 @@ import MenuDAO from "../../dao/MenuDAO.js";
 import SystemSettingDAO from "../../dao/SystemSettingDAO.js";
 import ServiceDAO from "../../dao/ServiceDAO.js";
 import PromotionDAO from "../../dao/PromotionDAO.js";
+import ContractDAO, { ContractStatus } from "../../dao/ContractDAO.js";
+import ContractServices from "../ContractServices.js";
 import BookingPricing from "./BookingPricing.js";
 import BookingStatus from "../../models/enums/BookingStatus.js";
 import { sendBookingStatusEmail } from "../../utils/mail/mailer.js";
 import UserDAO from "../../dao/userDao.js";
 import NotificationService from "../NotificationServices.js";
+import db from "../../config/db.js";
+import { notifyByStatusById } from "./BookingNotificationService.js";
 
 class BookingService {
   /**
@@ -37,15 +41,7 @@ class BookingService {
     } = data;
 
     // 1️⃣ Validate cơ bản
-    if (
-      !customerID ||
-      !eventTypeID ||
-      !hallID ||
-      !menuID ||
-      !eventDate ||
-      !startTime ||
-      !endTime
-    )
+    if (!customerID || !eventTypeID || !hallID || !menuID || !eventDate || !startTime || !endTime )
       throw new Error("Missing required fields.");
     if (!Number.isInteger(tableCount) || tableCount <= 0)
       throw new Error("Invalid table count.");
@@ -146,7 +142,7 @@ class BookingService {
     try {
       const vatSetting = await SystemSettingDAO.getByKey("VAT_RATE");
       if (vatSetting?.settingValue) vatRate = String(vatSetting.settingValue);
-    } catch {}
+    } catch { }
     await engine.calculateTotals({ VAT_RATE: vatRate });
 
     // Create booking with computed amounts; use engine.services (priced per-unit via appliedPrice)
@@ -173,22 +169,68 @@ class BookingService {
       }
     );
 
-    // 7️⃣ Gửi mail cho partner (chỉ khi có email)
-    const [partner, customer] = await Promise.all([
-      BookingDAO.getRestaurantPartnerByHallID(hallID),
-      BookingDAO.getCustomerByID(customerID),
-    ]);
+    return booking;
+  }
 
-    if (partner?.email || customer?.email) {
-      await NotificationService.sendBookingStatusChange({
-        bookingID: booking.bookingID,
-        customerEmail: customer?.email,
-        partnerEmail: partner?.email,
-        status: BookingStatus.PENDING,
-      });
+  /**
+   * Create a manual/blocked booking (external booking) that reserves a time slot for a hall.
+   * This booking has no customer (customerID = null) and status = MANUAL_BLOCKED.
+   * Useful when restaurant admin wants to mark a timeslot as already booked by an external system.
+   * Required fields: hallID, eventDate, startTime, endTime, tableCount
+   */
+  async setBooking(data, actorPartnerID = null) {
+    const { hallID, eventDate, startTime, endTime, tableCount, specialRequest = '', menuID = null, eventTypeID = null } = data;
+    if (!hallID || !eventDate || !startTime || !endTime || !Number.isInteger(tableCount) || tableCount <= 0) {
+      throw new Error('Missing required fields for manual booking (hallID, eventDate, startTime, endTime, tableCount)');
     }
 
-    return booking;
+    // Validate date/time
+    const now = new Date();
+    const event = new Date(eventDate);
+    if (isNaN(event.getTime())) throw new Error('Invalid event date format.');
+    if (event < now) throw new Error('Event date cannot be in the past.');
+
+    const start = new Date(`1970-01-01T${startTime}`);
+    const end = new Date(`1970-01-01T${endTime}`);
+    if (start >= end) throw new Error('Invalid time range: startTime must be before endTime.');
+
+  // Check overlapping bookings for the hall (consider deposited, manual blocked, confirmed)
+  const overlapping = await BookingDAO.findOverlapsForBlocking(hallID, eventDate, startTime, endTime);
+    if (overlapping.length > 0) throw new Error('This hall is already booked for the selected time range.');
+
+    // If actorPartnerID provided, ensure partner owns the hall's restaurant
+    if (actorPartnerID) {
+      const ownerPartner = await BookingDAO.getRestaurantPartnerByHallID(hallID);
+      if (!ownerPartner || String(ownerPartner.restaurantPartnerID) !== String(actorPartnerID)) {
+        throw new Error('Not authorized to create manual booking for this hall');
+      }
+    }
+
+    // Create a booking record with customerID = null and status = MANUAL_BLOCKED
+    const bookingData = {
+      customerID: null,
+      eventTypeID,
+      hallID,
+      menuID,
+      eventDate,
+      startTime,
+      endTime,
+      tableCount,
+      specialRequest,
+      status: BookingStatus.MANUAL_BLOCKED,
+      // Ensure non-null monetary fields for manual bookings
+      originalPrice: 0,
+      discountAmount: 0,
+      VAT: 0,
+      totalAmount: 0,
+    };
+
+    const created = await BookingDAO.createBooking(bookingData, { dishIDs: [], services: [], promotionIDs: [] });
+    // Immediately set status via DAO (in case createBooking doesn't persist status field)
+    if (created && created.bookingID) {
+      await BookingDAO.updateBooking(created.bookingID, { status: BookingStatus.MANUAL_BLOCKED, customerID: null });
+    }
+    return created;
   }
 
   /** ✅ GET ALL */
@@ -199,7 +241,22 @@ class BookingService {
   /** ✅ GET ONE */
   async getBookingById(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
-    return BookingDAO.getBookingById(bookingID);
+    return BookingDAO.getBookingDetails(bookingID);
+  }
+
+  /** ✅ GET BY CUSTOMER */
+  async getBookingsByCustomerId(customerID, { status = null, isChecked = null } = {}) {
+    if (!customerID) throw new Error("Missing customerID.");
+    return BookingDAO.getBookingsByCustomer({ customerID, status, isChecked });
+  }
+
+  /** ✅ GET BY PARTNER (all bookings under partner-owned restaurants)
+   * options: { detailed?: boolean }
+   */
+  async getBookingsByPartnerId(partnerID, { detailed = false } = {}) {
+    if (!partnerID) throw new Error("Missing partnerID.");
+    if (detailed) return BookingDAO.getBookingsByPartnerDetailed(partnerID);
+    return BookingDAO.getBookingsByPartner(partnerID);
   }
 
   /** ✅ UPDATE (partial) */
@@ -220,33 +277,70 @@ class BookingService {
    * - Tự động gửi mail theo trạng thái
    */
   async updateBookingStatus(bookingID, status, isChecked = true) {
+    // Delegate to centralized changeStatus (transactional + afterCommit notifications)
+    // Accept an options object so controller can pass actor info (actorId, actorRole, reason)
+    // and any other flags (e.g., setChecked).
+    if (typeof isChecked === 'object' && isChecked !== null) {
+      // called as updateBookingStatus(id, status, opts)
+      return this.changeStatus(bookingID, status, isChecked);
+    }
+    // called as updateBookingStatus(id, status, isCheckedBoolean)
+    return this.changeStatus(bookingID, status, { setChecked: isChecked });
+  }
+
+  /**
+   * Centralized status change with transaction and afterCommit notifications.
+   * opts: { actorId, actorRole, reason, setChecked }
+   */
+  async changeStatus(bookingID, status, opts = {}) {
+    const { actorId, actorRole, reason, setChecked = true } = opts;
     if (!bookingID || !status) throw new Error("Missing bookingID or status.");
 
     const validStatuses = Object.values(BookingStatus);
-    if (!validStatuses.includes(status))
-      throw new Error("Invalid booking status.");
+    if (!validStatuses.includes(status)) throw new Error("Invalid booking status.");
 
-    const updated = await BookingDAO.updateBookingStatus(bookingID, status, {
-      isChecked,
+    const { sequelize } = db;
+
+    const result = await sequelize.transaction(async (t) => {
+      // Lock the row to avoid race conditions via DAO helper
+      const bk = await BookingDAO.getBookingForUpdate(bookingID, { transaction: t });
+      if (!bk) throw new Error('Booking not found');
+
+      const prev = bk.status;
+
+      // Basic RBAC examples (caller may still validate before calling):
+      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && actorRole !== 1) {
+        throw new Error('Only partner can accept or reject bookings');
+      }
+
+      if (status === BookingStatus.CONFIRMED && !actorId) {
+        throw new Error('Authentication required to confirm booking');
+      }
+
+      // Optionally validate allowed transitions (simple example)
+      // e.g., only PENDING -> ACCEPTED/REJECTED
+      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && prev !== BookingStatus.PENDING) {
+        throw new Error('Only PENDING bookings can be accepted or rejected');
+      }
+
+      // Perform update via DAO (transaction-aware)
+      await BookingDAO.updateBookingStatusWithTransaction(bookingID, status, { isChecked: setChecked, transaction: t });
+
+      // after commit, send notifications (best-effort)
+      t.afterCommit(async () => {
+        try {
+          await notifyByStatusById(bookingID, status, { reason });
+        } catch (e) {
+          console.error(`Notification for status ${status} on booking ${bookingID} failed:`, e?.message || e);
+        }
+      });
+
+      return { success: true, previous: prev, status };
     });
-    if (!updated) throw new Error("Booking not found or update failed.");
 
-    const booking = await BookingDAO.getBookingDetails(bookingID);
-    const customer = booking?.customer;
-    const partner = await BookingDAO.getRestaurantPartnerByHallID(
-      booking.hallID
-    );
-
-    await NotificationService.sendBookingStatusChange({
-      bookingID,
-      customerEmail: customer?.email,
-      partnerEmail: partner?.email,
-      status,
-    });
-
-    return { success: true, status };
+    return result;
   }
-
+  
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
     if (!bookingID || !partnerID)
@@ -269,22 +363,18 @@ class BookingService {
       throw new Error("Only PENDING bookings can be accepted.");
     }
 
-    const ok = await BookingDAO.updateBookingStatus(
-      bookingID,
-      BookingStatus.ACCEPTED
-    );
-    if (!ok) throw new Error("Failed to update booking status.");
+    // Use centralized changeStatus (transaction + afterCommit notification)
+    await this.changeStatus(bookingID, BookingStatus.ACCEPTED, { actorId: partnerID, actorRole: 1 });
 
-    // Send email to customer (best effort)
-    const user = await UserDAO.getUserById(booking.customerID);
-    const email = user?.email;
-    if (email) {
-      await sendBookingStatusEmail(email, booking, "ACCEPTED");
-    } else {
-      console.log("No email found for customer, skipping email notification.");
+    // Create a Contract record linked to this booking so partner/customer can upload/sign it.
+    // Use booking details we already loaded above to get restaurantID.
+    try {
+      // Generate HTML contract, persist file and DB record
+      await ContractServices.createContractFromBooking(bookingID);
+    } catch (e) {
+      console.error(`Failed to create contract for booking ${bookingID}:`, e?.message || e);
     }
 
-    // Return updated booking (optional: reload)
     return await BookingDAO.getBookingById(bookingID);
   }
 
@@ -307,45 +397,29 @@ class BookingService {
       throw new Error("Only PENDING bookings can be rejected.");
     }
 
-    const ok = await BookingDAO.updateBookingStatus(
-      bookingID,
-      BookingStatus.REJECTED
-    );
-    if (!ok) throw new Error("Failed to update booking status.");
-    const user = await UserDAO.getUserById(booking.customerID);
-    const email = user?.email;
-    if (email) {
-      await sendBookingStatusEmail(email, booking, "REJECTED", { reason });
-    }
-
+    await this.changeStatus(bookingID, BookingStatus.REJECTED, { actorId: partnerID, actorRole: 1, reason });
     return await BookingDAO.getBookingById(bookingID);
   }
   async depositBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    this.updateBookingStatus(bookingID, BookingStatus.DEPOSITED);
+    await this.changeStatus(bookingID, BookingStatus.DEPOSITED);
     return await BookingDAO.getBookingById(bookingID);
   }
   async confirmBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    this.updateBookingStatus(bookingID, BookingStatus.CONFIRMED);
-    // after choose confirm if not deposit in 2day, it will switch to expired
-    setTimeout(async () => {
-      const b = await BookingDAO.getBookingDetails(bookingID);
-      if (b.status === BookingStatus.CONFIRMED) {
-        this.updateBookingStatus(bookingID, BookingStatus.EXPIRED);
-      }
-    }, 2 * 24 * 60 * 60 * 1000); // 2 days in milliseconds
+    await this.changeStatus(bookingID, BookingStatus.CONFIRMED);
+    // Expiration is handled by cron (bulkExpireConfirmedOlderThanBatch)
     return await BookingDAO.getBookingById(bookingID);
   }
   async completeBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    this.updateBookingStatus(bookingID, BookingStatus.COMPLETED);
+    await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
 

@@ -46,14 +46,23 @@ const StyledDatePickerTextField = styled(TextField)(({ theme }) => ({
   },
 }));
 
-export default function DateInput() {
+export default function DateInput({ value: propValue, onChange: propOnChange, labelText = "Ngày tổ chức" }) {
   const { state, setField } = useSearchForm();
 
   const tomorrow = dayjs().add(1, 'day');
   const oneYearLater = dayjs().add(1, 'year');
 
   const handleChange = (newValue) => {
-    setField("date", newValue ? newValue.format("YYYY-MM-DD") : "");
+    if (newValue && newValue.isBefore(tomorrow, 'day')) {
+      // Prevent past dates
+      return;
+    }
+    const dateStr = newValue ? newValue.format("YYYY-MM-DD") : "";
+    if (typeof propOnChange === 'function') {
+      propOnChange(dateStr);
+    } else {
+      setField("date", dateStr);
+    }
   };
 
   return (
@@ -61,12 +70,12 @@ export default function DateInput() {
       <div>
         <Form.Label>
           <CalendarDays className="me-1" style={{ color: '#E11D48' }} size={18} />
-          Ngày tổ chức
+          {labelText}
         </Form.Label>
 
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="vi">
           <DatePicker
-            value={state.date ? dayjs(state.date) : null}
+            value={(propValue ? dayjs(propValue) : (state?.date ? dayjs(state.date) : null))}
             onChange={handleChange}
             disablePast
             minDate={tomorrow}

@@ -39,17 +39,34 @@ export default function UserDetail() {
         // CUSTOMER (role === 0) -> lịch sử booking
         if (userData.role === 0 || userData.role === "0") {
           try {
-            const bookingRes = await axios.get(`/bookings/customer/${id}`);
-            // API có thể trả:
-            //  - { success: true, data: [...] }
-            //  - or directly an array [...]
+            // Fix: Sử dụng userID làm customerID (vì customerID = userID cho customers)
+            const customerID = userData.userID || userData.id || id;
+            console.log("🔍 Fetching bookings for customerID:", customerID);
+            console.log("🔍 User data:", userData);
+            
+            const bookingRes = await axios.get(`/admin/bookings/customer/${customerID}`);
+            console.log("🔍 Bookings API full response:", bookingRes);
+            console.log("🔍 Bookings API data:", bookingRes.data);
+            
+            // API trả về: { success: true, data: [...] }
             const payload = bookingRes.data;
-            const arr =
-              Array.isArray(payload) ? payload : payload?.data ?? payload ?? [];
+            let arr = [];
+            
+            if (Array.isArray(payload)) {
+              arr = payload;
+            } else if (payload?.data && Array.isArray(payload.data)) {
+              arr = payload.data;
+            } else if (payload?.success && payload?.data) {
+              arr = Array.isArray(payload.data) ? payload.data : [];
+            }
+            
+            console.log("🔍 Parsed bookings array:", arr);
             setBookings(arr);
-            console.log("Bookings loaded:", arr);
           } catch (bErr) {
-            console.error("Error loading bookings:", bErr);
+            console.error("❌ Error loading bookings:", bErr);
+            console.error("❌ Error response:", bErr.response?.data);
+            console.error("❌ Error status:", bErr.response?.status);
+            console.error("❌ Error config:", bErr.config);
             setBookings([]);
           }
         }
@@ -208,12 +225,13 @@ export default function UserDetail() {
                           <p className="mb-1">Wedding role: {user.customer.weddingRole || "-"}</p>
                         </>
                       )}
-                      {user.restaurantpartner && (
+                      {/* Fix: Đổi restaurantpartner thành partner (theo alias trong init-models.cjs line 171) */}
+                      {user.partner && (
                         <>
                           <hr/>
                           <h6>Thông tin Partner</h6>
-                          <p className="mb-1">License URL: {user.restaurantpartner.licenseUrl || "-"}</p>
-                          <p className="mb-1">Negotiation status: {user.restaurantpartner.status ?? "-"}</p>
+                          <p className="mb-1">License URL: {user.partner.licenseUrl || "-"}</p>
+                          <p className="mb-1">Negotiation status: {user.partner.status ?? "-"}</p>
                         </>
                       )}
                     </div>

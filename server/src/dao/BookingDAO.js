@@ -1,7 +1,8 @@
 import db from '../config/db.js';
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
-
+import BookingStatus from '../models/enums/BookingStatus.js';
+import UserDAO from './userDao.js';
 // Models from Sequelize
 const {
   sequelize,
@@ -18,6 +19,7 @@ const {
   promotion: PromotionModel,
   customer: CustomerModel,
   eventtype: EventTypeModel,
+  user: UserModel,
 } = db;
 
 class BookingDAO {
@@ -60,11 +62,52 @@ class BookingDAO {
 
   // Get bookings for a customer with optional filters
   static async getBookingsByCustomer({ customerID, status = null, isChecked = null }) {
+    if (customerID == null) return [];
     const where = { customerID };
-    if (status !== null && typeof status !== 'undefined') where.status = status;
-    if (isChecked !== null && typeof isChecked !== 'undefined') where.isChecked = !!isChecked;
+    if (status != null) where.status = status;
+    if (isChecked != null) where.isChecked = !!isChecked;
 
-    const rows = await BookingModel.findAll({ where, order: [['createdAt', 'DESC']] });
+    const rows = await BookingModel.findAll({
+      where,
+      include: [
+        {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [
+            { model: UserModel, as: 'user', attributes: { exclude: ['password'] } }
+          ]
+        },
+        { model: EventTypeModel, as: 'eventType' },
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
+          }]
+        },
+        { model: MenuModel, as: 'menu' },
+        {
+          model: BookingDishModel,
+          as: 'bookingdishes',
+          include: [{ model: DishModel, as: 'dish' }]
+        },
+        {
+          model: BookingServiceModel,
+          as: 'bookingservices',
+          include: [{ model: ServiceModel, as: 'service' }]
+        },
+        {
+          model: BookingPromotionModel,
+          as: 'bookingpromotions',
+          include: [{ model: PromotionModel, as: 'promotion' }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
     return toDTOs(rows);
   }
 
@@ -74,11 +117,11 @@ class BookingDAO {
       include: [{
         model: RestaurantModel,
         as: 'restaurant',
-        include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+        include: [{ model: RestaurantPartnerModel, as: 'partner' }]
       }]
     });
     if (!hall) return null;
-    const partner = hall.restaurant?.restaurantPartner;
+    const partner = hall.restaurant?.partner;
     return toDTO(partner);
   }
 
@@ -89,10 +132,24 @@ class BookingDAO {
   }
 
   static async updateBookingStatus(bookingID, newStatus, { isChecked } = {}) {
+    return this.updateBookingStatusWithTransaction(bookingID, newStatus, { isChecked });
+  }
+
+  // Transaction-aware update; Service should open transaction and pass it when required.
+  static async updateBookingStatusWithTransaction(bookingID, newStatus, { isChecked = undefined, transaction = null } = {}) {
     const updates = { status: newStatus };
     if (typeof isChecked !== 'undefined') updates.isChecked = !!isChecked;
-    const [affected] = await BookingModel.update(updates, { where: { bookingID } });
+    const [affected] = await BookingModel.update(updates, { where: { bookingID }, transaction });
     return affected > 0;
+  }
+
+  // Get booking row with optional FOR UPDATE lock when a transaction is provided
+  static async getBookingForUpdate(bookingID, { transaction = null } = {}) {
+    if (transaction) {
+      // lock the row within the provided transaction
+      return BookingModel.findByPk(bookingID, { transaction, lock: transaction.LOCK.UPDATE });
+    }
+    return BookingModel.findByPk(bookingID);
   }
 
   static async markBookingChecked(bookingID) {
@@ -100,11 +157,28 @@ class BookingDAO {
     return affected > 0;
   }
 
-  // Find overlapping bookings for a hall on a given date and time range
+  // Find overlapping bookings for a hall on a given date and time range, and only hall is at deposit stage
   static async findByHallAndTime(hallID, eventDate, startTime, endTime) {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
+        eventDate,
+        [Op.and]: [
+          { startTime: { [Op.lt]: endTime } },
+          { endTime: { [Op.gt]: startTime } }
+        ]
+      },
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
+  }
+  static async searchHallAvailable(hallID, eventDate, startTime, endTime) {
+    const rows = await BookingModel.findAll({
+      where: {
+        hallID,
+        // capacity will larger and equal, 
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -144,7 +218,12 @@ class BookingDAO {
   static async getBookingDetails(bookingID) {
     const row = await BookingModel.findByPk(bookingID, {
       include: [
-        { model: CustomerModel, as: 'customer' },
+        {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
         { model: EventTypeModel, as: 'eventType' },
         {
           model: HallModel,
@@ -152,7 +231,7 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -174,6 +253,90 @@ class BookingDAO {
       ]
     });
     return toDTO(row);
+  }
+
+  /**
+   * Get all bookings that belong to restaurants owned by a given partner.
+   * This traverses hall -> restaurant -> restaurantPartner and filters by partner ID.
+   */
+  static async getBookingsByPartner(partnerID) {
+    if (!partnerID) return [];
+    const rows = await BookingModel.findAll({
+      include: [
+        {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{
+              model: RestaurantPartnerModel,
+              as: 'partner',
+              where: { restaurantPartnerID: partnerID },
+              attributes: [] // we only need to filter; omit partner fields
+            }]
+          }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
+  }
+
+  /**
+   * Get partner-owned bookings with full details (customer, eventType, hall->restaurant, menu,
+   * dishes, services, promotions). Intended for partner list pages that need rich DTOs.
+   */
+  static async getBookingsByPartnerDetailed(partnerID) {
+    if (!partnerID) return [];
+    const rows = await BookingModel.findAll({
+      include: [
+      {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
+        { model: EventTypeModel, as: 'eventType' },
+        {
+          model: HallModel,
+          as: 'hall',
+          include: [{
+            model: RestaurantModel,
+            as: 'restaurant',
+            include: [{
+              model: RestaurantPartnerModel,
+              as: 'partner',
+              where: { restaurantPartnerID: partnerID },
+            }]
+          }]
+        },
+        { model: MenuModel, as: 'menu' },
+        {
+          model: BookingDishModel,
+          as: 'bookingdishes',
+          include: [{ model: DishModel, as: 'dish' }]
+        },
+        {
+          model: BookingServiceModel,
+          as: 'bookingservices',
+          include: [{ model: ServiceModel, as: 'service' }]
+        },
+        {
+          model: BookingPromotionModel,
+          as: 'bookingpromotions',
+          include: [{ model: PromotionModel, as: 'promotion' }]
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+    return toDTOs(rows);
   }
 
   // Replace dishes for a booking
@@ -235,7 +398,7 @@ class BookingDAO {
     }
     const rows = await BookingModel.findAll({
       where: {
-        status: 'CONFIRMED',
+        status: BookingStatus.CONFIRMED,
         createdAt: { [Op.lte]: cutoffDate },
       },
       attributes: ['bookingID'],
@@ -248,12 +411,12 @@ class BookingDAO {
   // Expire by a specific list of booking IDs (guarded by status)
   static async expireByIds(ids, { setChecked = true } = {}) {
     if (!Array.isArray(ids) || ids.length === 0) return 0;
-    const updates = { status: 'EXPIRED' };
+    const updates = { status: BookingStatus.EXPIRED };
     if (setChecked) updates.isChecked = true;
     const [affected] = await BookingModel.update(updates, {
       where: {
         bookingID: { [Op.in]: ids },
-        status: 'CONFIRMED',
+        status: BookingStatus.CONFIRMED,
       },
     });
     return affected;
@@ -271,6 +434,29 @@ class BookingDAO {
     }
     return total;
   }
+
+  /// write for me raw sql to get total booking count with status deposited, to get rank, i can post on my web take 8 restaurants with most deposited bookings + completed bookings + manual bookings status 4 7 8
+  static async getTopBookedRestaurants(statuses = [4, 7, 8], limit = 8) {
+    if (!Array.isArray(statuses) || statuses.length === 0) return [];
+
+    const rows = await sequelize.query(
+      `SELECT r.restaurantID, r.name, COUNT(b.bookingID) AS cnt
+       FROM restaurant r
+       JOIN hall h ON h.restaurantID = r.restaurantID
+       JOIN booking b ON b.hallID = h.hallID AND b.status IN (:statuses)
+       WHERE r.status = 1
+       GROUP BY r.restaurantID, r.name
+       ORDER BY cnt DESC
+       LIMIT :limit`,
+      {
+        replacements: { statuses, limit },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return rows.map((r) => ({ ...r, count: Number(r.cnt ?? r.count ?? 0) }));
+  }
+
 }
 
 export default BookingDAO;

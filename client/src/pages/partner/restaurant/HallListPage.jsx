@@ -1,19 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import CrudSection from "../../../layouts/CrudSection";
 import HallProfile from "./HallDetailPage";
 import HallCreate from "./HallCreatePage";
+import { useParams } from "react-router-dom";
+import { useHall } from "../../../hooks/useHall";
 
 export default function HallListPage({ readOnly = false }) {
   const [activeHall, setActiveHall] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [halls, setHalls] = useState([
-    { id: 1, name: "Sảnh A", capacity: 500, area: 600, price: "20,000,000 ₫", status: "active" },
-    { id: 2, name: "Sảnh B", capacity: 300, area: 400, price: "15,000,000 ₫", status: "inactive" },
-  ]);
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const restaurantID = useMemo(() => Number(paramRestaurantID || paramId) || undefined, [paramId, paramRestaurantID]);
+
+  const { list, status, loadByRestaurant, updateStatus } = useHall();
+
+  useEffect(() => {
+    if (restaurantID) {
+      loadByRestaurant(restaurantID).catch((e) => {
+        // eslint-disable-next-line no-console
+        console.warn("Load halls failed:", e);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantID]);
+
+  const formatPrice = (v) => {
+    const n = Number(v) || 0;
+    return n.toLocaleString("vi-VN") + " ₫";
+  };
+
+  const rows = useMemo(
+    () =>
+      (list || []).map((h) => ({
+        id: h.hallID,
+        name: h.name,
+        minTable: h.minTable,
+        maxTable: h.maxTable,
+        area: h.area,
+        price: formatPrice(h.price),
+        status: h.status ? "active" : "inactive",
+      })),
+    [list]
+  );
 
   const columns = [
     { key: "name", label: "Tên sảnh" },
-    { key: "capacity", label: "Sức chứa (người)" },
+    { key: "minTable", label: "Số bàn tối thiểu" },
+    { key: "maxTable", label: "Số bàn tối đa" },
     { key: "area", label: "Diện tích (m²)" },
     { key: "price", label: "Giá thuê" },
     { key: "status", label: "Trạng thái" },
@@ -26,11 +58,10 @@ export default function HallListPage({ readOnly = false }) {
 
   const handleToggleStatus = (id, activate) => {
     if (readOnly) return;
-    setHalls((prev) =>
-      prev.map((h) =>
-        h.id === id ? { ...h, status: activate ? "active" : "inactive" } : h
-      )
-    );
+    updateStatus({ id, status: !!activate }).catch((e) => {
+      // eslint-disable-next-line no-console
+      console.warn("Toggle hall status failed:", e);
+    });
   };
 
   return (
@@ -44,17 +75,26 @@ export default function HallListPage({ readOnly = false }) {
           <HallCreate onBack={() => setCreating(false)} />
         )
       ) : activeHall ? (
-        <HallProfile hall={activeHall} onBack={() => setActiveHall(null)} readOnly={readOnly} />
+        <HallProfile
+          hall={activeHall}
+          onBack={() => setActiveHall(null)}
+          onUpdated={(updated) => setActiveHall(updated)}
+          readOnly={readOnly}
+        />
       ) : (
         <CrudSection
           title="Sảnh tiệc"
           columns={columns}
-          data={halls}
+          data={rows}
           filters={filters}
           onToggleStatus={handleToggleStatus}
-          onRowClick={(row) => setActiveHall(row)}
+          onRowClick={(row) => {
+            // find full object from store list
+            const found = (list || []).find((h) => h.hallID === row.id);
+            setActiveHall(found || row);
+          }}
           onCreate={() => !readOnly && setCreating(true)}
-          readOnly={readOnly} // 🟢 THÊM DÒNG NÀY
+          readOnly={readOnly}
         />
       )}
     </>

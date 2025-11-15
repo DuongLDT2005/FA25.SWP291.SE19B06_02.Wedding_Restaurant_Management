@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Alert } from "react-bootstrap";
 import AppLayout from "../../../layouts/PartnerLayout";
-import { initialRestaurants } from "./RestaurantListPage";
 import { useParams } from "react-router-dom";
-
+import { useEffect } from "react";
+import { useRestaurant } from "../../../hooks/useRestaurant";
+import { useEventType } from "../../../hooks/useEventType";
 // Import từng tab component
 import RestaurantProfile from "./RestaurantProfile";
 import RestaurantHalls from "./HallListPage";
@@ -15,10 +16,56 @@ import PromotionListPage from "./PromotionListPage";
 export default function RestaurantDetail() {
   const { id } = useParams();
   const restaurantId = parseInt(id, 10);
-  const restaurant = initialRestaurants.find(r => r.id === restaurantId);
+  const [restaurant, setRestaurant] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { loadById, updateOne } = useRestaurant();
+  const {
+    items: allEventTypes = [],
+    loading: eventTypesLoading,
+    error: eventTypesError,
+    loadAll: loadAllEventTypes,
+  } = useEventType();
+  useEffect(() => {
+    if (!id) return;
+    let ignore = false;
+    async function load() {
+      setLoading(true); setError("");
+      try {
+        const data = await loadById(restaurantId);
+        if (!ignore) setRestaurant(data);
+      } catch (e) {
+        if (!ignore) setError(e.message || "Không thể tải nhà hàng");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => { ignore = true; };
+  }, [id, restaurantId]);
+
+  // Load supported event types once for the profile tab
+  useEffect(() => {
+    loadAllEventTypes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeTab, setActiveTab] = useState("profile"); // <-- quản lý active tab
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="mt-3 text-center text-muted">Đang tải...</div>
+      </AppLayout>
+    );
+  }
+  if (error) {
+    return (
+      <AppLayout>
+        <Alert variant="danger" className="mt-3">{error}</Alert>
+      </AppLayout>
+    );
+  }
   if (!restaurant) {
     return (
       <AppLayout>
@@ -39,17 +86,19 @@ export default function RestaurantDetail() {
         className="mb-3"
       >
         <Tab eventKey="profile" title="Hồ sơ">
-          <RestaurantProfile restaurant={restaurant}
-            allEventTypes={[
-              { eventTypeID: 1, name: "Tiệc cưới" },
-              { eventTypeID: 2, name: "Sinh nhật" },
-              { eventTypeID: 3, name: "Hội nghị" },
-              { eventTypeID: 4, name: "Tiệc báo hỷ" },
-              { eventTypeID: 5, name: "Tiệc liên hoan" },
-            ]} />
+          {/* Pass real event types from store instead of hardcoded list */}
+          {eventTypesError && (
+            <Alert variant="warning" className="mb-2">
+              Không tải được danh sách loại sự kiện. Bạn vẫn có thể tiếp tục chỉnh sửa thông tin khác.
+            </Alert>
+          )}
+          <RestaurantProfile
+            restaurant={restaurant}
+            allEventTypes={allEventTypes}
+          />
         </Tab>
         <Tab eventKey="amenities" title="Tiện nghi">
-          <AmenityListPage />
+          <AmenityListPage restaurant={restaurant} onUpdated={setRestaurant} />
         </Tab>
         <Tab eventKey="halls" title="Sảnh tiệc">
           <RestaurantHalls
@@ -64,7 +113,7 @@ export default function RestaurantDetail() {
           <DishManagement />
         </Tab>
         <Tab eventKey="services" title="Dịch vụ">
-          <ServiceListPage />
+          <ServiceListPage restaurant={restaurant} />
         </Tab>
         <Tab eventKey="promotions" title="Ưu đãi">
           <PromotionListPage />

@@ -1,16 +1,16 @@
 import React from "react";
 import CustomerInfoSection from "./CustomerInfoSection";
 import BookingInfoSection from "./BookingInforSection";
-import SpecialRequestSection from "./SpecialRequestSection";
-import SubmitBookingButton from "./SubmitBookingButton";
+// import BookingItemsTable from "./BookingItemsTable";
 
-const BookingForm = () => {
+const BookingForm = ({ restaurant, hall, user, searchData, promotions }) => {
+  const menus = restaurant?.menus || [];
+  const services = restaurant?.services || [];
   return (
     <form className="space-y-6">
-      <CustomerInfoSection />
-      <BookingInfoSection />
-      <SpecialRequestSection />
-      <SubmitBookingButton />
+      <CustomerInfoSection user={user} />
+      <BookingInfoSection menus={menus} services={services} restaurant={restaurant} hall={hall} searchData={searchData} promotions={promotions} />
+      {/* <BookingItemsTable /> */}
     </form>
   );
 };

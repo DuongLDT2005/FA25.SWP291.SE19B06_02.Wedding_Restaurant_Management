@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from "react";
-import ProductCard from "./ProductCard";
+import ProductCard from "../ProductCard";
 import {
-  Funnel,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -87,7 +86,6 @@ const ListResult = ({
 
         {/* SORT DROPDOWN */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Funnel size={18} color="#6B7280" />
           <span style={{ fontSize: 14, color: "#6B7280", fontWeight: 500 }}>
             Sắp xếp theo:
           </span>
@@ -96,20 +94,19 @@ const ListResult = ({
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
-                padding: "10px 16px",
-                border: "2px solid #E11D48",
-                borderRadius: 8,
+                padding: "8px 14px",
+                border: "2px solid #e23359ff",
+                borderRadius: "999px",
                 fontSize: 14,
-                fontWeight: 500,
+                fontWeight: 600,
                 background: "#fff",
-                color: "#E11D48",
-                minWidth: 200,
+                color: "#e23359ff",
+                width: "fit-content",
                 cursor: "pointer",
-                transition: "all 0.2s ease",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8,
+                gap: 6,
+                transition: "0.2s ease"
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "#FFF1F2";
@@ -118,7 +115,7 @@ const ListResult = ({
                 e.currentTarget.style.background = "#fff";
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span>{currentOption.label}</span>
               </div>
               <ChevronDown
@@ -157,44 +154,44 @@ const ListResult = ({
                     overflow: "hidden",
                   }}
                 >
-                  {sortOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => {
-                        onSortChange(opt.value);
-                        setIsDropdownOpen(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        background:
-                          sortBy === opt.value ? "#FFF1F2" : "#fff",
-                        color:
-                          sortBy === opt.value ? "#E11D48" : "#374151",
-                        fontSize: 14,
-                        fontWeight: sortBy === opt.value ? 600 : 400,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        textAlign: "left",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (sortBy !== opt.value) {
-                          e.currentTarget.style.background = "#F9FAFB";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (sortBy !== opt.value) {
-                          e.currentTarget.style.background = "#fff";
-                        }
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                  {sortOptions.map((opt) => {
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          onSortChange(opt.value);
+                          setIsDropdownOpen(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px",
+                          border: "none",
+                          background: sortBy === opt.value ? "#FFF1F2" : "#fff",
+                          color: sortBy === opt.value ? "#e23359ff" : "#374151",
+                          fontSize: 14,
+                          fontWeight: sortBy === opt.value ? 600 : 400,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          textAlign: "left",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (sortBy !== opt.value) {
+                            e.currentTarget.style.background = "#F9FAFB";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (sortBy !== opt.value) {
+                            e.currentTarget.style.background = "#fff";
+                          }
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}

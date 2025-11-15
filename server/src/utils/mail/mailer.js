@@ -1,7 +1,5 @@
 import nodemailer from 'nodemailer';
 import { bookingAcceptedTemplate, bookingRejectedTemplate } from './mailCustomerTemplates.js';
-import { getBookingTemplate as getPartnerTemplate } from './mailPartnerTemplates.js';
-
 // Create a singleton transporter using ENV variables
 let transporter;
 
@@ -82,18 +80,16 @@ export async function sendBookingStatusEmail(to, booking, status, { reason } = {
 // --- New helpers: separate customer vs partner emails ---
 
 function resolveCustomerEmail(booking, explicit) {
-  return explicit || booking?.customer?.email || booking?.customerEmail || null;
-}
-
-function resolvePartnerEmail(booking, explicit) {
-  // Try a few likely locations; caller can always pass `to` explicitly
+  // Prefer explicit target, then nested customer.user.email, then customer.email, then any booking-level override
   return (
     explicit ||
-    booking?.partnerEmail ||
-    booking?.hall?.restaurant?.restaurantPartner?.email ||
+    booking?.customer?.user?.email ||
+    booking?.customer?.email ||
+    booking?.customerEmail ||
     null
   );
 }
+
 
 export async function sendCustomerBookingEmail(booking, status, { to, reason } = {}) {
   const target = resolveCustomerEmail(booking, to);
@@ -133,41 +129,11 @@ export async function sendCustomerBookingEmail(booking, status, { to, reason } =
   }
 }
 
-export async function sendPartnerBookingEmail(booking, status, { to } = {}) {
-  const target = resolvePartnerEmail(booking, to);
-  if (!target) {
-    console.warn('sendPartnerBookingEmail: missing partner email. Provide `to` explicitly or include restaurantPartner.email in booking.');
-    return false;
-  }
-
-  const tpl = getPartnerTemplate(status, booking?.bookingID);
-  const subject = tpl.subject || `Cập nhật đơn đặt tiệc #${booking?.bookingID}`;
-  const html = tpl.html || `<p>Đơn #${booking?.bookingID} đã cập nhật trạng thái: ${status}</p>`;
-  const text = html
-    .replace(/<[^>]*>/g, ' ') // strip tags for a simple text version
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  try {
-    await sendEmail({ to: target, subject, text, html });
-    return true;
-  } catch (err) {
-    console.error('Failed to send partner booking email:', err?.message || err);
-    return false;
-  }
-}
 
 // Convenience: send emails to intended audiences based on partner template `target`
-export async function sendBookingStatusEmails(booking, status, { customerEmail, partnerEmail, reason } = {}) {
-  const tpl = getPartnerTemplate(status, booking?.bookingID);
-  const targets = tpl?.target || 'both';
-  const results = { customer: null, partner: null };
-
-  if (targets === 'customer' || targets === 'both') {
-    results.customer = await sendCustomerBookingEmail(booking, status, { to: customerEmail, reason });
-  }
-  if (targets === 'partner' || targets === 'both') {
-    results.partner = await sendPartnerBookingEmail(booking, status, { to: partnerEmail });
-  }
+// Convenience: only send customer emails. Partner emails are intentionally removed.
+export async function sendBookingStatusEmails(booking, status, { customerEmail, reason } = {}) {
+  const results = { customer: null };
+  results.customer = await sendCustomerBookingEmail(booking, status, { to: customerEmail, reason });
   return results;
 }

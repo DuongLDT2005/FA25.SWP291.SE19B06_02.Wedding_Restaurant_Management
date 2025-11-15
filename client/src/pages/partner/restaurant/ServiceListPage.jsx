@@ -1,45 +1,37 @@
 // File: src/pages/partner/Restaurant/ServiceListPage.jsx
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ServiceDetailPage from "./ServiceDetailPage";
 import ServiceCreatePage from "./ServiceCreatePage";
-import mock from "../../../mock/partnerMock";
+import { useParams } from "react-router-dom";
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
+import { useEventType } from "../../../hooks/useEventType";
 
-export default function ServiceListPage({ readOnly = false }) {
+export default function ServiceListPage({ readOnly = false, restaurant = null }) {
   const [activeService, setActiveService] = useState(null);
   const [creatingService, setCreatingService] = useState(false);
   const [activeEventType, setActiveEventType] = useState(null);
+  const { id: paramId, restaurantID: paramRestaurantID } = useParams();
+  const restaurantID = useMemo(() => Number(paramRestaurantID || paramId) || undefined, [paramId, paramRestaurantID]);
+  const { services, loadServicesByRestaurant, updateOneService, status, error } = useAdditionRestaurant();
+  const { items: eventTypes, loadAll: loadAllEventTypes } = useEventType();
+  const allowedEventTypeIDs = useMemo(() => {
+    const ets = Array.isArray(restaurant?.eventTypes) ? restaurant.eventTypes : [];
+    return ets.map((e) => e?.eventTypeID ?? e?.id).filter(Boolean);
+  }, [restaurant]);
+  const filteredEventTypes = useMemo(() => {
+    if (!allowedEventTypeIDs || allowedEventTypeIDs.length === 0) return eventTypes || [];
+    return (eventTypes || []).filter((et) => allowedEventTypeIDs.includes(et.eventTypeID ?? et.id));
+  }, [eventTypes, allowedEventTypeIDs]);
 
-  const [eventTypes, setEventTypes] = useState(mock.eventTypes);
-  const [services, setServices] = useState(mock.services);
+  useEffect(() => {
+    loadAllEventTypes().catch(() => {});
+  }, [loadAllEventTypes]);
 
-  // === Thêm loại sự kiện mới ===
-  const handleAddEventType = () => {
-    if (readOnly) return;
-    const newType = {
-      eventTypeID: Date.now(),
-      name: "Loại sự kiện mới",
-      status: 1,
-    };
-    setEventTypes([...eventTypes, newType]);
-  };
-
-  // === Cập nhật loại sự kiện (tên) ===
-  const handleUpdateEventType = (id, field, value) => {
-    if (readOnly) return;
-    setEventTypes((prev) =>
-      prev.map((t) => (t.eventTypeID === id ? { ...t, [field]: value } : t))
-    );
-  };
-
-  // === Toggle trạng thái loại sự kiện ===
-  const handleToggleEventType = (id) => {
-    if (readOnly) return;
-    setEventTypes((prev) =>
-      prev.map((t) =>
-        t.eventTypeID === id ? { ...t, status: t.status === 1 ? 0 : 1 } : t
-      )
-    );
-  };
+  useEffect(() => {
+    if (restaurantID) {
+      loadServicesByRestaurant(restaurantID).catch(() => {});
+    }
+  }, [restaurantID, loadServicesByRestaurant]);
 
   // === Thêm dịch vụ mới ===
   const handleAddService = (eventTypeID) => {
@@ -49,13 +41,16 @@ export default function ServiceListPage({ readOnly = false }) {
   };
 
   // === Toggle trạng thái dịch vụ ===
-  const handleToggleServiceStatus = (id) => {
+  const handleToggleServiceStatus = async (id) => {
     if (readOnly) return;
-    setServices((prev) =>
-      prev.map((s) =>
-        s.serviceID === id ? { ...s, status: s.status === 1 ? 0 : 1 } : s
-      )
-    );
+    try {
+      const current = (services || []).find((s) => (s.serviceID ?? s.id) === id);
+      const newStatus = Number(current?.status) === 1 ? 0 : 1;
+      await updateOneService({ id, payload: { status: newStatus } });
+    } catch (e) {
+      // eslint-disable-next-line no-alert
+      alert(e?.message || "Đổi trạng thái thất bại");
+    }
   };
 
   return (
@@ -68,13 +63,14 @@ export default function ServiceListPage({ readOnly = false }) {
         ) : (
           <ServiceCreatePage
             eventTypeID={activeEventType}
+            eventTypes={filteredEventTypes}
             onBack={() => setCreatingService(false)}
           />
         )
       ) : activeService ? (
         <ServiceDetailPage
           service={activeService}
-          eventTypes={mock.eventTypes}
+          eventTypes={filteredEventTypes}
           onBack={() => setActiveService(null)}
           readOnly={readOnly}
         />
@@ -82,16 +78,10 @@ export default function ServiceListPage({ readOnly = false }) {
         <div className="p-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
             <h3>Danh sách dịch vụ theo loại sự kiện</h3>
-            {!readOnly && (
-              <button className="btn btn-primary" onClick={handleAddEventType}>
-                + Thêm loại sự kiện
-              </button>
-            )}
           </div>
-
-          {eventTypes.map((type) => {
-            const servicesByType = services.filter(
-              (s) => s.eventTypeID === type.eventTypeID
+          {(filteredEventTypes || []).map((type) => {
+            const servicesByType = (services || []).filter(
+              (s) => Number(s.eventTypeID) === Number(type.eventTypeID ?? type.id)
             );
 
             return (
@@ -101,48 +91,15 @@ export default function ServiceListPage({ readOnly = false }) {
               >
                 <div className="d-flex justify-content-between align-items-center mb-2">
                   <div className="d-flex flex-column">
-                    <input
-                      type="text"
-                      value={type.name}
-                      onChange={(e) =>
-                        handleUpdateEventType(
-                          type.eventTypeID,
-                          "name",
-                          e.target.value
-                        )
-                      }
-                      className="form-control mb-1 fw-bold"
-                      style={{ maxWidth: "250px" }}
-                      disabled={readOnly}
-                    />
-
-                    <div className="form-check form-switch">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        checked={type.status === 1}
-                        disabled={readOnly}
-                        onChange={() => {
-                          if (readOnly) return;
-                          const confirmMsg =
-                            type.status === 1
-                              ? "Bạn có chắc chắn muốn ngừng hoạt động loại sự kiện này?"
-                              : "Bạn có chắc chắn muốn kích hoạt loại sự kiện này?";
-                          if (window.confirm(confirmMsg)) {
-                            handleToggleEventType(type.eventTypeID);
-                          }
-                        }}
-                      />
-                      <label className="form-check-label">
-                        {type.status === 1 ? "Hoạt động" : "Ngừng hoạt động"}
-                      </label>
+                    <div className="mb-1 fw-bold" style={{ maxWidth: "250px" }}>
+                      {type.name}
                     </div>
                   </div>
 
                   {!readOnly && (
                     <button
                       className="btn btn-success text-white"
-                      onClick={() => handleAddService(type.eventTypeID)}
+                      onClick={() => handleAddService(type.eventTypeID ?? type.id)}
                     >
                       + Thêm dịch vụ
                     </button>
@@ -153,7 +110,7 @@ export default function ServiceListPage({ readOnly = false }) {
                   {servicesByType.length > 0 ? (
                     servicesByType.map((s) => (
                       <div
-                        key={s.serviceID}
+                        key={s.serviceID ?? s.id}
                         className="col-md-4 mb-3"
                         style={{ cursor: "pointer" }}
                         onClick={() => setActiveService(s)}
@@ -162,13 +119,13 @@ export default function ServiceListPage({ readOnly = false }) {
                           <div className="card-body">
                             <h5 className="card-title fw-bold">{s.name}</h5>
                             <p className="card-text mb-1">
-                              Giá: {s.price.toLocaleString("vi-VN")} ₫
+                              Giá: {(Number(s.price) || 0).toLocaleString("vi-VN")} ₫
                             </p>
                             <p className="card-text mb-2">Đơn vị: {s.unit}</p>
 
                             <div
                               className={`badge ${
-                                s.status === 1 ? "bg-success" : "bg-secondary"
+                                Number(s.status) === 1 ? "bg-success" : "bg-secondary"
                               }`}
                               style={{
                                 cursor: readOnly ? "default" : "pointer",
@@ -178,15 +135,15 @@ export default function ServiceListPage({ readOnly = false }) {
                                 e.stopPropagation();
                                 if (readOnly) return;
                                 const confirmMsg =
-                                  s.status === 1
+                                  Number(s.status) === 1
                                     ? "Bạn có chắc chắn muốn ngừng bán dịch vụ này?"
                                     : "Bạn có chắc chắn muốn kích hoạt dịch vụ này?";
                                 if (window.confirm(confirmMsg)) {
-                                  handleToggleServiceStatus(s.serviceID);
+                                  handleToggleServiceStatus(s.serviceID ?? s.id);
                                 }
                               }}
                             >
-                              {s.status === 1
+                              {Number(s.status) === 1
                                 ? "Đang hoạt động"
                                 : "Ngừng bán"}
                             </div>

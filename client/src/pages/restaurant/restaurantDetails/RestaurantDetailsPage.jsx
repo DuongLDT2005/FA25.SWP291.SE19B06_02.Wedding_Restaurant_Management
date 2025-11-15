@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapPin, Phone, Mail, Star, Heart, MessageSquare, Users } from "lucide-react";
 import ImageCarousel from "../../../components/ImageCarousel";
 import "../../../styles/RestaurantDetailsStyles.css";
@@ -15,20 +15,80 @@ import EventTypeList from "./EventTypeList";
 import PromotionList from "./PromotionList";
 import MainLayout from "../../../layouts/MainLayout";
 import SearchSection from "../../../components/searchbar/SearchSection";
+import { useNavigate, useParams } from "react-router-dom";
+import useBooking from "../../../hooks/useBooking";
+import { useRestaurant } from "../../../hooks/useRestaurant";
 export default function RestaurantDetailsPage() {
-  const restaurant = restaurantDetail;
-  const resImages = [restaurant.thumbnailURL, ...restaurant.images.map(img => img.imageURL)];
+  const { id } = useParams();
+  const restaurantId = Number.parseInt(id, 10);
+  const [restaurant, setRestaurant] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [selectedHall, setSelectedHall] = useState(null);
+  const navigate = useNavigate();
+  const { setBookingField, clear } = useBooking();
+  const { loadById } = useRestaurant();
 
-  const totalReviews = restaurant.reviews.length;
-  const avgRating = restaurant.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+  useEffect(() => {
+    if (!restaurantId) return;
+    let ignore = false;
+    async function load() {
+      setLoading(true); setError("");
+      try {
+        const data = await loadById(restaurantId);
+        if (!ignore) setRestaurant(data);
+      } catch (e) {
+        if (!ignore) setError(e?.message || "Không thể tải nhà hàng");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    load();
+    return () => { ignore = true; };
+  }, [restaurantId, loadById]);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="container my-4">
+          <div className="mt-3 text-center text-muted">Đang tải...</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="container my-4">
+          <div className="alert alert-danger mt-3" role="alert">{error}</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!restaurant) {
+    return (
+      <MainLayout>
+        <div className="container my-4">
+          <div className="alert alert-warning mt-3" role="alert">Không tìm thấy nhà hàng với ID: {id}</div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const resImages = [restaurant.thumbnailURL, ...(restaurant.images || []).map(img => img.imageURL)];
+
+  const totalReviews = (restaurant.reviews || []).length;
+  const avgRating = totalReviews > 0 ? (restaurant.reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) : 0;
 
   const maxLength = 350;
-  const isLong = restaurant.description.length > maxLength;
+  const desc = restaurant.description || "";
+  const isLong = desc.length > maxLength;
   const displayText = expanded
-    ? restaurant.description
-    : restaurant.description.slice(0, maxLength) + (isLong ? "..." : "");
+    ? desc
+    : desc.slice(0, maxLength) + (isLong ? "..." : "");
 
   return (
     <MainLayout>
@@ -94,6 +154,21 @@ export default function RestaurantDetailsPage() {
                   border: "none",
                   transition: "transform 0.2s, box-shadow 0.2s",
                   boxShadow: "0 4px 8px rgba(0,0,0,0.15)",
+                }}
+                onClick={() => {
+                  // Optional: clear previous booking to avoid stale data
+                  try { clear(); } catch {}
+                  // Prefill basic booking info for the form
+                  setBookingField("restaurant", restaurant.name || "");
+                  const hallName = (selectedHall?.name) || (restaurant.halls?.[0]?.name) || "";
+                  setBookingField("hall", hallName);
+                  // Navigate to booking form; include ids in state if needed later
+                  navigate("/", {
+                    state: {
+                      restaurantId: restaurant.id,
+                      hallId: selectedHall?.id || restaurant.halls?.[0]?.id,
+                    },
+                  });
                 }}
               >
                 <MessageSquare size={18} className="me-2" /> Gửi yêu cầu tư vấn

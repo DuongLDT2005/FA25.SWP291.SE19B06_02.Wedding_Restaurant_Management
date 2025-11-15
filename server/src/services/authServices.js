@@ -26,8 +26,14 @@ class AuthServices {
       SIGN UP CUSTOMER
   ============================================ */
   static async signUpCustomer(userData) {
-    if (!userData) throw new Error("User data cannot be null");
-
+    if (!userData) {
+      throw new Error("User data cannot be null");
+    }
+    // Check if email already exists
+    const existing = await UserDAO.findByEmail(userData.email);
+    if (existing) {
+      throw new Error("Email đã tồn tại");
+    }
     if (userData.password) {
       userData.password = await hashPassword(userData.password);
     }
@@ -78,6 +84,7 @@ class AuthServices {
     if (!match) throw new Error("Invalid password");
 
     // ⭐ Check owner approval
+    let partnerStatus = null;
     if (user.role === userRole.owner) {
       const partner = await RestaurantPartnerModel.findByPk(user.userID);
 
@@ -88,6 +95,9 @@ class AuthServices {
 
       if (partner.status === negoStatus.rejected)
         throw new Error("Your registration was rejected by admin.");
+
+      // Store partner status for frontend redirect logic
+      partnerStatus = partner.status;
     }
 
     const token = jwt.sign(
@@ -96,7 +106,7 @@ class AuthServices {
       { expiresIn: "1h" }
     );
 
-    return { user, token };
+    return { user, token, partnerStatus };
   }
 
   /* ============================================
@@ -126,11 +136,35 @@ class AuthServices {
     }
 
     const token = jwt.sign(
-      { userID: user.userID, email: user.email, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "1h" }
+      {
+        userID: user.userID,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || "1h" }
     );
 
+    return { user, token };
+  }
+
+  static async loginWithEmail(email, password) {
+    const user = await UserDAO.findByEmail(email, true);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new Error("Invalid password");
+    }
+    // Generate JWT token
+  // Include both userId and sub for compatibility; source uses userID (capital D)
+  const userId = user.userID ?? user.userId ?? user.id;
+  const token = jwt.sign(
+    { sub: userId, userId: userId, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "1h", algorithm: "HS256" }
+  );
     return { user, token };
   }
 
@@ -159,47 +193,59 @@ class AuthServices {
       text: `Your OTP is ${otp}. It expires soon.`,
     });
   }
-
-  /* ============================================
-      VERIFY OTP
-  ============================================ */
-  static async verifyOtp(email, otpInput) {
-    const otp = await getOtpByEmail(email);
-    if (!otp) throw new Error("OTP not found or expired");
-    if (otp.otp != otpInput) throw new Error("Invalid OTP");
-
-    deleteOtpByEmail(email);
-    return true;
-  }
-
-  /* ============================================
-      RESET PASSWORD
-  ============================================ */
-  static async resetPassword(email, newPassword) {
-    const user = await UserDAO.findByEmail(email, true);
-    if (!user) throw new Error("User not found");
-
-    const hashed = await hashPassword(newPassword);
-    await UserDAO.updateUserInfo(user.userID, { password: hashed });
-  }
-
-  /* ============================================
-      LOGOUT (BLACKLIST TOKEN)
-  ============================================ */
   static async logout(req) {
-    const bearer = req.headers.authorization;
-    if (!bearer) throw new Error("Token missing");
+    const authHeader = req.headers.authorization;
+    let token = null;
+    if (authHeader?.startsWith('Bearer ')) token = authHeader.split(' ')[1];
+    if (!token && req.cookies?.token) token = req.cookies.token;
 
-    const token = bearer.split(" ")[1];
+    // Optional temp reset token (JWT 10m) sent in body or header or cookie
+    const tempToken = req.body?.tempToken || req.cookies?.tempToken || null;
+    // Optional raw OTP code if client wants to explicitly invalidate it early
+    const otpCode = req.body?.otp || null;
 
     const { getCollection } = await import("../dao/mongoDAO.js");
     const blacklist = getCollection("blacklist");
 
-    await blacklist.insertOne({
-      token,
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    });
-
+    const now = Date.now();
+    const docs = [];
+    if (token) {
+      docs.push({ token, type: 'access', expiresAt: new Date(now + 60 * 60 * 1000) });
+    }
+    if (tempToken) {
+      // Temp token already short-lived; still blacklist to force immediate invalidation
+      docs.push({ token: tempToken, type: 'temp', expiresAt: new Date(now + 10 * 60 * 1000) });
+    }
+    if (otpCode) {
+      // Mark OTP used/invalid — shorter TTL (5m) just for safety window
+      docs.push({ otp: String(otpCode), type: 'otp', expiresAt: new Date(now + 5 * 60 * 1000) });
+      // Also remove OTP document if still exists so it can't be verified
+      try { await deleteOtpByEmail(req.body?.email); } catch (_) {}
+    }
+    if (docs.length > 0) {
+      await blacklist.insertMany(docs);
+    }
+    return true;
+  }
+  static async verifyOtp(email, otpInput) {
+    // Block if OTP is blacklisted
+    try {
+      const { getCollection } = await import("../dao/mongoDAO.js");
+      const blacklist = getCollection("blacklist");
+      const blocked = await blacklist.findOne({ otp: String(otpInput) });
+      if (blocked) throw new Error("OTP has been invalidated");
+    } catch (_) {}
+    // Find OTP record for user
+    const otp = await getOtpByEmail(email);
+    if (!otp) {
+      throw new Error("OTP not found or expired");
+    }
+    if (otp.otp != otpInput) {
+      console.log(otpInput, otp.otp);
+      throw new Error("Invalid OTP");
+    }
+    console.log("OTP verified successfully");
+    deleteOtpByEmail(email);
     return true;
   }
 

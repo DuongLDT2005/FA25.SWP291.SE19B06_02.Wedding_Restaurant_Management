@@ -55,6 +55,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "proxy": "http://localhost:5000",
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -75,6 +76,5 @@
   },
   "devDependencies": {
     "sass": "^1.93.2"
-  },
-  "proxy": "http://localhost:5000"
+  }
 }

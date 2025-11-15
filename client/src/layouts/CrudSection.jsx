@@ -99,6 +99,7 @@ export default function CrudSection({
                           onToggleStatus(row.id, row.status === "inactive");
                         }
                       }}
+                      style={{ whiteSpace: "nowrap" }}
                     >
                       {row.status === "active" ? "Đang hoạt động" : "Ngừng hoạt động"}
                     </Button>

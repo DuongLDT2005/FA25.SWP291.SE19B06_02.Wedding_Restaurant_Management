@@ -1,8 +1,9 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Spotlight } from "lucide-react";
 import RestaurantCard from "./RestaurantCard";
 import ArrowButton from "../../components/ArrowButton";
+import { getTopBookedRestaurants } from "../../services/restaurantService";
 
 const TOP_RESTAURANTS = [
     {
@@ -74,7 +75,37 @@ const TOP_RESTAURANTS = [
 
 export default function BestSellerRestaurant() {
     const scrollRef = useRef(null);
-    const showArrows = TOP_RESTAURANTS.length > 4;
+    const [items, setItems] = useState(TOP_RESTAURANTS);
+    const showArrows = items.length > 4;
+
+    useEffect(() => {
+        let mounted = true;
+    (async () => {
+            try {
+        const res = await getTopBookedRestaurants({ limit: 8 });
+                const arr = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+                if (!mounted || arr.length === 0) return;
+                // normalize to RestaurantCard shape
+                const mapped = arr.map((r) => ({
+                    restaurantID: r.restaurantID ?? r.id ?? r.restaurantId,
+                    name: r.name,
+                    fullAddress: r.fullAddress ?? r.address?.fullAddress ?? r.address ?? "",
+                    priceFrom: r.priceFrom ?? r.startingPrice ?? r.minPricePerGuest ?? r.priceFromPerGuest,
+                    avgRating: r.avgRating ?? r.averageRating ?? r.rating ?? 0,
+                    totalReviews: r.totalReviews ?? r.reviewCount ?? r.reviews ?? 0,
+                    thumbnailURL: r.thumbnailURL ?? r.thumbnailUrl ?? r.imageURL ?? r.images?.[0]?.imageURL ?? "/assets/img/hotel.jpg",
+                    minCapacity: r.minCapacity ?? r.minGuests ?? r.minTables ?? 0,
+                    maxCapacity: r.maxCapacity ?? r.maxGuests ?? r.maxTables ?? 0,
+                    hallCount: r.hallCount ?? (Array.isArray(r.halls) ? r.halls.length : undefined) ?? 0,
+                    bestPromotion: r.bestPromotion?.name ?? r.bestPromotion ?? undefined,
+                }));
+                setItems(mapped);
+            } catch (_) {
+                // keep mock if backend fails
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
 
     const scrollBy = (distance) => {
         if (!scrollRef.current) return;
@@ -126,7 +157,7 @@ export default function BestSellerRestaurant() {
                         }}
                         className="g-2"
                     >
-                        {TOP_RESTAURANTS.map(r => (
+                        {items.map(r => (
                             <Col
                                 as="div"
                                 key={r.restaurantID}

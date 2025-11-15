@@ -40,11 +40,13 @@ export default function BookingCard({
   }
 
   function buildDetailPayload(b) {
-    const tokenRaw = localStorage.getItem("token")
-    let user = {}
-    try {
-      user = tokenRaw ? JSON.parse(tokenRaw) : {}
-    } catch { }
+    // Build customer info strictly from booking data (not auth)
+    const embeddedUser = b.customer?.user || {}
+    const customer = {
+      fullName: b.customer?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
+      phone: b.customer?.phone || embeddedUser.phone || "N/A",
+      email: b.customer?.email || embeddedUser.email || "N/A",
+    }
     return {
       bookingID: b.bookingID,
       status: b.status ?? 0,
@@ -55,11 +57,7 @@ export default function BookingCard({
       tableCount: b.tableCount || b.tables || 0,
       specialRequest: b.specialRequest || b.note || "",
       createdAt: b.createdAt || new Date().toISOString(),
-      customer: {
-        fullName: user.fullName || b.customer?.fullName || "Khách hàng",
-        phone: user.phone || b.customer?.phone || "N/A",
-        email: user.email || b.customer?.email || "N/A",
-      },
+      customer,
       restaurant: {
         name: b.restaurant?.name || "Nhà hàng",
         address: b.restaurant?.address || b.restaurant?.fullAddress || "Đang cập nhật",
@@ -91,7 +89,11 @@ export default function BookingCard({
 
   function prepareAndStore() {
     const payload = buildDetailPayload(b)
-    sessionStorage.setItem("currentBooking", JSON.stringify(payload))
+    try {
+      sessionStorage.setItem(`booking_${payload.bookingID}`, JSON.stringify(payload))
+      // keep legacy key for backward compatibility
+      sessionStorage.setItem("currentBooking", JSON.stringify(payload))
+    } catch {}
     return payload
   }
 

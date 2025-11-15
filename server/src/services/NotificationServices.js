@@ -1,5 +1,4 @@
 import EmailService from "./EmailServices.js";
-import { getBookingTemplate } from "../utils/mail/mailPartnerTemplates.js";
 
 class NotificationService {
   /**
@@ -11,29 +10,17 @@ class NotificationService {
    * @param {number} param0.status - BookingStatus enum
    */
   async sendBookingStatusChange({ bookingID, customerEmail, partnerEmail, status }) {
-    const template = getBookingTemplate(status, bookingID);
-    if (!template) throw new Error(`No mail template found for status: ${status}`);
-
-    const { subject, html, target } = template;
-
-    if (!customerEmail && !partnerEmail)
-      throw new Error("No recipient email provided for booking notification.");
-
-    if (target === "customer" && customerEmail) {
-      await EmailService.sendMail(customerEmail, subject, html);
-    } 
-    else if (target === "partner" && partnerEmail) {
-      await EmailService.sendMail(partnerEmail, subject, html);
-    } 
-    else if (target === "both") {
-      await Promise.all([
-        customerEmail ? EmailService.sendMail(customerEmail, subject, html) : null,
-        partnerEmail ? EmailService.sendMail(partnerEmail, subject, html) : null
-      ]);
+    // Only send notifications to customers. Partner notifications are disabled.
+    if (!customerEmail) {
+      console.log(`No customer email for booking ${bookingID}; skipping notification.`);
+      return { success: true, sentTo: 'none' };
     }
 
-    console.log(`📩 Notification sent for booking ${bookingID} (target: ${target})`);
-    return { success: true, sentTo: target };
+    const subject = `Cập nhật đơn đặt tiệc #${bookingID}`;
+    const html = `<p>Đơn đặt tiệc <b>${bookingID}</b> đã được cập nhật trạng thái: <b>${status}</b></p>`;
+    await EmailService.sendMail(customerEmail, subject, html);
+    console.log(`📩 Notification sent for booking ${bookingID} (target: customer)`);
+    return { success: true, sentTo: 'customer' };
   }
 
   async sendCustomMail(to, subject, html) {

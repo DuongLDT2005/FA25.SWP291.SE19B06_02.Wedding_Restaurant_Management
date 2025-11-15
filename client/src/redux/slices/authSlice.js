@@ -131,7 +131,9 @@ const authSlice = createSlice({
       })
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        const payload = action.payload || {};
+        const user = payload.user ?? payload;
+        state.user = user;
         state.status = "succeeded";
       })
       .addCase(login.rejected, (state, action) => {
@@ -148,7 +150,8 @@ const authSlice = createSlice({
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload;
+        const payload = action.payload || {};
+        state.user = payload.user ?? payload;
       })
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
