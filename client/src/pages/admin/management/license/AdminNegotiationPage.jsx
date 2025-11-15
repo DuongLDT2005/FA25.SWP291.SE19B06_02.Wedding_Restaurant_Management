@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Card, Button, Row, Col, Form, Badge, ListGroup, Container, Spinner, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import TopBar from "../../components/PartnerTopBar";
-import axios from "../../api/axios";
-import useAuth from "../../hooks/useAuth";
+import { useParams, useNavigate } from "react-router-dom";
+import AdminLayout from "../../../../layouts/AdminLayout";
+import axios from "../../../../api/axios";
 
-export default function NegotiationPage() {
-    const { user } = useAuth();
+export default function AdminNegotiationPage() {
+    const { partnerID } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,11 +15,9 @@ export default function NegotiationPage() {
     const [message, setMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const partnerID = user?.userID || user?.id;
-
     useEffect(() => {
         if (!partnerID) {
-            setError("Không tìm thấy thông tin đối tác");
+            setError("Không tìm thấy ID đối tác");
             setLoading(false);
             return;
         }
@@ -81,7 +78,7 @@ export default function NegotiationPage() {
     };
 
     const handleAccept = async () => {
-        if (!window.confirm("Bạn có chắc chắn muốn chấp nhận mức hoa hồng hiện tại?")) {
+        if (!window.confirm("Bạn có chắc chắn muốn chấp nhận mức hoa hồng hiện tại và kích hoạt đối tác?")) {
             return;
         }
 
@@ -89,8 +86,8 @@ export default function NegotiationPage() {
             setSubmitting(true);
             await axios.post(`/negotiation/${partnerID}/accept`);
 
-            alert("✅ Bạn đã chấp nhận mức hoa hồng. Trạng thái sẽ chuyển sang 'Hoạt động'.");
-            navigate("/partner");
+            alert("✅ Đã chấp nhận và kích hoạt đối tác thành công!");
+            navigate("/admin/license");
         } catch (err) {
             console.error("❌ Error accepting offer:", err);
             alert(err.response?.data?.message || "Không thể chấp nhận đề xuất");
@@ -111,24 +108,23 @@ export default function NegotiationPage() {
 
     if (loading) {
         return (
-            <>
-                <TopBar />
+            <AdminLayout title="Đàm phán hoa hồng">
                 <Container className="mt-4 text-center">
                     <Spinner animation="border" variant="primary" />
                     <p className="mt-3">Đang tải dữ liệu...</p>
                 </Container>
-            </>
+            </AdminLayout>
         );
     }
 
     if (error && !partnerData) {
         return (
-            <>
-                <TopBar />
+            <AdminLayout title="Đàm phán hoa hồng">
                 <Container className="mt-4">
                     <Alert variant="danger">{error}</Alert>
+                    <Button onClick={() => navigate("/admin/license")}>Quay lại</Button>
                 </Container>
-            </>
+            </AdminLayout>
         );
     }
 
@@ -138,18 +134,25 @@ export default function NegotiationPage() {
         : "Chưa có";
 
     return (
-        <>
-            <TopBar />
+        <AdminLayout title="Đàm phán hoa hồng">
             <Container className="mt-4">
-                <h2 className="mb-4">Đàm phán hoa hồng</h2>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Đàm phán hoa hồng</h2>
+                    <Button variant="secondary" onClick={() => navigate("/admin/license")}>
+                        Quay lại
+                    </Button>
+                </div>
                 
                 {error && <Alert variant="warning" dismissible onClose={() => setError(null)}>{error}</Alert>}
 
                 <Card className="mb-4">
                     <Card.Body>
-                        <h5>{partnerData?.owner?.fullName || user?.fullName || "N/A"}</h5>
+                        <h5>{partnerData?.owner?.fullName || "N/A"}</h5>
                         <p className="mb-2">
-                            <strong>Email:</strong> {partnerData?.owner?.email || user?.email || "N/A"}
+                            <strong>Email:</strong> {partnerData?.owner?.email || "N/A"}
+                        </p>
+                        <p className="mb-2">
+                            <strong>Phone:</strong> {partnerData?.owner?.phone || "N/A"}
                         </p>
                         <p className="mb-2">
                             <strong>Mức hoa hồng hiện tại:</strong>{" "}
@@ -264,7 +267,7 @@ export default function NegotiationPage() {
                                             Đang xử lý...
                                         </>
                                     ) : (
-                                        "Chấp nhận mức hiện tại"
+                                        "Chấp nhận và kích hoạt"
                                     )}
                                 </Button>
 
@@ -278,6 +281,7 @@ export default function NegotiationPage() {
                     </Col>
                 </Row>
             </Container>
-        </>
+        </AdminLayout>
     );
 }
+

@@ -22,6 +22,11 @@ module.exports = function(sequelize, DataTypes) {
     commissionRate: {
       type: DataTypes.DECIMAL(3,2),
       allowNull: true
+    },
+    negotiationHistory: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'JSON array lưu lịch sử đàm phán'
     }
   }, {
     sequelize,

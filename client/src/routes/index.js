@@ -33,6 +33,7 @@ import BookingList from "../pages/admin/management/booking/BookingList";
 import BookingListDetail from "../pages/admin/management/booking/BookingListDetail";
 import AdminProfilePage from "../pages/admin/Profile";
 import AdminLicensePage from "../pages/admin/management/license/AdminLicensePage";
+import AdminNegotiationPage from "../pages/admin/management/license/AdminNegotiationPage";
 import AdminRestaurantList from "../pages/admin/management/restaurant/AdminRestaurantList";
 import AdminPaymentListPage from "../pages/admin/management/payment/AdminPaymentListPage";
 import AdminPaymentDetail from "../pages/admin/management/payment/AdminPaymentDetail";
@@ -96,6 +97,7 @@ function AppRoutes() {
         <Route path="/admin/bookings" element={<BookingList />} />
         <Route path="/admin/bookings/:id" element={<BookingListDetail />} />
         <Route path="/admin/license" element={<AdminLicensePage />} />
+        <Route path="/admin/negotiation/:partnerID" element={<AdminNegotiationPage />} />
         <Route path="/admin/profile" element= {<AdminProfilePage/>} />
         <Route path="/admin/payments" element={<AdminPaymentListPage />} />
         <Route path="/admin/payments/:id" element={<AdminPaymentDetail />} />

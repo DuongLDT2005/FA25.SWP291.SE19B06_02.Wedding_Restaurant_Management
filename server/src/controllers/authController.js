@@ -19,6 +19,7 @@ class AuthController {
       }
 
       let user, token;
+      let responseData = { user: null, token: null }; // Initialize responseData
 
       if (tempToken) {
         // Login with temp token (after OTP verification)
@@ -73,7 +74,17 @@ class AuthController {
         const result = await AuthServices.loginWithEmail(email, password);
         user = result.user;
         token = result.token;
+        // Use partnerStatus from loginWithEmail result (already checked and validated)
+        // Important: result.partnerStatus can be 0, 1, 2, 3, etc., so check for null/undefined only
+        if (result.partnerStatus !== null && result.partnerStatus !== undefined) {
+          responseData.partnerStatus = result.partnerStatus;
+          console.log("✅ Set partnerStatus from loginWithEmail:", result.partnerStatus);
+        }
       }
+      
+      // Set user and token in responseData
+      responseData.user = user;
+      responseData.token = token;
 
       // Set HttpOnly cookie for JWT
       const cookieOptions = {
@@ -88,20 +99,56 @@ class AuthController {
         userId: user.userID,
         email: user.email,
         role: user.role,
+        partnerStatus: responseData.partnerStatus,
       });
 
       // Return token in header and response for OTP login
       res.setHeader("Authorization", `Bearer ${token}`);
       
-      // Include partner status if owner (for both tempToken and password login)
-      const responseData = { user, token };
-      if (user.role === 1) {
-        // Get partner status for owner
+      // Include partner status if owner (for tempToken login, query from DB)
+      // Only query if partnerStatus was not set from password login
+      if (user.role === 1 && (responseData.partnerStatus === null || responseData.partnerStatus === undefined)) {
+        // Get partner status for owner (only if not already set from password login)
         const { restaurantpartner: RestaurantPartnerModel } = db;
         const partner = await RestaurantPartnerModel.findByPk(user.userID);
         if (partner) {
           responseData.partnerStatus = partner.status;
+          console.log("✅ Set partnerStatus from DB query:", partner.status);
         }
+      }
+      
+      // Final check: ensure partnerStatus is set if user is owner
+      if (user.role === 1) {
+        // Fallback: try to get from user.partner if available (for tempToken login)
+        if ((responseData.partnerStatus === null || responseData.partnerStatus === undefined) && user.partner && user.partner.status !== undefined) {
+          responseData.partnerStatus = user.partner.status;
+          console.log("✅ Using partnerStatus from user.partner:", user.partner.status);
+        }
+        
+        // CRITICAL: If still null/undefined, query one more time to ensure we have it
+        if (responseData.partnerStatus === null || responseData.partnerStatus === undefined) {
+          const { restaurantpartner: RestaurantPartnerModel } = db;
+          const partner = await RestaurantPartnerModel.findByPk(user.userID);
+          if (partner) {
+            responseData.partnerStatus = partner.status;
+            console.log("✅ CRITICAL FIX: Set partnerStatus from final DB query:", partner.status);
+          }
+        }
+      }
+      
+      console.log("📤 Final response data BEFORE sending:", JSON.stringify({
+        userId: user.userID,
+        role: user.role,
+        partnerStatus: responseData.partnerStatus,
+        userPartnerStatus: user.partner?.status,
+        hasUserPartner: !!user.partner,
+      }, null, 2));
+      
+      // Ensure partnerStatus is in the response
+      if (user.role === 1 && responseData.partnerStatus !== null && responseData.partnerStatus !== undefined) {
+        console.log("✅ CONFIRMED: partnerStatus will be sent as:", responseData.partnerStatus);
+      } else if (user.role === 1) {
+        console.error("❌ ERROR: partnerStatus is still null/undefined for owner user!");
       }
       
       res.json(responseData);

@@ -7,7 +7,7 @@ import cloudinary from "../config/cloudinary.js";
 import UserDAO from "../dao/userDao.js";
 import db from "../config/db.js";
 
-import { negoStatus, userRole } from "../models/enums/UserStatus.js";
+import { negoStatus, userRole, userStatus } from "../models/enums/UserStatus.js";
 import { deleteOtpByEmail, getOtpByEmail, insertOtp } from "../dao/mongoDAO.js";
 
 dotenv.config();
@@ -49,10 +49,97 @@ class AuthServices {
 
     const { name, email, phone, password } = userData;
 
-    // 1) Upload giấy phép lên cloud
-    const uploaded = await cloudinary.uploader.upload(file.path, {
+    // 1) Upload giấy phép lên cloud (PDF hoặc image)
+    // Detect file type để dùng resource_type đúng
+    const fileExtension = file.originalname?.toLowerCase().split('.').pop() || '';
+    const isPdf = fileExtension === 'pdf' || file.mimetype === 'application/pdf';
+    
+    const uploadOptions = {
       folder: "partner-licenses",
+    };
+    
+    // Force dùng 'raw' cho PDF, 'image' cho ảnh
+    if (isPdf) {
+      uploadOptions.resource_type = "raw";
+    } else {
+      uploadOptions.resource_type = "image";
+    }
+
+    console.log("📤 Uploading license file:", {
+      filename: file.originalname,
+      mimetype: file.mimetype,
+      extension: fileExtension,
+      resource_type: uploadOptions.resource_type
     });
+
+    // Với raw files, cần giữ extension trong public_id để Cloudinary nhận diện đúng file type
+    // QUAN TRỌNG: Cloudinary yêu cầu public_id phải có extension .pdf cho raw PDF files
+    if (isPdf) {
+      uploadOptions.use_filename = false;
+      uploadOptions.unique_filename = true;
+      uploadOptions.overwrite = false;
+      // Tạo public_id CÓ extension .pdf (bắt buộc cho raw PDF files)
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(2, 15);
+      uploadOptions.public_id = `partner-licenses/${timestamp}_${randomStr}.pdf`;
+      
+      console.log("📝 Setting public_id with .pdf extension:", uploadOptions.public_id);
+    }
+
+    const uploaded = await cloudinary.uploader.upload(file.path, uploadOptions);
+
+    console.log("✅ Uploaded to Cloudinary:", {
+      secure_url: uploaded.secure_url,
+      resource_type: uploaded.resource_type,
+      format: uploaded.format,
+      public_id: uploaded.public_id,
+      url: uploaded.url,
+      bytes: uploaded.bytes,
+      created_at: uploaded.created_at
+    });
+
+    // Verify file exists in Cloudinary
+    try {
+      const resource = await cloudinary.api.resource(uploaded.public_id, {
+        resource_type: 'raw'
+      });
+      console.log("✅ Verified file exists in Cloudinary:", {
+        public_id: resource.public_id,
+        secure_url: resource.secure_url,
+        bytes: resource.bytes
+      });
+    } catch (verifyErr) {
+      console.error("❌ File verification failed:", verifyErr.message);
+      throw new Error(`File uploaded but verification failed: ${verifyErr.message}`);
+    }
+
+    // Đảm bảo URL đúng format - dùng URL từ Cloudinary response
+    // QUAN TRỌNG: Giữ nguyên URL gốc từ Cloudinary, KHÔNG convert
+    // Cloudinary có thể lưu PDF như image hoặc raw, URL từ Cloudinary đã đúng
+    let finalUrl = uploaded.secure_url || uploaded.url;
+    
+    // KHÔNG convert URL vì Cloudinary đã trả về URL đúng format
+    // Nếu Cloudinary trả về /image/upload/, đó là URL đúng cho file đó
+    // Nếu Cloudinary trả về /raw/upload/, đó cũng là URL đúng
+    console.log("ℹ️ Using original Cloudinary URL (no conversion):", finalUrl);
+    console.log("ℹ️ Resource type from Cloudinary:", uploaded.resource_type);
+    
+    console.log("🎯 Final URL to save:", finalUrl);
+    console.log("🔍 URL breakdown:", {
+      hasRawUpload: finalUrl.includes('/raw/upload/'),
+      hasPdf: finalUrl.includes('.pdf'),
+      endsWithPdf: finalUrl.endsWith('.pdf'),
+      publicIdInUrl: finalUrl.match(/partner-licenses\/[^\/]+/)?.[0],
+      fullUrl: finalUrl
+    });
+    
+    // Test URL bằng cách tạo signed URL (nếu cần)
+    // const signedUrl = cloudinary.utils.private_download_url(uploaded.public_id, {
+    //   resource_type: 'raw',
+    //   type: 'upload',
+    //   expires_at: Math.floor(Date.now() / 1000) + 3600 // 1 hour
+    // });
+    // console.log("🔐 Signed URL (if needed):", signedUrl);
 
     // 2) Hash password
     const hashedPassword = await hashPassword(password);
@@ -63,7 +150,7 @@ class AuthServices {
       email,
       phone,
       password: hashedPassword,
-      licenseUrl: uploaded.secure_url,
+      licenseUrl: finalUrl,
     });
 
     // ⭐ Chỉ trả về message → FE không login user
@@ -82,6 +169,11 @@ class AuthServices {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) throw new Error("Invalid password");
+
+    // ⭐ Check user status (inactive users cannot login)
+    if (user.status === userStatus.inactive || user.status === 0 || user.status === false) {
+      throw new Error("Your account is inactive. Please contact admin.");
+    }
 
     // ⭐ Check owner approval
     let partnerStatus = null;

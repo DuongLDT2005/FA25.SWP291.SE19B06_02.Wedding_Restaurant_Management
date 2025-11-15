@@ -78,7 +78,21 @@ export default function LoginPage() {
 
       // Điều hướng theo vai trò
       const role = data?.user?.role;
-      const partnerStatus = data?.partnerStatus; // 0: pending, 1: rejected, 2: negotiating, 3: active, 4: inactive
+      // Get partnerStatus from multiple possible locations
+      // Priority: 1) data.partnerStatus (top level), 2) data.user.partner.status (nested)
+      const partnerStatus = 
+        (data?.partnerStatus !== null && data?.partnerStatus !== undefined) 
+          ? data.partnerStatus 
+          : (data?.user?.partner?.status !== null && data?.user?.partner?.status !== undefined)
+            ? data.user.partner.status
+            : null;
+      
+      console.log("🔍 Login response data:", data);
+      console.log("🔍 data.partnerStatus:", data?.partnerStatus);
+      console.log("🔍 data.user.partner:", data?.user?.partner);
+      console.log("🔍 data.user.partner.status:", data?.user?.partner?.status);
+      console.log("🔍 Final Partner status:", partnerStatus);
+      console.log("🔍 User role:", role);
       
       switch (role) {
         case 2:
@@ -88,9 +102,11 @@ export default function LoginPage() {
           // Partner/Owner: check status for redirect
           if (partnerStatus === 2) {
             // Status = 2 (negotiating) → redirect to negotiation page
+            console.log("✅ Redirecting to /partner/negotiation (status = 2)");
             navigate("/partner/negotiation");
           } else {
             // Status = 3 (active) or other → normal partner page
+            console.log("✅ Redirecting to /partner (status =", partnerStatus, ")");
             navigate("/partner");
           }
           break;

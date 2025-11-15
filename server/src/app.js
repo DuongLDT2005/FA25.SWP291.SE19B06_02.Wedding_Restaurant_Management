@@ -16,6 +16,7 @@ import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
 import adminReviewRoutes from "./routes/admin/adminReviewRoutes.js";
 import adminReportRoutes from "./routes/admin/adminReportRoutes.js";
 import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
+import negotiationRoutes from "./routes/negotiationRoutes.js";
 
 import contractRoutes from "./routes/contractRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
@@ -53,6 +54,7 @@ app.use("/api/users", userRoutes);
 
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/bookings", adminBookingRoutes);
+app.use("/api/negotiation", negotiationRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/reviews", adminReviewRoutes);
 app.use("/api/admin/reports", adminReportRoutes);
