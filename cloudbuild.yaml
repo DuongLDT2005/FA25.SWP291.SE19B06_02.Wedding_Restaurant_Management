@@ -1,7 +1,6 @@
-# CẤP 1: CÁC BƯỚC THỰC THI
 steps:
   # 1. Build Docker image
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: 'us-central1-docker.pkg.dev/cloud-builders/docker' # <--- SỬA DÒNG NÀY
     args:
       - 'build'
       - '-t'
@@ -9,13 +8,13 @@ steps:
       - '.'
 
   # 2. Push image lên Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
+  - name: 'us-central1-docker.pkg.dev/cloud-builders/docker' # <--- SỬA DÒNG NÀY
     args:
       - 'push'
       - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
 
   # 3. Deploy image đó lên Cloud Run
-  - name: 'gcr.io/google/cloud-sdk'
+  - name: 'us-central1-docker.pkg.dev/google-cloud-public/cloudsdk/google-cloud-sdk' # <--- SỬA DÒNG NÀY
     entrypoint: 'gcloud'
     args:
       - 'run'
@@ -32,6 +31,5 @@ images:
   - 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/my-docker-repo/my-node-service:$COMMIT_SHA'
 
 # CẤP 1: CÁC TÙY CHỌN BUILD (ngang hàng với steps)
-# <--- PHẦN SỬA LỖI NẰM Ở ĐÂY
 options:
   logging: CLOUD_LOGGING_ONLY
