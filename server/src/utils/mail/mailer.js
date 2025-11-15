@@ -80,7 +80,14 @@ export async function sendBookingStatusEmail(to, booking, status, { reason } = {
 // --- New helpers: separate customer vs partner emails ---
 
 function resolveCustomerEmail(booking, explicit) {
-  return explicit || booking?.customer?.email || booking?.customerEmail || null;
+  // Prefer explicit target, then nested customer.user.email, then customer.email, then any booking-level override
+  return (
+    explicit ||
+    booking?.customer?.user?.email ||
+    booking?.customer?.email ||
+    booking?.customerEmail ||
+    null
+  );
 }
 
 

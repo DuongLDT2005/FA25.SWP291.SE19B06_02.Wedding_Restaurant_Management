@@ -23,7 +23,7 @@ const SubmitBookingButton = () => {
       const customerID = user?.customerID || user?.userID || user?.id || null;
 
       // Map eventType name -> eventTypeID via service
-      let eventTypeID = null;
+      let eventTypeID = booking?.bookingInfo?.eventTypeID || null;
       try {
         const ets = await getEventTypes();
         const name = (booking?.bookingInfo?.eventType || "").trim().toLowerCase();

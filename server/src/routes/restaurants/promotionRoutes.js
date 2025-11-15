@@ -4,6 +4,7 @@ import { authMiddleware, ensurePartner } from '../../middlewares/jwtToken.js';
 
 const router = express.Router();
 
+router.get('/', PromotionController.list);
 router.post('/', authMiddleware, ensurePartner, PromotionController.create);
 router.put('/:id', authMiddleware, ensurePartner, PromotionController.update);
 router.delete('/:id', authMiddleware, ensurePartner, PromotionController.delete);

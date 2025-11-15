@@ -1,15 +1,28 @@
 const API_URL = "/api/auth";
 
 /* -------------------- LOGIN -------------------- */
-export const login = async ({ email, password }) => {
+export const login = async ({ email, password, tempToken }) => {
+  const body = { email };
+  if (tempToken) {
+    body.tempToken = tempToken;
+  } else {
+    body.password = password;
+  }
+  
   const res = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(body),
     credentials: "include",
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Đăng nhập thất bại");
+  if (!res.ok) throw new Error(data?.message || data?.error || "Đăng nhập thất bại");
+  
+  // Store token in localStorage if returned in response (for OTP login)
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+  }
+  
   return data;
 };
 
@@ -106,7 +119,7 @@ export const signUpPartner = async ({ name, email, password, phone, licenseUrl }
   });
 
   const result = await res.json();
-  if (!res.ok) throw new Error(result?.message || "Đăng ký Partner thất bại");
+  if (!res.ok) throw new Error(result?.error || result?.message || "Đăng ký Partner thất bại");
   return result;
 };
 
@@ -134,7 +147,21 @@ export const signUpCustomer = async ({
   });
 
   const result = await res.json();
-  if (!res.ok) throw new Error(result?.message || "Đăng ký thất bại");
+
+  if (!res.ok) {
+    const error = new Error(result?.error || result?.message || "Đăng ký thất bại");
+    error.status = res.status;
+    error.data = result;
+
+    // Nếu backend trả 409 Conflict (email trùng) thì đính kèm thông tin email để frontend hiện lỗi phù hợp
+    if (res.status === 409) {
+      error.duplicateField = result?.field || "email";
+      error.duplicateValue = result?.value || email;
+    }
+
+    throw error;
+  }
+
   return result;
 };
 

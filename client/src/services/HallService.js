@@ -103,3 +103,18 @@ export const deleteHallImage = async (imageId) => {
 	if (!res.ok) throw data || new Error("Delete hall image failed");
 	return true;
 };
+
+// Hall Availability
+export const getAvailableHalls = async (params = {}) => {
+	const queryString = new URLSearchParams(params).toString();
+	const url = queryString ? `${API_URL}/available?${queryString}` : `${API_URL}/available`;
+	
+	const res = await fetch(url, {
+		method: "GET",
+		headers: { Accept: "application/json" },
+		credentials: "include",
+	});
+	const data = await res.json().catch(() => []);
+	if (!res.ok) throw data || new Error("Fetch available halls failed");
+	return data;
+};

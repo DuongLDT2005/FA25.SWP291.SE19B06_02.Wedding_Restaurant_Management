@@ -41,15 +41,7 @@ class BookingService {
     } = data;
 
     // 1️⃣ Validate cơ bản
-    if (
-      !customerID ||
-      !eventTypeID ||
-      !hallID ||
-      !menuID ||
-      !eventDate ||
-      !startTime ||
-      !endTime
-    )
+    if (!customerID || !eventTypeID || !hallID || !menuID || !eventDate || !startTime || !endTime )
       throw new Error("Missing required fields.");
     if (!Number.isInteger(tableCount) || tableCount <= 0)
       throw new Error("Invalid table count.");
@@ -249,7 +241,7 @@ class BookingService {
   /** ✅ GET ONE */
   async getBookingById(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
-    return BookingDAO.getBookingById(bookingID);
+    return BookingDAO.getBookingDetails(bookingID);
   }
 
   /** ✅ GET BY CUSTOMER */
@@ -327,7 +319,7 @@ class BookingService {
 
     return { success: true, status };
   }
-
+  
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
     if (!bookingID || !partnerID)
@@ -423,12 +415,7 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
-
-  async getBookingsByCustomerId(customerID) {
-    return await BookingDAO.getBookingsByCustomer({
-      customerID,
-    });
-  }
+  // get user by customerID from restaurants getBookingsByPartnerId
 }
 
 export default new BookingService();

@@ -17,9 +17,16 @@ class PromotionDAO {
         return toDTO(r);
     }
     static async getPromotionsByRestaurantID(restaurantID) {
-        // Prefer direct column filter on promotion table
+        const now = new Date();
+        // Only return promotions that have not expired (endDate >= now)
         const rows = await promotion.findAll({
-            where: { restaurantID },
+            where: {
+                status: true,
+                restaurantID,
+                endDate: {
+                    [Op.gte]: now
+                }
+            },
             attributes: ['promotionID', 'restaurantID', 'name', 'description', 'minTable', 'discountType', 'discountValue', 'startDate', 'endDate', 'status']
         });
         return toDTOs(rows);
@@ -89,6 +96,42 @@ class PromotionDAO {
     static async deletePromotion(promotionID) {
         const count = await promotion.destroy({ where: { promotionID } });
         return count > 0;
+    }
+
+    // get promotions by eventypeID and restaurantID
+    static async getPromotionsByEventTypeAndRestaurant(eventTypeID, restaurantID) {
+        // First, find all serviceIDs linked to the given eventTypeID and restaurantID
+        const serviceRows = await service.findAll({
+            where: { eventTypeID, restaurantID },
+            attributes: ['serviceID']
+        });
+        const serviceIDs = serviceRows.map(row => row.serviceID);
+        if (serviceIDs.length === 0) {
+            return [];
+        }
+        // Then, find all promotionIDs linked to these serviceIDs
+        const promotionLinks = await promotionservice.findAll({
+            where: {
+                serviceID: {
+                    [Op.in]: serviceIDs
+                }
+            },
+            attributes: ['promotionID']
+        });
+        const promotionIDs = promotionLinks.map(link => link.promotionID);
+        if (promotionIDs.length === 0) {
+            return [];
+        }
+        // Finally, fetch all promotions with these promotionIDs
+        const rows = await promotion.findAll({
+            where: {
+                promotionID: {
+                    [Op.in]: promotionIDs
+                }
+            },
+            attributes: ['promotionID', 'restaurantID', 'name', 'description', 'minTable', 'discountType', 'discountValue', 'startDate', 'endDate', 'status']
+        });
+        return toDTOs(rows);
     }
 }
 

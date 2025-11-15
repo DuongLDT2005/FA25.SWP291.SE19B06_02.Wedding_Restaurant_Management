@@ -1,50 +1,26 @@
 // File: BookingDetailPage.jsx
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, Button, Row, Col, Table, Badge } from "react-bootstrap";
 import { ArrowLeft } from "lucide-react";
-import MainLayout from "../../../layouts/MainLayout";
+import PartnerLayout from "../../../layouts/PartnerLayout";
+import { useBooking } from "../../../hooks/useBooking";
 
 // Mock booking (thay bằng fetch nếu có API)
-const mockBookingDetail = {
-  bookingID: 101,
-  status: 3, // 0: pending, 1: confirmed, 2: cancelled, 3: deposit, 4: completed, 5: rejected
-  checked: 0,
-  customer: { name: "Nguyễn Văn B", phone: "0905123456", email: "a.nguyen@example.com" },
-  restaurant: {
-    name: "The Rose Hall",
-    hall: { name: "Sảnh Hồng", price: 15000000 },
-    menu: { name: "Menu Tiệc Cưới Cao Cấp", price: 3000000 },
-  },
-  eventDate: "2025-11-15",
-  startTime: "18:00",
-  endTime: "22:00",
-  tableCount: 30,
-  specialRequest: "Trang trí thêm hoa hồng đỏ tại bàn cô dâu chú rể",
-  dishCategories: [
-    { name: "Khai vị", dishes: ["Gỏi cuốn tôm thịt", "Súp hải sản"] },
-    { name: "Món chính", dishes: ["Cá tầm hấp xì dầu", "Bò lúc lắc khoai tây", "Tôm sú nướng bơ tỏi"] },
-    { name: "Tráng miệng", dishes: ["Bánh flan"] },
-  ],
-  services: [
-    { serviceName: "Âm thanh - ánh sáng", quantity: 1, basePrice: 800000, appliedPrice: 500000 },
-    { serviceName: "MC chuyên nghiệp", quantity: 1, basePrice: 500000, appliedPrice: 300000 },
-  ],
-  promotions: [{ promotionName: "Giảm 10% tổng hóa đơn" }, { promotionName: "Tặng dịch vụ MC" }],
-  originalPrice: 5000000,
-  discountAmount: 500000,
-  VAT: 500000,
-  totalAmount: 5000000,
-};
+// Note: Trang này lấy dữ liệu từ Redux qua hook useBooking, không dùng mock.
 
-// Map trạng thái
+// Map trạng thái (theo enum hiện tại)
+// 0: PENDING, 1: ACCEPTED, 2: REJECTED, 3: CONFIRMED, 4: DEPOSITED, 5: EXPIRED?, 6: CANCELLED, 7: COMPLETED, 8: MANUAL_BLOCKED
 const STATUS_TEXT = {
   0: "Đang chờ",
   1: "Đã xác nhận",
-  2: "Đã hủy",
-  3: "Đã đặt cọc",
-  4: "Hoàn tất",
-  5: "Từ chối",
+  2: "Từ chối",
+  3: "Đã xác nhận (khóa lịch)",
+  4: "Đã đặt cọc",
+  5: "Hết hạn",
+  6: "Đã hủy",
+  7: "Hoàn tất",
+  8: "Đã chặn tay",
 };
 
 const mockReviews = [
@@ -62,74 +38,153 @@ const mockReviews = [
 
 // Lọc review của booking này
 
-const bookingReviews = mockReviews.filter(
-  (r) => r.bookingID === mockBookingDetail.bookingID && r.status === "Visible"
-);
+const bookingReviews = []; // Chưa tích hợp reviews thực tế
 
 
 export default function BookingDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [booking, setBooking] = useState({ ...mockBookingDetail, bookingID: id ? Number(id) : mockBookingDetail.bookingID });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const location = useLocation();
+  const passedBooking = location.state?.booking;
+  const {
+    partnerBookings,
+    partnerStatus,
+    partnerError,
+    loadPartnerBookings,
+    acceptByPartner,
+    rejectByPartner,
+    bookingDetail,
+    bookingDetailStatus,
+    bookingDetailError,
+  } = useBooking();
 
-  // use effect
+  const bookingID = useMemo(() => Number(id), [id]);
+  const [customerProfile, setCustomerProfile] = useState(null);
+  // detail is managed by hook (Redux)
+
+  // Load list if needed (deep-link vào trang chi tiết)
   useEffect(() => {
-  let mounted = true;
-  async function load() {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    try {
-      // Use named export from your axios wrapper
-      const { getBookingDetails } = await import("../../booking/BookingDetailsAPI");
-      const res = await getBookingDetails(id);
-      // BookingDetailsAPI.getBookingDetails returns the response.data (per file),
-      // but if your backend wraps with { success, data } adapt accordingly.
-      const payload = res?.data ?? res;
-      if (!mounted) return;
-      setBooking(prev => ({ ...prev, ...payload }));
-    } catch (err) {
-      console.error("Failed to load booking details", err);
-      setError(err?.message || "Failed to load booking");
-    } finally {
-      if (mounted) setLoading(false);
+    if (!partnerBookings || partnerBookings.length === 0) {
+      loadPartnerBookings({ detailed: true });
     }
-  }
-  load();
-  return () => { mounted = false; };
-}, [id]);
+  }, [partnerBookings?.length, loadPartnerBookings]);
+
+  // Ưu tiên dùng object truyền từ trang list; fallback tìm trong Redux theo ID
+  const booking = useMemo(() => {
+    const base = passedBooking || (partnerBookings || []).find((b) => Number(b.bookingID) === bookingID);
+    if (!base) return null;
+    return {
+      ...base,
+      checked: Number(base.isChecked ?? base.checked ?? 0),
+    };
+  }, [passedBooking, partnerBookings, bookingID]);
+
+  // Booking detail is fetched when navigating from list via hook; if deep-linking without it, list loader above ensures context.
+
+  // Lấy thông tin user từ customerID
+  useEffect(() => {
+    let mounted = true;
+    async function loadCustomer() {
+  const source = bookingDetail || booking;
+      const customerID = source?.customerID || source?.customer?.customerID;
+      if (!customerID) return;
+      try {
+        const { getCustomerDetails } = await import("../../booking/BookingDetailsAPI");
+        const res = await getCustomerDetails(customerID);
+        const payload = res?.data ?? res;
+        if (!mounted) return;
+        setCustomerProfile(payload);
+      } catch (e) {
+        // im lặng nếu lỗi; có thể hiển thị fallback từ booking.customer
+        console.warn("Không thể tải thông tin khách hàng", e);
+      }
+    }
+    loadCustomer();
+    return () => { mounted = false; };
+  }, [bookingDetail?.customerID, bookingDetail?.customer?.customerID, booking?.customerID, booking?.customer?.customerID]);
+
+  // Bỏ hiển thị các booking khác của khách hàng theo yêu cầu
   // Helper format
-  const formatVND = (val) => (Number(val ?? 0)).toLocaleString("vi-VN") + " ₫";
+  const toNum = (v) => Number(v ?? 0);
+  const formatVND = (val) => (toNum(val)).toLocaleString("vi-VN") + " ₫";
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("vi-VN") + " " + new Date(dateStr).toLocaleTimeString("vi-VN");
 
-  const calcSubtotal = () => {
-    const menuPrice = booking.restaurant?.menu?.price ?? 0;
-    const hallPrice = booking.restaurant?.hall?.price ?? 0;
-    const tables = booking.tableCount ?? 0;
-    const servicesTotal = booking.services?.reduce((sum, s) => sum + (s.appliedPrice ?? 0) * (s.quantity ?? 1), 0) ?? 0;
-    return hallPrice + menuPrice * tables + servicesTotal;
-  };
+  const baseData = bookingDetail || booking;
+  // Services total: prefer bookingservices from server, fallback to normalized services
+  const servicesTotal = (baseData?.bookingservices?.length
+    ? baseData.bookingservices.reduce((sum, bs) => sum + toNum(bs.appliedPrice ?? bs.service?.basePrice) * toNum(bs.quantity ?? 1), 0)
+    : (baseData?.services?.reduce((sum, s) => sum + toNum(s.appliedPrice ?? s.price) * toNum(s.quantity ?? 1), 0) ?? 0)
+  );
 
-  const totalAmount = calcSubtotal() - (booking.discountAmount ?? 0) + (booking.VAT ?? 0);
+  const hallUnitPrice = toNum(baseData?.hall?.price ?? baseData?.restaurant?.hall?.price);
+  const menuUnitPrice = toNum(baseData?.menu?.price ?? baseData?.restaurant?.menu?.price);
+  const tables = toNum(baseData?.tableCount ?? 0);
+  const menuTotal = menuUnitPrice * tables;
+
+  const subtotal = baseData?.originalPrice != null
+    ? toNum(baseData.originalPrice)
+    : hallUnitPrice + menuTotal + servicesTotal;
+
+  const discount = toNum(baseData?.discountAmount ?? 0);
+  const vat = toNum(baseData?.VAT ?? 0);
+  const totalAmount = baseData?.totalAmount != null
+    ? toNum(baseData.totalAmount)
+    : subtotal - discount + vat;
 
   // Trạng thái
-  const status = booking.status;
+  const status = baseData?.status;
   const isPending = status === 0;
-  const isDeposit = status === 3;
+  const isDeposit = status === 4; // Đặt cọc là 4
 
   // Actions
-  const handleMarkChecked = () => {
-    if (window.confirm("Đánh dấu đã kiểm tra booking này?")) setBooking(prev => ({ ...prev, checked: 1 }));
+  const handleReject = async () => {
+    if (!baseData) return;
+    if (!window.confirm("Bạn có chắc muốn từ chối booking này?")) return;
+    try {
+      await rejectByPartner(baseData.bookingID, "Partner rejected");
+    } catch (e) {
+      alert(e?.message || "Từ chối thất bại");
+    }
   };
-  const handleReject = () => {
-    if (window.confirm("Bạn có chắc muốn từ chối booking này?")) setBooking(prev => ({ ...prev, status: 5 }));
+  const handleViewContract = () => navigate(`/partner/bookings/${baseData.bookingID}/contract`);
+
+  const handleAccept = async () => {
+    if (!baseData) return;
+    if (!window.confirm("Xác nhận chấp nhận booking này?")) return;
+    try {
+      await acceptByPartner(baseData.bookingID);
+    } catch (e) {
+      alert(e?.message || "Chấp nhận thất bại");
+    }
   };
-  const handleViewContract = () => navigate(`/partner/bookings/${booking.bookingID}/contract`);
+
+  // Loading / error / not-found states
+  if ((partnerStatus === 'loading' || bookingDetailStatus === 'loading') && !baseData) {
+    return (
+      <PartnerLayout>
+        <div className="p-4 text-center text-muted">Đang tải thông tin...</div>
+      </PartnerLayout>
+    );
+  }
+
+  if ((partnerError || bookingDetailError) && !baseData) {
+    return (
+      <PartnerLayout>
+  <div className="p-4 text-center text-danger">{partnerError || bookingDetailError}</div>
+      </PartnerLayout>
+    );
+  }
+
+  if (!baseData) {
+    return (
+      <PartnerLayout>
+        <div className="p-4 text-center text-muted">Không tìm thấy booking</div>
+      </PartnerLayout>
+    );
+  }
 
   return (
-    <MainLayout>
+    <PartnerLayout>
       <div style={{ padding: "0 50px", maxWidth: "1200px" }}>
         <Button variant="secondary" className="mb-3 d-flex align-items-center gap-1" onClick={() => navigate(-1)}>
           <ArrowLeft size={18} /> Quay lại
@@ -140,20 +195,33 @@ export default function BookingDetailPage() {
           <Col md={8}>
             <Card className="p-4 shadow-sm border-0 rounded-3 mb-3">
               <h5 className="fw-bold text-primary mb-3">Thông tin khách hàng</h5>
-              <div className="mb-2"><strong>Tên:</strong> {booking.customer?.name ?? "-"}</div>
-              <div className="mb-2"><strong>Điện thoại:</strong> {booking.customer?.phone ?? "-"}</div>
-              <div className="mb-3"><strong>Email:</strong> {booking.customer?.email ?? "-"}</div>
+              <div className="mb-2"><strong>Tên:</strong> {customerProfile?.user?.fullName
+                || baseData.customer?.user?.fullName
+                || baseData.customer?.fullName
+                || baseData.customer?.name
+                || baseData.customer?.partnerName
+                || "-"}</div>
+              <div className="mb-2"><strong>Điện thoại:</strong> {customerProfile?.user?.phone
+                || baseData.customer?.user?.phone
+                || baseData.customer?.phone
+                || "-"}</div>
+              <div className="mb-3"><strong>Email:</strong> {customerProfile?.user?.email
+                || baseData.customer?.user?.email
+                || baseData.customer?.email
+                || "-"}</div>
 
               <h5 className="fw-bold text-primary mt-3 mb-2">Thông tin sự kiện</h5>
-              <div className="mb-2"><strong>Nhà hàng:</strong> {booking.restaurant?.name ?? "-"}</div>
-              <div className="mb-2"><strong>Sảnh:</strong> {booking.restaurant?.hall?.name ?? "-"} &nbsp;<span className="text-success">{formatVND(booking.restaurant?.hall?.price)}</span></div>
-              <div className="mb-2"><strong>Menu:</strong> {booking.restaurant?.menu?.name ?? "-"} &nbsp;<span className="text-success">{formatVND(booking.restaurant?.menu?.price)}</span></div>
-              <div className="mb-2"><strong>Ngày tổ chức:</strong> {booking.eventDate} ({booking.startTime} - {booking.endTime})</div>
-              <div className="mb-2"><strong>Số bàn:</strong> {booking.tableCount ?? "-"}</div>
-              <div className="mb-3"><strong>Yêu cầu đặc biệt:</strong> {booking.specialRequest ?? "-"}</div>
+              <div className="mb-2"><strong>Nhà hàng:</strong> {baseData.hall?.restaurant?.name || baseData.restaurant?.name || "-"}</div>
+              <div className="mb-2"><strong>Sảnh:</strong> {baseData.hall?.name || baseData.restaurant?.hall?.name || "-"} &nbsp;<span className="text-success">{formatVND(baseData.hall?.price || baseData.restaurant?.hall?.price)}</span></div>
+              <div className="mb-2"><strong>Menu:</strong> {baseData.menu?.name || baseData.restaurant?.menu?.name || "-"} &nbsp;<span className="text-success">{formatVND(baseData.menu?.price || baseData.restaurant?.menu?.price)}</span></div>
+              <div className="mb-2"><strong>Ngày tổ chức:</strong> {baseData.eventDate} ({(baseData.startTime||"").slice(0,5)} - {(baseData.endTime||"").slice(0,5)})</div>
+              <div className="mb-2"><strong>Số bàn:</strong> {baseData.tableCount ?? "-"}</div>
+              <div className="mb-3"><strong>Yêu cầu đặc biệt:</strong> {baseData.specialRequest ?? "-"}</div>
+
+              {/* Đã bỏ phần "Các đặt tiệc khác của khách này" */}
 
               <h5 className="fw-bold text-primary mt-3 mb-2">Danh sách món ăn</h5>
-              {booking.dishCategories?.map((cat, idx) => (
+              {baseData.dishCategories?.map((cat, idx) => (
                 <div key={idx} className="mb-2">
                   <div className="text-secondary fw-semibold">{cat.name}</div>
                   <ul className="mb-1 ms-3">{cat.dishes?.map((d, i) => <li key={i}>{d}</li>)}</ul>
@@ -166,19 +234,31 @@ export default function BookingDetailPage() {
                   <tr><th>Dịch vụ</th><th className="text-center" style={{ width: 90 }}>Số lượng</th><th className="text-end" style={{ width: 140 }}>Giá gốc</th><th className="text-end" style={{ width: 140 }}>Giá áp dụng</th></tr>
                 </thead>
                 <tbody>
-                  {booking.services?.map((s, i) => (
-                    <tr key={i}>
-                      <td>{s.serviceName}</td>
-                      <td className="text-center">{s.quantity ?? 1}</td>
-                      <td className="text-end">{formatVND(s.basePrice)}</td>
-                      <td className="text-end">{formatVND(s.appliedPrice)}</td>
-                    </tr>
-                  )) || <tr><td colSpan={4} className="text-center text-muted">Không có dịch vụ</td></tr>}
+                  {(baseData.bookingservices?.length
+                    ? baseData.bookingservices
+                    : baseData.services || []
+                  ).map((s, i) => {
+                    const name = s.serviceName || s.service?.name;
+                    const quantity = toNum(s.quantity ?? 1);
+                    const basePrice = s.basePrice ?? s.service?.basePrice;
+                    const appliedPrice = s.appliedPrice ?? basePrice;
+                    return (
+                      <tr key={i}>
+                        <td>{name}</td>
+                        <td className="text-center">{quantity}</td>
+                        <td className="text-end">{formatVND(basePrice)}</td>
+                        <td className="text-end">{formatVND(appliedPrice)}</td>
+                      </tr>
+                    );
+                  })}
+                  {!(baseData.bookingservices?.length || baseData.services?.length) && (
+                    <tr><td colSpan={4} className="text-center text-muted">Không có dịch vụ</td></tr>
+                  )}
                 </tbody>
               </Table>
 
               <h5 className="fw-bold text-primary mt-3 mb-2">Ưu đãi / Khuyến mãi</h5>
-              <div>{booking.promotions?.map((p, i) => <Badge key={i} bg="success" className="me-2 mb-2 p-2">{p.promotionName}</Badge>) || <div className="text-muted">Không có ưu đãi</div>}</div>
+              <div>{baseData.promotions?.map((p, i) => <Badge key={i} bg="success" className="me-2 mb-2 p-2">{p.promotionName}</Badge>) || <div className="text-muted">Không có ưu đãi</div>}</div>
             </Card>
           </Col>
 
@@ -188,18 +268,18 @@ export default function BookingDetailPage() {
               <h5 className="fw-bold text-primary mb-3">Chi tiết thanh toán</h5>
               <Table borderless size="sm" className="mb-0 align-middle">
                 <tbody>
-                  <tr><td>Sảnh</td><td className="text-end">{formatVND(booking.restaurant?.hall?.price)}</td></tr>
-                  <tr><td>Menu ({booking.tableCount} bàn)</td><td className="text-end">{formatVND((booking.restaurant?.menu?.price ?? 0) * booking.tableCount)}</td></tr>
-                  <tr><td>Dịch vụ</td><td className="text-end">{formatVND(booking.services?.reduce((sum, s) => sum + (s.appliedPrice ?? 0) * (s.quantity ?? 1), 0))}</td></tr>
-                  <tr className="fw-semibold"><td>Tạm tính</td><td className="text-end">{formatVND(calcSubtotal())}</td></tr>
-                  <tr><td>Giảm giá</td><td className="text-end text-danger">-{formatVND(booking.discountAmount)}</td></tr>
-                  <tr><td>VAT</td><td className="text-end">{formatVND(booking.VAT)}</td></tr>
+                  <tr><td>Sảnh</td><td className="text-end">{formatVND(hallUnitPrice)}</td></tr>
+                  <tr><td>Menu ({tables} bàn)</td><td className="text-end">{formatVND(menuTotal)}</td></tr>
+                  <tr><td>Dịch vụ</td><td className="text-end">{formatVND(servicesTotal)}</td></tr>
+                  <tr className="fw-semibold"><td>Tạm tính</td><td className="text-end">{formatVND(subtotal)}</td></tr>
+                  <tr><td>Giảm giá</td><td className="text-end text-danger">-{formatVND(discount)}</td></tr>
+                  <tr><td>VAT</td><td className="text-end">{formatVND(vat)}</td></tr>
                   <tr className="fw-bold fs-6 border-top"><td>Tổng cộng</td><td className="text-end text-success">{formatVND(totalAmount)}</td></tr>
                 </tbody>
               </Table>
 
               <div className="d-flex flex-column gap-2 mt-4">
-                {isPending && !booking.checked && <Button variant="primary" onClick={handleMarkChecked}>Đã kiểm tra</Button>}
+                {isPending && <Button variant="success" onClick={handleAccept}>Chấp nhận</Button>}
                 {isPending && <Button variant="danger" onClick={handleReject}>Từ chối</Button>}
                 {isDeposit && <Button variant="success" onClick={handleViewContract}>Xem hợp đồng</Button>}
               </div>
@@ -224,6 +304,6 @@ export default function BookingDetailPage() {
           </Col>
         </Row>
       </div>
-    </MainLayout>
+    </PartnerLayout>
   );
 }

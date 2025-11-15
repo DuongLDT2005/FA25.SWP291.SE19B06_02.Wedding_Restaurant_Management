@@ -55,7 +55,7 @@ class HallDAO {
     static async getHallsByRestaurantId(restaurantID) {
         const rows = await hall.findAll({ where: { restaurantID } });
         const dtos = toDTOs(rows);
-        return dtos.map(d => ({ ...d, capacity: d.maxTable }));
+        return dtos.map(d => ({ ...d, maxTable: d.maxTable, capacity: d.maxTable * 10 }));
     }
 
     static async updateHall(hallID, hallData) {

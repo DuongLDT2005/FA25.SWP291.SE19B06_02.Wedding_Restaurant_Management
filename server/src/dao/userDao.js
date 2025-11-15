@@ -227,50 +227,18 @@ class UserDAO {
     });
     return toDTOs(owners);
   }
-  static async getPartnersByStatus(status) {
-    const users = await UserModel.findAll({
-      where: { role: 1 }, // partner
+  static async getInfoUserID(UserID) {
+    const user = await UserModel.findByPk(UserID, {
       include: [
-        {
-          model: RestaurantPartnerModel,
-          as: "partner",
-          where: { status },
-          required: true,
-        },
+        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: CustomerModel, as: "customer" },
       ],
     });
-
-    return users.map((u) => u.get({ plain: true }));
-  }
-
-  static async getApprovedPartners() {
-    const { user, restaurantpartner } = db;
-
-    const rows = await user.findAll({
-      where: { role: 1 }, // role = 1 => partner/owner
-      include: [
-        {
-          model: restaurantpartner,
-          as: "partner",
-          where: { status: 3 }, // 3 = approved
-          required: true,
-        },
-      ],
-    });
-
-    return rows.map((r) => r.get({ plain: true }));
-  }
-
-  static async updatePartnerStatus(userID, status) {
-    const affected = await RestaurantPartnerModel.update(
-      { status },
-      { where: { restaurantPartnerID: userID } }
-    );
-
-    if (affected[0] === 0) throw new Error("Partner not found");
-
-    return true;
-  }
+    if (!user) return null;
+    const plain = user.get({ plain: true });
+    delete plain.password;
+    return toDTO(plain);
+  } 
 }
 
 export default UserDAO;

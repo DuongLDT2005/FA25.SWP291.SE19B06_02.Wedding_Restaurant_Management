@@ -8,30 +8,22 @@ import { Badge } from "react-bootstrap";
  * Hiển thị khuyến mãi đang áp dụng + gợi ý promotion kế cận
  * Cho phép áp dụng promotion gợi ý.
  */
-export default function PromotionBadge() {
-  const { booking, applyPromotion, fetchPromotions, recalcPrice } = useBooking();
-
-  useEffect(() => {
-    // fetch promotions relevant to current booking info
-    const params = {
-      eventType: booking.bookingInfo.eventType,
-      date: booking.bookingInfo.date,
-      tables: booking.bookingInfo.tables,
-    };
-    fetchPromotions(params).catch(() => { });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.bookingInfo.eventType, booking.bookingInfo.date, booking.bookingInfo.tables]);
-
-  const suggestions = booking.promotions || [];
-
+export default function PromotionBadge({ promotions, tables, menu, services }) {
+  const { booking, applyPromotion, recallPrice } = useBooking();
+  const [appliedPromotions, setAppliedPromotions] = React.useState([]);
+  // Use provided promotions directly
+  const suggestions = promotions || [];
   // Auto apply the best promotion when promotions list or inputs change
   useEffect(() => {
     if (!suggestions.length) return;
-    const base = { menu: booking.menu, tables: booking.bookingInfo?.tables, services: booking.services };
-    let best = null;
+    const base = {menu: menu, tables:tables, services: Array.isArray(services) ? services : [] };
+    let best = suggestions[0];
     let bestDiscount = 0;
-    suggestions.forEach((p) => {
+    // Only consider promotions with discountType 0 for best discount calculation
+    const discountPromotions = suggestions.filter(p => p.discountType === 0);
+    discountPromotions.forEach((p) => {
       const { discount } = calculatePrice({ ...base, promotion: p });
+      // console.log(`Promotion: ${p.title}, Discount: ${discount}`);
       if (discount > bestDiscount) {
         best = p;
         bestDiscount = discount;
@@ -41,32 +33,45 @@ export default function PromotionBadge() {
     if (best && (!booking.appliedPromotion || booking.appliedPromotion?.id !== best.id)) {
       applyPromotion(best);
       // recalc after apply
-      setTimeout(recalcPrice, 0);
+      setTimeout(recallPrice, 0);
     }
+    // Apply all discountType 1 promotions
+    const servicePromotions = suggestions.filter(p => p.discountType === 1);
+    servicePromotions.forEach((p) => {
+      if (!booking.appliedPromotion || !Array.isArray(booking.appliedPromotion) || !booking.appliedPromotion.some(ap => ap.id === p.id)) {
+        applyPromotion(p);
+        setTimeout(recallPrice, 0);
+      }
+    });
+    // Update local applied promotions for display
+    const allApplied = [best, ...servicePromotions].filter(Boolean);
+    setAppliedPromotions(allApplied);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, booking.menu, booking.bookingInfo?.tables, booking.services]);
+  }, [suggestions, tables, menu, services]);
 
   return (
     <div className="mt-3">
       <label className="fw-semibold mb-1">Khuyến mãi</label>
-      {booking.appliedPromotion ? (
-        <div className="d-flex align-items-center justify-content-between p-2 rounded border border-success bg-gradient-to-r" style={{ background: "linear-gradient(90deg, #d1fae5, #6ee7b7)" }}>
-          <div className="d-flex align-items-center gap-2">
-            <Tag size={16} className="text-success" />
-            <div>
-              <strong>{booking.appliedPromotion.title}</strong>
-              <div className="text-sm text-success">
-                {booking.appliedPromotion.description}
+      {appliedPromotions.length > 0 ? (
+        appliedPromotions.map((promotion, index) => (
+          <div key={promotion.id || index} className="d-flex align-items-center justify-content-between p-2 rounded border border-success bg-gradient-to-r mb-2" style={{ background: "linear-gradient(90deg, #d1fae5, #6ee7b7)" }}>
+            <div className="d-flex align-items-center gap-2">
+              <Tag size={16} className="text-success" />
+              <div>
+                <strong>{promotion.name}</strong>
+                <div className="text-sm text-success">
+                  {promotion.description}
+                </div>
+                <p className="mb-0" style={{ fontSize: "0.75rem", opacity: 0.85 }}>
+                  {promotion.startDate} → {promotion.endDate}
+                </p>
               </div>
-              <p className="mb-0" style={{ fontSize: "0.75rem", opacity: 0.85 }}>
-                {booking.appliedPromotion.startDate} → {booking.appliedPromotion.endDate}
-              </p>
             </div>
+            <Badge bg="success" pill>
+              Áp dụng
+            </Badge>
           </div>
-          <Badge bg="success" pill>
-            Áp dụng
-          </Badge>
-        </div>
+        ))
       ) : (
         <div className="text-muted">Chưa áp dụng khuyến mãi</div>
       )}

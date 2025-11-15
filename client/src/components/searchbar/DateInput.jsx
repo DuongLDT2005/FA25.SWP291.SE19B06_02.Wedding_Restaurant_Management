@@ -53,6 +53,10 @@ export default function DateInput({ value: propValue, onChange: propOnChange, la
   const oneYearLater = dayjs().add(1, 'year');
 
   const handleChange = (newValue) => {
+    if (newValue && newValue.isBefore(tomorrow, 'day')) {
+      // Prevent past dates
+      return;
+    }
     const dateStr = newValue ? newValue.format("YYYY-MM-DD") : "";
     if (typeof propOnChange === 'function') {
       propOnChange(dateStr);

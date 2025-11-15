@@ -1,4 +1,5 @@
 import BookingService from '../services/Booking/BookingServices.js';
+import { normalizeTime } from '../utils/timeUtils.js';
 
 class BookingController {
     // ========== CRUD CƠ BẢN ==========
@@ -125,7 +126,15 @@ class BookingController {
     // POST /api/bookings - Create new booking
     static async createBooking(req, res) {
         try {
-            const booking = await BookingService.createBooking(req.body);
+            // Normalize time fields in request body
+            const bookingData = { ...req.body };
+            if (bookingData.startTime) {
+                bookingData.startTime = normalizeTime(bookingData.startTime);
+            }
+            if (bookingData.endTime) {
+                bookingData.endTime = normalizeTime(bookingData.endTime);
+            }
+            const booking = await BookingService.createBooking(bookingData);
             res.status(201).json({
                 success: true,
                 message: 'Booking created successfully',
@@ -144,7 +153,15 @@ class BookingController {
         try {
             const partnerID = req.user?.userId;
             if (!partnerID) return res.status(401).json({ success: false, message: 'Unauthorized' });
-            const booking = await BookingService.setBooking(req.body, partnerID);
+            // Normalize time fields in request body
+            const bookingData = { ...req.body };
+            if (bookingData.startTime) {
+                bookingData.startTime = normalizeTime(bookingData.startTime);
+            }
+            if (bookingData.endTime) {
+                bookingData.endTime = normalizeTime(bookingData.endTime);
+            }
+            const booking = await BookingService.setBooking(bookingData, partnerID);
             res.status(201).json({ success: true, message: 'Manual booking created', data: booking });
         } catch (error) {
             res.status(400).json({ success: false, message: error.message });
@@ -155,7 +172,15 @@ class BookingController {
     static async updateBooking(req, res) {
         try {
             const { id } = req.params;
-            const booking = await BookingService.updateBooking(id, req.body);
+            // Normalize time fields in request body
+            const updateData = { ...req.body };
+            if (updateData.startTime) {
+                updateData.startTime = normalizeTime(updateData.startTime);
+            }
+            if (updateData.endTime) {
+                updateData.endTime = normalizeTime(updateData.endTime);
+            }
+            const booking = await BookingService.updateBooking(id, updateData);
             res.status(200).json({
                 success: true,
                 message: 'Booking updated successfully',
@@ -369,11 +394,14 @@ class BookingController {
     static async checkHallAvailability(req, res) {
         try {
             const { hallID, eventDate, startTime, endTime } = req.body;
+            // Normalize time format
+            const normalizedStartTime = normalizeTime(startTime);
+            const normalizedEndTime = normalizeTime(endTime);
             const isAvailable = await BookingService.checkHallAvailability(
                 hallID, 
                 eventDate, 
-                startTime, 
-                endTime
+                normalizedStartTime, 
+                normalizedEndTime
             );
             res.status(200).json({
                 success: true,

@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form } from "react-bootstrap";
 import { Utensils } from "lucide-react";
 import { useSearchForm } from "../../hooks/useSearchForm";
-
-const EVENT_TYPES = ["Tiệc cưới", "Sinh nhật", "Liên hoan", "Hội thảo", "Tiệc công ty"];
+import { useEventType } from "../../hooks/useEventType";
 
 export default function EventTypeSelect() {
   const { state, setField } = useSearchForm();
+  const { items, loadAll, loading, error } = useEventType();
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
   return (
     <div>
       <Form.Label>
@@ -14,14 +19,22 @@ export default function EventTypeSelect() {
         Loại sự kiện
       </Form.Label>
       <Form.Select
-        value={state.eventType ? state.eventType : EVENT_TYPES[0]}
+        value={state.eventType ? state.eventType : (items.length > 0 ? items[0].eventTypeID : "")}
         onChange={(e) => setField("eventType", e.target.value)}
         className="custom-form-select"
+        disabled={loading}
       >
-        {EVENT_TYPES.map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
+        {loading ? (
+          <option>Loading...</option>
+        ) : (
+          items.map((eventType) => (
+            <option key={eventType.eventTypeID} value={eventType.eventTypeID}>
+              {eventType.name}
+            </option>
+          ))
+        )}
       </Form.Select>
+      {error && <div className="text-danger mt-1">Error loading event types</div>}
     </div>
   );
 }

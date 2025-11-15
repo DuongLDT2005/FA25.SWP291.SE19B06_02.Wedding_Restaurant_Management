@@ -119,10 +119,23 @@ export const removeHallImage = createAsyncThunk(
   }
 );
 
+export const fetchAvailableHalls = createAsyncThunk(
+  "halls/fetchAvailable",
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const data = await hallService.getAvailableHalls(params);
+      return data;
+    } catch (err) {
+      return rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
+
 /* Slice */
 const initialState = {
   list: [], // halls of the current context (e.g., by restaurant)
   current: null,
+  availableHalls: [], // available halls based on search criteria
   imagesByHall: {}, // { [hallId]: [{imageID, imageURL}, ...] }
   status: "idle",
   error: null,
@@ -269,6 +282,20 @@ const hallSlice = createSlice({
         if (state.current && state.current.hallID === hallId && Array.isArray(state.current.images)) {
           state.current.images = state.current.images.filter((img) => img.imageID !== imageId);
         }
+      })
+
+      .addCase(fetchAvailableHalls.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchAvailableHalls.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.availableHalls = Array.isArray(action.payload) ? action.payload : [];
+        state.error = null;
+      })
+      .addCase(fetchAvailableHalls.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error?.message;
       });
   },
 });
@@ -277,6 +304,7 @@ export const { clearCurrentHall, clearHallError } = hallSlice.actions;
 
 export const selectHalls = (state) => state.halls?.list ?? [];
 export const selectCurrentHall = (state) => state.halls?.current ?? null;
+export const selectAvailableHalls = (state) => state.halls?.availableHalls ?? [];
 export const selectHallImages = (hallId) => (state) => state.halls?.imagesByHall?.[hallId] ?? [];
 
 export default hallSlice.reducer;

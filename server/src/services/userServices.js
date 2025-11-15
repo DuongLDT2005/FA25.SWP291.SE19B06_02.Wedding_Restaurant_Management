@@ -37,10 +37,26 @@ class UserService {
     return await UserDAO.getOwners();
   }
 
-  static async getUserById(userId) {
-    if (!userId) throw new Error("User ID cannot be null");
-    return await UserDAO.getUserById(userId);
-  }
+    static async getUserById(userId) {
+        if (!userId) {
+            throw new Error('User ID cannot be null');
+        }
+        const user = await UserDAO.getUserById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return user;
+    }
+
+    static async findByEmail(email) {
+        if (!email) {
+            throw new Error('Email cannot be null');
+        }
+        console.log("Finding user by email:", email.trim().toLowerCase());
+        const user = await UserDAO.findByEmail(email.trim().toLowerCase());
+        console.log("User found:", user ? { id: user.userID, email: user.email, role: user.role } : "null");
+        return user;
+    }
 
   static async updateUserStatus(userId, status) {
     if (!userId) throw new Error("User ID cannot be null");

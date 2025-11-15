@@ -57,10 +57,10 @@ export async function getPromotions(params = {}) {
  * services: [{ id, name, price }] (fixed price)
  * promotion: { id, type, value } type: percent | fixed
  */
-export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 10, promotion = null }) {
+export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 1, promotion = null }) {
   const guests = (tables || 1) * avgGuestsPerTable;
   const menuTotal = (menu?.price || 0) * guests;
-  const servicesTotal = (services || []).reduce((s, it) => s + (it.price || 0), 0);
+  const servicesTotal = (services || []).reduce((s, it) => s + (parseFloat(it.price) || 0), 0);
   let subtotal = menuTotal + servicesTotal;
   let discount = 0;
   if (promotion) {
@@ -169,4 +169,15 @@ export async function getAllBookings() {
   const json = await res.json();
   if (!res.ok) throw new Error(json?.message || 'Fetch bookings failed');
   return Array.isArray(json?.data) ? json.data : [];
+}
+
+/**
+ * Lấy chi tiết booking theo ID
+ * Backend: GET /api/bookings/:id (trả { success, data })
+ */
+export async function getBookingById(bookingID) {
+  const res = await fetch(`${API_URL}/${bookingID}`, { credentials: 'include', headers: { Accept: 'application/json' } });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.message || 'Fetch booking detail failed');
+  return json?.data ?? json;
 }

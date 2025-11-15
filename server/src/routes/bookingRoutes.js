@@ -27,20 +27,33 @@ router.delete("/:id", BookingController.deleteBooking);
 
 
 
+// Partner accept booking
+router.patch('/:id/partner/accept', authenticateJWT, ensurePartner, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.ACCEPTED;
+  next();
+}, BookingController.acceptByPartner);
 
-router.post(
-  "/:id/partner/accept",
-  authenticateJWT,
-  ensurePartner,
-  BookingController.acceptByPartner
-);
+// Generic status change endpoint (use role-based checks in controller)
+router.put('/:id/status', authenticateJWT, BookingController.updateBookingStatus);
+// Partner reject booking
+router.patch('/:id/partner/reject', authenticateJWT, ensurePartner, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.REJECTED;
+  next();
+}, BookingController.updateBookingStatus);
 
-router.post(
-  "/:id/partner/reject",
-  authenticateJWT,
-  ensurePartner,
-  BookingController.rejectByPartner
-);
+router.patch('/:id/customer/cancel', authenticateJWT, ensureCustomer, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.CANCELLED;
+  next();
+}, BookingController.rejectByPartner);
+
+router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res, next) => {
+  req.body = req.body || {};
+  req.body.status = BookingStatus.CONFIRMED;
+  next();
+}, BookingController.updateBookingStatus);
 
 // ======================
 // 💳 PayOS Payment Routes
