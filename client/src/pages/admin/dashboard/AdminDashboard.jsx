@@ -4,7 +4,6 @@ import BookingAnalytics from "./BookingAnalytics";
 import PartnerPerformanceAnalytics from "./PartnerPerformanceAnalytics";
 import CustomerInsightAnalytics from "./CustomerInsightAnalytics";
 import SystemSettings from "./SystemSettings";
-import Logs from "./Logs";
 import AdminLayout from "../../../layouts/AdminLayout";
 
 export default function AdminDashboard() {
@@ -16,7 +15,6 @@ export default function AdminDashboard() {
     { key: "partner", label: "Hiệu Suất Đối Tác" },
     { key: "customer", label: "Phân Tích Khách Hàng" },
     { key: "system", label: "Cài Đặt Hệ Thống" },
-    { key: "logs", label: "Nhật Ký Hệ Thống" },
   ];
 
   return (
@@ -64,7 +62,6 @@ export default function AdminDashboard() {
         {currentView === "partner" && <PartnerPerformanceAnalytics />}
         {currentView === "customer" && <CustomerInsightAnalytics />}
         {currentView === "system" && <SystemSettings />}
-        {currentView === "logs" && <Logs />}
       </div>
     </AdminLayout>
   );

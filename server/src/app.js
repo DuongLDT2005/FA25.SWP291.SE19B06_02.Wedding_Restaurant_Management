@@ -2,16 +2,24 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import restaurantRoutes from "./routes/restaurantRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import restaurantRoutes from "./routes/restaurantRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import hallRoutes from "./routes/hallRoutes.js";
 import aiSuggestRoutes from "./routes/aiSuggestRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import paymentRoutes from "./routes/PaymentRoutes.js";
+import amenityRoutes from "./routes/AmenityRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import adminBookingRoutes from "./routes/admin/adminBookingRoutes.js";
+import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
+import adminReviewRoutes from "./routes/admin/adminReviewRoutes.js";
+import adminReportRoutes from "./routes/admin/adminReportRoutes.js";
+import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
+import negotiationRoutes from "./routes/negotiationRoutes.js";
+
 import contractRoutes from "./routes/contractRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
-import amenityRoutes from "./routes/amenityRoutes.js";
 import eventTypeRoutes from "./routes/eventTypeRoutes.js";
 import bankAccountRoutes from "./routes/restaurants/bankAccountRoutes.js";
 import menuRoutes from "./routes/restaurants/menuRoutes.js";
@@ -33,16 +41,25 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/halls", hallRoutes);
-app.use("/api/auth", authRoutes);
-app.use("/api/admin", userRoutes);
 app.use("/api/ai", aiSuggestRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/amenities", amenityRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/users", userRoutes);
+
+
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/bookings", adminBookingRoutes);
+app.use("/api/negotiation", negotiationRoutes);
+app.use("/api/admin/payments", adminPaymentRoutes);
+app.use("/api/admin/reviews", adminReviewRoutes);
+app.use("/api/admin/reports", adminReportRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use("/api/chats", chatRoutes);
-app.use("/api/amenities", amenityRoutes);
 app.use("/api/eventtypes", eventTypeRoutes);
 // Nested restaurant-scoped mounts (non-breaking: keep top-level mounts)
 // app.use("/api/restaurants/:restaurantId/amenities", amenityRoutes);

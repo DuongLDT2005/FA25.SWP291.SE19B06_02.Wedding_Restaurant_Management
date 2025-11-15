@@ -57,14 +57,26 @@ class BookingService {
       throw new Error("Invalid time range: startTime must be before endTime.");
 
     // 2️⃣ Check trùng giờ sảnh
-    const overlapping = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+    const overlapping = await BookingDAO.findByHallAndTime(
+      hallID,
+      eventDate,
+      startTime,
+      endTime
+    );
     if (overlapping.length > 0)
-      throw new Error("This hall is already booked for the selected time range.");
+      throw new Error(
+        "This hall is already booked for the selected time range."
+      );
 
     // 3️⃣ Giới hạn đặt chỗ khách hàng
-    const customerBookings = await BookingDAO.findByCustomerAndDate(customerID, eventDate);
+    const customerBookings = await BookingDAO.findByCustomerAndDate(
+      customerID,
+      eventDate
+    );
     if (customerBookings.length >= 3)
-      throw new Error("Customer has reached the maximum number of bookings for this date.");
+      throw new Error(
+        "Customer has reached the maximum number of bookings for this date."
+      );
 
     // --- Pricing using BookingPricing engine ---
     // Load hall & menu prices
@@ -87,14 +99,27 @@ class BookingService {
         const p = promos[i];
         if (!p) continue;
         // Percent discount
-        if (p.discountPercentage && (!p.discountType || p.discountType === 'Percent')) {
-          promoInputs.push({ discountType: 0, discountValue: Number(p.discountPercentage) || 0, minTable: p.minTable || 0 });
+        if (
+          p.discountPercentage &&
+          (!p.discountType || p.discountType === "Percent")
+        ) {
+          promoInputs.push({
+            discountType: 0,
+            discountValue: Number(p.discountPercentage) || 0,
+            minTable: p.minTable || 0,
+          });
         }
         // Free service(s)
-        if (p.discountType === 'Free') {
-          const freeSvcs = await PromotionDAO.getServicesByPromotionID(p.promotionID);
+        if (p.discountType === "Free") {
+          const freeSvcs = await PromotionDAO.getServicesByPromotionID(
+            p.promotionID
+          );
           for (const svc of freeSvcs) {
-            promoInputs.push({ discountType: 1, freeServiceID: svc.serviceID, minTable: p.minTable || 0 });
+            promoInputs.push({
+              discountType: 1,
+              freeServiceID: svc.serviceID,
+              minTable: p.minTable || 0,
+            });
           }
         }
       }
@@ -104,16 +129,18 @@ class BookingService {
     // Load info for selected services
     let allServices = [];
     if (Array.isArray(services) && services.length > 0) {
-      const ids = [...new Set(services.map((s) => s.serviceID).filter(Boolean))];
+      const ids = [
+        ...new Set(services.map((s) => s.serviceID).filter(Boolean)),
+      ];
       allServices = await Promise.all(ids.map((id) => ServiceDAO.getByID(id)));
       allServices = allServices.filter(Boolean);
     }
     await engine.applyPaidServices(allServices);
 
     // VAT rate from settings or default 8%
-    let vatRate = '0.08';
+    let vatRate = "0.08";
     try {
-      const vatSetting = await SystemSettingDAO.getByKey('VAT_RATE');
+      const vatSetting = await SystemSettingDAO.getByKey("VAT_RATE");
       if (vatSetting?.settingValue) vatRate = String(vatSetting.settingValue);
     } catch { }
     await engine.calculateTotals({ VAT_RATE: vatRate });
@@ -316,7 +343,8 @@ class BookingService {
   
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     // Load full booking details (to get customer + hall)
     const booking = await BookingDAO.getBookingDetails(bookingID);
@@ -351,8 +379,9 @@ class BookingService {
   }
 
   // Partner rejects a booking (status: PENDING -> REJECTED)
-  async rejectByPartner(bookingID, partnerID, reason = '') {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+  async rejectByPartner(bookingID, partnerID, reason = "") {
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
@@ -393,8 +422,12 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
-  // get user by customerID from restaurants getBookingsByPartnerId
-}
 
+  async getBookingsByCustomerId(customerID) {
+    return await BookingDAO.getBookingsByCustomer({
+      customerID,
+    });
+  }
+}
 
 export default new BookingService();

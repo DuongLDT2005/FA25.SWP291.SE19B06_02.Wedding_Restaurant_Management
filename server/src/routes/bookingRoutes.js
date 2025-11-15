@@ -1,13 +1,18 @@
 import { Router } from "express";
 import { authenticateJWT, ensureCustomer, ensurePartner } from "../middlewares/jwtToken.js";
 import BookingController from "../controllers/BookingController.js";
-import PaymentController from "../controllers/PaymentController.js"; // ✅ thêm dòng này
+import PaymentController from "../controllers/PaymentController.js";
 import BookingStatus from "../models/enums/BookingStatus.js";
 const router = Router();
 
 // ======================
 // 📌 Booking CRUD Routes
 // ======================
+
+// ⚠️ Route customer phải đặt TRÊN ":id"
+router.get("/customer/:customerID", BookingController.getBookingsByCustomerId);
+router.get("/restaurant/:restaurantID", BookingController.getBookingsByRestaurantId);
+
 router.get("/", BookingController.getAllBookings);
 // Authenticated customer gets own bookings
 router.get('/me', authenticateJWT, ensureCustomer, BookingController.getMyBookings);
@@ -53,18 +58,14 @@ router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res
 // ======================
 // 💳 PayOS Payment Routes
 // ======================
-
-// ✅ Tạo link thanh toán PayOS
 router.post(
   "/:bookingID/payment/payos",
   authenticateJWT,
   PaymentController.createPayosCheckout
 );
 
-// ✅ Webhook nhận callback từ PayOS
 router.post("/payment/payos/webhook", PaymentController.payosWebhook);
 
-// ✅ Kiểm tra trạng thái thanh toán theo orderCode
 router.get(
   "/payment/payos/status/:orderCode",
   authenticateJWT,

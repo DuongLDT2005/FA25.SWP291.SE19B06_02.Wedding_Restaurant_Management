@@ -29,17 +29,17 @@ import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 import UserList from "../pages/admin/management/user/UserList";
 import UserDetail from "../pages/admin/management/user/UserDetails";
 import AdminRestaurantDetail from "../pages/admin/management/restaurant/AdminRestaurantDetail";
-import AdminBookingListPage from "../pages/admin/booking/AdminBookingListPage";
-import AdminBookingDetailsPage from "../pages/admin/booking/AdminBookingDetailsPage";
+import BookingList from "../pages/admin/management/booking/BookingList";
+import BookingListDetail from "../pages/admin/management/booking/BookingListDetail";
 import AdminProfilePage from "../pages/admin/Profile";
-import AdminLicensePage from "../pages/admin/management/license/AdminiLicensePage";
+import AdminLicensePage from "../pages/admin/management/license/AdminLicensePage";
+import AdminNegotiationPage from "../pages/admin/management/license/AdminNegotiationPage";
 import AdminRestaurantList from "../pages/admin/management/restaurant/AdminRestaurantList";
 import AdminPaymentListPage from "../pages/admin/management/payment/AdminPaymentListPage";
 import AdminPaymentDetail from "../pages/admin/management/payment/AdminPaymentDetail";
-import AdminReviewListPage from "../pages/admin/management/report/ReviewList";
+import AdminReviewListPage from "../pages/admin/management/review/ReviewList";
 import AdminReportListPage from "../pages/admin/management/report/ReportList";
-import AdminNotificationPage from "../pages/admin/notification/AdminNotificationPage";
-import AdminSettingsPage from "../pages/admin/setting/AdminSettingPage";
+
 
 import BookingListPage from "../pages/customer/bookingForm/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
@@ -94,16 +94,16 @@ function AppRoutes() {
         <Route path="/admin/users/:id" element = {<UserDetail/>} />
         <Route path="/admin/restaurants" element={<AdminRestaurantList />} />
         <Route path="/admin/restaurants/:id" element = {<AdminRestaurantDetail/>}/>
-        <Route path="/admin/bookings" element={<AdminBookingListPage />} />
-        <Route path="/admin/bookings/:bookingId" element={<AdminBookingDetailsPage />} />
+        <Route path="/admin/bookings" element={<BookingList />} />
+        <Route path="/admin/bookings/:id" element={<BookingListDetail />} />
         <Route path="/admin/license" element={<AdminLicensePage />} />
+        <Route path="/admin/negotiation/:partnerID" element={<AdminNegotiationPage />} />
         <Route path="/admin/profile" element= {<AdminProfilePage/>} />
         <Route path="/admin/payments" element={<AdminPaymentListPage />} />
         <Route path="/admin/payments/:id" element={<AdminPaymentDetail />} />
         <Route path="/admin/reviews" element={<AdminReviewListPage />} />
         <Route path="/admin/reports" element={<AdminReportListPage />} />
-        <Route path="/admin/notifications" element={<AdminNotificationPage />} />
-        <Route path="/admin/settings" element={<AdminSettingsPage />} />
+
 
         {/* Booking Routes */}
         <Route path="/booking/:bookingId" element={<BookingDetailsPage />} />

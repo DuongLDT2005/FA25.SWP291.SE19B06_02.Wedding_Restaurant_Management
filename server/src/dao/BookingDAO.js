@@ -85,7 +85,7 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -117,11 +117,11 @@ class BookingDAO {
       include: [{
         model: RestaurantModel,
         as: 'restaurant',
-        include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+        include: [{ model: RestaurantPartnerModel, as: 'partner' }]
       }]
     });
     if (!hall) return null;
-    const partner = hall.restaurant?.restaurantPartner;
+    const partner = hall.restaurant?.partner;
     return toDTO(partner);
   }
 
@@ -231,7 +231,7 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -277,7 +277,7 @@ class BookingDAO {
             as: 'restaurant',
             include: [{
               model: RestaurantPartnerModel,
-              as: 'restaurantPartner',
+              as: 'partner',
               where: { restaurantPartnerID: partnerID },
               attributes: [] // we only need to filter; omit partner fields
             }]
@@ -312,7 +312,7 @@ class BookingDAO {
             as: 'restaurant',
             include: [{
               model: RestaurantPartnerModel,
-              as: 'restaurantPartner',
+              as: 'partner',
               where: { restaurantPartnerID: partnerID },
             }]
           }]

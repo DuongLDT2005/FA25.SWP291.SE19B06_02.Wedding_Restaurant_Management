@@ -1,139 +1,194 @@
-import React, { useState } from "react";
-import { Table, Badge, Button, Dropdown, InputGroup, FormControl } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import axios from "../../../../api/axios";
 import AdminLayout from "../../../../layouts/AdminLayout";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { reports as mockReports } from "../../../customer/ValueStore"; // hoặc tạo file mock riêng
+import { Modal, Button, Badge } from "react-bootstrap";
 
-export default function AdminReportListPage() {
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [reports, setReports] = useState(mockReports || []);
+export default function ReportList() {
+  const [reports, setReports] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
 
-  const STATUS = {
-    0: { label: "Chưa xử lý", color: "warning" },
-    1: { label: "Đã xử lý", color: "success" },
-    2: { label: "Đã bỏ qua", color: "secondary" },
+  useEffect(() => {
+    loadReports();
+  }, []);
+
+  const loadReports = async () => {
+    try {
+      const res = await axios.get("/admin/reports");
+      setReports(res.data.data);
+    } catch (err) {
+      console.error("❌ Fetch reports failed:", err);
+    }
   };
 
-  const filtered = reports.filter((r) => {
-    const matchSearch =
-      r.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      r.restaurantName.toLowerCase().includes(search.toLowerCase());
-    const matchStatus =
-      filterStatus === "all" || r.status.toString() === filterStatus;
-    return matchSearch && matchStatus;
-  });
+  const viewDetail = async (id) => {
+    try {
+      const res = await axios.get(`/admin/reports/${id}`);
+      setSelected(res.data.data);
+      setShowDetail(true);
+    } catch (err) {
+      console.error("❌ Load report detail failed:", err);
+    }
+  };
 
-  const handleAction = (id, action) => {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.reportID === id
-          ? {
-              ...r,
-              status: action === "resolve" ? 1 : 2,
-            }
-          : r
-      )
-    );
+  const updateStatus = async (id, status) => {
+    if (!window.confirm("Bạn muốn cập nhật trạng thái báo cáo?")) return;
+
+    try {
+      await axios.put(`/admin/reports/${id}/status`, { status });
+      loadReports();
+      alert("Cập nhật thành công!");
+    } catch (err) {
+      console.error("❌ Update report failed:", err);
+    }
+  };
+
+  const deleteReport = async (id) => {
+    if (!window.confirm("Bạn chắc chắn xoá báo cáo này?")) return;
+
+    try {
+      await axios.delete(`/admin/reports/${id}`);
+      loadReports();
+      alert("Đã xoá thành công!");
+    } catch (err) {
+      console.error("❌ Delete report failed:", err);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 0:
+        return <Badge bg="warning">Chờ xử lý</Badge>;
+      case 1:
+        return <Badge bg="success">Đã xử lý</Badge>;
+      case 2:
+        return <Badge bg="danger">Từ chối</Badge>;
+      default:
+        return <Badge bg="secondary">Không rõ</Badge>;
+    }
   };
 
   return (
-    <AdminLayout title="Báo cáo & Khiếu nại">
+    <AdminLayout title="Quản lý báo cáo">
       <div className="container py-4">
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="fw-bold text-danger mb-0">Danh sách báo cáo</h2>
+        <h4 className="fw-bold mb-3">Danh sách báo cáo</h4>
 
-          <div className="d-flex gap-2">
-            <Dropdown>
-              <Dropdown.Toggle variant="outline-danger" size="sm">
-                {filterStatus === "all"
-                  ? "Tất cả trạng thái"
-                  : STATUS[filterStatus].label}
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item onClick={() => setFilterStatus("all")}>Tất cả</Dropdown.Item>
-                {Object.keys(STATUS).map((key) => (
-                  <Dropdown.Item key={key} onClick={() => setFilterStatus(key)}>
-                    {STATUS[key].label}
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            </Dropdown>
-
-            <InputGroup size="sm" style={{ width: "250px" }}>
-              <FormControl
-                placeholder="Tìm khách hàng hoặc nhà hàng..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </InputGroup>
-          </div>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="text-center text-muted py-5">
-            <i className="fas fa-exclamation-triangle fa-2x mb-2"></i>
-            <p>Không có báo cáo nào.</p>
-          </div>
-        ) : (
-          <div className="table-responsive shadow-sm rounded-4">
-            <Table hover className="align-middle mb-0">
-              <thead className="bg-light text-muted">
+        <div className="card shadow-sm">
+          <div className="card-body table-responsive">
+            <table className="table align-middle">
+              <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Khách hàng</th>
-                  <th>Nhà hàng</th>
-                  <th>Lý do</th>
-                  <th>Ngày gửi</th>
-                  <th className="text-center">Trạng thái</th>
-                  <th className="text-center">Thao tác</th>
+                  <th>ID</th>
+                  <th>Người báo cáo</th>
+                  <th>Loại mục tiêu</th>
+                  <th>Nội dung</th>
+                  <th>Trạng thái</th>
+                  <th className="text-end">Hành động</th>
                 </tr>
               </thead>
+
               <tbody>
-                {filtered.map((r, idx) => (
+                {reports.map((r) => (
                   <tr key={r.reportID}>
-                    <td>{idx + 1}</td>
-                    <td>{r.customerName}</td>
-                    <td>{r.restaurantName}</td>
-                    <td>{r.reason}</td>
-                    <td>{new Date(r.createdAt).toLocaleDateString("vi-VN")}</td>
-                    <td className="text-center">
-                      <Badge bg={STATUS[r.status].color}>
-                        {STATUS[r.status].label}
-                      </Badge>
-                    </td>
-                    <td className="text-center">
-                      {r.status === 0 ? (
-                        <div className="d-flex justify-content-center gap-2">
-                          <Button
-                            variant="success"
-                            size="sm"
-                            className="rounded-pill"
-                            onClick={() => handleAction(r.reportID, "resolve")}
-                          >
-                            <i className="fas fa-check me-1"></i> Xử lý
-                          </Button>
-                          <Button
-                            variant="outline-secondary"
-                            size="sm"
-                            className="rounded-pill"
-                            onClick={() => handleAction(r.reportID, "ignore")}
-                          >
-                            <i className="fas fa-times me-1"></i> Bỏ qua
-                          </Button>
-                        </div>
-                      ) : (
-                        <Badge bg={STATUS[r.status].color} className="px-3 py-2">
-                          {STATUS[r.status].label}
-                        </Badge>
-                      )}
+                    <td>{r.reportID}</td>
+                    <td>{r.user?.fullName}</td>
+                    <td>{r.targetType === 1 ? "Nhà hàng" : "Đánh giá"}</td>
+                    <td>{r.content?.slice(0, 40)}...</td>
+                    <td>{getStatusBadge(r.status)}</td>
+
+                    <td className="text-end">
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2"
+                        onClick={() => viewDetail(r.reportID)}
+                      >
+                        Chi tiết
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-success me-2"
+                        onClick={() => updateStatus(r.reportID, 1)}
+                      >
+                        Duyệt
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-warning me-2"
+                        onClick={() => updateStatus(r.reportID, 2)}
+                      >
+                        Từ chối
+                      </button>
+
+                      <button
+                        className="btn btn-sm btn-danger"
+                        onClick={() => deleteReport(r.reportID)}
+                      >
+                        Xoá
+                      </button>
                     </td>
                   </tr>
                 ))}
+
+                {reports.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="text-center py-4 text-muted">
+                      Không có báo cáo nào.
+                    </td>
+                  </tr>
+                )}
               </tbody>
-            </Table>
+            </table>
           </div>
-        )}
+        </div>
+
+        {/* DETAIL MODAL */}
+        <Modal show={showDetail} onHide={() => setShowDetail(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Chi tiết báo cáo</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            {selected ? (
+              <>
+                <p>
+                  <strong>Người báo cáo:</strong> {selected.user?.fullName}
+                </p>
+
+                <p>
+                  <strong>Nội dung báo cáo:</strong>
+                  <br />
+                  {selected.content}
+                </p>
+
+                <p>
+                  <strong>Loại mục tiêu:</strong>{" "}
+                  {selected.targetType === 1 ? "Nhà hàng" : "Đánh giá"}
+                </p>
+
+                {selected.review && (
+                  <>
+                    <hr />
+                    <p>
+                      <strong>Đánh giá liên quan:</strong>
+                    </p>
+                    <p>
+                      Rating: {selected.review.rating}⭐
+                      <br />
+                      Comment: {selected.review.comment}
+                    </p>
+                  </>
+                )}
+              </>
+            ) : (
+              "Đang tải..."
+            )}
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowDetail(false)}>
+              Đóng
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </div>
     </AdminLayout>
   );

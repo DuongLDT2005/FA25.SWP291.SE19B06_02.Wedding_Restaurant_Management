@@ -1,29 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Button, Badge, InputGroup, FormControl } from "react-bootstrap";
 import AdminLayout from "../../../../layouts/AdminLayout";
-import mock from "../../../../mock/partnerMock";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 export default function AdminRestaurantList() {
   const navigate = useNavigate();
-  const [restaurants, setRestaurants] = useState(mock.restaurants);
+  const [restaurants, setRestaurants] = useState([]);
   const [search, setSearch] = useState("");
 
-  // Hàm xử lý tìm kiếm
+  // 🟦 Load từ backend
+  useEffect(() => {
+    loadRestaurants();
+  }, []);
+
+  const loadRestaurants = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/restaurants");
+      setRestaurants(res.data);
+    } catch (error) {
+      console.error("❌ Error loading restaurants: ", error);
+    }
+  };
+
+  // 🟦 Tìm kiếm
   const filtered = restaurants.filter((r) =>
     r.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleViewDetail = (id) => {
-    navigate(`/admin/restaurants/${id}`);
+  // 🟦 Format trạng thái
+  const getStatusBadge = (status) => {
+    const active = Number(status) === 1;
+
+    return active ? (
+      <Badge bg="success" pill>
+        Đang hoạt động
+      </Badge>
+    ) : (
+      <Badge bg="secondary" pill>
+        Ngừng hoạt động
+      </Badge>
+    );
   };
 
-  const getStatusBadge = (status) => {
-    if (status === 1)
-      return <Badge bg="success" pill>Đang hoạt động</Badge>;
-    if (status === 0)
-      return <Badge bg="secondary" pill>Ngừng hoạt động</Badge>;
-    return <Badge bg="warning" pill>Chưa xác định</Badge>;
+  // 🟦 Lấy tên đối tác
+  const getPartnerName = (r) => {
+  return (
+    r.partner?.owner?.fullName ||
+    r.partner?.owner?.email ||
+    "—"
+  );
+};
+
+  // 🟦 Đi vào chi tiết
+  const handleViewDetail = (id) => {
+    navigate(`/admin/restaurants/${id}`);
   };
 
   return (
@@ -60,13 +91,17 @@ export default function AdminRestaurantList() {
                   <th>Địa chỉ</th>
                   <th>Đối tác</th>
                   <th>Trạng thái</th>
-                  <th className="text-end" style={{ width: "150px" }}>Thao tác</th>
+                  <th className="text-end" style={{ width: "150px" }}>
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((r, index) => (
                   <tr key={r.restaurantID}>
                     <td>{index + 1}</td>
+
+                    {/* Tên nhà hàng + thumbnail */}
                     <td className="fw-semibold">
                       <div className="d-flex align-items-center">
                         <img
@@ -83,9 +118,14 @@ export default function AdminRestaurantList() {
                         <span>{r.name}</span>
                       </div>
                     </td>
-                    <td>{r.address}</td>
-                    <td>{r.partnerName || "—"}</td>
+
+                    <td>{r.address?.fullAddress || "—"}</td>
+
+                    {/* Tên đối tác */}
+                    <td>{getPartnerName(r)}</td>
+
                     <td>{getStatusBadge(r.status)}</td>
+
                     <td className="text-end">
                       <Button
                         variant="outline-primary"

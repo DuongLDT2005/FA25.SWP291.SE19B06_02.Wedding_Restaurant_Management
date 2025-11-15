@@ -20,6 +20,6 @@ const store = configureStore({
     additionRestaurant: additionRestaurantReducer,
     payment: paymentReducer,
   },
-})
+});
 
-export default store
+export default store;

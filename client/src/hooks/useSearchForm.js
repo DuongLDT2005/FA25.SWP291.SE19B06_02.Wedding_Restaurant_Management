@@ -12,7 +12,6 @@ import {
  * useSearchForm hook
  */
 export function useSearchForm() {
-  
   const dispatch = useDispatch();
   const state = useSelector(selectSearch);
 
@@ -54,18 +53,42 @@ export function useSearchForm() {
 
   const getQueryString = useCallback(() => {
     const qp = new URLSearchParams();
-    if (state.location) qp.set("location", state.location);
+
+    // 🏙️ Vị trí
+    if (state.location && state.location.trim() !== "") {
+      qp.set("location", state.location);
+    }
+
+    // 📅 Ngày
     if (state.date) qp.set("date", state.date);
-    if (state.eventType) qp.set("eventType", state.eventType);
-    if (state.tables != null) qp.set("tables", String(state.tables));
+
+    // 🎉 Loại sự kiện
+    if (state.eventType && state.eventType.trim() !== "") {
+      qp.set("eventType", state.eventType);
+    }
+
+    // 🍽️ Số bàn (chỉ thêm nếu là số > 0)
+    if (
+      state.tables !== null &&
+      state.tables !== undefined &&
+      state.tables !== "" &&
+      !isNaN(Number(state.tables)) &&
+      Number(state.tables) > 0
+    ) {
+      qp.set("tables", String(state.tables));
+    }
+
+    // 🕒 Thời gian
     if (state.startTime) qp.set("startTime", state.startTime);
     if (state.endTime) qp.set("endTime", state.endTime);
+
     return qp.toString();
   }, [state]);
 
   const performSearch = useCallback(
     async (overrideParams = {}) => {
       const params = { ...state, ...overrideParams };
+      console.log("🧠 performSearch sending params:", params);
       const action = await dispatch(performSearchThunk(params));
       if (action.error) throw action.payload || action.error.message;
       return action.payload;

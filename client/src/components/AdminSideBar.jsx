@@ -120,19 +120,6 @@ export default function AdminSideBar() {
             ]}
           />
 
-          <SidebarItem
-            to="/admin/notifications"
-            label="Thông báo"
-            icon={<Bell size={18} />}
-            collapsed={collapsed}
-          />
-
-          <SidebarItem
-            to="/admin/settings"
-            label="Cài đặt"
-            icon={<Settings size={18} />}
-            collapsed={collapsed}
-          />
         </Nav>
       </div>
     </div>
@@ -174,14 +161,11 @@ function SidebarItem({ to, label, icon, collapsed }) {
 
 /* --- COMPONENT GROUP (MENU CÓ CON) --- */
 function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
-  const [hover, setHover] = useState(false);
-
   return (
     <div>
       <button
         onClick={toggle}
-        className={`w-100 border-0 bg-transparent text-start d-flex align-items-center rounded-3 mb-2 ${open ? "bg-light text-primary" : "text-dark"
-          }`}
+        className="w-100 border-0 bg-transparent text-start d-flex align-items-center rounded-3 mb-2 text-primary"
         style={{
           display: "flex",
           gap: 15,
@@ -189,31 +173,32 @@ function SidebarGroup({ label, icon, collapsed, open, toggle, items }) {
           minHeight: 45,
           padding: "8px 18px",
           width: "100%",
-          background: open || hover ? "#0d6efd" : "transparent", // màu xanh đồng nhất
+          background: "transparent",
           transition: "all 0.2s ease",
-          boxShadow: "none", // xoá viền shadow focus
-          outline: "none",   // xoá outline mặc định
         }}
       >
-        {icon}
+        {React.cloneElement(icon, { color: "#0d6efd" })}
+
         {!collapsed && (
           <>
             <span className="flex-grow-1">{label}</span>
-            {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            {open ? (
+              <ChevronDown size={16} color="#0d6efd" />
+            ) : (
+              <ChevronRight size={16} color="#0d6efd" />
+            )}
           </>
         )}
       </button>
 
+      {/* submenu */}
       <Collapse in={open && !collapsed}>
         <div className="ms-4">
           {items.map((item, index) => (
             <NavLink
               key={index}
               to={item.to}
-              className={({ isActive }) =>
-                `d-block rounded-3 py-2 ps-3 mb-1 text-decoration-none ${isActive ? "text-primary fw-semibold" : "text-secondary"
-                }`
-              }
+              className="d-block rounded-3 py-2 ps-3 mb-1 text-decoration-none text-primary"
             >
               {item.label}
             </NavLink>
