@@ -2,6 +2,9 @@ import AuthServices from "../services/AuthServices.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 
+import db from "../config/db.js";
+const { user: User } = db;
+
 class AuthController {
   /* ===========================================
       LOGIN NORMAL
@@ -9,54 +12,98 @@ class AuthController {
   static async login(req, res) {
     try {
       const { email, password } = req.body;
-      const { user, token } = await AuthServices.loginWithEmail(
-        email,
-        password
-      );
+      if (!email || !password)
+        return res
+          .status(400)
+          .json({ error: "Email and password are required" });
 
-      user.password = undefined;
-      return res.json({ user, token });
-    } catch (error) {
-      console.error("Login error:", error);
-      return res.status(401).json({ error: error.message });
+      const { user, token } = await AuthServices.loginWithEmail(email, password);
+
+      return res.json({ success: true, user, token });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Login failed",
+      });
     }
   }
 
   /* ===========================================
       GOOGLE LOGIN
   =========================================== */
-  static async googlePopupLogin(req, res) {
+  static async googleLogin(req, res) {
     try {
       const { code } = req.body;
-      if (!code) return res.status(400).json({ message: "Missing code" });
+      if (!code)
+        return res.status(400).json({ error: "Google code is required" });
 
-      // 1) Đổi code lấy access_token
-      const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
-        code,
-        client_id: process.env.GOOGLE_CLIENT_ID,
-        client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: "postmessage",
-        grant_type: "authorization_code",
-      });
+      // 1️⃣ Đổi code sang tokens
+      const tokenRes = await axios.post(
+        "https://oauth2.googleapis.com/token",
+        {
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: "postmessage",
+          grant_type: "authorization_code",
+        }
+      );
 
-      const { access_token } = tokenRes.data;
+      const { id_token, access_token } = tokenRes.data;
 
-      // 2) Lấy user profile từ Google
-      const { data: profile } = await axios.get(
-        "https://www.googleapis.com/oauth2/v3/userinfo",
+      // 2️⃣ Lấy thông tin user từ Google
+      const googleUser = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
         { headers: { Authorization: `Bearer ${access_token}` } }
       );
 
-      const { user, token } = await AuthServices.findOrCreateGoogleUser({
-        email: profile.email,
-        name: profile.name,
-        picture: profile.picture,
-      });
+      const { email, name, picture } = googleUser.data;
 
-      return res.json({ user, token });
-    } catch (error) {
-      console.error("Google login error:", error);
-      return res.status(500).json({ error: "Google login failed" });
+      if (!email)
+        return res.status(400).json({ error: "Google user has no email" });
+
+      // 3️⃣ Kiểm tra user đã tồn tại chưa
+      let user = await User.findOne({ where: { email } });
+
+      if (!user) {
+        // Nếu user chưa tồn tại → tạo mới
+        user = await User.create({
+          email,
+          fullName: name,
+          avatarURL: picture,
+          role: "CUSTOMER",
+          status: "ACTIVE",
+          password: "", // Google Login không dùng password
+        });
+      } else {
+        // Nếu user đã có → cập nhật avatar nếu thay đổi
+        if (picture && user.avatarURL !== picture) {
+          await user.update({ avatarURL: picture }); // FIX: user là instance Sequelize
+        }
+      }
+
+      // 4️⃣ Tạo token JWT
+      const token = jwt.sign(
+        {
+          userID: user.userID,
+          email: user.email,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      return res.json({
+        success: true,
+        user,
+        token,
+      });
+    } catch (err) {
+      console.error("Google login error:", err.message);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Google Login failed",
+      });
     }
   }
 

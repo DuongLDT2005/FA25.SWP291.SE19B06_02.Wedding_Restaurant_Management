@@ -64,7 +64,7 @@ export default function AdminLicensePage() {
     if (!selectedPartner) return;
 
     try {
-      await axios.put(`/admin/owners/${selectedPartner.userID}/approve`);
+      await axios.put(`/admin/users/partners/${selectedPartner.userID}/approve`);
 
       loadPendingPartners();
       loadNegotiatingPartners();
@@ -93,7 +93,7 @@ export default function AdminLicensePage() {
 
   const handleActivate = async (partner) => {
     try {
-      await axios.put(`/admin/owners/${partner.userID}/activate`);
+      await axios.put(`/admin/users/partners/${partner.userID}/activate`);
       loadNegotiatingPartners();
       loadApprovedPartners();
       alert("🎉 Đã kích hoạt đối tác!");
@@ -140,7 +140,6 @@ export default function AdminLicensePage() {
           onSelect={(k) => setActiveTab(k)}
           className="mb-4"
         >
-          {/* PENDING */}
           {/* PENDING */}
           <Tab eventKey="pending" title="Đang chờ phê duyệt">
             {pendingPartners.length === 0 ? (

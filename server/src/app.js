@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 
-import restaurantRoutes from "./routes/restaurantRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import restaurantRoutes from "./routes/restaurantRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import hallRoutes from "./routes/hallRoutes.js";
 import aiSuggestRoutes from "./routes/aiSuggestRoutes.js";
@@ -28,9 +28,9 @@ app.use(
 
 app.use(express.json());
 
+app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/halls", hallRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiSuggestRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
