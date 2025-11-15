@@ -28,6 +28,7 @@ import dishCategoryRoutes from "./routes/restaurants/dishCategoryRoutes.js";
 import promotionRoutes from "./routes/restaurants/promotionRoutes.js";
 import serviceRoutes from "./routes/restaurants/serviceRoutes.js";
 import reviewRoutes from "./routes/restaurants/reviewRoutes.js";
+import wardRoutes from "./routes/wardRoutes.js";
 const app = express();
 
 app.use(
@@ -71,5 +72,6 @@ app.use("/api/dishcategories", dishCategoryRoutes);
 app.use("/api/promotions", promotionRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/restaurants/:restaurantId/reviews", reviewRoutes);
+app.use("/api/wards", wardRoutes);
 
 export default app;

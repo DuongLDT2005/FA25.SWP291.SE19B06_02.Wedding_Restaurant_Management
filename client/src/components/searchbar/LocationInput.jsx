@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, ListGroup } from "react-bootstrap";
 import { MapPin } from "lucide-react";
 import { useSearchForm } from "../../hooks/useSearchForm";
-
-const LOCATIONS = ["Liên Chiểu", "Ngũ Hành Sơn", "Sơn Trà", "Cẩm Lệ", "Thanh Khê", "Hải Châu"];
+import { useSelector, useDispatch } from "react-redux";
+import { fetchWards } from "../../redux/slices/wardSlice";
 
 export default function LocationInput() {
   const { state, setField } = useSearchForm();
+  const dispatch = useDispatch();
+  const { list: wards = [] } = useSelector((state) => state.wards || {});
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+
+  // Load wards từ API khi component mount
+  useEffect(() => {
+    if (wards.length === 0) {
+      dispatch(fetchWards());
+    }
+  }, [dispatch, wards.length]);
+
+  // Lấy danh sách tên wards từ API
+  const LOCATIONS = wards.map(ward => ward.name);
 
   const filteredLocations = state.location
     ? LOCATIONS.filter((loc) => loc.toLowerCase().includes(state.location.toLowerCase())).slice(0, 8)
