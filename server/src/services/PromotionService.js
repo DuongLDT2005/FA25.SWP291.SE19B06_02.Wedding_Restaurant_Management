@@ -100,6 +100,27 @@ class PromotionService {
     return await PromotionDAO.getPromotionsByRestaurantID(restaurantID);
   }
 
+  static async listFiltered({ date, tables, restaurantId }) {
+    // Get all promotions and filter client-side for now
+    // In production, this should be done in the database
+    // const allPromotions = await PromotionDAO.getPromotionsByEventTypeAndRestaurant(eventType, restaurantId);
+    const allPromotions = await PromotionDAO.getPromotionsByRestaurantID(restaurantId);
+    return allPromotions.filter(promo => {
+      // Filter by date if provided (check if date is within startDate and endDate)
+      if (date) {
+        const promoStart = new Date(promo.startDate);
+        const promoEnd = new Date(promo.endDate);
+        const checkDate = new Date(date);
+        if (checkDate < promoStart || checkDate > promoEnd) return false;
+      }
+      
+      // Filter by tables if provided (check minTable condition)
+      if (tables && promo.minTable && tables < promo.minTable) return false;
+      
+      return true;
+    });
+  }
+
   static async listServicesForPromotion(promotionID) {
     return await PromotionDAO.getServicesByPromotionID(promotionID);
   }

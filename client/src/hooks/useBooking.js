@@ -22,6 +22,8 @@ export function useBooking() {
   const acceptByPartner = useCallback((bookingID) => dispatch(bookingActions.acceptBookingByPartner(bookingID)), [dispatch]);
   const rejectByPartner = useCallback((bookingID, reason) => dispatch(bookingActions.rejectBookingByPartner({ bookingID, reason })), [dispatch]);
   const markCheckedLocal = useCallback((bookingID) => dispatch(bookingActions.markCheckedLocal(bookingID)), [dispatch]);
+  // Detail loader
+  const loadBookingDetail = useCallback((bookingID) => dispatch(bookingActions.loadBookingDetail(bookingID)), [dispatch]);
 
   const recalcPrice = useCallback(() => {
     if (!booking) return { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 };
@@ -105,9 +107,13 @@ export function useBooking() {
     acceptByPartner,
     rejectByPartner,
     markCheckedLocal,
+    loadBookingDetail,
     partnerBookings: booking.partnerRows || [],
     partnerStatus: booking.partnerStatus || 'idle',
     partnerError: booking.partnerError || null,
+    bookingDetail: booking.detail || null,
+    bookingDetailStatus: booking.detailStatus || 'idle',
+    bookingDetailError: booking.detailError || null,
   };
 }
 

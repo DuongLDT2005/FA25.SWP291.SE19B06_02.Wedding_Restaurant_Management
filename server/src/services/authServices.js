@@ -19,6 +19,11 @@ class AuthServices {
     if (!userData) {
       throw new Error("User data cannot be null");
     }
+    // Check if email already exists
+    const existing = await UserDAO.findByEmail(userData.email);
+    if (existing) {
+      throw new Error("Email đã tồn tại");
+    }
     if (userData.password) {
       userData.password = await hashPassword(userData.password);
     }
@@ -30,6 +35,11 @@ class AuthServices {
   static async signUpOwner(userData) {
     if (!userData) {
       throw new Error("User data cannot be null");
+    }
+    // Check if email already exists
+    const existing = await UserDAO.findByEmail(userData.email);
+    if (existing) {
+      throw new Error("Email đã tồn tại");
     }
     if (userData.password) {
       userData.password = await hashPassword(userData.password);

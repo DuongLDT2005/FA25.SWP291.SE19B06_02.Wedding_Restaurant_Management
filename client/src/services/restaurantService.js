@@ -122,7 +122,8 @@ export const searchRestaurants = async (params = {}) => {
   return data;
 };
 export const getFeaturedRestaurants = async () => {
-  const res = await fetch(`${API_URL}/featuredRestaurants`, {
+    // Server exposes `/available` route; keep function name for backward compatibility
+  const res = await fetch(`${API_URL}/available`, {
     method: "GET",
     credentials: "include",
     headers: { Accept: "application/json" },
@@ -132,8 +133,22 @@ export const getFeaturedRestaurants = async () => {
   return data;
 };
 
-export const getTopBookedRestaurants = async () => {
-  const res = await fetch(`${API_URL}/top-booked`, {
+export const getAvailableRestaurants = async () => {
+  const res = await fetch(`${API_URL}/available`, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const data = await res.json();
+  if (!res.ok) throw data || new Error("Fetch available restaurants failed");
+  return data;
+};
+
+export const getTopBookedRestaurants = async (params = {}) => {
+  const qp = new URLSearchParams();
+  if (params?.limit != null) qp.set("limit", String(params.limit));
+  const url = qp.toString() ? `${API_URL}/top_booked?${qp.toString()}` : `${API_URL}/top_booked`;
+  const res = await fetch(url, {
     method: "GET",
     credentials: "include",
     headers: { Accept: "application/json" },

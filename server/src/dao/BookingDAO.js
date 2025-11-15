@@ -2,7 +2,7 @@ import db from '../config/db.js';
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 import BookingStatus from '../models/enums/BookingStatus.js';
-
+import UserDAO from './userDao.js';
 // Models from Sequelize
 const {
   sequelize,
@@ -162,7 +162,7 @@ class BookingDAO {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
-        status: BookingStatus.DEPOSITED, 
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -173,13 +173,12 @@ class BookingDAO {
     });
     return toDTOs(rows);
   }
-
-  // Find overlapping bookings for blocking/availability checks. Includes deposited, manual blocked, and confirmed.
-  static async findOverlapsForBlocking(hallID, eventDate, startTime, endTime) {
+  static async searchHallAvailable(hallID, eventDate, startTime, endTime) {
     const rows = await BookingModel.findAll({
       where: {
         hallID,
-        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.MANUAL_BLOCKED] },
+        // capacity will larger and equal, 
+        status: { [Op.in]: [BookingStatus.DEPOSITED, BookingStatus.COMPLETED, BookingStatus.MANUAL_BLOCKED] }, 
         eventDate,
         [Op.and]: [
           { startTime: { [Op.lt]: endTime } },
@@ -219,7 +218,12 @@ class BookingDAO {
   static async getBookingDetails(bookingID) {
     const row = await BookingModel.findByPk(bookingID, {
       include: [
-        { model: CustomerModel, as: 'customer' },
+        {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
         { model: EventTypeModel, as: 'eventType' },
         {
           model: HallModel,
@@ -260,6 +264,12 @@ class BookingDAO {
     const rows = await BookingModel.findAll({
       include: [
         {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
+        {
           model: HallModel,
           as: 'hall',
           include: [{
@@ -287,7 +297,12 @@ class BookingDAO {
     if (!partnerID) return [];
     const rows = await BookingModel.findAll({
       include: [
-        { model: CustomerModel, as: 'customer' },
+      {
+          model: CustomerModel,
+          as: 'customer',
+          attributes: { exclude: ['password'] },
+          include: [{ model: UserModel, as: 'user', attributes: { exclude: ['password'] } }]
+        },
         { model: EventTypeModel, as: 'eventType' },
         {
           model: HallModel,
@@ -425,12 +440,13 @@ class BookingDAO {
     if (!Array.isArray(statuses) || statuses.length === 0) return [];
 
     const rows = await sequelize.query(
-      `SELECT r."restaurantID", r."name", COUNT(b."bookingID") AS "count"
-       FROM "restaurants" r
-       JOIN "halls" h ON h."restaurantID" = r."restaurantID"
-       JOIN "bookings" b ON b."hallID" = h."hallID" AND b."status" IN (:statuses)
-       GROUP BY r."restaurantID", r."name"
-       ORDER BY "count" DESC
+      `SELECT r.restaurantID, r.name, COUNT(b.bookingID) AS cnt
+       FROM restaurant r
+       JOIN hall h ON h.restaurantID = r.restaurantID
+       JOIN booking b ON b.hallID = h.hallID AND b.status IN (:statuses)
+       WHERE r.status = 1
+       GROUP BY r.restaurantID, r.name
+       ORDER BY cnt DESC
        LIMIT :limit`,
       {
         replacements: { statuses, limit },
@@ -438,7 +454,7 @@ class BookingDAO {
       }
     );
 
-    return rows.map((r) => ({ ...r, count: Number(r.count) }));
+    return rows.map((r) => ({ ...r, count: Number(r.cnt ?? r.count ?? 0) }));
   }
 
 }

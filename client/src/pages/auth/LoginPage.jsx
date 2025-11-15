@@ -18,6 +18,7 @@ import {
 import AuthLayout from "../../layouts/MainLayout";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { verifyOtp } from "../../services/authService";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -36,6 +37,12 @@ export default function LoginPage() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotEmailError, setForgotEmailError] = useState("");
+
+  // OTP states
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
 
   const { login, forgotPassword } = useAuth();
 
@@ -104,13 +111,61 @@ export default function LoginPage() {
     setForgotLoading(true);
     try {
       await forgotPassword(forgotEmail);
-      setInfo("Nếu email tồn tại, hệ thống đã gửi hướng dẫn đặt lại mật khẩu.");
       setShowForgot(false);
-      setForgotEmail("");
+      setShowOtp(true);
+      setOtp("");
+      setOtpError("");
     } catch (err) {
       setForgotGlobalError(err.message || "Không thể gửi email khôi phục");
     } finally {
       setForgotLoading(false);
+    }
+  };
+
+  // ==========================================================
+  // 💬 Xác minh OTP
+  // ==========================================================
+  const handleVerifyOtp = async (ev) => {
+    ev.preventDefault();
+    setOtpError("");
+
+    if (!otp || otp.length !== 6) {
+      setOtpError("Vui lòng nhập mã OTP 6 chữ số");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const result = await verifyOtp({ email: forgotEmail, otp });
+      
+      // OTP verified successfully - auto login
+      toast.success("OTP xác minh thành công! Đang đăng nhập...");
+      
+      // Close OTP modal
+      setShowOtp(false);
+      setOtp("");
+      setForgotEmail("");
+      
+      // Auto login with temp token
+      const loginData = await login({ email: forgotEmail, tempToken: result.tempToken });
+      setInfo("Đăng nhập thành công — điều hướng...");
+
+      // Điều hướng theo vai trò
+      const role = loginData?.user?.role;
+      switch (role) {
+        case 2:
+          navigate('/admin/dashboard');
+          break;
+        case 1:
+          navigate('/partner');
+          break;
+        default:
+          navigate('/customer/bookings');
+      }
+    } catch (err) {
+      setOtpError(err.message || "Mã OTP không hợp lệ");
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -516,6 +571,57 @@ export default function LoginPage() {
                 disabled={forgotLoading}
               >
                 {forgotLoading ? "Đang gửi..." : "Gửi"}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Modal Nhập OTP */}
+      <Modal show={showOtp} onHide={() => setShowOtp(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác minh OTP</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p style={{ fontSize: "14px", marginBottom: "12px" }}>
+            Chúng tôi đã gửi mã OTP 6 chữ số đến email <strong>{forgotEmail}</strong>. 
+            Vui lòng nhập mã để tiếp tục.
+          </p>
+          {otpError && (
+            <Alert
+              variant="danger"
+              style={{ marginBottom: "12px", fontSize: "14px" }}
+            >
+              {otpError}
+            </Alert>
+          )}
+          <Form onSubmit={handleVerifyOtp}>
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="Nhập mã OTP 6 chữ số"
+                maxLength={6}
+                style={{ textAlign: "center", fontSize: "18px", letterSpacing: "4px" }}
+              />
+            </Form.Group>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "8px",
+              }}
+            >
+              <Button variant="secondary" onClick={() => setShowOtp(false)}>
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                style={{ backgroundColor: "#E11D48", borderColor: "#dd4666ff" }}
+                disabled={otpLoading}
+              >
+                {otpLoading ? "Đang xác minh..." : "Xác minh"}
               </Button>
             </div>
           </Form>

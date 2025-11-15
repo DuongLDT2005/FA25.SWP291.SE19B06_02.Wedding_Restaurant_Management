@@ -2,9 +2,19 @@ import React from "react";
 import useBooking from "../../../hooks/useBooking";
 import { Form } from "react-bootstrap";
 
-export default function CustomerInfoSection() {
+export default function CustomerInfoSection({ user }) {
   const { booking, setCustomerField } = useBooking();
-  const { customer } = booking;
+  const customer = user || {};
+
+  if (!user) {
+    return (
+      <section className="p-4 bg-white border rounded shadow-sm mb-3">
+        <div className="text-center text-muted">
+          <p>Vui lòng đăng nhập để tiếp tục đặt tiệc</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="p-4 bg-white border rounded shadow-sm mb-3">
@@ -18,8 +28,8 @@ export default function CustomerInfoSection() {
           <Form.Control
             type="text"
             placeholder="Nhập họ và tên"
-            value={customer.name}
-            onChange={(e) => setCustomerField("name", e.target.value)}
+            value={customer.fullName || ""}
+            onChange={(e) => setCustomerField("fullName", e.target.value)}
             required
           />
         </Form.Group>
@@ -29,7 +39,7 @@ export default function CustomerInfoSection() {
           <Form.Control
             type="text"
             placeholder="Nhập số điện thoại"
-            value={customer.phone}
+            value={customer.phone || ""}
             onChange={(e) => setCustomerField("phone", e.target.value)}
             required
           />
@@ -40,7 +50,7 @@ export default function CustomerInfoSection() {
           <Form.Control
             type="email"
             placeholder="Nhập email"
-            value={customer.email}
+            value={customer.email || ""}
             onChange={(e) => setCustomerField("email", e.target.value)}
             required
           />

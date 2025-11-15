@@ -10,7 +10,7 @@ import "../../styles/AuthStyle.css";
 
 function SignUpForOwner() {
   const navigate = useNavigate();
-  const { signUpOwner } = useAuth();
+  const { signUpPartner } = useAuth();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -32,13 +32,8 @@ function SignUpForOwner() {
     else if (!/^[A-Za-zÀ-ỹ\s]+$/.test(form.name))
       e.name = "Tên không chứa số hoặc kí tự đặc biệt.";
 
-    const phoneRegex = /^0\d{9}$/;
     if (!/^[0-9]{9,11}$/.test(form.phone))
       e.phone = "Số điện thoại không hợp lệ";
-    if (!phoneRegex.test(form.phoneNumber)) {
-      e.phoneNumber =
-        "Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 chữ số.";
-    }
 
     const emailRegex = /^[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}$/;
     if (!emailRegex.test(form.email)) {
@@ -86,7 +81,7 @@ function SignUpForOwner() {
         const secureUrl = await uploadImageToCloudinary(file);
         licenseUrl = secureUrl;
       }
-      await signUpOwner({
+      await signUpPartner({
         name: form.name,
         email: form.email,
         password: form.password,
@@ -96,8 +91,13 @@ function SignUpForOwner() {
       navigate("/login");
     } catch (err) {
       const message = err?.message || String(err);
-      // set general form error
-      setErrors((prev) => ({ ...prev, form: message }));
+      // Handle specific errors
+      if (message === "Email đã tồn tại") {
+        setErrors((prev) => ({ ...prev, email: "Email đã tồn tại" }));
+      } else {
+        // set general form error
+        setErrors((prev) => ({ ...prev, form: message }));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -252,7 +252,8 @@ function SignUpForOwner() {
           }
           .error-message {
             color: #E11D48;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
             margin-top: 2px;
             margin-bottom: 10px;
             display: block;
@@ -328,8 +329,8 @@ function SignUpForOwner() {
               <Form.Group className="mb-3">
                 <input
                   type="text"
-                  id="phoneNumber"
-                  name="phoneNumber"
+                  id="phone"
+                  name="phone"
                   placeholder="Số điện thoại"
                   maxLength={10}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -337,11 +338,11 @@ function SignUpForOwner() {
                     (e.target.value = e.target.value.replace(/\D/g, ""))
                   }
                   className={`form-control signup-input ${
-                    errors.phoneNumber ? "is-invalid" : ""
+                    errors.phone ? "is-invalid" : ""
                   }`}
                 />
-                {errors.phoneNumber && (
-                  <div className="error-message">{errors.phoneNumber}</div>
+                {errors.phone && (
+                  <div className="error-message">{errors.phone}</div>
                 )}
               </Form.Group>
 
@@ -483,6 +484,14 @@ function SignUpForOwner() {
               <button type="submit" className="signup-btn">
                 Đăng Ký
               </button>
+              {errors.form && (
+                <div
+                  className="error-message"
+                  style={{ textAlign: "center", marginTop: "10px" }}
+                >
+                  {errors.form}
+                </div>
+              )}
             </form>
 
             <div className="signup-link">

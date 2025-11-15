@@ -227,6 +227,18 @@ class UserDAO {
     });
     return toDTOs(owners);
   }
+  static async getInfoUserID(UserID) {
+    const user = await UserModel.findByPk(UserID, {
+      include: [
+        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: CustomerModel, as: "customer" },
+      ],
+    });
+    if (!user) return null;
+    const plain = user.get({ plain: true });
+    delete plain.password;
+    return toDTO(plain);
+  } 
 }
 
 export default UserDAO;

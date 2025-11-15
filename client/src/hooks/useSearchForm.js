@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   setField as setFieldAction,
@@ -15,16 +15,42 @@ export function useSearchForm() {
   
   const dispatch = useDispatch();
   const state = useSelector(selectSearch);
+
+  // Load from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("searchForm");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        dispatch(setFieldsAction(parsed));
+      } catch (e) {
+        console.error("Failed to parse searchForm from sessionStorage", e);
+      }
+    }
+  }, [dispatch]);
+
   const setField = useCallback(
     (key, value) => {
       if (key === "tables") value = value === "" ? "" : Number(value);
       dispatch(setFieldAction({ key, value }));
+      // Save to sessionStorage
+      const current = { ...state, [key]: value };
+      sessionStorage.setItem("searchForm", JSON.stringify(current));
     },
-    [dispatch]
+    [dispatch, state]
   );
 
-  const setFields = useCallback((obj) => dispatch(setFieldsAction(obj)), [dispatch]);
-  const reset = useCallback(() => dispatch(resetSearch()), [dispatch]);
+  const setFields = useCallback((obj) => {
+    dispatch(setFieldsAction(obj));
+    // Save to sessionStorage
+    const current = { ...state, ...obj };
+    sessionStorage.setItem("searchForm", JSON.stringify(current));
+  }, [dispatch, state]);
+
+  const reset = useCallback(() => {
+    dispatch(resetSearch());
+    sessionStorage.removeItem("searchForm");
+  }, [dispatch]);
 
   const getQueryString = useCallback(() => {
     const qp = new URLSearchParams();

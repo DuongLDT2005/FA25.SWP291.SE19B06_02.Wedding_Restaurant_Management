@@ -1,6 +1,5 @@
 import React from "react";
 import { Card, Row, Col } from "react-bootstrap";
-
 // Bảng màu mềm, hiện đại
 const palette = [
   "#f87171", // đỏ coral
@@ -14,8 +13,10 @@ const palette = [
 ];
 
 const EventTypeList = ({ restaurant }) => {
-  const eventTypes = restaurant?.eventTypes || ["Tiệc cưới", "Hội nghị", "Sinh nhật"];
-
+  const raw = restaurant?.eventTypes ?? restaurant?.eventType ?? [];
+  // const {} =useEventType();
+  const eventTypes = Array.isArray(raw) ? raw : [raw];
+  if (!eventTypes.length) return null;
   return (
     <div className="mb-5">
       <h4 className="mb-3 fw-bold" style={{ color: "#e11d48" }}>
@@ -25,9 +26,10 @@ const EventTypeList = ({ restaurant }) => {
       <Row className="g-3">
         {eventTypes.map((type, index) => {
           const color = palette[index % palette.length];
+          const label = typeof type === "string" ? type : (type?.name ?? "-");
 
           return (
-            <Col key={index} xs={12} sm={6} md={3}>
+            <Col key={type?.eventTypeID ?? `${index}-${label}`} xs={12} sm={6} md={3}>
               <Card
                 className="shadow-sm border-0 h-100"
                 style={{
@@ -54,7 +56,7 @@ const EventTypeList = ({ restaurant }) => {
 
                 <Card.Body className="d-flex justify-content-between align-items-center">
                   <span className="fw-semibold" style={{ fontSize: "1rem" }}>
-                    {type}
+                    {label}
                   </span>
 
                   <span

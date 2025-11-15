@@ -77,10 +77,38 @@ class HallServices {
             throw new Error('Missing parameters for availability check');
         }
         // Reuse BookingDAO overlap check for blocking statuses
-        const overlaps = await BookingDAO.findOverlapsForBlocking(hallID, eventDate, startTime, endTime);
+        const overlaps = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+        console.log("Overlaps:", overlaps);
         return { available: overlaps.length === 0, overlaps: overlaps.length };
     }
     
+    static async listAvailableHalls(restaurantID, eventDate, startTime, endTime, requiredTables) {
+        if (!restaurantID || !eventDate || !startTime || !endTime) {
+            throw new Error('Missing parameters for listing available halls');
+        }
+        const halls = await HallDAO.getHallsByRestaurantId(restaurantID);
+        const availableHalls = [];
+        for (const hall of halls) {
+            // If requiredTables is provided, skip halls that don't fit the [minTable, maxTable] range
+            if (requiredTables != null) {
+                const min = Number(hall.minTable ?? 0);
+                const max = Number(hall.maxTable ?? Infinity);
+                const req = Number(requiredTables);
+
+                // Normalize bit/boolean/number/string representations of status to 0/1
+                const statusValue = (typeof hall.status === 'boolean') ? (hall.status ? 1 : 0) : Number(hall.status);
+
+                if (req < min || req > max || statusValue !== 1) {
+                    continue;
+                }
+            }
+            const availability = await this.isHallAvailable(hall.hallID, eventDate, startTime, endTime);
+            if (availability.available) {
+                availableHalls.push(hall);
+            }
+        }
+        return availableHalls;
+    }
 }
 
 export default HallServices;

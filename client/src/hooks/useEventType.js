@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEventTypes, fetchAmenities } from "../redux/slices/eventTypeSlice";
+import { getEventTypesByRestaurant } from "../services/eventTypeAndAmenityService";
 
 /**
  * useEventType hook
@@ -26,6 +27,15 @@ export function useEventType() {
         return action.payload;
     }, [dispatch]);
 
+    const loadByRestaurant = useCallback(async (restaurantID) => {
+        try {
+            const data = await getEventTypesByRestaurant(restaurantID);
+            return data;
+        } catch (error) {
+            throw error;
+        }
+    }, []);
+
     const loadAmenities = useCallback(async () => {
         const action = await dispatch(fetchAmenities());
         if (action.error) throw action.payload || action.error.message;
@@ -37,6 +47,7 @@ export function useEventType() {
         loading,
         error,
         loadAll,
+        loadByRestaurant,
         amenities,
         amenitiesLoading,
         amenitiesError,

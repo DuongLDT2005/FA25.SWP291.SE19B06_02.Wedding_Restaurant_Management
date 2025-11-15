@@ -24,18 +24,31 @@ export async function authenticateJWT(req, res, next) {
   } else if (req.cookies?.token) {
     token = req.cookies.token;
   }
-  if (!token) return res.status(401).json({ error: 'No token provided' });
+  
+  console.log("authenticateJWT - Token from header:", !!authHeader);
+  console.log("authenticateJWT - Token from cookie:", !!req.cookies?.token);
+  console.log("authenticateJWT - Token value:", token ? token.substring(0, 20) + "..." : "null");
+  
+  if (!token) {
+    console.log("authenticateJWT - No token provided");
+    return res.status(401).json({ error: 'No token provided' });
+  }
 
   // Kiểm tra token trong blacklist
   const blacklist = getCollection('blacklist');
   const blacklisted = await blacklist.findOne({ token });
-  if (blacklisted) return res.status(401).json({ error: 'Token is blacklisted' });
+  if (blacklisted) {
+    console.log("authenticateJWT - Token is blacklisted");
+    return res.status(401).json({ error: 'Token is blacklisted' });
+  }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = { ...decoded, userId: decoded.userId ?? decoded.sub };
+    console.log("authenticateJWT - Decoded user:", { userId: req.user.userId, email: req.user.email, role: req.user.role });
     next();
   } catch (err) {
+    console.log("authenticateJWT - Token verification failed:", err.message);
     return res.status(401).json({ error: 'Invalid token' });
   }
 }
@@ -71,8 +84,11 @@ export async function authMiddleware(req, res, next) {
   }
   export async function ensureCustomer(req, res, next){
     const role = req.user?.role;
+    console.log("ensureCustomer - User role:", role, "Expected:", userRole.customer);
     if (role !== userRole.customer) {
+      console.log("ensureCustomer - Access denied for role:", role);
       return res.status(403).json({ error: "Customer only" });
     }
+    console.log("ensureCustomer - Access granted");
     return next();
   }

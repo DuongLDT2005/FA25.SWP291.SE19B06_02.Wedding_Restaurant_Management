@@ -100,6 +100,17 @@ export const deleteMenu = createAsyncThunk(
   }
 );
 
+export const fetchMenuById = createAsyncThunk(
+  "addition/fetchMenuById",
+  async (menuId, { rejectWithValue }) => {
+    try {
+      return await additionService.getMenusById(menuId);
+    } catch (err) {
+      return rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
+
 // Dishes
 export const fetchDishesByRestaurant = createAsyncThunk(
   "addition/dishesByRestaurant",
@@ -152,6 +163,17 @@ export const fetchPromotionsByRestaurant = createAsyncThunk(
   async (restaurantId, { rejectWithValue }) => {
     try {
       return await additionService.getPromotionsByRestaurant(restaurantId);
+    } catch (err) {
+      return rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
+
+export const fetchPromotions = createAsyncThunk(
+  "addition/fetchPromotions",
+  async (params, { rejectWithValue }) => {
+    try {
+      return await additionService.getPromotionsBySearch(params);
     } catch (err) {
       return rejectWithValue(getErrorMessage(err));
     }
@@ -333,6 +355,22 @@ const additionSlice = createSlice({
         const id = action.payload;
         state.menus = state.menus.filter((m) => (m.menuID ?? m.id) !== id);
       })
+      .addCase(fetchMenuById.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchMenuById.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Optionally add to menus if not present
+        const menu = action.payload;
+        if (menu && !state.menus.find(m => (m.menuID ?? m.id) === (menu.menuID ?? menu.id))) {
+          state.menus.push(menu);
+        }
+      })
+      .addCase(fetchMenuById.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error?.message;
+      })
 
       // Dishes
       .addCase(fetchDishesByRestaurant.pending, (state) => {
@@ -384,6 +422,18 @@ const additionSlice = createSlice({
       .addCase(deletePromotion.fulfilled, (state, action) => {
         const id = action.payload;
         state.promotions = state.promotions.filter((p) => (p.promotionID ?? p.id) !== id);
+      })
+      .addCase(fetchPromotions.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchPromotions.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.promotions = Array.isArray(action.payload) ? action.payload : [];
+      })
+      .addCase(fetchPromotions.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload ?? action.error?.message;
       })
       // Services
       .addCase(fetchServicesByRestaurant.pending, (state) => {

@@ -3,6 +3,10 @@ import PaymentController from "../controllers/PaymentController.js";
 
 const router = Router();
 
+// Generic payment endpoints
+router.post("/", PaymentController.createPayment);
+router.get("/booking/:bookingID", PaymentController.getPaymentsByBooking);
+
 // Create PayOS checkout link for a booking
 router.post("/payos/checkout/:bookingID", PaymentController.createPayosCheckout);
 

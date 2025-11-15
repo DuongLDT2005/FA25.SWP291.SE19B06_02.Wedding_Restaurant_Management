@@ -99,7 +99,8 @@ class RestaurantService {
     // from result get restaurant details can add cron job to cache this later
     const restaurantIDs = result.map(r => r.restaurantID);
     const restaurants = await Promise.all(restaurantIDs.map(id => RestaurantDAO.getByID(id)));
-    return restaurants;
+    // Filter out nulls in case some restaurants were removed or unavailable
+    return restaurants.filter(Boolean);
   }
 }
 
