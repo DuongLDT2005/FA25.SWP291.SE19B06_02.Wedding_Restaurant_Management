@@ -21,7 +21,7 @@ export default class BookingPricing {
     this.totalAmount = 0;
   }
 
-  async calculateBasePrice(hall, menu) {
+  async calculateBasePrice(hall, menu, promotions = []) {
   const hallPrice = Number(hall?.price);
   const menuPrice = Number(menu?.price);
   const tableCount = Number(this.tableCount);
@@ -33,7 +33,22 @@ export default class BookingPricing {
     throw new Error('tableCount must be a number.');
   }
 
-  this.originalPrice = hallPrice + (menuPrice * tableCount);
+  const rawPrice = hallPrice + (menuPrice * tableCount);
+  this.originalPrice = rawPrice >= 1000 ? Math.floor(rawPrice / 1000) * 1000 : 0;
+
+  // Calculate discount for percent promotions (discountType = 0)
+  this.discountAmount = 0;
+  if (Array.isArray(promotions)) {
+    for (const promo of promotions) {
+      if (!promo || typeof promo !== 'object') continue;
+      const minTable = Number(promo.minTable || 0);
+      if (this.tableCount >= minTable && (promo.discountType === 0 || promo.discountType === 'Percent') && typeof promo.discountValue === 'number') {
+        const rawDiscount = this.originalPrice * (promo.discountValue / 100);
+        const discount = rawDiscount >= 1000 ? Math.floor(rawDiscount / 1000) * 1000 : 0;
+        this.discountAmount += discount;
+      }
+    }
+  }
 }
 
 
@@ -41,20 +56,14 @@ export default class BookingPricing {
     if (!Array.isArray(promotions)) {
       throw new TypeError('promotions must be an array');
     }
-    this.discountAmount = 0;
     this.promotions = [];
 
     for (const promo of promotions) {
       if (!promo || typeof promo !== 'object') continue;
       const minTable = Number(promo.minTable || 0);
       if (this.tableCount >= minTable) {
-        // Percent discount
-        if ((promo.discountType === 0 || promo.discountType === 'Percent') && typeof promo.discountValue === 'number') {
-          this.promotions.push(promo);
-          this.discountAmount += this.originalPrice * (promo.discountValue / 100);
-        }
         // Free service by ID (can be provided multiple times via separate promo entries)
-        else if ((promo.discountType === 1 || promo.discountType === 'Free') && promo.freeServiceID) {
+        if ((promo.discountType === 1 || promo.discountType === 'Free') && promo.freeServiceID) {
           this.promotions.push(promo);
           this.#freeServices.add(promo.freeServiceID);
         }
@@ -90,8 +99,10 @@ export default class BookingPricing {
     if (typeof this.originalPrice !== 'number') throw new Error('originalPrice must be a number.');
     if (typeof this.discountAmount !== 'number') throw new Error('discountAmount must be a number.');
     const afterDiscount = this.originalPrice - this.discountAmount;
-    this.VAT = afterDiscount * this.#vatRate;
-    this.totalAmount = afterDiscount + this.VAT;
+    const rawVAT = afterDiscount * this.#vatRate;
+    this.VAT = rawVAT >= 1000 ? Math.floor(rawVAT / 1000) * 1000 : 0;
+    const rawTotal = afterDiscount + this.VAT;
+    this.totalAmount = rawTotal >= 1000 ? Math.floor(rawTotal / 1000) * 1000 : 0;
     if (this.totalAmount < 0) this.totalAmount = 0;
   }
 }

@@ -41,7 +41,7 @@ export default function BookingCard({
 
   function buildDetailPayload(b) {
     // Build customer info strictly from booking data (not auth)
-    console.log(b.restaurant?.fullAddress);
+    console.log(b);
     const embeddedUser = b.customer?.user || {}
     const customer = {
       fullName: b.customer?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",

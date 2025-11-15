@@ -57,19 +57,31 @@ export async function getPromotions(params = {}) {
  * services: [{ id, name, price }] (fixed price)
  * promotion: { id, type, value } type: percent | fixed
  */
-export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 1, promotion = null }) {
-  const guests = (tables || 1) * avgGuestsPerTable;
-  const menuTotal = (menu?.price || 0) * guests;
-  const servicesTotal = (services || []).reduce((s, it) => s + (parseFloat(it.price) || 0), 0);
-  let subtotal = menuTotal + servicesTotal;
+export function calculatePrice({ menu, tables = 1, services = [], promotion = null, hallFee = 0, avgGuestsPerTable = 1 }) {
+  const menuPrice = Number(menu?.price || 0);
+  const tablesNum = Number(tables || 1);
+  const hallFeeNum = Number(hallFee || 0);
+  const guests = tablesNum * Number(avgGuestsPerTable || 1);
+  const menuTotal = menuPrice * tablesNum;
+  const servicesTotal = (services || []).reduce((s, it) => s + Number(it.price || 0), 0);
+  const subtotal = menuTotal + servicesTotal + hallFeeNum;
   let discount = 0;
   if (promotion) {
-    if (promotion.type === "percent") discount = Math.round((subtotal * (promotion.value || 0)) / 100);
-    else discount = promotion.value || 0;
+    const promoValue = Number(promotion?.discountValue || 0);
+      discount = Math.round((subtotal * promoValue) / 100);
+
   }
   const vat = Math.round((subtotal - discount) * 0.08); // 8% VAT
   const total = subtotal - discount + vat;
-  return { guests, menuTotal, servicesTotal, subtotal, discount, vat, total };
+  return {
+    guests,
+    menuTotal,
+    servicesTotal,
+    subtotal,
+    discount,
+    vat,
+    total
+  };
 }
 
 /**

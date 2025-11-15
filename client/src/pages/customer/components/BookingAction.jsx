@@ -49,7 +49,7 @@ export default function BookingActions({
             </Button>
             <Button
               as={Link}
-              to={`/booking/${bookingID}`}
+              to={`/booking/${bookingID}/payment`}
               state={{ booking: prepareAndStore() }}
               variant="outline-secondary"
               size="sm"

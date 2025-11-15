@@ -56,60 +56,24 @@ export default function BookingDetailPage() {
     bookingDetail,
     bookingDetailStatus,
     bookingDetailError,
+    loadBookingDetail,
   } = useBooking();
 
   const bookingID = useMemo(() => Number(id), [id]);
   const [customerProfile, setCustomerProfile] = useState(null);
-  // detail is managed by hook (Redux)
 
-  // Load list if needed (deep-link vào trang chi tiết)
+  // Load booking detail using the hook
   useEffect(() => {
-    if (!partnerBookings || partnerBookings.length === 0) {
-      loadPartnerBookings({ detailed: true });
+    if (id && !bookingDetail) {
+      loadBookingDetail(id);
     }
-  }, [partnerBookings?.length, loadPartnerBookings]);
-
-  // Ưu tiên dùng object truyền từ trang list; fallback tìm trong Redux theo ID
-  const booking = useMemo(() => {
-    const base = passedBooking || (partnerBookings || []).find((b) => Number(b.bookingID) === bookingID);
-    if (!base) return null;
-    return {
-      ...base,
-      checked: Number(base.isChecked ?? base.checked ?? 0),
-    };
-  }, [passedBooking, partnerBookings, bookingID]);
-
-  // Booking detail is fetched when navigating from list via hook; if deep-linking without it, list loader above ensures context.
-
-  // Lấy thông tin user từ customerID
-  useEffect(() => {
-    let mounted = true;
-    async function loadCustomer() {
-  const source = bookingDetail || booking;
-      const customerID = source?.customerID || source?.customer?.customerID;
-      if (!customerID) return;
-      try {
-        const { getCustomerDetails } = await import("../../booking/BookingDetailsAPI");
-        const res = await getCustomerDetails(customerID);
-        const payload = res?.data ?? res;
-        if (!mounted) return;
-        setCustomerProfile(payload);
-      } catch (e) {
-        // im lặng nếu lỗi; có thể hiển thị fallback từ booking.customer
-        console.warn("Không thể tải thông tin khách hàng", e);
-      }
-    }
-    loadCustomer();
-    return () => { mounted = false; };
-  }, [bookingDetail?.customerID, bookingDetail?.customer?.customerID, booking?.customerID, booking?.customer?.customerID]);
-
-  // Bỏ hiển thị các booking khác của khách hàng theo yêu cầu
+  }, [id, bookingDetail, loadBookingDetail]);
   // Helper format
   const toNum = (v) => Number(v ?? 0);
   const formatVND = (val) => (toNum(val)).toLocaleString("vi-VN") + " ₫";
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("vi-VN") + " " + new Date(dateStr).toLocaleTimeString("vi-VN");
 
-  const baseData = bookingDetail || booking;
+  const baseData = bookingDetail;
   // Services total: prefer bookingservices from server, fallback to normalized services
   const servicesTotal = (baseData?.bookingservices?.length
     ? baseData.bookingservices.reduce((sum, bs) => sum + toNum(bs.appliedPrice ?? bs.service?.basePrice) * toNum(bs.quantity ?? 1), 0)

@@ -8,13 +8,11 @@ import CountdownTimer from "./components/PaymentPage/CountdownTimer";
 import PaymentSummary from "./components/PaymentPage/PaymentSummary";
 import PaymentMethods from "./components/PaymentPage/PaymentMethods";
 
-// 🧩 Import dữ liệu mock chung
-import { mockBooking } from "../booking/BookingDetails/BookingDetailsPage";
+import MainLayout from "../../../layouts/MainLayout";
 
 const PaymentPage = () => {
   const { bookingId } = useParams();
 
-  // 🌟 State quản lý logic
   const [timeLeft, setTimeLeft] = useState(5 * 60);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
@@ -23,7 +21,6 @@ const PaymentPage = () => {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [actualBookingId, setActualBookingId] = useState(bookingId || Date.now().toString());
 
-  // 🧩 1. Load dữ liệu booking
   useEffect(() => {
     if (hasLoaded) return;
 
@@ -42,21 +39,18 @@ const PaymentPage = () => {
 
     const selectedRestaurant = sessionStorage.getItem("selectedRestaurant");
     const restaurantData = selectedRestaurant ? JSON.parse(selectedRestaurant) : null;
-    const newMock = mockBooking(bookingId, restaurantData);
-    sessionStorage.setItem("currentBooking", JSON.stringify(newMock));
-    setBooking(newMock);
-    setActualBookingId(newMock.bookingID);
-    setHasLoaded(true);
+    // Nếu không có booking, hiển thị lỗi
+    alert("Không tìm thấy thông tin đặt tiệc để thanh toán. Vui lòng quay lại.");
+    window.history.back();
   }, [hasLoaded, bookingId]);
 
-  // 🧩 2. Đếm ngược thời gian thanh toán
   useEffect(() => {
     if (!hasLoaded || paymentCompleted) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          alert("⏰ Hết thời gian thanh toán!");
+          alert("Hết thời gian thanh toán!");
           return 0;
         }
         return prev - 1;
@@ -65,10 +59,8 @@ const PaymentPage = () => {
     return () => clearInterval(timer);
   }, [hasLoaded, paymentCompleted]);
 
-  // 💰 Helper định dạng tiền
   const formatCurrency = (amount) => (amount || 0).toLocaleString("vi-VN") + " VNĐ";
 
-  // 🪙 Xử lý thanh toán
   const handlePayment = async () => {
     if (!booking) return;
     setIsProcessing(true);
@@ -97,14 +89,13 @@ const PaymentPage = () => {
       setBooking(updated);
       setPaymentCompleted(true);
     } catch (err) {
-      alert("❌ Có lỗi xảy ra khi thanh toán.");
+      alert("Có lỗi xảy ra khi thanh toán.");
       console.error(err);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 🌀 Loading UI
   if (!hasLoaded || !booking) {
     return (
       <Container className="py-5 text-center">
@@ -114,7 +105,6 @@ const PaymentPage = () => {
     );
   }
 
-  // ✅ Sau khi thanh toán thành công
   if (paymentCompleted) {
     return (
       <Container className="mt-5 text-center">
@@ -143,47 +133,52 @@ const PaymentPage = () => {
     );
   }
 
-  // 💳 Giao diện thanh toán chính (chỉ còn gọi component con)
   return (
-    <Container className="mt-4">
-      <Row className="justify-content-center">
-        <Col lg={8}>
-          {/* Header */}
-          <Card className="mb-4 shadow-sm text-center">
-            <Card.Body>
-              <h2>
-                <i className="fas fa-credit-card me-2"></i> Thanh toán đặt tiệc
-              </h2>
-              <div className="text-muted">
-                {booking.restaurant?.name} • {booking.eventDate}
-              </div>
-            </Card.Body>
-          </Card>
+    <MainLayout>
+      <div style={{ maxWidth: "1200px", margin: "0 160px" }} className="container-fluid ">
+        <Container className="mt-4">
+          <Row className="justify-content-center">
+            <Col lg={8}>
+              {/* Header */}
+              <Card className="mb-4 shadow-sm text-center">
+                <Card.Body>
+                  <h2>
+                    <i className="fas fa-credit-card me-2"></i> Thanh toán đặt tiệc
+                  </h2>
+                  <div className="text-muted">
+                    {booking.restaurant?.name} • {booking.eventDate}
+                  </div>
+                </Card.Body>
+              </Card>
 
-          {/* Countdown timer */}
-          <CountdownTimer timeLeft={timeLeft} />
+              {/* Countdown timer */}
+              <CountdownTimer timeLeft={timeLeft} />
 
-          {/* Nội dung chính */}
-          <Row>
-            <Col md={6} className="mb-3">
-              <PaymentSummary booking={booking} />
-            </Col>
-            <Col md={6}>
-              <PaymentMethods
-                paymentMethod={paymentMethod}
-                setPaymentMethod={setPaymentMethod}
-                handlePayment={handlePayment}
-                isProcessing={isProcessing}
-                timeLeft={timeLeft}
-                depositAmount={Math.round((booking.totalAmount || 0) * 0.3)}
-                actualBookingId={actualBookingId}
-                formatCurrency={formatCurrency}
-              />
+              {/* Nội dung chính */}
+              <Row>
+                <Col md={6} className="mb-3">
+                  <PaymentSummary booking={booking} />
+                </Col>
+                <Col md={6}>
+                  <PaymentMethods
+                    paymentMethod={paymentMethod}
+                    setPaymentMethod={setPaymentMethod}
+                    handlePayment={handlePayment}
+                    isProcessing={isProcessing}
+                    timeLeft={timeLeft}
+                    depositAmount={Math.round((booking.totalAmount || 0) * 0.3)}
+                    actualBookingId={actualBookingId}
+                    formatCurrency={formatCurrency}
+                  />
+                </Col>
+              </Row>
             </Col>
           </Row>
-        </Col>
-      </Row>
-    </Container>
+        </Container>
+      </div>
+
+    </MainLayout>
+
   );
 };
 

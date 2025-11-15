@@ -288,7 +288,7 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
         )}
       </div>
       {/* <ServiceSelector services={services} /> */}
-      <PromotionBadge promotions={promotions} tables={searchData.tables} menu={menu} services={booking.services} />
+      <PromotionBadge promotions={promotions} tables={searchData.tables} menu={menu} services={booking.services} hallFee={selectedHall?.price || 0} />
       <SpecialRequestSection />
     </section>
   );

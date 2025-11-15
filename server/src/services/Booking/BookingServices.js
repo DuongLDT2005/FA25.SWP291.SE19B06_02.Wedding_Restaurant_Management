@@ -74,24 +74,23 @@ class BookingService {
     if (!menu) throw new Error("Menu not found");
 
     const engine = new BookingPricing({ tableCount, services });
-    await engine.calculateBasePrice(hall, menu);
 
     // Load promotions details if provided
     let promoInputs = [];
+    let percentPromo = null;
     if (Array.isArray(promotionIDs) && promotionIDs.length > 0) {
       const promos = await Promise.all(
         promotionIDs.map((pid) => PromotionDAO.getByID(pid))
       );
-      // Normalize promotions to engine format; also expand "Free" promotions to individual freeServiceID entries
+      // Find the first promotion with discountType = 0
+      const percentPromotion = promos.find(p => p && p.discountType === 0);
+      if (percentPromotion && percentPromotion.discountValue) {
+        percentPromo = { discountType: 0, discountValue: Number(percentPromotion.discountValue) || 0, minTable: percentPromotion.minTable || 0 };
+      }
+      // Free service promotions
       for (let i = 0; i < promos.length; i++) {
         const p = promos[i];
-        if (!p) continue;
-        // Percent discount
-        if (p.discountPercentage && (!p.discountType || p.discountType === 'Percent')) {
-          promoInputs.push({ discountType: 0, discountValue: Number(p.discountPercentage) || 0, minTable: p.minTable || 0 });
-        }
-        // Free service(s)
-        if (p.discountType === 'Free') {
+        if (p && p.discountType === 'Free') {
           const freeSvcs = await PromotionDAO.getServicesByPromotionID(p.promotionID);
           for (const svc of freeSvcs) {
             promoInputs.push({ discountType: 1, freeServiceID: svc.serviceID, minTable: p.minTable || 0 });
@@ -99,6 +98,9 @@ class BookingService {
         }
       }
     }
+
+    await engine.calculateBasePrice(hall, menu, percentPromo ? [percentPromo] : []);
+
     await engine.applyPromotions(promoInputs);
 
     // Load info for selected services

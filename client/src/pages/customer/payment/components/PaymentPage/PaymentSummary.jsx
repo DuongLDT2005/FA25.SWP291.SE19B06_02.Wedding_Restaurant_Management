@@ -1,6 +1,8 @@
 import React from "react";
 import { Card } from "react-bootstrap";
 
+const PRIMARY = "#D81C45";
+
 const formatCurrency = (amount) =>
   (amount || 0).toLocaleString("vi-VN") + " VNĐ";
 
@@ -15,35 +17,41 @@ const PaymentSummary = ({ booking }) => {
   return (
     <Card className="shadow-sm h-100">
       <Card.Header>
-        <h5 className="mb-0">
+        <h5 className="mb-0" style={{ color: PRIMARY }}>
           <i className="fas fa-receipt me-2"></i> Tóm tắt thanh toán
         </h5>
       </Card.Header>
+
       <Card.Body>
         <div className="d-flex justify-content-between mb-2">
           <span>Giá gốc:</span>
           <span>{formatCurrency(originalPrice)}</span>
         </div>
+
         <div className="d-flex justify-content-between mb-2">
           <span>Giảm giá:</span>
-          <span className="text-success">
+          <span style={{ color: "green" }}>
             {discountAmount > 0
               ? `-${formatCurrency(discountAmount)}`
               : formatCurrency(0)}
           </span>
         </div>
+
         <div className="d-flex justify-content-between mb-2">
           <span>VAT (10%):</span>
           <span>{formatCurrency(vatAmount)}</span>
         </div>
+
         <hr />
+
         <div className="d-flex justify-content-between fw-semibold mb-2">
           <span>Tổng cộng:</span>
           <span>{formatCurrency(totalAmount)}</span>
         </div>
+
         <div className="d-flex justify-content-between">
           <span>Tiền cọc (30%):</span>
-          <span className="text-primary fw-semibold">
+          <span style={{ color: PRIMARY, fontWeight: 600 }}>
             {formatCurrency(depositAmount)}
           </span>
         </div>

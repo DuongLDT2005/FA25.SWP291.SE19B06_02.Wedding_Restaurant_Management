@@ -73,24 +73,15 @@ export default function PriceSummaryPanel() {
     Number(summary?.servicesTotal) ??
     normalServices.reduce((s, it) => s + it.price * it.quantity, 0);
 
-  // compute discount: prefer summary.discount if present, otherwise derive percent case.
-  // IMPORTANT: for gift_service we DO NOT treat gift value as discount here (user requested)
+  // compute discount: use summary.discount which now includes hall fee in calculation
   let discount = Number(summary?.discount ?? 0);
-  if (!discount && applied) {
-    if (applied.type === "percent") {
-      const base = menuTotal + servicesTotal + hallFee;
-      discount = Math.round(((applied.value || 0) / 100) * base);
-    } else {
-      // gift_service or other types: do not compute monetary discount from gifted services
-      discount = Number(summary?.discount ?? 0);
-    }
-  }
-
+  
   // subtotal includes hallFee and charged services + menu
-  const subtotal = Number(summary?.subtotal ?? (menuTotal + servicesTotal)) + hallFee;
+  const subtotal = Number((menuTotal + servicesTotal)) + hallFee;
   const vat = Math.round((subtotal - discount) * 0.08);
+  console.log(discount);
   const total = subtotal - discount + vat;
-
+//  console.log(total)
   return (
     <Card className="shadow-sm">
       <Card.Body>
