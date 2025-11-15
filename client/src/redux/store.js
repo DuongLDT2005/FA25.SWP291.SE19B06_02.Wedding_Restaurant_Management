@@ -4,9 +4,8 @@ import authReducer from "./slices/authSlice"
 import searchReducer from "./slices/searchSlice"
 import bookingReducer from "./slices/bookingSlice"
 import eventTypeReducer from "./slices/eventTypeSlice";
-import restaurantsReducer from "./slices/restaurantSlice";
-import hallsReducer from "./slices/hallSlice";
-import additionRestaurantReducer from "./slices/additionRestaurantSlice";
+import restaurantReducer from "./slices/restaurantSlice";
+
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -14,10 +13,8 @@ const store = configureStore({
     wards: wardReducer,
     booking: bookingReducer,
     eventType: eventTypeReducer,
-    restaurants: restaurantsReducer,
-    halls: hallsReducer,
-    additionRestaurant: additionRestaurantReducer,
+    restaurants: restaurantReducer,
   },
-})
+});
 
-export default store
+export default store;

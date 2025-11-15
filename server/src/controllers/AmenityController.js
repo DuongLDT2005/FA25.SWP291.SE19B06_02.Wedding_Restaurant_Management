@@ -1,62 +1,35 @@
-import AmenityService from '../services/AmenityService.js';
-import { authenticateJWT, authMiddleware, ensurePartner, ensureAdmin } from '../middlewares/jwtToken.js';
+import AmenityServices from "../services/AmenityServices.js";
 
 class AmenityController {
-  static async listAll(req, res) {
+  static async getAll(req, res) {
     try {
-      const all = await AmenityService.listAll();
-      res.json(all);
+      const amenities = await AmenityServices.getAll();
+      res.json(amenities);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      console.error("Error fetching amenities:", err);
+      res.status(500).json({ message: "Error fetching amenities", error: err.message });
     }
   }
 
-  static async create(req, res) {
+  static async getByID(req, res) {
     try {
-      // only admin route — ensureAdmin will be used on route
-      const created = await AmenityService.createAmenity(req.body);
-      res.status(201).json(created);
+      const { id } = req.params;
+      const amenity = await AmenityServices.getByID(id);
+      if (!amenity)
+        return res.status(404).json({ message: "Amenity not found" });
+      res.json(amenity);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ message: "Error fetching amenity", error: err.message });
     }
   }
 
-  static async assign(req, res) {
+  static async getByRestaurant(req, res) {
     try {
-      // prefer restaurantId from URL params when present (nested route), fallback to body
-      const restaurantID = req.params.restaurantId || req.params.restaurantID || req.body.restaurantID;
-      const amenityID = req.body.amenityID || req.body.amenityId;
-      if (!restaurantID || !amenityID) return res.status(400).json({ error: 'restaurantID and amenityID required' });
-      const actor = req.user?.userId;
-      const result = await AmenityService.assignAmenityToRestaurant(restaurantID, amenityID, actor);
-      res.status(201).json(result);
+      const { restaurantID } = req.params;
+      const amenities = await AmenityServices.getAmenitiesByRestaurant(restaurantID);
+      res.json(amenities);
     } catch (err) {
-      res.status(403).json({ error: err.message });
-    }
-  }
-
-  static async unassign(req, res) {
-    try {
-      const restaurantID = req.params.restaurantId || req.params.restaurantID || req.body.restaurantID;
-      const amenityID = req.body.amenityID || req.body.amenityId;
-      if (!restaurantID || !amenityID) return res.status(400).json({ error: 'restaurantID and amenityID required' });
-      const actor = req.user?.userId;
-      const result = await AmenityService.removeAmenityFromRestaurant(restaurantID, amenityID, actor);
-      res.json({ success: !!result });
-    } catch (err) {
-      res.status(403).json({ error: err.message });
-    }
-  }
-
-  static async listForRestaurant(req, res) {
-    try {
-      // support nested mount (/api/restaurants/:restaurantId/amenities) and legacy /restaurant/:restaurantID
-      const restaurantID = req.params.restaurantId || req.params.restaurantID;
-      if (!restaurantID) return res.status(400).json({ error: 'restaurantID required' });
-      const data = await AmenityService.listForRestaurant(restaurantID);
-      res.json(data);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ message: "Error fetching restaurant amenities", error: err.message });
     }
   }
 }

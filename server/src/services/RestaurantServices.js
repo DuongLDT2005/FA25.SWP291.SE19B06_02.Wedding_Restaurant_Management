@@ -9,10 +9,11 @@ class RestaurantService {
   }
 
   static async getByPartnerID(restaurantPartnerID) {
-    return await RestaurantDAO.getAllByPartnerID(restaurantPartnerID);
+    if (!restaurantPartnerID) throw new Error("Missing partnerID");
+    return await RestaurantDAO.getByPartnerID(Number(restaurantPartnerID));
   }
 
-  static async getAvailable(){
+  static async getAvailable() {
     return await RestaurantDAO.getAvailable();
   }
 
@@ -25,73 +26,50 @@ class RestaurantService {
   }
 
   static async create(data) {
-    if (!data || typeof data !== 'object') {
+    if (!data || typeof data !== "object") {
       throw new Error("Invalid payload");
     }
     const { name, restaurantPartnerID, address, thumbnailURL, phone } = data;
     if (!name || !restaurantPartnerID) {
       throw new Error("Restaurant name and restaurantPartnerID are required");
     }
-    if (!thumbnailURL || typeof thumbnailURL !== 'string') {
+    if (!thumbnailURL || typeof thumbnailURL !== "string") {
       throw new Error("thumbnailURL is required");
     }
-    if (!address || typeof address !== 'object') {
+    if (!address || typeof address !== "object") {
       throw new Error("address is required with { number, street, ward }");
     }
     const { number, street, ward } = address;
     if (!number || !street || !ward) {
-      throw new Error("address.number, address.street and address.ward are required");
-    }
-    if (phone !== undefined && phone !== null && typeof phone !== 'string') {
-      throw new Error('phone must be a string');
+      throw new Error(
+        "address.number, address.street and address.ward are required"
+      );
     }
     return await RestaurantDAO.createRestaurant(data);
   }
 
-  static async update(restaurantID, data){
-    // validate phone if present
-  
-    if (data && Object.prototype.hasOwnProperty.call(data, 'phone')) {
-      const phone = data.phone;
-      if (phone !== null && phone !== undefined && typeof phone !== 'string') {
-        throw new Error('phone must be a string');
-      }
-    }
-  
-    // Extract eventTypes & amenities (arrays of IDs) if provided
-    const { eventTypes, amenities, ...patch } = data || {};
-    const updated = await RestaurantDAO.updateRestaurant(restaurantID, patch);
-    // If eventTypes specified, replace the mapping
-    if (Array.isArray(eventTypes)) {
-      await EventTypeDAO.setEventTypesForRestaurant(restaurantID, eventTypes);
-    }
-    // If amenities specified, replace the mapping
-    if (Array.isArray(amenities)) {
-      await AmenityDAO.setAmenitiesForRestaurant(restaurantID, amenities);
-    }
-    // refetch full to include updated relations if any
-    if (Array.isArray(eventTypes) || Array.isArray(amenities)) {
-      return await RestaurantDAO.getByID(restaurantID);
-    }
-    return updated;
+  static async update(restaurantID, data) {
+    return await RestaurantDAO.updateRestaurant(restaurantID, data);
   }
 
   static async changeRestaurantStatus(id) {
     return await RestaurantDAO.toggleRestaurantStatus(id);
   }
 
-  static async addImage(restaurantID, imageURL){
+  static async addImage(restaurantID, imageURL) {
     if (!restaurantID) throw new Error("restaurantID is required");
-    if (!imageURL || typeof imageURL !== 'string') throw new Error("imageURL is required");
+    if (!imageURL || typeof imageURL !== "string")
+      throw new Error("imageURL is required");
     return await RestaurantImageDAO.addImage(restaurantID, imageURL);
   }
 
-  static async deleteImage(imageID){
+  static async deleteImage(imageID) {
     if (!imageID) throw new Error("imageID is required");
     return await RestaurantImageDAO.deleteImage(imageID);
   }
 
-  static async search(filter){
+  static async search(filter) {
+    console.log("🔧 [RestaurantService] Final search filter:", filter);
     return await RestaurantDAO.search(filter);
   }
   static async getTopBookedRestaurants() {

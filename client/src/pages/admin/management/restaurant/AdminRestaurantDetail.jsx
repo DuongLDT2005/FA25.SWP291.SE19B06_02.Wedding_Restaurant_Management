@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, Tab, Alert } from "react-bootstrap";
 import AdminLayout from "../../../../layouts/AdminLayout";
-import mock from "../../../../mock/partnerMock";
+import axios from "axios";
 import { useParams } from "react-router-dom";
 
 import RestaurantProfile from "../../../partner/restaurant/RestaurantProfile";
@@ -14,11 +14,22 @@ import PromotionListPage from "../../../partner/restaurant/PromotionListPage";
 
 export default function AdminRestaurantDetail() {
   const { id } = useParams();
-  const restaurantId = parseInt(id, 10);
-  const restaurant = mock.restaurants.find(
-    (r) => r.restaurantID === restaurantId
-  );
+  const [restaurant, setRestaurant] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
+
+  useEffect(() => {
+    const loadRestaurant = async () => {
+      try {
+        const res = await axios.get(`/api/restaurants/${id}`);
+        setRestaurant(res.data);
+      } catch (error) {
+        console.error("❌ Error loading restaurant:", error);
+        setRestaurant(null);
+      }
+    };
+
+    loadRestaurant();
+  }, [id]);
 
   if (!restaurant) {
     return (
@@ -34,6 +45,7 @@ export default function AdminRestaurantDetail() {
     <AdminLayout title="Chi tiết nhà hàng (Admin)">
       <div className="container py-4">
         <h2 className="mb-4">{restaurant.name}</h2>
+
         <Tabs
           activeKey={activeTab}
           onSelect={(k) => setActiveTab(k)}
@@ -45,27 +57,27 @@ export default function AdminRestaurantDetail() {
           </Tab>
 
           <Tab eventKey="amenities" title="Tiện nghi">
-            <AmenityListPage readOnly={true} />
+            <AmenityListPage restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
 
           <Tab eventKey="halls" title="Sảnh tiệc">
-            <RestaurantHalls restaurant={restaurant} readOnly={true} />
+            <RestaurantHalls restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
 
           <Tab eventKey="menu" title="Thực đơn">
-            <MenuManagement readOnly={true} />
+            <MenuManagement restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
 
           <Tab eventKey="dishes" title="Món ăn">
-            <DishManagement readOnly={true} />
+            <DishManagement restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
 
           <Tab eventKey="services" title="Dịch vụ">
-            <ServiceListPage readOnly={true} />
+            <ServiceListPage restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
 
           <Tab eventKey="promotions" title="Ưu đãi">
-            <PromotionListPage readOnly={true} />
+            <PromotionListPage restaurantId={restaurant.restaurantID} readOnly={true} />
           </Tab>
         </Tabs>
       </div>

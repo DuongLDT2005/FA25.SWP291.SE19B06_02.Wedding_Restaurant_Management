@@ -41,7 +41,15 @@ class BookingService {
     } = data;
 
     // 1️⃣ Validate cơ bản
-    if (!customerID || !eventTypeID || !hallID || !menuID || !eventDate || !startTime || !endTime)
+    if (
+      !customerID ||
+      !eventTypeID ||
+      !hallID ||
+      !menuID ||
+      !eventDate ||
+      !startTime ||
+      !endTime
+    )
       throw new Error("Missing required fields.");
     if (!Number.isInteger(tableCount) || tableCount <= 0)
       throw new Error("Invalid table count.");
@@ -57,14 +65,26 @@ class BookingService {
       throw new Error("Invalid time range: startTime must be before endTime.");
 
     // 2️⃣ Check trùng giờ sảnh
-    const overlapping = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+    const overlapping = await BookingDAO.findByHallAndTime(
+      hallID,
+      eventDate,
+      startTime,
+      endTime
+    );
     if (overlapping.length > 0)
-      throw new Error("This hall is already booked for the selected time range.");
+      throw new Error(
+        "This hall is already booked for the selected time range."
+      );
 
     // 3️⃣ Giới hạn đặt chỗ khách hàng
-    const customerBookings = await BookingDAO.findByCustomerAndDate(customerID, eventDate);
+    const customerBookings = await BookingDAO.findByCustomerAndDate(
+      customerID,
+      eventDate
+    );
     if (customerBookings.length >= 3)
-      throw new Error("Customer has reached the maximum number of bookings for this date.");
+      throw new Error(
+        "Customer has reached the maximum number of bookings for this date."
+      );
 
     // --- Pricing using BookingPricing engine ---
     // Load hall & menu prices
@@ -87,14 +107,27 @@ class BookingService {
         const p = promos[i];
         if (!p) continue;
         // Percent discount
-        if (p.discountPercentage && (!p.discountType || p.discountType === 'Percent')) {
-          promoInputs.push({ discountType: 0, discountValue: Number(p.discountPercentage) || 0, minTable: p.minTable || 0 });
+        if (
+          p.discountPercentage &&
+          (!p.discountType || p.discountType === "Percent")
+        ) {
+          promoInputs.push({
+            discountType: 0,
+            discountValue: Number(p.discountPercentage) || 0,
+            minTable: p.minTable || 0,
+          });
         }
         // Free service(s)
-        if (p.discountType === 'Free') {
-          const freeSvcs = await PromotionDAO.getServicesByPromotionID(p.promotionID);
+        if (p.discountType === "Free") {
+          const freeSvcs = await PromotionDAO.getServicesByPromotionID(
+            p.promotionID
+          );
           for (const svc of freeSvcs) {
-            promoInputs.push({ discountType: 1, freeServiceID: svc.serviceID, minTable: p.minTable || 0 });
+            promoInputs.push({
+              discountType: 1,
+              freeServiceID: svc.serviceID,
+              minTable: p.minTable || 0,
+            });
           }
         }
       }
@@ -104,16 +137,18 @@ class BookingService {
     // Load info for selected services
     let allServices = [];
     if (Array.isArray(services) && services.length > 0) {
-      const ids = [...new Set(services.map((s) => s.serviceID).filter(Boolean))];
+      const ids = [
+        ...new Set(services.map((s) => s.serviceID).filter(Boolean)),
+      ];
       allServices = await Promise.all(ids.map((id) => ServiceDAO.getByID(id)));
       allServices = allServices.filter(Boolean);
     }
     await engine.applyPaidServices(allServices);
 
     // VAT rate from settings or default 8%
-    let vatRate = '0.08';
+    let vatRate = "0.08";
     try {
-      const vatSetting = await SystemSettingDAO.getByKey('VAT_RATE');
+      const vatSetting = await SystemSettingDAO.getByKey("VAT_RATE");
       if (vatSetting?.settingValue) vatRate = String(vatSetting.settingValue);
     } catch { }
     await engine.calculateTotals({ VAT_RATE: vatRate });
@@ -272,51 +307,31 @@ class BookingService {
     const validStatuses = Object.values(BookingStatus);
     if (!validStatuses.includes(status)) throw new Error("Invalid booking status.");
 
-    const { sequelize } = db;
+    const updated = await BookingDAO.updateBookingStatus(bookingID, status, {
+      isChecked,
+    });
+    if (!updated) throw new Error("Booking not found or update failed.");
 
-    const result = await sequelize.transaction(async (t) => {
-      // Lock the row to avoid race conditions via DAO helper
-      const bk = await BookingDAO.getBookingForUpdate(bookingID, { transaction: t });
-      if (!bk) throw new Error('Booking not found');
+    const booking = await BookingDAO.getBookingDetails(bookingID);
+    const customer = booking?.customer;
+    const partner = await BookingDAO.getRestaurantPartnerByHallID(
+      booking.hallID
+    );
 
-      const prev = bk.status;
-
-      // Basic RBAC examples (caller may still validate before calling):
-      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && actorRole !== 1) {
-        throw new Error('Only partner can accept or reject bookings');
-      }
-
-      if (status === BookingStatus.CONFIRMED && !actorId) {
-        throw new Error('Authentication required to confirm booking');
-      }
-
-      // Optionally validate allowed transitions (simple example)
-      // e.g., only PENDING -> ACCEPTED/REJECTED
-      if ((status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED) && prev !== BookingStatus.PENDING) {
-        throw new Error('Only PENDING bookings can be accepted or rejected');
-      }
-
-      // Perform update via DAO (transaction-aware)
-      await BookingDAO.updateBookingStatusWithTransaction(bookingID, status, { isChecked: setChecked, transaction: t });
-
-      // after commit, send notifications (best-effort)
-      t.afterCommit(async () => {
-        try {
-          await notifyByStatusById(bookingID, status, { reason });
-        } catch (e) {
-          console.error(`Notification for status ${status} on booking ${bookingID} failed:`, e?.message || e);
-        }
-      });
-
-      return { success: true, previous: prev, status };
+    await NotificationService.sendBookingStatusChange({
+      bookingID,
+      customerEmail: customer?.email,
+      partnerEmail: partner?.email,
+      status,
     });
 
-    return result;
+    return { success: true, status };
   }
 
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     // Load full booking details (to get customer + hall)
     const booking = await BookingDAO.getBookingDetails(bookingID);
@@ -335,24 +350,29 @@ class BookingService {
       throw new Error("Only PENDING bookings can be accepted.");
     }
 
-    // Use centralized changeStatus (transaction + afterCommit notification)
-    await this.changeStatus(bookingID, BookingStatus.ACCEPTED, { actorId: partnerID, actorRole: 1 });
+    const ok = await BookingDAO.updateBookingStatus(
+      bookingID,
+      BookingStatus.ACCEPTED
+    );
+    if (!ok) throw new Error("Failed to update booking status.");
 
-    // Create a Contract record linked to this booking so partner/customer can upload/sign it.
-    // Use booking details we already loaded above to get restaurantID.
-    try {
-      // Generate HTML contract, persist file and DB record
-      await ContractServices.createContractFromBooking(bookingID);
-    } catch (e) {
-      console.error(`Failed to create contract for booking ${bookingID}:`, e?.message || e);
+    // Send email to customer (best effort)
+    const user = await UserDAO.getUserById(booking.customerID);
+    const email = user?.email;
+    if (email) {
+      await sendBookingStatusEmail(email, booking, "ACCEPTED");
+    } else {
+      console.log("No email found for customer, skipping email notification.");
     }
 
+    // Return updated booking (optional: reload)
     return await BookingDAO.getBookingById(bookingID);
   }
 
   // Partner rejects a booking (status: PENDING -> REJECTED)
-  async rejectByPartner(bookingID, partnerID, reason = '') {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+  async rejectByPartner(bookingID, partnerID, reason = "") {
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
@@ -368,14 +388,24 @@ class BookingService {
       throw new Error("Only PENDING bookings can be rejected.");
     }
 
-    await this.changeStatus(bookingID, BookingStatus.REJECTED, { actorId: partnerID, actorRole: 1, reason });
+    const ok = await BookingDAO.updateBookingStatus(
+      bookingID,
+      BookingStatus.REJECTED
+    );
+    if (!ok) throw new Error("Failed to update booking status.");
+    const user = await UserDAO.getUserById(booking.customerID);
+    const email = user?.email;
+    if (email) {
+      await sendBookingStatusEmail(email, booking, "REJECTED", { reason });
+    }
+
     return await BookingDAO.getBookingById(bookingID);
   }
   async depositBooking(bookingID) {
     if (!bookingID) throw new Error("Missing bookingID.");
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
-    await this.changeStatus(bookingID, BookingStatus.DEPOSITED);
+    this.updateBookingStatus(bookingID, BookingStatus.DEPOSITED);
     return await BookingDAO.getBookingById(bookingID);
   }
   async confirmBooking(bookingID) {
@@ -393,8 +423,12 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
-  // take 
-}
 
+  async getBookingsByCustomerId(customerID) {
+    return await BookingDAO.getBookingsByCustomer({
+      customerID,
+    });
+  }
+}
 
 export default new BookingService();

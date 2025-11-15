@@ -20,7 +20,7 @@ class UserDAO {
   static async getAllUsers() {
     const users = await UserModel.findAll({
       include: [
-        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: RestaurantPartnerModel, as: "partner" },
         { model: CustomerModel, as: "customer" },
       ],
     });
@@ -31,7 +31,7 @@ class UserDAO {
   static async getUserById(id) {
     const user = await UserModel.findByPk(id, {
       include: [
-        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: RestaurantPartnerModel, as: "partner" },
         { model: CustomerModel, as: "customer" },
       ],
     });
@@ -226,6 +226,50 @@ class UserDAO {
       include: [{ model: RestaurantPartnerModel, as: "restaurantpartner" }],
     });
     return toDTOs(owners);
+  }
+  static async getPartnersByStatus(status) {
+    const users = await UserModel.findAll({
+      where: { role: 1 }, // partner
+      include: [
+        {
+          model: RestaurantPartnerModel,
+          as: "partner",
+          where: { status },
+          required: true,
+        },
+      ],
+    });
+
+    return users.map((u) => u.get({ plain: true }));
+  }
+
+  static async getApprovedPartners() {
+    const { user, restaurantpartner } = db;
+
+    const rows = await user.findAll({
+      where: { role: 1 }, // role = 1 => partner/owner
+      include: [
+        {
+          model: restaurantpartner,
+          as: "partner",
+          where: { status: 3 }, // 3 = approved
+          required: true,
+        },
+      ],
+    });
+
+    return rows.map((r) => r.get({ plain: true }));
+  }
+
+  static async updatePartnerStatus(userID, status) {
+    const affected = await RestaurantPartnerModel.update(
+      { status },
+      { where: { restaurantPartnerID: userID } }
+    );
+
+    if (affected[0] === 0) throw new Error("Partner not found");
+
+    return true;
   }
 }
 
