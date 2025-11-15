@@ -157,44 +157,44 @@ const ListResult = ({
                     overflow: "hidden",
                   }}
                 >
-                  {sortOptions.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => {
-                        onSortChange(opt.value);
-                        setIsDropdownOpen(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        border: "none",
-                        background:
-                          sortBy === opt.value ? "#FFF1F2" : "#fff",
-                        color:
-                          sortBy === opt.value ? "#E11D48" : "#374151",
-                        fontSize: 14,
-                        fontWeight: sortBy === opt.value ? 600 : 400,
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        textAlign: "left",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (sortBy !== opt.value) {
-                          e.currentTarget.style.background = "#F9FAFB";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (sortBy !== opt.value) {
-                          e.currentTarget.style.background = "#fff";
-                        }
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                  {sortOptions.map((opt) => {
+                    return (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          onSortChange(opt.value);
+                          setIsDropdownOpen(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px",
+                          border: "none",
+                          background: sortBy === opt.value ? "#FFF1F2" : "#fff",
+                          color: sortBy === opt.value ? "#e23359ff" : "#374151",
+                          fontSize: 14,
+                          fontWeight: sortBy === opt.value ? 600 : 400,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          textAlign: "left",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (sortBy !== opt.value) {
+                            e.currentTarget.style.background = "#F9FAFB";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (sortBy !== opt.value) {
+                            e.currentTarget.style.background = "#fff";
+                          }
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}

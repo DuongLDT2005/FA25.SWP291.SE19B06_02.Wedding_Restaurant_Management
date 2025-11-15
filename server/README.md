@@ -18,3 +18,4 @@ npm i cron
 # description
 - to run cycle with 1H at time,job to check in mongo userRestaurantsDB.depositBooking -> check bookId, if not found booking will be mark at expired
 
+npm install multer cloudinary dotenv

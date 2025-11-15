@@ -5,16 +5,12 @@ import {
   negoStatus,
   coupleRole,
 } from "../models/enums/UserStatus.js";
-import { bitToNumber } from "../utils/convert/bitUtils.js";
 import { toDTO, toDTOs } from "../utils/convert/dto.js";
 
-// db (from config/db.js) exports: { sequelize, user, restaurantpartner, customer, ... }
-const {
-  sequelize,
-  user: UserModel,
-  restaurantpartner: RestaurantPartnerModel,
-  customer: CustomerModel,
-} = db;
+const sequelize = db.sequelize;
+const UserModel = db.user;
+const CustomerModel = db.customer;
+const RestaurantPartnerModel = db.restaurantpartner;
 
 class UserDAO {
   static async getAllUsers() {
@@ -43,6 +39,7 @@ class UserDAO {
     const t = await sequelize.transaction();
 
     try {
+      // 1) Create user
       const createdUser = await UserModel.create(
         {
           email,
@@ -50,11 +47,12 @@ class UserDAO {
           phone,
           password,
           role: userRole.owner,
-          status: userStatus.active,
+          status: userStatus.inactive,
         },
         { transaction: t }
       );
 
+      // 2) Create partner
       await RestaurantPartnerModel.create(
         {
           restaurantPartnerID: createdUser.userID,
@@ -66,8 +64,7 @@ class UserDAO {
       );
 
       await t.commit();
-      const result = await this.getUserById(createdUser.userID);
-      return result;
+      return await this.getUserById(createdUser.userID);
     } catch (error) {
       await t.rollback();
       console.error("❌ createOwner failed:", error);
@@ -89,7 +86,7 @@ class UserDAO {
           phone,
           password,
           role: userRole.customer,
-          status: userStatus.active,
+          status: userStatus.inactive,
         },
         { transaction: t }
       );
@@ -223,14 +220,57 @@ class UserDAO {
   static async getOwners() {
     const owners = await UserModel.findAll({
       where: { role: userRole.owner },
-      include: [{ model: RestaurantPartnerModel, as: "restaurantpartner" }],
+      include: [{ model: RestaurantPartnerModel, as: "partner" }],
     });
     return toDTOs(owners);
+  }
+  static async getPartnersByStatus(status) {
+    const users = await UserModel.findAll({
+      where: { role: 1 },
+      include: [
+        {
+          model: RestaurantPartnerModel,
+          as: "partner",
+          where: { status },
+          required: true,
+        },
+      ],
+    });
+
+    return users.map((u) => u.get({ plain: true }));
+  }
+
+  static async getApprovedPartners() {
+    const { user, restaurantpartner } = db;
+
+    const rows = await user.findAll({
+      where: { role: 1 }, // role = 1 => partner/owner
+      include: [
+        {
+          model: restaurantpartner,
+          as: "partner",
+          where: { status: 3 }, // 3 = approved
+          required: true,
+        },
+      ],
+    });
+
+    return rows.map((r) => r.get({ plain: true }));
+  }
+
+  static async updatePartnerStatus(userID, status) {
+    const affected = await RestaurantPartnerModel.update(
+      { status },
+      { where: { restaurantPartnerID: userID } }
+    );
+
+    if (affected[0] === 0) throw new Error("Partner not found");
+    return true;
   }
   static async getInfoUserID(UserID) {
     const user = await UserModel.findByPk(UserID, {
       include: [
-        { model: RestaurantPartnerModel, as: "restaurantpartner" },
+        { model: RestaurantPartnerModel, as: "partner" },
         { model: CustomerModel, as: "customer" },
       ],
     });

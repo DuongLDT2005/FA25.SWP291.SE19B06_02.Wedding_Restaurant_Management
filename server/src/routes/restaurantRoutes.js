@@ -1,6 +1,8 @@
 import express from "express";
 import RestaurantController from "../controllers/RestaurantController.js";
 const router = express.Router();
+
+router.get("/search", RestaurantController.search);
 router.get("/top_booked", RestaurantController.getTopBookedRestaurants);
 router.get("/", RestaurantController.getAll);
 router.get("/available", RestaurantController.getAvailable);

@@ -2,8 +2,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import restaurantRoutes from "./routes/restaurantRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import restaurantRoutes from "./routes/restaurantRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import hallRoutes from "./routes/hallRoutes.js";
 import aiSuggestRoutes from "./routes/aiSuggestRoutes.js";
@@ -16,7 +16,18 @@ import adminPaymentRoutes from "./routes/admin/adminPaymentRoutes.js";
 import adminReviewRoutes from "./routes/admin/adminReviewRoutes.js";
 import adminReportRoutes from "./routes/admin/adminReportRoutes.js";
 import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
+import negotiationRoutes from "./routes/negotiationRoutes.js";
 
+import contractRoutes from "./routes/contractRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import eventTypeRoutes from "./routes/eventTypeRoutes.js";
+import bankAccountRoutes from "./routes/restaurants/bankAccountRoutes.js";
+import menuRoutes from "./routes/restaurants/menuRoutes.js";
+import dishRoutes from "./routes/restaurants/dishRoutes.js";
+import dishCategoryRoutes from "./routes/restaurants/dishCategoryRoutes.js";
+import promotionRoutes from "./routes/restaurants/promotionRoutes.js";
+import serviceRoutes from "./routes/restaurants/serviceRoutes.js";
+import reviewRoutes from "./routes/restaurants/reviewRoutes.js";
 const app = express();
 
 app.use(
@@ -30,22 +41,35 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/halls", hallRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api/ai", aiSuggestRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
-app.use("/amenities", amenityRoutes);
+app.use("/api/amenities", amenityRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", userRoutes);
 
 
 app.use("/api/admin/users", adminUserRoutes);
-app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin/bookings", adminBookingRoutes);
+app.use("/api/negotiation", negotiationRoutes);
 app.use("/api/admin/payments", adminPaymentRoutes);
 app.use("/api/admin/reviews", adminReviewRoutes);
 app.use("/api/admin/reports", adminReportRoutes);
+app.use("/api/contracts", contractRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/eventtypes", eventTypeRoutes);
+// Nested restaurant-scoped mounts (non-breaking: keep top-level mounts)
+// app.use("/api/restaurants/:restaurantId/amenities", amenityRoutes);
+// app.use("/api/restaurants/:restaurantId/eventtypes", eventTypeRoutes);
+app.use("/api/bankaccounts", bankAccountRoutes);
+app.use("/api/menus", menuRoutes);
+app.use("/api/dishes", dishRoutes);
+app.use("/api/dishcategories", dishCategoryRoutes);
+app.use("/api/promotions", promotionRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/restaurants/:restaurantId/reviews", reviewRoutes);
 
 export default app;

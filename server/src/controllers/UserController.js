@@ -93,6 +93,15 @@ class UserController {
     }
   }
 
+  static async getNegotiatingPartners(req, res) {
+    try {
+      const list = await UserService.getNegotiatingPartners();
+      res.json({ success: true, data: list });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   static async getApprovedPartners(req, res) {
     try {
       const list = await UserService.getApprovedPartners();
@@ -116,6 +125,15 @@ class UserController {
       const updated = await UserService.rejectPartner(req.params.id);
       res.json({ success: true, data: updated });
     } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
+  static async activatePartner(req, res) {
+    try {
+      const updated = await UserService.activatePartner(req.params.id);
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      console.error("Activate partner error:", err);
       res.status(500).json({ success: false, error: err.message });
     }
   }

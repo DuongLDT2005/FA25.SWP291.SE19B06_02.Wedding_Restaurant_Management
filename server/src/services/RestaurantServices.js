@@ -48,8 +48,32 @@ class RestaurantService {
     return await RestaurantDAO.createRestaurant(data);
   }
 
-  static async update(restaurantID, data) {
-    return await RestaurantDAO.updateRestaurant(restaurantID, data);
+  static async update(restaurantID, data){
+    // validate phone if present
+  
+    if (data && Object.prototype.hasOwnProperty.call(data, 'phone')) {
+      const phone = data.phone;
+      if (phone !== null && phone !== undefined && typeof phone !== 'string') {
+        throw new Error('phone must be a string');
+      }
+    }
+  
+    // Extract eventTypes & amenities (arrays of IDs) if provided
+    const { eventTypes, amenities, ...patch } = data || {};
+    const updated = await RestaurantDAO.updateRestaurant(restaurantID, patch);
+    // If eventTypes specified, replace the mapping
+    if (Array.isArray(eventTypes)) {
+      await EventTypeDAO.setEventTypesForRestaurant(restaurantID, eventTypes);
+    }
+    // If amenities specified, replace the mapping
+    if (Array.isArray(amenities)) {
+      await AmenityDAO.setAmenitiesForRestaurant(restaurantID, amenities);
+    }
+    // refetch full to include updated relations if any
+    if (Array.isArray(eventTypes) || Array.isArray(amenities)) {
+      return await RestaurantDAO.getByID(restaurantID);
+    }
+    return updated;
   }
 
   static async changeRestaurantStatus(id) {

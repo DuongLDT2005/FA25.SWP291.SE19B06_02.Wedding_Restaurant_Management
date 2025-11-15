@@ -1,15 +1,13 @@
-import express from "express";
-import AmenityController from "../controllers/AmenityController.js";
+import express from 'express';
+import AmenityController from '../controllers/AmenityController.js';
+import { authMiddleware, ensurePartner, ensureAdmin } from '../middlewares/jwtToken.js';
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
-// Lấy tất cả tiện nghi
-router.get("/", AmenityController.getAll);
+router.get('/', AmenityController.listAll);
 
-// Lấy 1 tiện nghi cụ thể theo ID
-router.get("/:id", AmenityController.getByID);
-
-// Lấy danh sách tiện nghi của 1 nhà hàng
-router.get("/restaurant/:restaurantID", AmenityController.getByRestaurant);
+router.post('/', authMiddleware, ensureAdmin, AmenityController.create);
 
 export default router;
+
+

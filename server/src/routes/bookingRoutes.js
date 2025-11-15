@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticateJWT, ensureCustomer, ensurePartner } from "../middlewares/jwtToken.js";
 import BookingController from "../controllers/BookingController.js";
 import PaymentController from "../controllers/PaymentController.js";
-
+import BookingStatus from "../models/enums/BookingStatus.js";
 const router = Router();
 
 // ======================

@@ -9,30 +9,35 @@ import {
   Badge,
   Modal,
 } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import axios from "../../../../api/axios";
 import AdminLayout from "../../../../layouts/AdminLayout";
+import { getPdfViewUrl } from "../../../../utils/cloudinaryHelper";
+import PdfViewer from "../../../../components/PdfViewer";
 
 export default function AdminLicensePage() {
-  const [activeTab, setActiveTab] = useState("approved");
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("pending");
 
   const [approvedPartners, setApprovedPartners] = useState([]);
   const [pendingPartners, setPendingPartners] = useState([]);
+  const [negotiatingPartners, setNegotiatingPartners] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [selectedLicenseUrl, setSelectedLicenseUrl] = useState(null);
 
-  // Load partner lists
   useEffect(() => {
     loadApprovedPartners();
     loadPendingPartners();
+    loadNegotiatingPartners();
   }, []);
 
   const loadApprovedPartners = async () => {
     try {
       const res = await axios.get("/admin/users/partners/approved");
-      if (res.data?.success) {
-        setApprovedPartners(res.data.data || []);
-      }
+      if (res.data?.success) setApprovedPartners(res.data.data || []);
     } catch (err) {
       console.error("❌ Load approved failed:", err);
     }
@@ -41,15 +46,21 @@ export default function AdminLicensePage() {
   const loadPendingPartners = async () => {
     try {
       const res = await axios.get("/admin/users/partners/pending");
-      if (res.data?.success) {
-        setPendingPartners(res.data.data || []);
-      }
+      if (res.data?.success) setPendingPartners(res.data.data || []);
     } catch (err) {
       console.error("❌ Load pending failed:", err);
     }
   };
 
-  // Approve
+  const loadNegotiatingPartners = async () => {
+    try {
+      const res = await axios.get("/admin/users/partners/negotiating");
+      if (res.data?.success) setNegotiatingPartners(res.data.data || []);
+    } catch (err) {
+      console.error("❌ Load negotiating failed:", err);
+    }
+  };
+
   const handleApprove = (partner) => {
     setSelectedPartner(partner);
     setShowModal(true);
@@ -59,14 +70,12 @@ export default function AdminLicensePage() {
     if (!selectedPartner) return;
 
     try {
-      await axios.put(
-        `/admin/users/partners/${selectedPartner.userID}/approve`
-      );
+      await axios.put(`/admin/users/partners/${selectedPartner.userID}/approve`);
 
-      loadApprovedPartners();
       loadPendingPartners();
+      loadNegotiatingPartners();
 
-      alert(`✅ Đã phê duyệt đối tác ${selectedPartner.fullName}`);
+      alert(`✅ Đã chuyển đối tác ${selectedPartner.fullName} sang đàm phán`);
     } catch (err) {
       console.error(err);
       alert("❌ Lỗi khi phê duyệt đối tác.");
@@ -75,7 +84,6 @@ export default function AdminLicensePage() {
     setShowModal(false);
   };
 
-  // Reject
   const handleReject = async (id) => {
     if (!window.confirm("❌ Bạn chắc chắn muốn từ chối đối tác này?")) return;
 
@@ -89,13 +97,49 @@ export default function AdminLicensePage() {
     }
   };
 
-  const handleChat = (partner) => {
-    alert(`💬 Chat với ${partner.fullName} (dev sau)`);
+  const handleActivate = async (partner) => {
+    try {
+      await axios.put(`/admin/users/partners/${partner.userID}/activate`);
+      loadNegotiatingPartners();
+      loadApprovedPartners();
+      alert("🎉 Đã kích hoạt đối tác!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Lỗi khi kích hoạt.");
+    }
   };
+
+  /* ✨ Style chung cho card */
+  const cardStyle = {
+    border: "0",
+    borderRadius: "18px",
+    transition: "all 0.25s ease",
+    cursor: "default",
+  };
+
+  const cardHover = (e) =>
+    (e.currentTarget.style.transform = "translateY(-5px)");
+  const cardLeave = (e) => (e.currentTarget.style.transform = "none");
 
   return (
     <AdminLayout title="Quản lý Đối tác & License">
       <div className="container py-4">
+        <style>{`
+          .partner-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+          }
+          .truncate-url {
+            max-width: 220px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+          }
+        `}</style>
+
         <Tabs
           id="license-tabs"
           activeKey={activeTab}
@@ -106,54 +150,167 @@ export default function AdminLicensePage() {
           <Tab eventKey="pending" title="Đang chờ phê duyệt">
             {pendingPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
-                <i className="fas fa-check-circle fa-3x text-success mb-3"></i>
                 <p>Không có đối tác đang chờ.</p>
               </div>
             ) : (
               <Row className="g-4">
                 {pendingPartners.map((p) => (
                   <Col md={6} lg={4} key={p.userID}>
-                    <Card className="border-0 shadow-sm h-100 rounded-4">
+                    <Card
+                      className="shadow-sm border-0"
+                      style={{ borderRadius: "18px" }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "translateY(-5px)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "none")
+                      }
+                    >
                       <Card.Body>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
+                        {/* Header */}
+                        <div className="d-flex justify-content-between align-items-start mb-3">
                           <div>
-                            <h5 className="fw-semibold mb-1">{p.fullName}</h5>
-                            <p className="text-muted small mb-0">{p.email}</p>
+                            <h5 className="fw-bold mb-1">{p.fullName}</h5>
+                            <span className="text-muted small">{p.email}</span>
                           </div>
-                          <Badge bg="warning" text="dark">
+
+                          <Badge
+                            bg="warning"
+                            text="dark"
+                            className="px-3 py-2 rounded-pill"
+                          >
                             Đang chờ
                           </Badge>
                         </div>
 
-                        <div className="small text-muted mb-2">
-                          <strong>📞</strong> {p.phone} <br />
-                          <strong>📄 License:</strong> {p.partner?.licenseUrl}
+                        {/* Info */}
+                        <div className="text-muted small mb-3 partner-info">
+                          <span>📞 {p.phone}</span>
+                          <span>
+                            📄 License:{" "}
+                            {p.partner?.licenseUrl ? (
+                              <Button
+                                variant="link"
+                                className="p-0 text-primary text-decoration-none"
+                                onClick={() => {
+                                  setSelectedLicenseUrl(p.partner.licenseUrl);
+                                  setShowPdfViewer(true);
+                                }}
+                                style={{ fontSize: "inherit", textDecoration: "underline" }}
+                              >
+                                Xem giấy phép
+                              </Button>
+                            ) : (
+                              <span className="text-muted">Chưa có</span>
+                            )}
+                          </span>
                         </div>
 
-                        <div className="d-flex justify-content-between">
+                        {/* Footer / Actions */}
+                        <div className="d-flex justify-content-between mt-2 pt-2 border-top">
                           <Button
                             variant="success"
                             size="sm"
-                            className="rounded-pill px-3"
+                            className="px-3"
                             onClick={() => handleApprove(p)}
                           >
-                            <i className="fas fa-check me-1"></i> Phê duyệt
+                            Phê duyệt
                           </Button>
+
                           <Button
                             variant="outline-danger"
                             size="sm"
-                            className="rounded-pill px-3"
+                            className="px-3"
                             onClick={() => handleReject(p.userID)}
                           >
-                            <i className="fas fa-times me-1"></i> Từ chối
+                            Từ chối
+                          </Button>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </Tab>
+
+          {/* NEGOTIATING */}
+          <Tab eventKey="negotiating" title="Đang đàm phán">
+            {negotiatingPartners.length === 0 ? (
+              <div className="text-center py-5 text-muted">
+                <p>Không có đối tác đang đàm phán.</p>
+              </div>
+            ) : (
+              <Row className="g-4">
+                {negotiatingPartners.map((p) => (
+                  <Col md={6} lg={4} key={p.userID}>
+                    <Card
+                      className="shadow-sm border-0"
+                      style={{ borderRadius: "18px" }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "translateY(-5px)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "none")
+                      }
+                    >
+                      <Card.Body>
+                        {/* Header */}
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <div>
+                            <h5 className="fw-bold mb-1">{p.fullName}</h5>
+                            <span className="text-muted small">{p.email}</span>
+                          </div>
+
+                          <Badge
+                            bg="info"
+                            text="dark"
+                            className="px-3 py-2 rounded-pill"
+                          >
+                            Đàm phán
+                          </Badge>
+                        </div>
+
+                        {/* Info */}
+                        <div className="text-muted small mb-3 partner-info">
+                          <span>📞 {p.phone}</span>
+                          <span>
+                            📄 License:{" "}
+                            {p.partner?.licenseUrl ? (
+                              <Button
+                                variant="link"
+                                className="p-0 text-primary text-decoration-none"
+                                onClick={() => {
+                                  setSelectedLicenseUrl(p.partner.licenseUrl);
+                                  setShowPdfViewer(true);
+                                }}
+                                style={{ fontSize: "inherit", textDecoration: "underline" }}
+                              >
+                                Xem giấy phép
+                              </Button>
+                            ) : (
+                              <span className="text-muted">Chưa có</span>
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="d-flex gap-2 mt-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="flex-fill"
+                            onClick={() => navigate(`/admin/negotiation/${p.userID}`)}
+                          >
+                            Đàm phán
                           </Button>
                           <Button
-                            variant="outline-primary"
+                            variant="success"
                             size="sm"
-                            className="rounded-pill px-3"
-                            onClick={() => handleChat(p)}
+                            className="flex-fill"
+                            onClick={() => handleActivate(p)}
                           >
-                            <i className="fas fa-comments me-1"></i> Đàm phán
+                            Kích hoạt
                           </Button>
                         </div>
                       </Card.Body>
@@ -168,41 +325,68 @@ export default function AdminLicensePage() {
           <Tab eventKey="approved" title="Đối tác đã hợp tác">
             {approvedPartners.length === 0 ? (
               <div className="text-center py-5 text-muted">
-                <i className="fas fa-user-slash fa-3x text-secondary mb-3"></i>
-                <p>Chưa có đối tác được phê duyệt.</p>
+                <p>Chưa có đối tác đã hợp tác.</p>
               </div>
             ) : (
               <Row className="g-4">
                 {approvedPartners.map((p) => (
                   <Col md={6} lg={4} key={p.userID}>
-                    <Card className="border-0 shadow-sm rounded-4 h-100">
+                    <Card
+                      className="shadow-sm"
+                      style={cardStyle}
+                      onMouseEnter={cardHover}
+                      onMouseLeave={cardLeave}
+                    >
                       <Card.Body>
-                        <div className="d-flex justify-content-between align-items-start mb-2">
+                        {/* Header */}
+                        <div className="d-flex justify-content-between align-items-start mb-3">
                           <div>
-                            <h5 className="fw-semibold mb-1">{p.fullName}</h5>
-                            <p className="text-muted small mb-0">{p.email}</p>
+                            <h5 className="fw-bold mb-1">{p.fullName}</h5>
+                            <span className="text-muted small">{p.email}</span>
                           </div>
-                          <Badge bg="success">Đã hợp tác</Badge>
+                          <Badge
+                            bg="success"
+                            className="px-3 py-2 rounded-pill"
+                          >
+                            Đã hợp tác
+                          </Badge>
                         </div>
 
-                        <div className="small text-muted mb-3">
-                          <strong>📞</strong> {p.phone} <br />
-                          <strong>📄 License:</strong>{" "}
-                          {p.partner?.licenseUrl}
-                          <br />
-                          <strong>💰 Hoa hồng:</strong>{" "}
-                          <span className="fw-semibold text-primary">
-                            {(p.partner?.commissionRate * 100).toFixed(
-                              0
-                            ) || 0}
-                            %
+                        {/* Info */}
+                        <div className="partner-info text-muted small mb-3">
+                          <span>📞 {p.phone}</span>
+
+                          <span>
+                            📄 License:{" "}
+                            {p.partner?.licenseUrl ? (
+                              <Button
+                                variant="link"
+                                className="p-0 text-primary text-decoration-none"
+                                onClick={() => {
+                                  setSelectedLicenseUrl(p.partner.licenseUrl);
+                                  setShowPdfViewer(true);
+                                }}
+                                style={{ fontSize: "inherit", textDecoration: "underline" }}
+                              >
+                                Xem giấy phép
+                              </Button>
+                            ) : (
+                              <span className="text-muted">Chưa có</span>
+                            )}
+                          </span>
+
+                          <span>
+                            💰 Hoa hồng:
+                            <strong className="text-primary ms-1">
+                              {(p.partner?.commissionRate * 100).toFixed(0)}%
+                            </strong>
                           </span>
                         </div>
 
-                        <div className="border-top pt-2 mt-2 small">
-                          <p className="text-muted mb-0">
-                            Đối tác đã hoàn tất đàm phán.
-                          </p>
+                        {/* Footer */}
+                        <div className="border-top pt-2 text-muted small">
+                          <i className="fas fa-check-circle text-success me-1"></i>
+                          Đối tác đã hoàn tất đàm phán.
                         </div>
                       </Card.Body>
                     </Card>
@@ -213,29 +397,21 @@ export default function AdminLicensePage() {
           </Tab>
         </Tabs>
 
-        {/* MODAL */}
-        <Modal
-          show={showModal}
-          onHide={() => setShowModal(false)}
-          centered
-          backdrop="static"
-        >
+        {/* APPROVE MODAL */}
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>Xác nhận phê duyệt</Modal.Title>
           </Modal.Header>
+
           <Modal.Body>
             {selectedPartner && (
-              <>
-                <p>
-                  Bạn có chắc chắn muốn phê duyệt{" "}
-                  <strong>{selectedPartner.fullName}</strong>?
-                </p>
-                <p className="text-muted small">
-                  Sau khi phê duyệt, đối tác sẽ có quyền đăng nhà hàng.
-                </p>
-              </>
+              <p>
+                Bạn có muốn chuyển <strong>{selectedPartner.fullName}</strong>{" "}
+                sang giai đoạn <strong>đàm phán</strong>?
+              </p>
             )}
           </Modal.Body>
+
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               Hủy
@@ -245,6 +421,17 @@ export default function AdminLicensePage() {
             </Button>
           </Modal.Footer>
         </Modal>
+
+        {/* PDF Viewer Modal */}
+        <PdfViewer
+          url={selectedLicenseUrl}
+          show={showPdfViewer}
+          onHide={() => {
+            setShowPdfViewer(false);
+            setSelectedLicenseUrl(null);
+          }}
+          title="Giấy phép kinh doanh"
+        />
       </div>
     </AdminLayout>
   );
