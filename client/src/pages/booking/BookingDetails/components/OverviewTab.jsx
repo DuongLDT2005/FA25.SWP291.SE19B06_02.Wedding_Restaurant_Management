@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Button, Card, Row, Col, Alert, Form } from "react-bootstrap";
 
-export default function OverviewTab({ booking, onApprove, onReject, isApproved, paymentCompleted }) {
+export default function OverviewTab({ booking, onApprove, onReject, isApproved, paymentCompleted, updateBooking, bookingId }) {
     const [isEditing, setIsEditing] = useState(false);
     const [editingData, setEditingData] = useState({});
     const PRIMARY = "#D81C45";
-    const servicesSafe = Array.isArray(booking?.services) ? booking.services : [];
+    const servicesSafe = Array.isArray(booking?.bookingservices) ? booking.bookingservices : [];
     const menuCategoriesSafe = Array.isArray(booking?.menu?.categories) ? booking.menu.categories : [];
     const eventTypeText = typeof booking?.eventType === "string" ? booking.eventType : (booking?.eventType?.name || "");
-
+    console.log(booking);
     const formatCurrency = (amount) =>
         (amount || 0).toLocaleString("vi-VN") + " VNĐ";
     const formatDate = (dateString) =>
@@ -117,21 +117,17 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
         }));
     };
 
-    const handleSaveChanges = () => {
+    const handleSaveChanges = async () => {
         // Tính lại giá sau khi chỉnh sửa
         const newPrices = calculatePrices();
         
-        // TODO: Gọi API để lưu thay đổi
-        const updatedBooking = {
-            ...booking,
-            customer: editingData.customer,
+        // Chuẩn bị dữ liệu để gửi lên server
+        const updates = {
             eventDate: editingData.eventDetails.eventDate,
             startTime: editingData.eventDetails.startTime,
             endTime: editingData.eventDetails.endTime,
             tableCount: editingData.eventDetails.tableCount,
             specialRequest: editingData.eventDetails.specialRequest,
-            menu: editingData.menu,
-            services: editingData.services,
             // Cập nhật giá
             originalPrice: newPrices.originalPrice,
             discountAmount: newPrices.discountAmount,
@@ -139,13 +135,26 @@ export default function OverviewTab({ booking, onApprove, onReject, isApproved, 
             totalAmount: newPrices.totalAmount,
         };
         
-        // Lưu vào sessionStorage
-        sessionStorage.setItem("currentBooking", JSON.stringify(updatedBooking));
-        
-        alert("✅ Đã lưu thay đổi thành công!");
-        setIsEditing(false);
-        // Reload page để cập nhật UI
-        window.location.reload();
+        try {
+            await updateBooking(bookingId, updates);
+            
+            // Cập nhật local state sau khi thành công
+            const updatedBooking = {
+                ...booking,
+                ...updates,
+            };
+            
+            // Lưu vào sessionStorage
+            sessionStorage.setItem(`booking_${bookingId}`, JSON.stringify(updatedBooking));
+            
+            alert("✅ Đã lưu thay đổi thành công!");
+            setIsEditing(false);
+            // Reload page để cập nhật UI
+            window.location.reload();
+        } catch (error) {
+            console.error("Error saving changes:", error);
+            alert("Có lỗi xảy ra khi lưu thay đổi. Vui lòng thử lại.");
+        }
     };
 
     const displayData = isEditing ? editingData : {

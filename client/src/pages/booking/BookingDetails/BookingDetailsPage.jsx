@@ -9,6 +9,7 @@ import ContractTab from "./components/ContractTab";
 import ReportIssueModal from "./components/ReportIssueModal";
 import ScrollToTopButton from "../../../components/ScrollToTopButton";
 import "../../../styles/BookingDetailsStyles.css"; // optional extra styles
+import { useDispatch } from "react-redux";
 import useBooking from "../../../hooks/useBooking";
 
 
@@ -22,6 +23,87 @@ const formatDate = (dateString) => {
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
 };
+
+function buildDetailPayload(b) {
+    // Build customer info strictly from booking data (not auth)
+    const embeddedUser = b.customer || {}
+    const customer = {
+      fullName: b.customer?.user?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
+      phone: b.customer?.user?.phone || embeddedUser.phone || "N/A",
+      email: b.customer?.user?.email || embeddedUser.email || "N/A",
+    }
+    // Build restaurant from hall.restaurant
+    const restaurant = {
+      name: b.hall?.restaurant?.name || "Nhà hàng",
+      address: b.restaurant?.address || "Đang cập nhật", // Note: address might need to be fetched separately
+      thumbnailURL: b.hall?.restaurant?.thumbnailURL || "",
+    }
+
+    // Build hall
+    const hall = {
+      name: b.hall?.name || "Sảnh",
+      capacity: b.hall?.maxTable*10 || b.tableCount || 0,
+      area: parseFloat(b.hall?.area) || 0,
+      price: parseFloat(b.hall?.price) || 0,
+    }
+
+    // Build menu with categories from bookingdishes
+    const dishMap = {};
+    (b.bookingdishes || []).forEach(bd => {
+      const dish = bd.dish;
+      if (!dishMap[dish.categoryID]) {
+        dishMap[dish.categoryID] = {
+          name: `Danh mục ${dish.categoryID}`, // Placeholder, might need category lookup
+          dishes: []
+        };
+      }
+      dishMap[dish.categoryID].dishes.push({
+        id: dish.dishID,
+        name: dish.name,
+        price: 0, // Price not in dish data, might need to fetch
+        imageURL: dish.imageURL
+      });
+    });
+    const menu = {
+      name: b.menu?.name || "Menu đã chọn",
+      price: parseFloat(b.menu?.price) || 0,
+      categories: Object.values(dishMap)
+    }
+
+    // Build services from bookingservices
+    const services = (b.bookingservices || []).map(bs => ({
+      name: bs.service?.name || "Dịch vụ",
+      quantity: bs.quantity || 1,
+      price: parseFloat(bs.service?.price) || 0
+    }));
+
+    return {
+      bookingID: b.bookingID,
+      status: b.status ?? 0,
+      eventType: b.eventType?.name || "Tiệc cưới",
+      eventDate: b.eventDate,
+      startTime: b.startTime || "18:00",
+      endTime: b.endTime || "22:00",
+      tableCount: b.tableCount || 0,
+      specialRequest: b.specialRequest || "",
+      createdAt: b.createdAt || new Date().toISOString(),
+      customer,
+      restaurant,
+      hall,
+      menu,
+      services,
+      payments: b.payments || [],
+      contract: b.contract || {
+        content: "Hợp đồng dịch vụ...",
+        status: 0,
+        signedAt: null,
+      },
+      originalPrice: parseFloat(b.originalPrice) || 0,
+      discountAmount: parseFloat(b.discountAmount) || 0,
+      VAT: parseFloat(b.VAT) || 0,
+      totalAmount: parseFloat(b.totalAmount) || 0,
+    }
+  }
 export const mockBooking = (bookingId, restaurantData = null) => ({
     bookingID: bookingId,
     customer: { fullName: "Nguyễn Văn A", phone: "0123456789", email: "customer@email.com" },
@@ -88,7 +170,8 @@ export default function BookingDetailsPage() {
     const { bookingId } = useParams();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const { booking: bookingSlice } = useBooking();
+    const { booking: bookingSlice, hydrateFromDTO, updateBooking } = useBooking();
+    const dispatch = useDispatch();
 
     const [activeKey, setActiveKey] = useState("overview");
     const [booking, setBooking] = useState(null);
@@ -123,20 +206,23 @@ export default function BookingDetailsPage() {
                     bookingID: sliceId,
                     ...bookingSlice,
                 };
-                setBooking(merged);
-                try { sessionStorage.setItem(`booking_${sliceId}`, JSON.stringify(merged)); } catch {}
+                
+                setBooking(buildDetailPayload(merged));
+                try { sessionStorage.setItem(`booking_${sliceId}`, JSON.stringify(buildDetailPayload(merged))); } catch {}
                 setLoading(false);
                 setHasLoaded(true);
                 return;
             }
-
             // 2) Fallback to sessionStorage key set by BookingListPage
             const key = `booking_${bookingId}`;
             const storedByKey = sessionStorage.getItem(key);
+
             if (storedByKey) {
+                // console.log(storedByKey);
                 try {
                     const parsed = JSON.parse(storedByKey);
-                    setBooking(parsed);
+                    dispatch(hydrateFromDTO(parsed)); // Hydrate Redux with raw data
+                    setBooking(buildDetailPayload(parsed));
                     setLoading(false);
                     setHasLoaded(true);
                     return;
@@ -151,7 +237,8 @@ export default function BookingDetailsPage() {
                 try {
                     const parsedLegacy = JSON.parse(legacy);
                     if (parsedLegacy.bookingID === bookingId) {
-                        setBooking(parsedLegacy);
+                        dispatch(hydrateFromDTO(parsedLegacy)); // Hydrate Redux with raw data
+                        setBooking(buildDetailPayload(parsedLegacy));
                         setLoading(false);
                         setHasLoaded(true);
                         return;
@@ -163,8 +250,9 @@ export default function BookingDetailsPage() {
 
             if (location.state?.booking) {
                 const b = location.state.booking;
-                setBooking(b);
-                try { sessionStorage.setItem(`booking_${b.bookingID || b.id || bookingId}` , JSON.stringify(b)); } catch {}
+                dispatch(hydrateFromDTO(b)); // Hydrate Redux with raw data
+                setBooking(buildDetailPayload(b));
+                try { sessionStorage.setItem(`booking_${b.bookingID || b.id || bookingId}` , JSON.stringify(buildDetailPayload(b))); } catch {}
                 setLoading(false);
                 setHasLoaded(true);
                 return;
@@ -195,7 +283,7 @@ export default function BookingDetailsPage() {
           setLoading(true);
           const bookingDataFromForm = sessionStorage.getItem("newBookingData");
           if (bookingDataFromForm) {
-            setBooking(JSON.parse(bookingDataFromForm));
+            setBooking(buildDetailPayload(JSON.parse(bookingDataFromForm)));
             setLoading(false);
             setHasLoaded(true);
             return;
@@ -206,7 +294,7 @@ export default function BookingDetailsPage() {
       
           const mockData = mockBooking(bookingId, restaurantData);
       
-          setBooking(mockData);
+          setBooking(buildDetailPayload(mockData));
           setLoading(false);
           setHasLoaded(true);
         } catch (err) {
@@ -241,8 +329,8 @@ export default function BookingDetailsPage() {
                     status: 1, // ACCEPTED
                     acceptedAt: new Date().toISOString() // Lưu thời gian khi chuyển sang ACCEPTED
                 };
-                setBooking(updatedBooking);
-                sessionStorage.setItem("currentBooking", JSON.stringify(updatedBooking));
+                setBooking(buildDetailPayload(updatedBooking));
+                sessionStorage.setItem("currentBooking", JSON.stringify(buildDetailPayload(updatedBooking)));
                 alert("Đã xác nhận thành công! Xin vui lòng đợi để bên partner có thể xét duyệt.");
             } catch (error) {
                 console.error("Error confirming booking:", error);
@@ -260,8 +348,8 @@ export default function BookingDetailsPage() {
                     status: 2, // REJECTED
                     rejectedAt: new Date().toISOString()
                 };
-                setBooking(updatedBooking);
-                sessionStorage.setItem("currentBooking", JSON.stringify(updatedBooking));
+                setBooking(buildDetailPayload(updatedBooking));
+                sessionStorage.setItem("currentBooking", JSON.stringify(buildDetailPayload(updatedBooking)));
                 
                 alert("Đã hủy đặt tiệc thành công!");
             } catch (error) {
@@ -285,11 +373,19 @@ export default function BookingDetailsPage() {
                     status: 5, // EXPIRED
                     expiredAt: now.toISOString()
                 };
-                setBooking(updatedBooking);
-                sessionStorage.setItem("currentBooking", JSON.stringify(updatedBooking));
+                setBooking(buildDetailPayload(updatedBooking));
+                sessionStorage.setItem("currentBooking", JSON.stringify(buildDetailPayload(updatedBooking)));
             }
         }
     }, [booking]);
+
+    useEffect(() => {
+        if (bookingSlice && bookingSlice.bookingID === bookingId) {
+            const updated = buildDetailPayload(bookingSlice);
+            setBooking(updated);
+            try { sessionStorage.setItem(`booking_${bookingId}`, JSON.stringify(updated)); } catch {}
+        }
+    }, [bookingSlice, bookingId]);
 
     if (loading) {
         return (
@@ -310,17 +406,7 @@ export default function BookingDetailsPage() {
         );
     }
 
-    // ensure safe defaults; prefer data embedded in booking (and nested booking.customer.user) not auth context
-    booking.customer = booking.customer || {};
-    const embeddedUser = booking.customer.user || {};
-    booking.customer.fullName = booking.customer.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng";
-    booking.customer.phone = booking.customer.phone || embeddedUser.phone || "N/A";
-    booking.customer.email = booking.customer.email || embeddedUser.email || "N/A";
-    booking.restaurant = booking.restaurant || { name: "Nhà hàng", address: "Đang cập nhật" };
-    booking.hall = booking.hall || { name: "Sảnh", capacity: 0, area: 0 };
-    booking.menu = booking.menu || { name: "Menu", price: 0, categories: [] };
-    booking.payments = Array.isArray(booking.payments) ? booking.payments : [];
-
+    // console.log("Final booking data:", booking);
     return (
         <Container fluid className="py-4">
             <Card className="mb-3" style={{ borderRadius: 12, overflow: "hidden" }}>
@@ -382,6 +468,8 @@ export default function BookingDetailsPage() {
                                             paymentCompleted={booking.status >= 4}
                                             bookingStatus={booking.status}
                                             onBookingUpdate={setBooking}
+                                            updateBooking={updateBooking}
+                                            bookingId={bookingId}
                                         />
                                     </Tab.Pane>
 

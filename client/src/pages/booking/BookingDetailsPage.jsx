@@ -233,21 +233,36 @@ const BookingDetailsPage = () => {
         setIsEditing(!isEditing);
     };
 
-    const handleSaveChanges = () => {
-        // Cập nhật booking data với dữ liệu đã chỉnh sửa
-        const updatedBooking = {
-            ...booking,
-            customer: editingData.customer,
+    const handleSaveChanges = async () => {
+        // Chuẩn bị dữ liệu để gửi lên server
+        const updates = {
             eventDate: editingData.eventDetails.eventDate,
             startTime: editingData.eventDetails.startTime,
             endTime: editingData.eventDetails.endTime,
             tableCount: editingData.eventDetails.tableCount,
             specialRequest: editingData.eventDetails.specialRequest,
-            menu: editingData.menu
         };
-        setBooking(updatedBooking);
-        setIsEditing(false);
-        alert('Đã lưu thay đổi thành công!');
+
+        try {
+            await updateBooking(bookingId, updates);
+
+            // Cập nhật local state sau khi thành công
+            const updatedBooking = {
+                ...booking,
+                ...updates,
+            };
+
+            setBooking(updatedBooking);
+
+            // Lưu vào sessionStorage
+            sessionStorage.setItem(`booking_${bookingId}`, JSON.stringify(updatedBooking));
+
+            alert("✅ Đã lưu thay đổi thành công!");
+            setIsEditing(false);
+        } catch (error) {
+            console.error("Error saving changes:", error);
+            alert("Có lỗi xảy ra khi lưu thay đổi. Vui lòng thử lại.");
+        }
     };
 
     const handleCancelEdit = () => {

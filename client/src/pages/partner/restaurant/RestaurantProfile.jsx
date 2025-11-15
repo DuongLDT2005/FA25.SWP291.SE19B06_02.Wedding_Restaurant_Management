@@ -12,7 +12,6 @@ export default function RestaurantProfile(props) {
   const [profile, setProfile] = useState({
     name: "",
     phone: "",
-    email: "",
     description: "",
     thumbnailURL: "",
     imageURLs: [],
@@ -32,7 +31,6 @@ export default function RestaurantProfile(props) {
       setProfile({
         name: props.restaurant.name || "",
         phone: props.restaurant.phone || props.restaurant.contactPhone || "",
-        email: props.restaurant.contactEmail || "",
         description: props.restaurant.description || "",
         thumbnailURL: props.restaurant.thumbnailURL || "",
         imageURLs: (props.restaurant.images || props.restaurant.imageURLs || []).map(i => i.imageURL || i),
@@ -170,17 +168,6 @@ export default function RestaurantProfile(props) {
                   type="text"
                   name="phone"
                   value={profile.phone}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group controlId="restaurantEmail">
-                <Form.Label>Email</Form.Label>
-                <Form.Control
-                  type="email"
-                  name="email"
-                  value={profile.email}
                   onChange={handleChange}
                 />
               </Form.Group>

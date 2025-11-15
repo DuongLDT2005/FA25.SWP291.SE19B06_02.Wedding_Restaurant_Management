@@ -52,6 +52,19 @@ export const rejectBookingByPartner = createAsyncThunk(
   }
 );
 
+// Update booking by ID
+export const updateBooking = createAsyncThunk(
+  "booking/update",
+  async ({ bookingID, updates }, { rejectWithValue }) => {
+    try {
+      const res = await bookingService.updateBooking(bookingID, updates);
+      return { bookingID, res };
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
 // Load full detail by ID for detail page
 export const loadBookingDetail = createAsyncThunk(
   "booking/detail/load",
@@ -299,6 +312,17 @@ const bookingSlice = createSlice({
         );
         if (state.detail && state.detail.bookingID === id) {
           state.detail = { ...state.detail, status: 2 };
+        }
+      })
+      .addCase(updateBooking.fulfilled, (state, action) => {
+        const id = action.payload?.bookingID;
+        // Update partnerRows if exists
+        state.partnerRows = (state.partnerRows || []).map((x) =>
+          x.bookingID === id ? { ...x, ...action.payload.res } : x
+        );
+        // Update detail if matches
+        if (state.detail && state.detail.bookingID === id) {
+          state.detail = { ...state.detail, ...action.payload.res };
         }
       });
   },

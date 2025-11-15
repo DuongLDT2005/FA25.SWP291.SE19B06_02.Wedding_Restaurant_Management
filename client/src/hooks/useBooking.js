@@ -24,6 +24,7 @@ export function useBooking() {
   const markCheckedLocal = useCallback((bookingID) => dispatch(bookingActions.markCheckedLocal(bookingID)), [dispatch]);
   // Detail loader
   const loadBookingDetail = useCallback((bookingID) => dispatch(bookingActions.loadBookingDetail(bookingID)), [dispatch]);
+  const updateBooking = useCallback((bookingID, updates) => dispatch(bookingActions.updateBooking({ bookingID, updates })), [dispatch]);
 
   const recalcPrice = useCallback(() => {
     if (!booking) return { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 };
@@ -108,6 +109,7 @@ export function useBooking() {
     rejectByPartner,
     markCheckedLocal,
     loadBookingDetail,
+    updateBooking,
     partnerBookings: booking.partnerRows || [],
     partnerStatus: booking.partnerStatus || 'idle',
     partnerError: booking.partnerError || null,

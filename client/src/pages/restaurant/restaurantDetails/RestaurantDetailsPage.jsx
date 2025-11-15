@@ -136,7 +136,7 @@ export default function RestaurantDetailsPage() {
                   <FontAwesomeIcon
                     icon={faBuildingColumns}
                     style={{ color: "#e11d48" }}
-                    className="me-1"
+                    className="me-restaurantEmail1"
                   />
                   {restaurant.hallCount} sảnh
                 </span>

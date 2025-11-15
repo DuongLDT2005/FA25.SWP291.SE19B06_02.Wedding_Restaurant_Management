@@ -172,6 +172,22 @@ export async function getAllBookings() {
 }
 
 /**
+ * Update a booking by ID
+ * Backend: PATCH /api/bookings/:id
+ */
+export async function updateBooking(bookingID, updates) {
+  const res = await fetch(`${API_URL}/${bookingID}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+    credentials: 'include',
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || 'Update booking failed');
+  return json;
+}
+
+/**
  * Lấy chi tiết booking theo ID
  * Backend: GET /api/bookings/:id (trả { success, data })
  */

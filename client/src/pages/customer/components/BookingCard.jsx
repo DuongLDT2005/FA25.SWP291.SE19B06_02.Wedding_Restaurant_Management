@@ -41,6 +41,7 @@ export default function BookingCard({
 
   function buildDetailPayload(b) {
     // Build customer info strictly from booking data (not auth)
+    console.log(b.restaurant?.fullAddress);
     const embeddedUser = b.customer?.user || {}
     const customer = {
       fullName: b.customer?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
@@ -60,20 +61,20 @@ export default function BookingCard({
       customer,
       restaurant: {
         name: b.restaurant?.name || "Nhà hàng",
-        address: b.restaurant?.address || b.restaurant?.fullAddress || "Đang cập nhật",
+        address: b.restaurant?.fullAddress || "Đang cập nhật",
         thumbnailURL: b.restaurant?.thumbnailURL || "",
       },
       hall: b.hall || {
-        name: b.hallName || "Sảnh",
-        capacity: b.tableCount ? b.tableCount * 10 : 0,
+        name: b.name || "Sảnh",
+        capacity:  b.tableCount * 10,
         area: b.hallArea || 0,
       },
       menu: b.menu || {
-        name: b.menuName || "Menu đã chọn",
-        price: b.pricePerTable || 0,
+        name: b.name || "Menu đã chọn",
+        price: b.price || 0,
         categories: b.menu?.categories || [],
       },
-      services: b.services || [],
+      services: b.bookingservices || [],
       payments: b.payments || [],
       contract: b.contract || {
         content: "Hợp đồng dịch vụ...",

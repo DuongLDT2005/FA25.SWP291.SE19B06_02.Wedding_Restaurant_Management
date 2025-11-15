@@ -20,6 +20,7 @@ const {
   customer: CustomerModel,
   eventtype: EventTypeModel,
   user: UserModel,
+  address: AddressModel, // Add AddressModel
 } = db;
 
 class BookingDAO {
@@ -85,7 +86,10 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            include: [
+              { model: RestaurantPartnerModel, as: 'restaurantPartner' },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -108,7 +112,15 @@ class BookingDAO {
       order: [['createdAt', 'DESC']]
     });
 
-    return toDTOs(rows);
+    const dtos = toDTOs(rows);
+    // Replace addressID with fullAddress in restaurant
+    dtos.forEach(booking => {
+      if (booking.hall?.restaurant) {
+        booking.hall.restaurant.fullAddress = booking.hall.restaurant.address?.fullAddress;
+        delete booking.hall.restaurant.address;
+      }
+    });
+    return dtos;
   }
 
   // Get the Restaurant Partner owning the hall where this booking is placed
@@ -231,7 +243,10 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+            include: [
+              { model: RestaurantPartnerModel, as: 'restaurantPartner' },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -252,7 +267,13 @@ class BookingDAO {
         }
       ]
     });
-    return toDTO(row);
+    const dto = toDTO(row);
+    // Replace addressID with fullAddress in restaurant
+    if (dto?.hall?.restaurant) {
+      dto.hall.restaurant.fullAddress = dto.hall.restaurant.address?.fullAddress;
+      delete dto.hall.restaurant.address;
+    }
+    return dto;
   }
 
   /**
@@ -310,11 +331,14 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{
-              model: RestaurantPartnerModel,
-              as: 'restaurantPartner',
-              where: { restaurantPartnerID: partnerID },
-            }]
+            include: [
+              {
+                model: RestaurantPartnerModel,
+                as: 'restaurantPartner',
+                where: { restaurantPartnerID: partnerID },
+              },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },
@@ -336,7 +360,15 @@ class BookingDAO {
       ],
       order: [['createdAt', 'DESC']]
     });
-    return toDTOs(rows);
+    const dtos = toDTOs(rows);
+    // Replace addressID with fullAddress in restaurant
+    dtos.forEach(booking => {
+      if (booking.hall?.restaurant) {
+        booking.hall.restaurant.fullAddress = booking.hall.restaurant.address?.fullAddress;
+        delete booking.hall.restaurant.address;
+      }
+    });
+    return dtos;
   }
 
   // Replace dishes for a booking

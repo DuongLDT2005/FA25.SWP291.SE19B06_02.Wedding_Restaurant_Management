@@ -19,10 +19,23 @@ export default function BookingActions({
     return (
       <div className="d-flex gap-1 flex-wrap mt-2">
         {status === BookingStatus.PENDING && (
-          <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
-            <i className="bi bi-x-circle me-1"></i>
-            Hủy
-          </Button>
+          <>
+            <Button variant="danger" onClick={onCancel} size="sm" className="flex-grow-1">
+              <i className="bi bi-x-circle me-1"></i>
+              Hủy
+            </Button>
+            <Button
+              as={Link}
+              to={`/booking/${bookingID}`}
+              state={{ booking: prepareAndStore() }}
+              variant="outline-primary"
+              size="sm"
+              className="flex-grow-1"
+            >
+              <i className="bi bi-eye me-1"></i>
+              Xem chi tiết
+            </Button>
+          </>
         )}
         {status === BookingStatus.ACCEPTED && (
           <>
@@ -81,10 +94,22 @@ export default function BookingActions({
   return (
     <div className="d-flex gap-2 flex-wrap mt-3">
       {status === BookingStatus.PENDING && (
-        <Button variant="danger" onClick={onCancel} className="flex-grow-1">
-          <i className="bi bi-x-circle me-2"></i>
-          Hủy
-        </Button>
+        <>
+          <Button variant="danger" onClick={onCancel} className="flex-grow-1">
+            <i className="bi bi-x-circle me-2"></i>
+            Hủy
+          </Button>
+          <Button
+            as={Link}
+            to={`/booking/${bookingID}`}
+            state={{ booking: prepareAndStore() }}
+            variant="outline-primary"
+            className="flex-grow-1"
+          >
+            <i className="bi bi-eye me-2"></i>
+            Xem chi tiết
+          </Button>
+        </>
       )}
 
       {status === BookingStatus.ACCEPTED && (
