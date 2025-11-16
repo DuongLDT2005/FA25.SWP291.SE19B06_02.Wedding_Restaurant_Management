@@ -30,6 +30,7 @@ import partnerReviewRoutes from "./routes/partnerReviewRoutes.js";
 import partnerDashboardRoutes from "./routes/partnerDashboardRoutes.js";
 import payoutRoutes from "./routes/PayoutRoutes.js";
 
+import wardRoutes from "./routes/wardRoutes.js";
 const app = express();
 
 app.use(
@@ -76,5 +77,6 @@ app.use("/api/admin/reviews", adminReviewRoutes);
 app.use("/api/admin/reports", adminReportRoutes);
 app.use("/api/partners", partnerReviewRoutes);
 app.use("/api/dashboard/partner", partnerDashboardRoutes);
+app.use("/api/wards", wardRoutes);
 
 export default app;

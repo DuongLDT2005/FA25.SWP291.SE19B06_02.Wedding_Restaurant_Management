@@ -4,11 +4,13 @@ import { fetchAmenities } from "../redux/slices/amenitySlice";
 
 export default function useAmenity() {
   const dispatch = useDispatch();
-  const { list, loading, error } = useSelector((state) => state.amenities);
+  const { list = [], loading = false, error = null } = useSelector((state) => state.amenities || {});
 
   useEffect(() => {
-    dispatch(fetchAmenities());
-  }, [dispatch]);
+    if (!list || list.length === 0) {
+      dispatch(fetchAmenities());
+    }
+  }, [dispatch, list]);
 
   return { amenities: list, loading, error };
 }

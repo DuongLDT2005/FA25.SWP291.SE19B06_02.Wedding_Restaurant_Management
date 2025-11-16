@@ -18,6 +18,8 @@ import {
     selectTopRatedRestaurants,
     selectCurrentRestaurant,
     selectSearchResults,
+    selectStatus,
+    selectError,
 } from "../redux/slices/restaurantSlice";
 
 /**

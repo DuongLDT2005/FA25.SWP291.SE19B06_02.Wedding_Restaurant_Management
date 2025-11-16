@@ -9,6 +9,7 @@ import hallsReducer from "./slices/hallSlice";
 import additionRestaurantReducer from "./slices/additionRestaurantSlice";
 import paymentReducer from "./slices/paymentSlice";
 import reviewReducer from "./slices/reviewSlice";
+import amenityReducer from "./slices/amenitySlice";
 const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -21,6 +22,7 @@ const store = configureStore({
     additionRestaurant: additionRestaurantReducer,
     payment: paymentReducer,
     reviews: reviewReducer,
+    amenities: amenityReducer,
   },
 });
 

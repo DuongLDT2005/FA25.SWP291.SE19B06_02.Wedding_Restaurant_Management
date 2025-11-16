@@ -38,6 +38,18 @@ export default function ProductCard({ venue }) {
     ? { min: venue.priceMin }
     : priceRangeFromPrice(venue.price);
 
+  // Tính capacity từ halls nếu có, hoặc dùng maxCapacity đã được tính sẵn
+  const getCapacity = () => {
+    if (venue.maxCapacity) return venue.maxCapacity;
+    if (venue.halls && Array.isArray(venue.halls) && venue.halls.length > 0) {
+      const maxTable = Math.max(...venue.halls.map((h) => Number(h.maxTable) || 0));
+      return maxTable > 0 ? maxTable : null;
+    }
+    return venue.capacityTables || venue.capacity || null;
+  };
+  
+  const capacity = getCapacity();
+
   return (
     <div
       className="card mb-4"
@@ -94,7 +106,7 @@ export default function ProductCard({ venue }) {
               <PeopleFill className="me-1 text-secondary" />
               <span className="text-secondary me-1">Sức chứa:</span>
               <strong>
-                {tablesFromCapacity(venue.capacityTables || venue.capacity)}
+                {capacity ? `${capacity} bàn` : "—"}
               </strong>
             </div>
 

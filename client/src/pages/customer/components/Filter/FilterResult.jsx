@@ -343,9 +343,9 @@ export default function FilterResult() {
         {!loading && amenities.length > 0
           ? amenities.map((item) => (
               <Form.Check
-                key={item.id}
+                key={item.amenityID || item.id}
                 type="checkbox"
-                id={`amenity-${item.id}`}
+                id={`amenity-${item.amenityID || item.id}`}
                 label={item.name}
                 style={{ marginBottom: 8, fontSize: 14 }}
               />

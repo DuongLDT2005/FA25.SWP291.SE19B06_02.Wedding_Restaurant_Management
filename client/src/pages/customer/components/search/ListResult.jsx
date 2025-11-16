@@ -20,17 +20,27 @@ const ListResult = ({
   const query = new URLSearchParams(useLocation().search);
   const location = query.get("location") || "Kết quả tìm kiếm";
 
-  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity)
+  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity) và map fields
   const processedVenues = useMemo(() => {
     return venues.map((v) => {
       const halls = v.halls || [];
       const minPrice = halls.length
-        ? Math.min(...halls.map((h) => Number(h.price)))
+        ? Math.min(...halls.map((h) => Number(h.price) || 0))
         : 0;
       const maxCapacity = halls.length
-        ? Math.max(...halls.map((h) => Number(h.maxTable)))
+        ? Math.max(...halls.map((h) => Number(h.maxTable) || 0))
         : 0;
-      return { ...v, minPrice, maxCapacity };
+      
+      // Map các field từ backend format sang ProductCard format
+      return {
+        ...v,
+        id: v.restaurantID || v.id, // Map restaurantID -> id
+        image: v.thumbnailURL || v.restaurantimages?.[0]?.imageURL || v.image, // Map thumbnailURL -> image
+        location: v.address?.fullAddress || v.address?.ward || v.location, // Map address.fullAddress -> location
+        rating: v.avgRating ? Number(v.avgRating) : v.rating, // Map avgRating -> rating
+        minPrice,
+        maxCapacity,
+      };
     });
   }, [venues]);
 
