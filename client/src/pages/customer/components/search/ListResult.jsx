@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import ProductCard from "../ProductCard";
 import {
+  Funnel,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -20,17 +21,27 @@ const ListResult = ({
   const query = new URLSearchParams(useLocation().search);
   const location = query.get("location") || "Kết quả tìm kiếm";
 
-  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity)
+  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity) và map fields
   const processedVenues = useMemo(() => {
     return venues.map((v) => {
       const halls = v.halls || [];
       const minPrice = halls.length
-        ? Math.min(...halls.map((h) => Number(h.price)))
+        ? Math.min(...halls.map((h) => Number(h.price) || 0))
         : 0;
       const maxCapacity = halls.length
-        ? Math.max(...halls.map((h) => Number(h.maxTable)))
+        ? Math.max(...halls.map((h) => Number(h.maxTable) || 0))
         : 0;
-      return { ...v, minPrice, maxCapacity };
+      
+      // Map các field từ backend format sang ProductCard format
+      return {
+        ...v,
+        id: v.restaurantID || v.id, // Map restaurantID -> id
+        image: v.thumbnailURL || v.restaurantimages?.[0]?.imageURL || v.image, // Map thumbnailURL -> image
+        location: v.address?.fullAddress || v.address?.ward || v.location, // Map address.fullAddress -> location
+        rating: v.avgRating ? Number(v.avgRating) : v.rating, // Map avgRating -> rating
+        minPrice,
+        maxCapacity,
+      };
     });
   }, [venues]);
 
@@ -86,6 +97,7 @@ const ListResult = ({
 
         {/* SORT DROPDOWN */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Funnel size={18} color="#6B7280" />
           <span style={{ fontSize: 14, color: "#6B7280", fontWeight: 500 }}>
             Sắp xếp theo:
           </span>
@@ -94,19 +106,20 @@ const ListResult = ({
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               style={{
-                padding: "8px 14px",
-                border: "2px solid #e23359ff",
-                borderRadius: "999px",
+                padding: "10px 16px",
+                border: "2px solid #E11D48",
+                borderRadius: 8,
                 fontSize: 14,
-                fontWeight: 600,
+                fontWeight: 500,
                 background: "#fff",
-                color: "#e23359ff",
-                width: "fit-content",
+                color: "#E11D48",
+                minWidth: 200,
                 cursor: "pointer",
+                transition: "all 0.2s ease",
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                transition: "0.2s ease"
+                justifyContent: "space-between",
+                gap: 8,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "#FFF1F2";
@@ -115,7 +128,7 @@ const ListResult = ({
                 e.currentTarget.style.background = "#fff";
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span>{currentOption.label}</span>
               </div>
               <ChevronDown

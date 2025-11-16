@@ -52,7 +52,7 @@ const SearchResultList = () => {
         maxPrice: params.maxPrice || null,
       };
 
-      // Nếu thiếu hết các thông tin chính → không fetch
+      // Cho phép search chỉ với location (từ ward cards)
       if (
         !normalizedParams.location &&
         !normalizedParams.eventType &&
@@ -62,6 +62,9 @@ const SearchResultList = () => {
         console.log("⚠️ Thiếu dữ kiện tìm kiếm, bỏ qua API call");
         return;
       }
+
+      // Nếu chỉ có location (slug), vẫn cho phép search
+      // Backend sẽ tự động convert slug thành ward name
 
       hasFetched.current = true;
       console.log("🚀 [SearchResultList] Fetching:", normalizedParams);
@@ -78,10 +81,18 @@ const SearchResultList = () => {
 
   // ✅ Khi Redux có kết quả thì hiển thị ra filteredVenues
   useEffect(() => {
+    console.log("🔍 [SearchResultList] Status:", status);
+    console.log("🔍 [SearchResultList] SearchResults:", searchResults);
+    console.log("🔍 [SearchResultList] Is Array:", Array.isArray(searchResults));
+    console.log("🔍 [SearchResultList] Length:", searchResults?.length);
+    
     if (status === "succeeded" && Array.isArray(searchResults)) {
       console.log("✅ Cập nhật filteredVenues:", searchResults.length);
       setFilteredVenues(searchResults);
       setCurrentPage(1);
+    } else if (status === "succeeded" && !Array.isArray(searchResults)) {
+      console.warn("⚠️ SearchResults không phải array:", searchResults);
+      setFilteredVenues([]);
     }
   }, [status, searchResults]);
 
@@ -182,6 +193,14 @@ const SearchResultList = () => {
                   itemsPerPage={itemsPerPage}
                   totalItems={filteredVenues.length}
                 />
+              ) : status === "succeeded" && searchResults?.length === 0 ? (
+                <p className="text-center my-5 text-muted">
+                  Không tìm thấy nhà hàng nào phù hợp.
+                </p>
+              ) : status === "succeeded" && searchResults?.length > 0 && filteredVenues.length === 0 ? (
+                <p className="text-center my-5 text-warning">
+                  Có {searchResults.length} nhà hàng nhưng đã bị lọc bởi bộ lọc. Vui lòng điều chỉnh bộ lọc.
+                </p>
               ) : (
                 <p className="text-center my-5 text-muted">
                   Không tìm thấy nhà hàng nào phù hợp.

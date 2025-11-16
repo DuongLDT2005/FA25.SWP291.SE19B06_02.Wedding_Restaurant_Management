@@ -20,6 +20,7 @@ const {
   customer: CustomerModel,
   eventtype: EventTypeModel,
   user: UserModel,
+  address: AddressModel,
 } = db;
 
 class BookingDAO {
@@ -231,7 +232,14 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
+            include: [
+              {
+                model: RestaurantPartnerModel,
+                as: 'partner',
+                include: [{ model: UserModel, as: 'owner', attributes: { exclude: ['password'] } }]
+              },
+              { model: AddressModel, as: 'address' }
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },

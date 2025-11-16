@@ -16,6 +16,8 @@ import {
     selectFeaturedRestaurants,
     selectCurrentRestaurant,
     selectSearchResults,
+    selectStatus,
+    selectError,
 } from "../redux/slices/restaurantSlice";
 
 /**
@@ -28,10 +30,9 @@ export function useRestaurant() {
     const dispatch = useDispatch();
 
     // ====== Selectors (State + Memo hóa bằng shallowEqual) ======
-    const { list, status, error } = useSelector(
-        selectRestaurants,
-        shallowEqual
-    );
+    const list = useSelector(selectRestaurants, shallowEqual);
+    const status = useSelector(selectStatus, shallowEqual);
+    const error = useSelector(selectError, shallowEqual);
     const featured = useSelector(selectFeaturedRestaurants, shallowEqual);
     const current = useSelector(selectCurrentRestaurant, shallowEqual);
     const searchResults = useSelector(selectSearchResults, shallowEqual);
