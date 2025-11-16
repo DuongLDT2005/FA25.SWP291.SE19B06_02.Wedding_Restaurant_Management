@@ -1,6 +1,11 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import authRoutes from "./routes/authRoutes.js";
 import restaurantRoutes from "./routes/restaurantRoutes.js";
@@ -41,6 +46,17 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve static files from uploads directory (contracts, images, etc.)
+const uploadsDir = path.resolve(process.cwd(), 'server', 'uploads');
+console.log('📁 [app.js] Static files directory:', uploadsDir);
+app.use("/uploads", express.static(uploadsDir, {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    console.log('📄 [static] Serving file:', filePath);
+  }
+}));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
