@@ -287,7 +287,7 @@ function SignUpForOwner() {
           </div>
 
           <div className="signup-form-container">
-            <h1>Đăng Ký Chủ Nhà Hàng</h1>
+            <h1>Đăng Ký Đối Tác Nhà Hàng</h1>
 
             <form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
