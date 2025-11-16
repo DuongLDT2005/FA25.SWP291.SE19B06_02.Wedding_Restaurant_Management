@@ -29,7 +29,8 @@ module.exports = function(sequelize, DataTypes) {
     },
     maxTable: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: true,
+      field: "maxTable",
     },
     area: {
       type: DataTypes.DECIMAL(7,2),

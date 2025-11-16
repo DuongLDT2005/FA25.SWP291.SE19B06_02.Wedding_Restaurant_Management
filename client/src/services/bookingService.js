@@ -64,15 +64,15 @@ export function calculatePrice({ menu, tables = 1, services = [], promotion = nu
   const guests = tablesNum * Number(avgGuestsPerTable || 1);
   const menuTotal = menuPrice * tablesNum;
   const servicesTotal = (services || []).reduce((s, it) => s + Number(it.price || 0), 0);
-  const subtotal = menuTotal + servicesTotal + hallFeeNum;
+  const subtotal = menuTotal  + hallFeeNum;
   let discount = 0;
   if (promotion) {
     const promoValue = Number(promotion?.discountValue || 0);
       discount = Math.round((subtotal * promoValue) / 100);
-
   }
-  const vat = Math.round((subtotal - discount) * 0.08); // 8% VAT
-  const total = subtotal - discount + vat;
+  const subtotalAfterDiscount = subtotal - discount + servicesTotal;
+  const vat = Math.round((subtotalAfterDiscount) * 0.08); // 8% VAT
+  const total = subtotalAfterDiscount + vat;
   return {
     guests,
     menuTotal,

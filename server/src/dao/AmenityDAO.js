@@ -1,7 +1,8 @@
 import db from "../config/db.js";
 import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
-const { amenity, sequelize, restaurantamenities } = db;
+
+const { amenity, restaurantamenities } = db;
 
 class AmenityDAO {
     static async getAll() {
@@ -67,4 +68,5 @@ class AmenityDAO {
         });
     }
 }
+
 export default AmenityDAO;

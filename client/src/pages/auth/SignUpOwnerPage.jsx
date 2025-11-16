@@ -1,5 +1,6 @@
-import { uploadImageToCloudinary } from "../../services/uploadServices";
-import { useState } from "react";
+import { Link } from "react-router-dom";
+import { uploadImageToCloudinary } from "../../services/uploadServices"; 
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
@@ -19,12 +20,15 @@ function SignUpForOwner() {
     confirmPassword: "",
     licenseUrl: "",
   });
+
   const [file, setFile] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const [setSubmitting] = useState(false);
+  const [submitting,setSubmitting] = useState(false);
 
-  // Validate form
+  // =====================================
+  // VALIDATION
+  // =====================================
   const validateForm = () => {
     const e = {};
 
@@ -48,15 +52,17 @@ function SignUpForOwner() {
       e.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
-    // require license either via uploaded file or URL
-    if (!file && !form.licenseUrl) {
-      e.licenseUrl = "Bạn cần upload giấy phép kinh doanh.";
+    if (!file) {
+      e.licenseUrl = "Bạn cần upload giấy phép kinh doanh (PDF hoặc ảnh).";
     }
 
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
+  // =====================================
+  // HANDLE FILE
+  // =====================================
   const handleFileChange = (event) => {
     const selectedFile = event.target.files[0];
     setFile(selectedFile);
@@ -69,7 +75,10 @@ function SignUpForOwner() {
     }
   };
 
-  const handleSubmit = async (ev) => {
+  // =====================================
+  // SUBMIT FORM
+  // =====================================
+   const handleSubmit = async (ev) => {
     ev.preventDefault();
     if (!validateForm()) return;
     setSubmitting(true);
@@ -101,24 +110,11 @@ function SignUpForOwner() {
     } finally {
       setSubmitting(false);
     }
-
-    // try {
-    //   const secureUrl = await uploadImageToCloudinary(file);
-    //   console.log("Cloudinary URL:", secureUrl);
-    //   await signUpOwner({ name, phoneNumber, email, password, licenseUrl: secureUrl });
-
-    //   // 👉 Không dùng toast hay alert, chỉ reset form
-    //   setErrors({});
-    //   setPassword("");
-    //   setConfirmPassword("");
-    //   setFile(null);
-    // } catch (err) {
-    //   console.error(err);
-    //   // 👉 Có thể gán lỗi chung nếu muốn
-    //   setErrors({ form: "Có lỗi xảy ra, vui lòng thử lại." });
-    // }
   };
 
+  // =====================================
+  // UI (KHÔNG THAY ĐỔI)
+  // =====================================
   return (
     <AuthLayout>
       <Container
@@ -183,12 +179,14 @@ function SignUpForOwner() {
             background: #fff;
             border-radius: 0 15px 15px 0;
           }
+          
           @media (max-width: 768px) {
             .signup-form-container {
               border-radius: 0 0 15px 15px;
               padding: 25px 20px;
             }
           }
+
           .signup-form-container h1 {
             margin-bottom: 20px;
             font-size: 32px;
@@ -196,6 +194,7 @@ function SignUpForOwner() {
             color: #E11D48;
             font-weight: 700;
           }
+
           .signup-input {
             width: 100%;
             padding: 12px;
@@ -203,12 +202,14 @@ function SignUpForOwner() {
             border-radius: 6px;
             font-size: 15px;
           }
+
           .password-wrapper {
             position: relative;
             width: 100%;
             margin-bottom: 4px;
             height: auto;
           }
+
           .password-wrapper input {
             width: 100%;
             padding: 12px 40px 12px 12px;
@@ -218,6 +219,7 @@ function SignUpForOwner() {
             box-sizing: border-box;
             height: auto;
           }
+
           .toggle-password {
             position: absolute;
             top: 50%;
@@ -233,6 +235,7 @@ function SignUpForOwner() {
             z-index: 3;
             pointer-events: auto;
           }
+
           .signup-btn {
             width: 100%;
             background: #E11D48;
@@ -246,10 +249,12 @@ function SignUpForOwner() {
             cursor: pointer;
             transition: all 0.3s ease;
           }
+
           .signup-btn:hover {
             background: #c81344;
             transform: translateY(-2px);
           }
+
           .error-message {
             color: #E11D48;
             font-size: 16px;
@@ -259,16 +264,19 @@ function SignUpForOwner() {
             display: block;
             min-height: 18px;
           }
+
           .signup-link {
             text-align: center;
             font-size: 14px;
             color: #999;
           }
+
           .signup-link a {
             text-decoration: none;
             color: #f6a401;
             font-weight: 500;
           }
+
           .signup-link a:hover {
             text-decoration: underline;
           }
@@ -309,12 +317,11 @@ function SignUpForOwner() {
             }}
           >
             <h1>Đăng Ký Chủ Nhà Hàng</h1>
+
             <form onSubmit={handleSubmit}>
               <Form.Group className="mb-3">
                 <input
                   type="text"
-                  id="name"
-                  name="name"
                   placeholder="Họ và tên"
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={`form-control signup-input ${
@@ -349,8 +356,6 @@ function SignUpForOwner() {
               <Form.Group className="mb-3">
                 <input
                   type="email"
-                  id="email"
-                  name="email"
                   placeholder="Email"
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className={`form-control signup-input ${
@@ -365,7 +370,6 @@ function SignUpForOwner() {
               <Form.Group className="mb-3">
                 <div className="password-wrapper">
                   <input
-                    name="password"
                     type={showPassword ? "text" : "password"}
                     value={form.password}
                     className={`form-control ${
@@ -385,15 +389,12 @@ function SignUpForOwner() {
                       />
                     </span>
                 </div>
-                {errors.password && (
-                  <div className="error-message">{errors.password}</div>
-                )}
+                {errors.password && <div className="error-message">{errors.password}</div>}
               </Form.Group>
 
               <Form.Group className="mb-3">
                 <div className="password-wrapper">
                   <input
-                    name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     value={form.confirmPassword}
                     className={`form-control ${
@@ -403,6 +404,7 @@ function SignUpForOwner() {
                       setForm({ ...form, confirmPassword: e.target.value })
                     }
                     placeholder="Xác nhận mật khẩu"
+                   
                   />
                     <span
                       className="toggle-password"
@@ -419,7 +421,7 @@ function SignUpForOwner() {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <label htmlFor="licenseUrl" className="form-label">
+                <label className="form-label">
                   <p className="mb-2">Upload giấy phép cá nhân</p>
                 </label>
                 <div style={{ position: "relative", width: "100%" }}>
@@ -481,8 +483,10 @@ function SignUpForOwner() {
                 )}
               </Form.Group>
 
-              <button type="submit" className="signup-btn">
-                Đăng Ký
+              {errors.form && <div className="error-message">{errors.form}</div>}
+
+              <button type="submit" className="signup-btn" disabled={submitting}>
+                {submitting ? "Đang xử lý..." : "Đăng Ký"}
               </button>
               {errors.form && (
                 <div
@@ -499,6 +503,7 @@ function SignUpForOwner() {
                 Bạn đã có tài khoản? <a href="/">Đăng nhập</a>
               </p>
             </div>
+
             <div className="signup-link">
               <p>
                 Quay lại <a href="/">Trang chủ</a>

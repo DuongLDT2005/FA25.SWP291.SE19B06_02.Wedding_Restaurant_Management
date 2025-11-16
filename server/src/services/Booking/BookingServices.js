@@ -14,6 +14,8 @@ import UserDAO from "../../dao/userDao.js";
 import NotificationService from "../NotificationServices.js";
 import db from "../../config/db.js";
 import { notifyByStatusById } from "./BookingNotificationService.js";
+import PaymentService from "../payment/PaymentServices.js";
+import { paymentStatus } from "../../models/enums/paymentStatus.js";
 
 class BookingService {
   /**
@@ -57,14 +59,26 @@ class BookingService {
       throw new Error("Invalid time range: startTime must be before endTime.");
 
     // 2️⃣ Check trùng giờ sảnh
-    const overlapping = await BookingDAO.findByHallAndTime(hallID, eventDate, startTime, endTime);
+    const overlapping = await BookingDAO.findByHallAndTime(
+      hallID,
+      eventDate,
+      startTime,
+      endTime
+    );
     if (overlapping.length > 0)
-      throw new Error("This hall is already booked for the selected time range.");
+      throw new Error(
+        "This hall is already booked for the selected time range."
+      );
 
     // 3️⃣ Giới hạn đặt chỗ khách hàng
-    const customerBookings = await BookingDAO.findByCustomerAndDate(customerID, eventDate);
+    const customerBookings = await BookingDAO.findByCustomerAndDate(
+      customerID,
+      eventDate
+    );
     if (customerBookings.length >= 3)
-      throw new Error("Customer has reached the maximum number of bookings for this date.");
+      throw new Error(
+        "Customer has reached the maximum number of bookings for this date."
+      );
 
     // --- Pricing using BookingPricing engine ---
     // Load hall & menu prices
@@ -93,7 +107,11 @@ class BookingService {
         if (p && p.discountType === 'Free') {
           const freeSvcs = await PromotionDAO.getServicesByPromotionID(p.promotionID);
           for (const svc of freeSvcs) {
-            promoInputs.push({ discountType: 1, freeServiceID: svc.serviceID, minTable: p.minTable || 0 });
+            promoInputs.push({
+              discountType: 1,
+              freeServiceID: svc.serviceID,
+              minTable: p.minTable || 0,
+            });
           }
         }
       }
@@ -106,16 +124,18 @@ class BookingService {
     // Load info for selected services
     let allServices = [];
     if (Array.isArray(services) && services.length > 0) {
-      const ids = [...new Set(services.map((s) => s.serviceID).filter(Boolean))];
+      const ids = [
+        ...new Set(services.map((s) => s.serviceID).filter(Boolean)),
+      ];
       allServices = await Promise.all(ids.map((id) => ServiceDAO.getByID(id)));
       allServices = allServices.filter(Boolean);
     }
     await engine.applyPaidServices(allServices);
 
     // VAT rate from settings or default 8%
-    let vatRate = '0.08';
+    let vatRate = "0.08";
     try {
-      const vatSetting = await SystemSettingDAO.getByKey('VAT_RATE');
+      const vatSetting = await SystemSettingDAO.getByKey("VAT_RATE");
       if (vatSetting?.settingValue) vatRate = String(vatSetting.settingValue);
     } catch { }
     await engine.calculateTotals({ VAT_RATE: vatRate });
@@ -301,12 +321,47 @@ class BookingService {
       // Perform update via DAO (transaction-aware)
       await BookingDAO.updateBookingStatusWithTransaction(bookingID, status, { isChecked: setChecked, transaction: t });
 
-      // after commit, send notifications (best-effort)
+      // after commit, side-effects: notifications and payment scaffolding
       t.afterCommit(async () => {
         try {
           await notifyByStatusById(bookingID, status, { reason });
         } catch (e) {
           console.error(`Notification for status ${status} on booking ${bookingID} failed:`, e?.message || e);
+        }
+
+        // When booking moves to CONFIRMED, ensure there is a pending DEPOSIT payment created
+        if (status === BookingStatus.CONFIRMED) {
+          try {
+            const bk = await BookingDAO.getBookingById(bookingID);
+            if (bk) {
+              const restaurantID = bk?.hall?.restaurant?.restaurantID || bk?.restaurantID || null;
+              // deposit rate configurable via SystemSetting: DEPOSIT_RATE in [0,1)
+              let depositRate = 0.3;
+              try {
+                const setting = await SystemSettingDAO.getByKey("DEPOSIT_RATE");
+                const val = Number(setting?.settingValue);
+                if (!Number.isNaN(val) && val > 0 && val < 1) depositRate = val;
+              } catch {}
+              const total = Number(bk.totalAmount || 0);
+              const amount = Math.round(total * depositRate);
+              if (amount > 0) {
+                const existing = await PaymentService.getPaymentsByBooking(bookingID);
+                const hasDeposit = (existing || []).some(p => (p?.type === paymentStatus.type.DEPOSIT || p?.type === 0) && (p?.status === paymentStatus.status.PENDING || p?.status === paymentStatus.status.PROCESSING || p?.status === 0 || p?.status === 1));
+                if (!hasDeposit) {
+                  await PaymentService.createPayment({
+                    bookingID,
+                    restaurantID,
+                    amount,
+                    type: paymentStatus.type.DEPOSIT,
+                    paymentMethod: paymentStatus.paymentMethod.PAYOS,
+                    status: paymentStatus.status.PENDING,
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.error(`[BookingService] ensure deposit payment after CONFIRMED failed:`, e?.message || e);
+          }
         }
       });
 
@@ -318,7 +373,8 @@ class BookingService {
   
   // Partner accepts a booking (status: PENDING -> ACCEPTED)
   async acceptByPartner(bookingID, partnerID) {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     // Load full booking details (to get customer + hall)
     const booking = await BookingDAO.getBookingDetails(bookingID);
@@ -353,8 +409,9 @@ class BookingService {
   }
 
   // Partner rejects a booking (status: PENDING -> REJECTED)
-  async rejectByPartner(bookingID, partnerID, reason = '') {
-    if (!bookingID || !partnerID) throw new Error("Missing bookingID or partnerID.");
+  async rejectByPartner(bookingID, partnerID, reason = "") {
+    if (!bookingID || !partnerID)
+      throw new Error("Missing bookingID or partnerID.");
 
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
@@ -385,6 +442,36 @@ class BookingService {
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
     await this.changeStatus(bookingID, BookingStatus.CONFIRMED);
+    // Create a pending DEPOSIT payment record so we can track and reuse for PayOS
+    try {
+      const restaurantID = booking?.hall?.restaurant?.restaurantID || booking?.restaurantID || null;
+      // Get deposit rate from settings if present, else default 30%
+      let depositRate = 0.3;
+      try {
+        const setting = await SystemSettingDAO.getByKey("DEPOSIT_RATE");
+        const val = Number(setting?.settingValue);
+        if (!Number.isNaN(val) && val > 0 && val < 1) depositRate = val;
+      } catch {}
+      const total = Number(booking.totalAmount || 0);
+      const amount = Math.round(total * depositRate);
+      if (amount > 0) {
+        // Avoid duplicate deposit payment creation if one already exists pending/processing
+        const existing = await PaymentService.getPaymentsByBooking(bookingID);
+        const hasDeposit = (existing || []).some(p => (p?.type === paymentStatus.type.DEPOSIT || p?.type === 0) && (p?.status === paymentStatus.status.PENDING || p?.status === paymentStatus.status.PROCESSING || p?.status === 0 || p?.status === 1));
+        if (!hasDeposit) {
+          await PaymentService.createPayment({
+            bookingID,
+            restaurantID,
+            amount,
+            type: paymentStatus.type.DEPOSIT, // 0
+            paymentMethod: paymentStatus.paymentMethod.PAYOS, // 0
+            status: paymentStatus.status.PENDING, // 0
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[BookingService] create deposit payment error:", e?.message || e);
+    }
     // Expiration is handled by cron (bulkExpireConfirmedOlderThanBatch)
     return await BookingDAO.getBookingById(bookingID);
   }
@@ -395,8 +482,34 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
+  /**
+   * Webhook helper: map PayOS orderCode back to bookingID and set status to DEPOSITED
+   */
+  async deposit(orderCode) {
+    const bookingID = Number(orderCode);
+    if (!Number.isFinite(bookingID) || bookingID <= 0) throw new Error("Invalid orderCode");
+    return this.depositBooking(bookingID);
+  }
+
+  /**
+   * Webhook helper: update internal payment record by transaction reference if present
+   * newStatus matches internal paymentStatus enum values (e.g., 2 = SUCCESS, 3 = FAILED)
+   */
+  async updatePaymentStatusByOrderCode(orderCode, newStatus, transactionID = null) {
+    try {
+      if (transactionID) {
+        const pay = await PaymentService.getPaymentByTransactionRef(transactionID);
+        if (pay?.paymentID) {
+          await PaymentService.updatePaymentStatus(pay.paymentID, newStatus);
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error("updatePaymentStatusByOrderCode failed:", e?.message || e);
+    }
+    return false;
+  }
   // get user by customerID from restaurants getBookingsByPartnerId
 }
-
 
 export default new BookingService();

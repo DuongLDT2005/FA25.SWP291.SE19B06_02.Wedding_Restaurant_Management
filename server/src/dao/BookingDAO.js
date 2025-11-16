@@ -3,6 +3,9 @@ import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 import BookingStatus from '../models/enums/BookingStatus.js';
 import UserDAO from './userDao.js';
+import MenuDAO from './MenuDAO.js';
+import DishDAO from './DishDAO.js';
+import DishCategoryDAO from './DishCategoryDAO.js';
 // Models from Sequelize
 const {
   sequelize,
@@ -21,6 +24,7 @@ const {
   eventtype: EventTypeModel,
   user: UserModel,
   address: AddressModel, // Add AddressModel
+  dishcategory: DishCategoryModel,
 } = db;
 
 class BookingDAO {
@@ -87,7 +91,7 @@ class BookingDAO {
             model: RestaurantModel,
             as: 'restaurant',
             include: [
-              { model: RestaurantPartnerModel, as: 'restaurantPartner' },
+              { model: RestaurantPartnerModel, as: 'partner' },
               { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
             ]
           }]
@@ -96,7 +100,11 @@ class BookingDAO {
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,
@@ -113,6 +121,30 @@ class BookingDAO {
     });
 
     const dtos = toDTOs(rows);
+    // Fetch menu data using MenuDAO and add categories for each booking
+    for (const booking of dtos) {
+      if (booking.menuID) {
+        const menuData = await MenuDAO.getByID(booking.menuID, { includeDishes: false });
+        if (menuData) {
+          booking.menu = menuData;
+          // Add categories to menu based on booking dishes
+          const categoryMap = {};
+          booking.bookingdishes.forEach(bd => {
+            if (bd.dish && bd.dish.categoryID) {
+              if (!categoryMap[bd.dish.categoryID]) {
+                categoryMap[bd.dish.categoryID] = {
+                  categoryID: bd.dish.categoryID,
+                  name: bd.dish.category?.name || 'Unknown',
+                  dishes: []
+                };
+              }
+              categoryMap[bd.dish.categoryID].dishes.push(bd.dish);
+            }
+          });
+          booking.menu.categories = Object.values(categoryMap);
+        }
+      }
+    }
     // Replace addressID with fullAddress in restaurant
     dtos.forEach(booking => {
       if (booking.hall?.restaurant) {
@@ -129,11 +161,11 @@ class BookingDAO {
       include: [{
         model: RestaurantModel,
         as: 'restaurant',
-        include: [{ model: RestaurantPartnerModel, as: 'restaurantPartner' }]
+        include: [{ model: RestaurantPartnerModel, as: 'partner' }]
       }]
     });
     if (!hall) return null;
-    const partner = hall.restaurant?.restaurantPartner;
+    const partner = hall.restaurant?.partner;
     return toDTO(partner);
   }
 
@@ -244,16 +276,20 @@ class BookingDAO {
             model: RestaurantModel,
             as: 'restaurant',
             include: [
-              { model: RestaurantPartnerModel, as: 'restaurantPartner' },
+              { model: RestaurantPartnerModel, as: 'partner' },
               { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
             ]
           }]
         },
-        { model: MenuModel, as: 'menu' },
+        // Remove menu include - will fetch via MenuDAO
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,
@@ -268,6 +304,44 @@ class BookingDAO {
       ]
     });
     const dto = toDTO(row);
+    
+    // Fetch menu data using MenuDAO
+    if (dto?.menuID) {
+      try {
+        const allMenus = await MenuDAO.getByRestaurantID(dto.hall?.restaurant?.restaurantID).catch(() => []);
+        // Find the specific menu for this booking
+        dto.menu = allMenus.find(menu => menu.menuID === dto.menuID) || null;
+        
+        // Add categories to menu based on booking dishes
+        if (dto.menu && dto.bookingdishes?.length > 0) {
+          // Get all dish categories for this restaurant
+          const allCategories = await DishDAO.getCategoriesByRestaurantID(dto.hall?.restaurant?.restaurantID).catch(() => []);
+          
+          // Group dishes by categoryID from bookingdishes
+          const dishesByCategory = {};
+          dto.bookingdishes.forEach(bookingDish => {
+            if (bookingDish.dish?.categoryID) {
+              if (!dishesByCategory[bookingDish.dish.categoryID]) {
+                dishesByCategory[bookingDish.dish.categoryID] = [];
+              }
+              dishesByCategory[bookingDish.dish.categoryID].push(bookingDish.dish.name);
+            }
+          });
+          
+          // Create categories array for the menu
+          dto.menu.categories = allCategories
+            .filter(cat => dishesByCategory[cat.categoryID]) // Only include categories that have dishes in this booking
+            .map(cat => ({
+              ...cat,
+              dishes: dishesByCategory[cat.categoryID] || []
+            }));
+        }
+      } catch (error) {
+        console.error('Error fetching menu data:', error);
+        dto.menu = null;
+      }
+    }
+    
     // Replace addressID with fullAddress in restaurant
     if (dto?.hall?.restaurant) {
       dto.hall.restaurant.fullAddress = dto.hall.restaurant.address?.fullAddress;
@@ -276,10 +350,6 @@ class BookingDAO {
     return dto;
   }
 
-  /**
-   * Get all bookings that belong to restaurants owned by a given partner.
-   * This traverses hall -> restaurant -> restaurantPartner and filters by partner ID.
-   */
   static async getBookingsByPartner(partnerID) {
     if (!partnerID) return [];
     const rows = await BookingModel.findAll({
@@ -298,7 +368,7 @@ class BookingDAO {
             as: 'restaurant',
             include: [{
               model: RestaurantPartnerModel,
-              as: 'restaurantPartner',
+              as: 'partner',
               where: { restaurantPartnerID: partnerID },
               attributes: [] // we only need to filter; omit partner fields
             }]
@@ -334,7 +404,7 @@ class BookingDAO {
             include: [
               {
                 model: RestaurantPartnerModel,
-                as: 'restaurantPartner',
+                as: 'partner',
                 where: { restaurantPartnerID: partnerID },
               },
               { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
@@ -345,7 +415,11 @@ class BookingDAO {
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,

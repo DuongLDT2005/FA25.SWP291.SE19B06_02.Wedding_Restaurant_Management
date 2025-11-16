@@ -5,11 +5,11 @@ const initialState = {
   location: "",
   date: "",
   eventType: "Tiệc cưới",
-  tables: 1,
+  tables: null, 
   startTime: "10:30",
   endTime: "14:00",
   results: [],
-  status: "idle", // idle | loading | succeeded | failed
+  status: "idle",
   error: null,
 };
 

@@ -1,4 +1,4 @@
-## Download lib
+n## Download lib
 - bcryptjs
 - npm i bcryptjs
 - npm i jsonwebtoken
@@ -20,3 +20,4 @@ npm i cron
 
 # download mysql2 and dotenv
 npm install mysql2 dotenv
+npm install multer cloudinary dotenv

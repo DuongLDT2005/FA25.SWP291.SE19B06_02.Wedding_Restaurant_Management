@@ -49,21 +49,34 @@ export default function BookingActions({
             </Button>
             <Button
               as={Link}
-              to={`/booking/${bookingID}/payment`}
+              to={`/booking/${bookingID}`}
               state={{ booking: prepareAndStore() }}
               variant="outline-secondary"
               size="sm"
               className="flex-grow-1"
             >
-              <i className="bi bi-file-text me-1"></i>
-              Hợp đồng
+              <i className="bi bi-eye me-1"></i>
+              Xem chi tiết
             </Button>
           </>
         )}
 
         {status === BookingStatus.CONFIRMED && (
           <>
-            <Button variant="primary" onClick={onTransfer} size="sm" className="flex-grow-1">
+            <Button
+              as={Link}
+              to={`/booking/${bookingID}/payments`}
+              onClick={() => {
+                try {
+                  const data = prepareAndStore();
+                  sessionStorage.setItem(`booking_${bookingID}`, JSON.stringify(data));
+                  sessionStorage.setItem("currentBooking", JSON.stringify(data));
+                } catch {}
+              }}
+              variant="primary"
+              size="sm"
+              className="flex-grow-1"
+            >
               <i className="bi bi-credit-card me-1"></i>
               Đặt cọc
             </Button>
@@ -81,10 +94,24 @@ export default function BookingActions({
           </>
         )}
 
-        {status === BookingStatus.DEPOSITED && (
+        {(status === BookingStatus.EXPIRED || status === BookingStatus.COMPLETED) && (
           <Button variant="warning" onClick={onReview} size="sm" className="w-100">
             <i className="bi bi-star me-1"></i>
             Đánh giá
+          </Button>
+        )}
+
+        {(status === BookingStatus.REJECTED || status === BookingStatus.EXPIRED || status === BookingStatus.CANCELLED || status === BookingStatus.COMPLETED || status === BookingStatus.MANUAL_BLOCKED) && (
+          <Button
+            as={Link}
+            to={`/booking/${bookingID}`}
+            state={{ booking: prepareAndStore() }}
+            variant="outline-secondary"
+            size="sm"
+            className="w-100"
+          >
+            <i className="bi bi-eye me-1"></i>
+            Xem chi tiết
           </Button>
         )}
       </div>
@@ -137,7 +164,18 @@ export default function BookingActions({
 
       {status === BookingStatus.CONFIRMED && (
         <>
-          <Button variant="primary" onClick={onTransfer} >
+          <Button
+            as={Link}
+            to={`/booking/${bookingID}/payments`}
+            onClick={() => {
+              try {
+                const data = prepareAndStore();
+                sessionStorage.setItem(`booking_${bookingID}`, JSON.stringify(data));
+                sessionStorage.setItem("currentBooking", JSON.stringify(data));
+              } catch {}
+            }}
+            variant="primary"
+          >
             <i className="bi bi-credit-card me-2"></i>
             Đặt cọc
           </Button>
@@ -155,9 +193,35 @@ export default function BookingActions({
       )}
 
       {status === BookingStatus.DEPOSITED && (
+        <Button
+          as={Link}
+          to={`/booking/${bookingID}`}
+          state={{ booking: prepareAndStore() }}
+          variant="outline-secondary"
+          className="flex-grow-1"
+        >
+          <i className="bi bi-eye me-2"></i>
+          Xem chi tiết
+        </Button>
+      )}
+
+      {(status === BookingStatus.EXPIRED || status === BookingStatus.COMPLETED) && (
         <Button variant="warning" onClick={onReview} className="w-100">
           <i className="bi bi-star me-2"></i>
           Tạo đánh giá
+        </Button>
+      )}
+
+      {(status === BookingStatus.REJECTED || status === BookingStatus.EXPIRED || status === BookingStatus.CANCELLED || status === BookingStatus.COMPLETED || status === BookingStatus.MANUAL_BLOCKED) && (
+        <Button
+          as={Link}
+          to={`/booking/${bookingID}`}
+          state={{ booking: prepareAndStore() }}
+          variant="outline-secondary"
+          className="w-100"
+        >
+          <i className="bi bi-eye me-2"></i>
+          Xem chi tiết
         </Button>
       )}
     </div>

@@ -1,71 +1,88 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Card, Table, Row, Col, Form, Button, Badge, OverlayTrigger, Tooltip, Modal } from "react-bootstrap";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import PartnerLayout from "../../../layouts/PartnerLayout";
+import useAuth from "../../../hooks/useAuth";
+import { getPaymentsByPartner } from "../../../services/paymentService";
 
 export default function PartnerPaymentPage() {
+  const { user } = useAuth();
   const [status, setStatus] = useState("");
   const [type, setType] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [payments, setPayments] = useState([]);
 
-  // mock data
-  const payments = [
-    {
-      paymentID: 1,
-      bookingID: "BK001",
-      type: "DEPOSIT",
-      amount: 5000000,
-      method: "Bank Transfer",
-      status: "Confirmed",
-      transactionRef: "TXN12345",
-      paymentDate: "2025-10-01T10:15:00",
-      released: true,
-    },
-    {
-      paymentID: 2,
-      bookingID: "BK002",
-      type: "REMAINING",
-      amount: 10000000,
-      method: "Momo",
-      status: "Pending",
-      transactionRef: "TXN12346",
-      paymentDate: "2025-10-05T14:30:00",
-      released: false,
-    },
-    {
-      paymentID: 3,
-      bookingID: "BK003",
-      type: "DEPOSIT",
-      amount: 3000000,
-      method: "Cash",
-      status: "Failed",
-      transactionRef: "TXN12347",
-      paymentDate: "2025-09-28T19:00:00",
-      released: false,
-    },
-  ];
+  useEffect(() => {
+    const partnerID = user?.userID || user?.partner?.restaurantPartnerID || user?.id;
+    if (!partnerID) return;
+    let ignore = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const list = await getPaymentsByPartner(partnerID);
+        if (!ignore) setPayments(Array.isArray(list) ? list : []);
+      } catch (e) {
+        if (!ignore) setError(e?.message || "Tải dữ liệu thanh toán thất bại");
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [user]);
+
+  const TYPE_LABEL = {
+    0: "DEPOSIT",
+    1: "REMAINING",
+    2: "REFUND",
+  };
+
+  const METHOD_LABEL = {
+    0: "PAYOS",
+    1: "BANK_TRANSFER",
+    2: "CARD",
+    3: "CASH",
+  };
+
+  const STATUS_LABEL = {
+    0: "Pending",
+    1: "Processing",
+    2: "Confirmed",
+    3: "Failed",
+    4: "Refunded",
+    5: "Cancelled",
+  };
 
   const filtered = useMemo(() => {
+    const fromTs = fromDate ? new Date(fromDate).getTime() : null;
+    const toTs = toDate ? new Date(toDate).getTime() : null;
     return payments.filter((p) => {
+      const labelStatus = STATUS_LABEL[p?.status] || String(p?.status ?? "");
+      const labelType = TYPE_LABEL[p?.type] || String(p?.type ?? "");
+      const payDate = p?.paymentDate ? new Date(p.paymentDate).getTime() : null;
       return (
-        (!status || p.status === status) &&
-        (!type || p.type === type) &&
-        (!search || p.bookingID.toLowerCase().includes(search.toLowerCase())) &&
-        (!fromDate || p.paymentDate >= fromDate) &&
-        (!toDate || p.paymentDate <= toDate)
+        (!status || labelStatus === status) &&
+        (!type || labelType === type) &&
+        (!search || String(p?.bookingID ?? "").toLowerCase().includes(search.toLowerCase())) &&
+        (!fromTs || (payDate && payDate >= fromTs)) &&
+        (!toTs || (payDate && payDate <= toTs))
       );
     });
-  }, [status, type, fromDate, toDate, search]);
+  }, [payments, status, type, fromDate, toDate, search]);
 
-  const totalAmount = filtered.reduce((sum, p) => sum + p.amount, 0);
+  const totalAmount = filtered.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-  const formatCurrency = (n) => n.toLocaleString("vi-VN") + " ₫";
+  const formatCurrency = (n) => Number(n || 0).toLocaleString("vi-VN") + " ₫";
 
   const renderStatusBadge = (s) => {
     switch (s) {
@@ -73,8 +90,14 @@ export default function PartnerPaymentPage() {
         return <Badge bg="success">Đã xác nhận</Badge>;
       case "Pending":
         return <Badge bg="secondary">Chờ xử lý</Badge>;
+      case "Processing":
+        return <Badge bg="info">Đang xử lý</Badge>;
       case "Failed":
         return <Badge bg="danger">Thất bại</Badge>;
+      case "Refunded":
+        return <Badge bg="warning" text="dark">Hoàn tiền</Badge>;
+      case "Cancelled":
+        return <Badge bg="dark">Đã hủy</Badge>;
       default:
         return <Badge bg="light text-dark">{s}</Badge>;
     }
@@ -154,6 +177,8 @@ export default function PartnerPaymentPage() {
         {/* Bảng dữ liệu */}
         <Card>
           <Card.Body>
+            {loading && <div className="mb-2">Đang tải dữ liệu…</div>}
+            {error && <div className="text-danger mb-2">{error}</div>}
             <div className="table-responsive">
               <Table bordered hover responsive>
                 <thead>
@@ -169,28 +194,38 @@ export default function PartnerPaymentPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p) => (
+                  {filtered.map((p) => {
+                    const labelType = TYPE_LABEL[p?.type] || String(p?.type ?? "");
+                    const labelMethod = METHOD_LABEL[p?.paymentMethod] || String(p?.paymentMethod ?? "");
+                    const labelStatus = STATUS_LABEL[p?.status] || String(p?.status ?? "");
+                    return (
                     <tr key={p.paymentID}>
                       <td>
                         <Link to={`/partner/bookings/${p.bookingID}`} className="text-primary text-decoration-none">
                           {p.bookingID}
                         </Link>
                       </td>
-                      <td>{renderTypeBadge(p.type)}</td>
+                      <td>{renderTypeBadge(labelType)}</td>
                       <td className="text-end fw-bold">{formatCurrency(p.amount)}</td>
-                      <td>{p.method}</td>
-                      <td>{new Date(p.paymentDate).toLocaleString("vi-VN")}</td>
-                      <td>{renderStatusBadge(p.status)}</td>
+                      <td>{labelMethod}</td>
+                      <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleString("vi-VN") : "-"}</td>
+                      <td>{renderStatusBadge(labelStatus)}</td>
                       <td className="text-center">
                         {p.released ? <CheckCircle size={18} color="green" /> : <XCircle size={18} color="red" />}
                       </td>
                       <td>
-                        <Button size="sm" variant="info" onClick={() => handleShowDetail(p)}>
+                        <Button size="sm" variant="info" onClick={() => handleShowDetail({
+                          ...p,
+                          type: labelType,
+                          method: labelMethod,
+                          status: labelStatus,
+                        })}>
                           Xem
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </Table>
             </div>

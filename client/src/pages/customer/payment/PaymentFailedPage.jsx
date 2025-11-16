@@ -1,7 +1,7 @@
 // client/src/pages/payment/PaymentFailedPage.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import "../../styles/PaymentFailedStyles.css";
+import "../../../styles/PaymentFailedStyles.css";
 
 import FailedHeader from "./components/PaymentFailed/FailedHeader";
 import ErrorDetails from "./components/PaymentFailed/ErrorDetails";

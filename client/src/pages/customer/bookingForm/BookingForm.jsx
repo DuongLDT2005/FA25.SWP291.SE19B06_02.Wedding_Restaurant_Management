@@ -3,9 +3,7 @@ import CustomerInfoSection from "./CustomerInfoSection";
 import BookingInfoSection from "./BookingInforSection";
 // import BookingItemsTable from "./BookingItemsTable";
 
-const BookingForm = ({ restaurant, hall, user, searchData, promotions }) => {
-  const menus = restaurant?.menus || [];
-  const services = restaurant?.services || [];
+const BookingForm = ({menus, services, restaurant, hall, user, searchData, promotions }) => {
   return (
     <form className="space-y-6">
       <CustomerInfoSection user={user} />

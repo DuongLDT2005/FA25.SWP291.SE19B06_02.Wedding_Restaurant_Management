@@ -12,6 +12,7 @@ import useBooking from "../../../hooks/useBooking"
 import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant"
 import { fetchDishCategoriesByRestaurant } from "../../../redux/slices/additionRestaurantSlice"
 import { useDispatch } from "react-redux"
+import { useReview } from "../../../hooks/useReview"
 import "bootstrap/dist/css/bootstrap.min.css"
 
 function buildDetailPayload(b, categoriesMap) {
@@ -107,7 +108,8 @@ function BookingListPage() {
   const [error, setError] = useState("")
   const dispatch = useDispatch()
   const [categoriesMap, setCategoriesMap] = useState({})
-
+  const { createOne: createReview } = useReview()
+console.log(bookingsData);
   useEffect(() => {
     let ignore = false
     async function load() {
@@ -175,7 +177,8 @@ function BookingListPage() {
   async function handleCancel(b, note) {
     try {
       await customerCancel(b.bookingID, note)
-      setBookingsData(prev => prev.filter(it => it.bookingID !== b.bookingID))
+      // Keep cancelled bookings visible; just update status to 6 (CANCELLED)
+      setBookingsData(prev => prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 6 } : it))
     } catch (e) {
       alert(e.message || 'Hủy booking thất bại')
     }
@@ -185,8 +188,21 @@ function BookingListPage() {
     console.log("Transfer deposit for booking", b.bookingID)
   }
 
-  function handleReview(b, payload) {
-    console.log("Review booking", b.bookingID, payload)
+  async function handleReview(b, payload) {
+    try {
+      const restaurantID = b?.hall?.restaurant?.restaurantID || b?.restaurant?.restaurantID
+      if (!restaurantID) throw new Error("Thiếu restaurantID để tạo đánh giá")
+      // Map ReviewModal payload to API: content -> comment
+      await createReview(restaurantID, {
+        bookingID: b.bookingID,
+        rating: payload?.rating,
+        comment: payload?.content || "",
+      })
+      alert("Gửi đánh giá thành công!")
+      // Optional: you could refresh reviews here if showing inline
+    } catch (e) {
+      alert(e.message || "Gửi đánh giá thất bại")
+    }
   }
 
   function handleOpenContract(b) {
@@ -247,7 +263,7 @@ function BookingListPage() {
                   <div style={{ textAlign: 'center', padding: '40px 20px' }}>Đang tải dữ liệu...</div>
                 ) : error ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px', color: '#dc2626' }}>{error}</div>
-                ) : bookingsData.filter(b => b.status !== 6).length === 0 ? (
+                ) : bookingsData.length === 0 ? (
                   <div style={{
                     background: '#ffffff',
                     border: '2px dashed #e5e7eb',
@@ -290,7 +306,7 @@ function BookingListPage() {
                     </p>
                   </div>
                 ) : (
-                  bookingsData.filter(b => b.status !== 6).map((b) => (
+                  bookingsData.map((b) => (
                     <div key={b.bookingID} style={{
                       marginBottom: '24px',
                       borderRadius: '12px',
@@ -308,6 +324,7 @@ function BookingListPage() {
                       }}>
                       <BookingCard
                         booking={b}
+                        categoriesMap={categoriesMap}
                         onConfirm={handleConfirm}
                         onCancel={handleCancel}
                         onTransfer={handleTransfer}

@@ -1,4 +1,4 @@
-const API_BASE = "/api/bookings";
+const API_BASE = "/api/payments";
 
 /**
  * Create a PayOS checkout link for a booking's deposit
@@ -8,7 +8,7 @@ const API_BASE = "/api/bookings";
  */
 export async function createPayOSCheckout(bookingID, buyer = {}) {
   if (!bookingID) throw new Error("bookingID is required");
-  const res = await fetch(`${API_BASE}/${bookingID}/payment/payos`, {
+  const res = await fetch(`${API_BASE}/payos/checkout/${bookingID}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     credentials: "include",
@@ -32,7 +32,7 @@ export async function createPayOSCheckout(bookingID, buyer = {}) {
  */
 export async function getPayOSStatus(orderCode) {
   if (!orderCode) throw new Error("orderCode is required");
-  const res = await fetch(`${API_BASE}/payment/payos/status/${orderCode}`, {
+  const res = await fetch(`${API_BASE}/payos/status/${orderCode}`, {
     method: "GET",
     headers: { Accept: "application/json" },
     credentials: "include",
@@ -42,4 +42,23 @@ export async function getPayOSStatus(orderCode) {
     throw new Error(json?.message || "Get PayOS status failed");
   }
   return json;
+}
+
+/**
+ * Fetch all payments across restaurants owned by a partner
+ * Backend: GET /api/payments/partner/:partnerID
+ * Returns: { success, data: Payment[] }
+ */
+export async function getPaymentsByPartner(partnerID) {
+  if (!partnerID) throw new Error("partnerID is required");
+  const res = await fetch(`${API_BASE}/partner/${partnerID}`, {
+    method: "GET",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json?.success === false) {
+    throw new Error(json?.message || "Get partner payments failed");
+  }
+  return json?.data ?? [];
 }

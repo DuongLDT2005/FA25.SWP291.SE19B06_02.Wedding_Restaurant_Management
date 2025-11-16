@@ -1,4 +1,5 @@
 const Sequelize = require('sequelize');
+const { default: restaurant } = require('./restaurant.cjs');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('review', {
     reviewID: {
@@ -30,11 +31,16 @@ module.exports = function(sequelize, DataTypes) {
     comment: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    restaurantID: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      
     }
   }, {
     sequelize,
     tableName: 'review',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "PRIMARY",

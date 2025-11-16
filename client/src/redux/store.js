@@ -22,6 +22,6 @@ const store = configureStore({
     payment: paymentReducer,
     reviews: reviewReducer,
   },
-})
+});
 
-export default store
+export default store;

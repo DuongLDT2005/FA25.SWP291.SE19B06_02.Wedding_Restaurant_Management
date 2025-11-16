@@ -4,10 +4,10 @@ const router = express.Router();
 router.get("/top_booked", RestaurantController.getTopBookedRestaurants);
 router.get("/top_rated", RestaurantController.getTopRatedRestaurants);
 
+router.get("/search", RestaurantController.search);
 router.get("/", RestaurantController.getAll);
 router.get("/available", RestaurantController.getAvailable);
 router.get("/partner/:partnerID", RestaurantController.getByPartner);
-router.get("/search", RestaurantController.search);
 router.get("/:id", RestaurantController.getOne);
 
 router.post("/", RestaurantController.create);

@@ -48,10 +48,16 @@ const SubmitBookingButton = () => {
         quantity: s.quantity || 1,
       }));
 
-      // Dish IDs (optional) - keep empty if not real IDs available
-      const dishIDs = (booking?.dishes || [])
-        .map((d) => d.dishID || d.id)
-        .filter((v) => Number.isInteger(Number(v)));
+      // Dish IDs: prefer bookingInfo.dishIDs, fallback to derive from dishes array
+      let dishIDs = Array.isArray(booking?.bookingInfo?.dishIDs) ? booking.bookingInfo.dishIDs : [];
+      if (!dishIDs.length) {
+        dishIDs = (booking?.dishes || [])
+          .map(d => d.dishID ?? d.id)
+          .filter(id => Number.isInteger(Number(id)))
+          .map(Number);
+      }
+      // ensure uniqueness
+      dishIDs = Array.from(new Set(dishIDs));
 
       // Provide default times if not yet collected in UI to satisfy backend validation
       const startTime = booking?.bookingInfo?.startTime || "18:00:00";
@@ -72,6 +78,8 @@ const SubmitBookingButton = () => {
         services: servicesForServer,
         promotionIDs,
       };
+
+      console.log('Booking data to send:', extra);
 
       // Basic client-side validations
       const missing = [];

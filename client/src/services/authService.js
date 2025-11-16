@@ -1,4 +1,6 @@
-const API_URL = "/api/auth";
+import axios from "../api/axios";
+
+const API_URL = "/auth"; // axios baseURL = /api → tổng là /api/auth
 
 /* -------------------- LOGIN -------------------- */
 export const login = async ({ email, password, tempToken }) => {
@@ -9,120 +11,85 @@ export const login = async ({ email, password, tempToken }) => {
     body.password = password;
   }
   
-  const res = await fetch(`${API_URL}/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    credentials: "include",
+  const res = await axios.post(`${API_URL}/login`, body, {
+    withCredentials: true,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || data?.error || "Đăng nhập thất bại");
   
   // Store token in localStorage if returned in response (for OTP login)
-  if (data.token) {
-    localStorage.setItem('token', data.token);
+  if (res.data.token) {
+    localStorage.setItem('token', res.data.token);
   }
   
-  return data;
+  return res.data;
 };
 
 /* -------------------- GET CURRENT USER -------------------- */
 export const getCurrentUser = async () => {
-  const res = await fetch(`${API_URL}/me`, {
-    method: "GET",
-    credentials: "include",
+  const res = await axios.get(`${API_URL}/me`, {
+    withCredentials: true,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Không thể lấy thông tin user");
-  return data;
+  return res.data;
 };
 
 /* -------------------- LOGOUT -------------------- */
 export const logout = async () => {
   try {
-    const res = await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
-
-    // Nếu backend chưa có endpoint logout, ta vẫn xử lý local
-    if (!res.ok) {
-      console.warn("[authService] Logout API không khả dụng hoặc trả lỗi, dùng fallback local.");
-    }
+    await axios.post(`${API_URL}/logout`, {}, { withCredentials: true });
 
     // Xóa token local nếu có
     localStorage.removeItem("token");
 
-    // Không ném lỗi để frontend không crash
-    return { message: "Đăng xuất thành công (local fallback)" };
+    return { message: "Đăng xuất thành công" };
   } catch (err) {
     console.warn("[authService] Lỗi logout:", err.message);
-
-    // Dù lỗi cũng vẫn xóa token để user thực sự đăng xuất
     localStorage.removeItem("token");
-    return { message: "Đăng xuất thành công (local fallback)" };
+    return { message: "Đăng xuất (fallback)" };
   }
 };
 
 /* -------------------- FORGOT PASSWORD -------------------- */
 export const forgotPassword = async (email) => {
-  const res = await fetch(`${API_URL}/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Yêu cầu thất bại");
-  return data;
+  const res = await axios.post(`${API_URL}/forgot-password`, 
+    { email },
+    { withCredentials: true }
+  );
+  return res.data;
 };
 
 /* -------------------- VERIFY OTP -------------------- */
 export const verifyOtp = async ({ email, otp }) => {
-  const res = await fetch(`${API_URL}/verify-otp`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, otp }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Xác minh OTP thất bại");
-  return data; // { message, tempToken }
+  const res = await axios.post(`${API_URL}/verify-otp`, 
+    { email, otp },
+    { withCredentials: true }
+  );
+  return res.data;
 };
 
 /* -------------------- RESET PASSWORD -------------------- */
 export const resetPassword = async ({ email, newPassword, tempToken }) => {
-  const res = await fetch(`${API_URL}/reset-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, newPassword, tempToken }),
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Đặt lại mật khẩu thất bại");
-  return data;
+  const res = await axios.post(`${API_URL}/reset-password`, 
+    { email, newPassword, tempToken },
+    { withCredentials: true }
+  );
+  return res.data;
 };
 
-/* -------------------- SIGNUP OWNER (PARTNER) -------------------- */
-export const signUpPartner = async ({ name, email, password, phone, licenseUrl }) => {
-  const res = await fetch(`${API_URL}/signup/owner`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fullName: name,
-      email,
-      password,
-      phone,
-      licenseUrl,
-    }),
-    credentials: "include",
-  });
+/* -------------------- SIGNUP OWNER (PARTNER) - UPLOAD FILE -------------------- */
+export const signUpPartner = async (formData) => {
+  try {
+    const res = await axios.post(`${API_URL}/signup/owner`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      withCredentials: true,
+    });
 
-  const result = await res.json();
-  if (!res.ok) throw new Error(result?.error || result?.message || "Đăng ký Partner thất bại");
-  return result;
-};
-
+    return res.data;
+  } catch (error) {
+    console.error("Lỗi đăng ký Partner:", error);
+    throw error;
+  }
+}
 /* -------------------- SIGNUP CUSTOMER -------------------- */
 export const signUpCustomer = async ({
   fullname,
@@ -132,58 +99,54 @@ export const signUpCustomer = async ({
   email,
   password,
 }) => {
-  const res = await fetch(`${API_URL}/signup/customer`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fullName: fullname,
-      weddingRole,
-      partnerName: partner,
-      phone,
-      email,
-      password,
-    }),
-    credentials: "include",
-  });
+  try {
+    const res = await axios.post(
+      `${API_URL}/signup/customer`,
+      {
+        fullName: fullname,
+        weddingRole,
+        partnerName: partner,
+        phone,
+        email,
+        password,
+      },
+      { withCredentials: true }
+    );
 
-  const result = await res.json();
+    return res.data;
+  } catch (error) {
+    const result = error.response?.data;
+    const status = error.response?.status;
 
-  if (!res.ok) {
-    const error = new Error(result?.error || result?.message || "Đăng ký thất bại");
-    error.status = res.status;
-    error.data = result;
+    const err = new Error(result?.error || result?.message || "Đăng ký thất bại");
+    err.status = status;
+    err.data = result;
 
     // Nếu backend trả 409 Conflict (email trùng) thì đính kèm thông tin email để frontend hiện lỗi phù hợp
-    if (res.status === 409) {
-      error.duplicateField = result?.field || "email";
-      error.duplicateValue = result?.value || email;
+    if (status === 409) {
+      err.duplicateField = result?.field || "email";
+      err.duplicateValue = result?.value || email;
     }
 
-    throw error;
+    throw err;
   }
-
-  return result;
 };
 
-/* -------------------- SAVE PARTNER (upload license to backend) -------------------- */
-export async function savePartner({ name, phoneNumber, email, password, licenseUrl }) {
-  const apiUrl = `${API_URL}/signup/owner`;
-
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fullName: name,
-      phone: phoneNumber,
-      email,
-      password,
-      licenseUrl,
-    }),
+/* -------------------- SAVE PARTNER (Nếu sau này cần dùng) -------------------- */
+export async function savePartner({
+  name,
+  phoneNumber,
+  email,
+  password,
+  licenseUrl,
+}) {
+  const res = await axios.post(`${API_URL}/signup/owner`, {
+    fullName: name,
+    phone: phoneNumber,
+    email,
+    password,
+    licenseUrl,
   });
 
-  if (!response.ok) {
-    throw new Error("Lưu ảnh vào hệ thống thất bại!");
-  }
-
-  return await response.json();
-}
+  return res.data;
+};

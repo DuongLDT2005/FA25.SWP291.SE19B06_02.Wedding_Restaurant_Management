@@ -8,6 +8,11 @@ const router = Router();
 // ======================
 // 📌 Booking CRUD Routes
 // ======================
+
+// ⚠️ Route customer phải đặt TRÊN ":id"
+router.get("/customer/:customerID", BookingController.getBookingsByCustomerId);
+router.get("/restaurant/:restaurantID", BookingController.getBookingsByRestaurantId);
+
 router.get("/", BookingController.getAllBookings);
 // Authenticated customer gets own bookings
 router.get('/me', authenticateJWT, ensureCustomer, BookingController.getMyBookings);
@@ -42,7 +47,7 @@ router.patch('/:id/customer/cancel', authenticateJWT, ensureCustomer, (req, res,
   req.body = req.body || {};
   req.body.status = BookingStatus.CANCELLED;
   next();
-}, BookingController.rejectByPartner);
+}, BookingController.updateBookingStatus);
 
 router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res, next) => {
   req.body = req.body || {};
@@ -53,18 +58,14 @@ router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res
 // ======================
 // 💳 PayOS Payment Routes
 // ======================
-
-// ✅ Tạo link thanh toán PayOS
 router.post(
   "/:bookingID/payment/payos",
   authenticateJWT,
   PaymentController.createPayosCheckout
 );
 
-// ✅ Webhook nhận callback từ PayOS
 router.post("/payment/payos/webhook", PaymentController.payosWebhook);
 
-// ✅ Kiểm tra trạng thái thanh toán theo orderCode
 router.get(
   "/payment/payos/status/:orderCode",
   authenticateJWT,

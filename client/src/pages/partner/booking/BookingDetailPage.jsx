@@ -74,6 +74,21 @@ export default function BookingDetailPage() {
   const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("vi-VN") + " " + new Date(dateStr).toLocaleTimeString("vi-VN");
 
   const baseData = bookingDetail;
+  // Build dish categories from bookingdishes if available (must be before any early return)
+  const dishCategories = useMemo(() => {
+    const map = new Map();
+    const list = baseData?.bookingdishes || [];
+    for (const bd of list) {
+      const d = bd?.dish || {};
+      const cat = d?.category || {};
+      const cid = d?.categoryID || cat?.categoryID;
+      const cname = cat?.name || `Danh mục ${cid ?? "-"}`;
+      if (!cid) continue;
+      if (!map.has(cid)) map.set(cid, { categoryID: cid, name: cname, dishes: [] });
+      map.get(cid).dishes.push(d?.name || `Món #${d?.dishID}`);
+    }
+    return Array.from(map.values());
+  }, [baseData?.bookingdishes]);
   // Services total: prefer bookingservices from server, fallback to normalized services
   const servicesTotal = (baseData?.bookingservices?.length
     ? baseData.bookingservices.reduce((sum, bs) => sum + toNum(bs.appliedPrice ?? bs.service?.basePrice) * toNum(bs.quantity ?? 1), 0)
@@ -185,12 +200,18 @@ export default function BookingDetailPage() {
               {/* Đã bỏ phần "Các đặt tiệc khác của khách này" */}
 
               <h5 className="fw-bold text-primary mt-3 mb-2">Danh sách món ăn</h5>
-              {baseData.dishCategories?.map((cat, idx) => (
-                <div key={idx} className="mb-2">
-                  <div className="text-secondary fw-semibold">{cat.name}</div>
-                  <ul className="mb-1 ms-3">{cat.dishes?.map((d, i) => <li key={i}>{d}</li>)}</ul>
-                </div>
-              )) || <div className="text-muted">Không có món được chọn</div>}
+              {dishCategories.length > 0 ? (
+                dishCategories.map((cat, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="text-secondary fw-semibold">{cat.name}</div>
+                    <ul className="mb-1 ms-3">
+                      {cat.dishes.map((d, i) => <li key={i}>{d}</li>)}
+                    </ul>
+                  </div>
+                ))
+              ) : (
+                <div className="text-muted">Không có món được chọn</div>
+              )}
 
               <h5 className="fw-bold text-primary mt-3 mb-2">Dịch vụ</h5>
               <Table bordered hover size="sm" className="mb-0 align-middle">

@@ -26,7 +26,8 @@ class ReviewService {
       }
     }
 
-    const created = await ReviewDAO.createReview({ bookingID, customerID: actorUserId, rating, comment });
+    const derivedRestaurantID = booking.hall?.restaurant?.restaurantID ?? booking.restaurantID ?? restaurantID ?? null;
+    const created = await ReviewDAO.createReview({ bookingID, customerID: actorUserId, rating, comment, restaurantID: derivedRestaurantID });
     return created;
   }
 
@@ -35,19 +36,10 @@ class ReviewService {
   }
 
   static async listForRestaurant(restaurantID) {
-    // get bookings for the restaurant (may be heavy; optimize later with DAO if needed)
-    const all = await BookingDAO.getAllBookings();
-    const bookingIDs = (all || [])
-      .filter((b) => b.hall?.restaurant?.restaurantID && String(b.hall.restaurant.restaurantID) === String(restaurantID))
-      .map((b) => b.bookingID);
-
-    const reviews = [];
-    if (bookingIDs.length === 0) return reviews;
-    for (const id of bookingIDs) {
-      const rs = await ReviewDAO.getByBookingID(id);
-      if (Array.isArray(rs) && rs.length > 0) reviews.push(...rs);
-    }
-    return reviews;
+    // Prefer direct filtering by review.restaurantID; fallback to join method if empty
+    const direct = await ReviewDAO.getByRestaurantID(restaurantID);
+    if (direct && direct.length) return direct;
+    return await ReviewDAO.getForRestaurantWithDetails(restaurantID);
   }
 
   static async updateReview(reviewID, patch, actorUserId, isAdmin = false) {

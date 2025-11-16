@@ -225,30 +225,26 @@ CREATE TABLE PromotionService (
 -- Table Booking
 CREATE TABLE Booking (
     bookingID INT AUTO_INCREMENT PRIMARY KEY,
-    customerID INT NULL,
-    eventTypeID INT NULL,
+    customerID INT NOT NULL,
+    eventTypeID INT NOT NULL,
     hallID INT NOT NULL,
-    menuID INT NULL,
-	eventDate DATE NOT NULL,
+    menuID INT NOT NULL,
+    eventDate DATE NOT NULL,
     startTime TIME NOT NULL,
     endTime TIME NOT NULL,
     tableCount INT DEFAULT 1 CHECK(tableCount > 0),
     specialRequest VARCHAR(255),
-    status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0: PENDING, 1: ACCEPTED, 2: REJECTED, 3: CONFIRMED, 4: DEPOSITED, 5: EXPIRED, 6: CANCELLED, 7: COMPLETED, 8: MANUAL_BLOCKED
-    originalPrice DECIMAL(15,2) DEFAULT 0,
+    status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0: PENDING, 1: ACCEPTED, 2: REJECTED, 3: CONFIRMED, 4: DEPOSITED, 5: EXPIRED, 6: CANCELLED, 7: COMPLETED
+    originalPrice DECIMAL(15,2) NOT NULL,
     discountAmount DECIMAL(15,2) DEFAULT 0,
-    VAT DECIMAL(15,2) DEFAULT 0,
-    totalAmount DECIMAL(15,2) DEFAULT 0,
+    VAT DECIMAL(15,2) NOT NULL,
+    totalAmount DECIMAL(15,2) NOT NULL,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    isChecked BIT DEFAULT 0,
-    FOREIGN KEY (customerID) REFERENCES Customer(customerID) 
-        ON UPDATE CASCADE ON DELETE SET NULL,
-    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) 
-        ON UPDATE CASCADE ON DELETE SET NULL,
-    FOREIGN KEY (hallID) REFERENCES Hall(hallID) 
-        ON UPDATE CASCADE ON DELETE CASCADE,
-    FOREIGN KEY (menuID) REFERENCES Menu(menuID) 
-        ON UPDATE CASCADE ON DELETE SET NULL
+    isChecked BIT DEFAULT 0, -- 0: UNCHECKED, 1: CHECKED
+    FOREIGN KEY (customerID) REFERENCES Customer(customerID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (eventTypeID) REFERENCES EventType(eventTypeID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (hallID) REFERENCES Hall(hallID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (menuID) REFERENCES Menu(menuID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Table BookingDish
@@ -578,3 +574,257 @@ INSERT INTO Amenity (name) VALUES
 ('Thảm đỏ lối vào'),
 ('Hoa tươi bàn tiệc cơ bản'),
 ('Thực đơn in sẵn trên bàn');
+
+
+
+-- ===========================================================
+-- USERS
+-- ===========================================================
+INSERT INTO User (email, fullName, phone, password, avatarURL, role, status)
+VALUES
+('admin@weddinghub.vn', 'WeddingHub Admin', '0909000000', 'hashed_admin_pw', NULL, 2, 1),
+('partner.themira@gmail.com', 'Trần Minh Quân', '0905123456', 'hashed_pw_mira', 'https://randomuser.me/api/portraits/men/20.jpg', 1, 1),
+('partner.lamour@gmail.com', 'Lê Ngọc Diễm', '0906789123', 'hashed_pw_lamour', 'https://randomuser.me/api/portraits/women/40.jpg', 1, 1),
+('ngoc.bride@gmail.com', 'Phạm Ngọc Anh', '0902123123', 'hashed_pw_bride', 'https://randomuser.me/api/portraits/women/12.jpg', 0, 1),
+('duc.groom@gmail.com', 'Nguyễn Văn Đức', '0903678456', 'hashed_pw_groom', 'https://randomuser.me/api/portraits/men/5.jpg', 0, 1);
+
+-- ===========================================================
+-- CUSTOMER
+-- ===========================================================
+INSERT INTO Customer (customerID, weddingRole, partnerName)
+VALUES
+(4, 0, 'Nguyễn Văn Đức'),  -- Bride
+(5, 1, 'Phạm Ngọc Anh');   -- Groom
+
+-- ===========================================================
+-- RESTAURANT PARTNER
+-- ===========================================================
+INSERT INTO RestaurantPartner (restaurantPartnerID, licenseUrl, status, commissionRate)
+VALUES
+(2, 'https://example.com/licenses/themira.pdf', 3, 0.10),
+(3, 'https://example.com/licenses/lamour.pdf', 3, 0.12);
+
+-- ===========================================================
+-- ADDRESS
+-- ===========================================================
+INSERT INTO Address (number, street, ward)
+VALUES
+('368', 'Đại lộ Bình Dương', 'Phú Cường, Thủ Dầu Một'),
+('25A', 'Nguyễn Văn Linh', 'Tân Phong, Quận 7'),
+('12', 'Lý Thường Kiệt', 'Hải Châu, Đà Nẵng');
+
+-- ===========================================================
+-- RESTAURANT
+-- ===========================================================
+INSERT INTO Restaurant (restaurantPartnerID, name, phone, description, hallCount, addressID, thumbnailURL, avgRating, totalReviews, status)
+VALUES
+(2, 'The Mira Wedding Hall', '0905888999', 'Không gian sang trọng, phù hợp tiệc cưới cao cấp.', 2, 1, 'https://images.unsplash.com/photo-1562059390-a761a084768e', 4.8, 126, 1),
+(3, 'L’amour Wedding & Events', '0906888123', 'Phong cách châu Âu hiện đại, lãng mạn.', 3, 2, 'https://images.unsplash.com/photo-1604328698692-f76ea9498e76', 4.6, 89, 1);
+
+-- ===========================================================
+-- RESTAURANT IMAGES
+-- ===========================================================
+INSERT INTO RestaurantImage (restaurantID, imageURL)
+VALUES
+(1, 'https://images.unsplash.com/photo-1528605248644-14dd04022da1'),
+(1, 'https://images.unsplash.com/photo-1562059390-a761a084768e'),
+(2, 'https://images.unsplash.com/photo-1591348277844-4a3cfb07b3c1');
+
+-- ===========================================================
+-- RESTAURANT AMENITY
+-- ===========================================================
+INSERT INTO RestaurantAmenities (restaurantID, amenityID)
+VALUES
+(1, 1), (1, 2), (1, 5),
+(2, 1), (2, 3), (2, 4), (2, 6);
+
+-- ===========================================================
+-- HALLS
+-- ===========================================================
+INSERT INTO Hall (restaurantID, name, description, minTable, maxTable, area, price)
+VALUES
+(1, 'Sảnh Diamond', 'Sảnh lớn sang trọng, 80 bàn.', 20, 80, 800.00, 12000000.00),
+(1, 'Sảnh Ruby', 'Không gian ấm cúng, 40 bàn.', 10, 40, 400.00, 8000000.00),
+(2, 'Sảnh Paris', 'Phong cách Pháp lãng mạn.', 15, 60, 600.00, 9500000.00),
+(2, 'Sảnh Venice', 'Không gian mở hồ nước.', 10, 50, 700.00, 10500000.00);
+
+-- ===========================================================
+-- HALL IMAGE
+-- ===========================================================
+INSERT INTO HallImage (hallID, imageURL)
+VALUES
+(1, 'https://images.unsplash.com/photo-1618220039448-3d0b9233e9a2'),
+(2, 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb'),
+(3, 'https://images.unsplash.com/photo-1556912998-6e6b2b1a0f2b'),
+(4, 'https://images.unsplash.com/photo-1575936123452-b67c3203c357');
+
+-- ===========================================================
+-- RESTAURANT EVENT TYPES
+-- ===========================================================
+INSERT INTO RestaurantEventType (restaurantID, eventTypeID)
+VALUES
+(1, 1), (1, 2),
+(2, 1), (2, 3);
+
+-- ===========================================================
+-- DISH CATEGORY
+-- ===========================================================
+INSERT INTO DishCategory (restaurantID, name, requiredQuantity)
+VALUES
+(1, 'Khai vị', 1),
+(1, 'Món chính', 2),
+(1, 'Tráng miệng', 1),
+(2, 'Khai vị', 1),
+(2, 'Món chính', 2),
+(2, 'Tráng miệng', 1);
+
+-- ===========================================================
+-- DISHES
+-- ===========================================================
+INSERT INTO Dish (restaurantID, name, categoryID, imageURL)
+VALUES
+(1, 'Tôm hấp bia', 1, 'https://images.unsplash.com/photo-1613145993481-84c29370b3f8'),
+(1, 'Bò nướng tiêu đen', 2, 'https://images.unsplash.com/photo-1613145993481-84c29370b3f8'),
+(1, 'Lẩu hải sản', 2, 'https://images.unsplash.com/photo-1571167375749-10a1f3c2d9b6'),
+(1, 'Chè hạt sen', 3, 'https://images.unsplash.com/photo-1606755962773-0e6b22b9fa2e'),
+(2, 'Súp bào ngư', 4, 'https://images.unsplash.com/photo-1617196034796-4b7fdbbc66cc'),
+(2, 'Cá hồi nướng bơ tỏi', 5, 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f'),
+(2, 'Gà hấp muối', 5, 'https://images.unsplash.com/photo-1611171710749-1dfcf9e3c4b6'),
+(2, 'Trái cây tươi', 6, 'https://images.unsplash.com/photo-1565958011705-44e21152d46e');
+
+-- ===========================================================
+-- MENU
+-- ===========================================================
+INSERT INTO Menu (restaurantID, name, price, imageURL)
+VALUES
+(1, 'Set Menu Premium A', 3500000, 'https://images.unsplash.com/photo-1562967916-eb82221dfb36'),
+(2, 'Set Menu Deluxe B', 4000000, 'https://images.unsplash.com/photo-1543353071-873f17a7a088');
+
+-- ===========================================================
+-- MENU - DISH MAPPING
+-- ===========================================================
+INSERT INTO DishMenu (menuID, dishID)
+VALUES
+(1, 1), (1, 2), (1, 3), (1, 4),
+(2, 5), (2, 6), (2, 7), (2, 8);
+
+-- ===========================================================
+-- SERVICES
+-- ===========================================================
+INSERT INTO Service (restaurantID, eventTypeID, name, price, unit)
+VALUES
+(1, 1, 'Trang trí hoa tươi', 2000000, 'gói'),
+(1, 1, 'MC chuyên nghiệp', 1500000, 'buổi'),
+(2, 1, 'Ca sĩ biểu diễn', 4000000, 'buổi'),
+(2, 3, 'Máy chiếu & màn hình LED', 2500000, 'buổi');
+
+-- ===========================================================
+-- PROMOTIONS
+-- ===========================================================
+INSERT INTO Promotion (restaurantID, name, description, discountType, discountValue, startDate, endDate, status)
+VALUES
+(1, 'Ưu đãi tháng 11', 'Giảm 10% cho tiệc cưới trong tháng 11.', 0, 10, '2025-11-01', '2025-11-30', 1),
+(2, 'Giảm 15% khi đặt trước 1 tháng', 'Đặt sớm giảm 15%', 0, 15, '2025-11-01', '2025-12-31', 1);
+
+-- ===========================================================
+-- BOOKING
+-- ===========================================================
+INSERT INTO Booking (customerID, eventTypeID, hallID, menuID, eventDate, startTime, endTime, tableCount, specialRequest, status, originalPrice, discountAmount, VAT, totalAmount)
+VALUES
+(4, 1, 1, 1, '2025-12-20', '10:00:00', '14:00:00', 30, 'Yêu cầu trang trí hoa hồng trắng', 3, 105000000, 10000000, 8000000, 103000000);
+
+-- ===========================================================
+-- PAYMENT
+-- ===========================================================
+INSERT INTO Payment (bookingID, restaurantID, amount, type, paymentMethod, status, transactionRef)
+VALUES
+(1, 1, 30900000, 0, 0, 2, 'TXN001'),
+(1, 1, 72000000, 1, 0, 0, 'TXN002');
+
+-- ===========================================================
+-- REVIEW
+-- ===========================================================
+INSERT INTO Review (bookingID, customerID, rating, comment)
+VALUES
+(1, 4, 5, 'Dịch vụ rất tốt, món ăn ngon, nhân viên thân thiện!');
+
+-- ===========================================================
+-- REPORT
+-- ===========================================================
+INSERT INTO Report (userID, restaurantID, targetType, reasonType, content, status)
+VALUES
+(4, 2, 0, 1, 'Nhà hàng phản hồi chậm.', 0);
+
+-- ===========================================================
+-- SYSTEM SETTINGS
+-- ===========================================================
+INSERT INTO SystemSetting (category, settingKey, settingName, settingValue, dataType, description)
+VALUES
+(3, 'DEFAULT_COMMISSION_RATE', 'Tỷ lệ hoa hồng mặc định', '0.10', 1, 'Hoa hồng mặc định cho partner'),
+(2, 'VAT_RATE', 'Thuế VAT mặc định', '0.08', 1, 'Thuế giá trị gia tăng 8%'),
+(1, 'BOOKING_DEPOSIT_PERCENTAGE', 'Tỷ lệ cọc khi đặt', '0.30', 1, 'Khách cần đặt cọc 30%');
+
+DELETE FROM user WHERE userID IN (22);
+
+SHOW CREATE TABLE customer;
+
+use weddingrestaurantmanagement;
+
+SELECT * FROM User;
+
+SELECT * FROM Restaurant;
+UPDATE Address
+SET number = '368',
+    street = 'Nguyễn Văn Linh',
+    ward = 'Hải Châu'
+WHERE addressID = 1;
+UPDATE Address
+SET number = '25A',
+    street = 'Võ Nguyên Giáp',
+    ward = 'Sơn Trà'
+WHERE addressID = 2;
+SELECT * FROM Address;
+
+SELECT 
+  r.restaurantID,
+  r.name AS restaurantName,
+  e.name AS eventTypeName
+FROM Restaurant r
+JOIN RestaurantEventType re ON r.restaurantID = re.restaurantID
+JOIN EventType e ON e.eventTypeID = re.eventTypeID;
+
+SELECT fullAddress FROM address WHERE addressID IN (SELECT addressID FROM restaurant);
+
+
+SELECT * FROM HALL;
+
+DESCRIBE hall;
+
+SELECT restaurantID, name, restaurantPartnerID 
+FROM restaurant;
+
+SELECT userID, fullName, role FROM user WHERE role = 1;
+
+SELECT * FROM restaurant WHERE restaurantPartnerID = 2;
+UPDATE restaurant SET status = 1 WHERE status IS NULL;
+				SELECT * FROM payment;
+SELECT * FROM review;
+SELECT * FROM report;
+
+
+SELECT 
+    rp.reportID,
+    rp.content,
+    rp.status,
+    rp.reasonType,
+    rp.createdAt,
+    u.fullName AS reporterName,
+    res.name AS restaurantName
+FROM report rp
+LEFT JOIN user u 
+    ON rp.userID = u.userID
+LEFT JOIN restaurant res 
+    ON rp.restaurantID = res.restaurantID
+ORDER BY rp.createdAt DESC;
+
+

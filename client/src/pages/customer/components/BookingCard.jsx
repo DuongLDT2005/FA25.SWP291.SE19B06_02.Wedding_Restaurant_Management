@@ -8,9 +8,11 @@ import ConfirmModal from "./ConfirmModal"
 import CancelModal from "./CancelModal"
 import ReviewModal from "./ReviewModal"
 import ScrollToTopButton from "../../../components/ScrollToTopButton"
+import { BookingStatus } from "../../../constants/bookingStatus"
 
 export default function BookingCard({
   booking,
+  categoriesMap = {},
   onConfirm,
   onCancel,
   onTransfer,
@@ -19,7 +21,6 @@ export default function BookingCard({
   onViewContract,
 }) {
   const b = booking
-
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
@@ -35,67 +36,98 @@ export default function BookingCard({
   }
 
   function handleReviewSubmit(reviewPayload) {
-    onReview?.(b, reviewPayload)
+    const restaurantID = b.hall?.restaurant?.restaurantID || b.restaurant?.restaurantID || b.restaurantID
+    onReview?.(b, { ...reviewPayload, restaurantID })
     setShowReviewModal(false)
   }
 
-  function buildDetailPayload(b) {
-    // Build customer info strictly from booking data (not auth)
+  function buildDetailPayload(b, categoriesMap) {
     console.log(b);
+    // Build customer info strictly from booking data (not auth)
     const embeddedUser = b.customer?.user || {}
     const customer = {
       fullName: b.customer?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
       phone: b.customer?.phone || embeddedUser.phone || "N/A",
       email: b.customer?.email || embeddedUser.email || "N/A",
     }
+    // Build restaurant from hall.restaurant
+    const restaurant = {
+      name: b.hall?.restaurant?.name || "Nhà hàng",
+      address: b.hall?.restaurant?.fullAddress || "Đang cập nhật",
+      thumbnailURL: b.hall?.restaurant?.thumbnailURL || "",
+    }
+
+    // Build hall
+    const hall = {
+      name: b.hall?.name || "Sảnh",
+      capacity: b.hall?.maxTable || b.tableCount || 0,
+      area: parseFloat(b.hall?.area) || 0,
+      price: parseFloat(b.hall?.price) || 0,
+    }
+
+    // Build menu with categories from bookingdishes
+    const dishMap = {};
+    (b.bookingdishes || []).forEach(bd => {
+      const dish = bd.dish;
+      const categoryId = dish.categoryID;
+      if (!dishMap[categoryId]) {
+        dishMap[categoryId] = {
+          name: categoriesMap[categoryId]?.name || `Danh mục ${categoryId}`,
+          dishes: []
+        };
+      }
+      dishMap[categoryId].dishes.push({
+        id: dish.dishID,
+        name: dish.name,
+        price: 0,
+        imageURL: dish.imageURL,
+        category: categoriesMap[categoryId]?.name || `Danh mục ${categoryId}`
+      });
+    });
+    const menu = {
+      name: b.menu?.name || "Menu đã chọn",
+      price: parseFloat(b.menu?.price) || 0,
+      categories: Object.values(dishMap).filter(category => category.dishes && category.dishes.length > 0)
+    }
+
+    // Build services from bookingservices
+    const services = (b.bookingservices || []).map(bs => ({
+      name: bs.service?.name || "Dịch vụ",
+      quantity: bs.quantity || 1,
+      price: parseFloat(bs.service?.price) || 0
+    }));
+
     return {
       bookingID: b.bookingID,
       status: b.status ?? 0,
-      eventType: b.eventType || "Tiệc cưới",
+      eventType: b.eventType?.name || "Tiệc cưới",
       eventDate: b.eventDate,
       startTime: b.startTime || "18:00",
       endTime: b.endTime || "22:00",
-      tableCount: b.tableCount || b.tables || 0,
-      specialRequest: b.specialRequest || b.note || "",
+      tableCount: b.tableCount || 0,
+      specialRequest: b.specialRequest || "",
       createdAt: b.createdAt || new Date().toISOString(),
       customer,
-      restaurant: {
-        name: b.restaurant?.name || "Nhà hàng",
-        address: b.restaurant?.fullAddress || "Đang cập nhật",
-        thumbnailURL: b.restaurant?.thumbnailURL || "",
-      },
-      hall: b.hall || {
-        name: b.name || "Sảnh",
-        capacity:  b.tableCount * 10,
-        area: b.hallArea || 0,
-      },
-      menu: b.menu || {
-        name: b.name || "Menu đã chọn",
-        price: b.price || 0,
-        categories: b.menu?.categories || [],
-      },
-      services: b.bookingservices || [],
+      restaurant,
+      hall,
+      menu,
+      services,
       payments: b.payments || [],
       contract: b.contract || {
         content: "Hợp đồng dịch vụ...",
         status: 0,
         signedAt: null,
       },
-      originalPrice: b.originalPrice || b.price || 0,
-      discountAmount: b.discountAmount || 0,
-      VAT: b.VAT || 0,
-      totalAmount: b.totalAmount || b.total || b.price || 0,
+      originalPrice: parseFloat(b.originalPrice) || 0,
+      discountAmount: parseFloat(b.discountAmount) || 0,
+      VAT: parseFloat(b.VAT) || 0,
+      totalAmount: parseFloat(b.totalAmount) || 0,
     }
   }
 
   function prepareAndStore() {
-    const payload = buildDetailPayload(b)
-    try {
-      sessionStorage.setItem(`booking_${payload.bookingID}`, JSON.stringify(payload))
-      // keep legacy key for backward compatibility
-      sessionStorage.setItem("currentBooking", JSON.stringify(payload))
-    } catch {}
-    return payload
+    // Pass raw booking object via route state; Details page will normalize
+    return b
   }
 
   const formatPrice = (price) => {
@@ -151,30 +183,61 @@ export default function BookingCard({
                 <div style={{
                   fontSize: "0.85rem",
                   color: '#6b7280',
+                  marginBottom: '4px'
+                }}>
+                  Thời gian: {b.startTime || "18:00"} - {b.endTime || "22:00"}
+                </div>
+
+                <div style={{
+                  fontSize: "0.85rem",
+                  color: '#6b7280',
+                  marginBottom: '4px'
+                }}>
+                  Sảnh: {b.hall?.name || "Chưa có thông tin"} | Bàn: {b.tableCount || 0}
+                </div>
+
+                <div style={{
+                  fontSize: "0.85rem",
+                  color: '#6b7280',
                   marginBottom: '8px'
                 }}>
                   {b.restaurant.fullAddress || "Chưa có địa chỉ"}
                 </div>
 
-                <div style={{
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  fontWeight: '500',
-                  ...(b.status === 1 ? {
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    color: 'rgb(22, 163, 74)'
-                  } : b.status === 2 ? {
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    color: 'rgb(220, 38, 38)'
-                  } : {
-                    background: 'rgba(250, 204, 21, 0.1)',
-                    color: 'rgb(202, 138, 4)'
-                  })
-                }}>
-                  {b.status === 1 ? 'Đã hoàn thành' : b.status === 2 ? 'Đã hủy' : 'Đang xử lý'}
-                </div>
+                {(() => {
+                  const s = b.status;
+                  const text = {
+                    [BookingStatus.PENDING]: 'Chờ xác nhận',
+                    [BookingStatus.ACCEPTED]: 'Đã chấp nhận',
+                    [BookingStatus.REJECTED]: 'Bị từ chối',
+                    [BookingStatus.CONFIRMED]: 'Chuẩn bị đặt cọc',
+                    [BookingStatus.DEPOSITED]: 'Đã đặt cọc',
+                    [BookingStatus.EXPIRED]: 'Quá hạn',
+                    [BookingStatus.CANCELLED]: 'Đã hủy',
+                    [BookingStatus.COMPLETED]: 'Hoàn thành',
+                    [BookingStatus.MANUAL_BLOCKED]: 'Bị chặn',
+                  }[s] || 'Đang xử lý';
+                  const style =
+                    (s === BookingStatus.ACCEPTED || s === BookingStatus.DEPOSITED || s === BookingStatus.COMPLETED)
+                      ? { background: 'rgba(34, 197, 94, 0.1)', color: 'rgb(22, 163, 74)' }
+                      : (s === BookingStatus.REJECTED || s === BookingStatus.CANCELLED || s === BookingStatus.MANUAL_BLOCKED)
+                        ? { background: 'rgba(239, 68, 68, 0.1)', color: 'rgb(220, 38, 38)' }
+                        : (s === BookingStatus.EXPIRED)
+                          ? { background: 'rgba(107, 114, 128, 0.12)', color: '#374151' } // gray for expired
+                          : { background: 'rgba(250, 204, 21, 0.1)', color: 'rgb(202, 138, 4)' }; // pending/confirmed
+                  return (
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      fontWeight: '500',
+                      ...style
+                    }}>
+                      {text}
+                    </div>
+                  );
+                })()}
               </div>
             </Col>
 
@@ -192,6 +255,16 @@ export default function BookingCard({
                 }}>
                   {formatPrice(b.totalAmount || b.total || b.price || 0)} VND
                 </div>
+
+                {b.discountAmount > 0 && (
+                  <div style={{
+                    fontSize: '0.85rem',
+                    color: 'rgb(34, 197, 94)',
+                    fontWeight: '500',
+                  }}>
+                    Giảm: -{formatPrice(b.discountAmount)} VND
+                  </div>
+                )}
 
                 <button
                   style={{

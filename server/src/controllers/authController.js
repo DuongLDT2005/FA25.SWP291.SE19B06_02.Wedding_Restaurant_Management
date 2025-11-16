@@ -2,7 +2,14 @@ import AuthServices from "../services/AuthServices.js";
 import UserService from "../services/userServices.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+
+import db from "../config/db.js";
+const { user: User } = db;
+
 class AuthController {
+  /* ===========================================
+      LOGIN NORMAL
+  =========================================== */
   static async login(req, res) {
     try {
       const { email, password, tempToken } = req.body;
@@ -75,63 +82,88 @@ class AuthController {
     }
   }
 
-  static async googlePopupLogin(req, res) {
-  try {
-    const { code } = req.body;
-    if (!code) return res.status(400).json({ message: "Thiếu code" });
+  /* ===========================================
+      GOOGLE LOGIN
+  =========================================== */
+  static async googleLogin(req, res) {
+    try {
+      const { code } = req.body;
+      if (!code)
+        return res.status(400).json({ error: "Google code is required" });
 
-    console.log("Received Google code:", code);
+      // 1️⃣ Đổi code sang tokens
+      const tokenRes = await axios.post(
+        "https://oauth2.googleapis.com/token",
+        {
+          code,
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          redirect_uri: "postmessage",
+          grant_type: "authorization_code",
+        }
+      );
 
-    const tokenRes = await axios.post("https://oauth2.googleapis.com/token", {
-      code,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri: "postmessage",
-      grant_type: "authorization_code",
-    });
+      const { id_token, access_token } = tokenRes.data;
 
-    const { access_token, id_token } = tokenRes.data;
-    console.log("Google token exchange success:", tokenRes.data);
+      // 2️⃣ Lấy thông tin user từ Google
+      const googleUser = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      );
 
-    // Lấy thông tin user
-    const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    const { email, name, picture } = userInfo.data;
+      const { email, name, picture } = googleUser.data;
 
-    console.log("Google user info:", userInfo.data);
+      if (!email)
+        return res.status(400).json({ error: "Google user has no email" });
 
-    // Tìm hoặc tạo user
-    const user = await AuthServices.findOrCreateGoogleUser({
-      email,
-      fullName: name,
-      avatarURL: picture,
-    });
+      // 3️⃣ Kiểm tra user đã tồn tại chưa
+      let user = await User.findOne({ where: { email } });
 
-    const token = jwt.sign(
-      { userID: user.userID, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+      if (!user) {
+        // Nếu user chưa tồn tại → tạo mới
+        user = await User.create({
+          email,
+          fullName: name,
+          avatarURL: picture,
+          role: "CUSTOMER",
+          status: "ACTIVE",
+          password: "", // Google Login không dùng password
+        });
+      } else {
+        // Nếu user đã có → cập nhật avatar nếu thay đổi
+        if (picture && user.avatarURL !== picture) {
+          await user.update({ avatarURL: picture }); // FIX: user là instance Sequelize
+        }
+      }
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: 2 * 60 * 60 * 1000,
-    };
-    res.cookie('token', token, cookieOptions);
-    res.json({ message: "Đăng nhập Google thành công", user });
-  } catch (err) {
-    console.error("Google Sign-In Error:", err.response?.data || err.message);
-    res.status(500).json({
-      message: "Đăng nhập Google thất bại",
-      error: err.response?.data || err.message,
-    });
+      // 4️⃣ Tạo token JWT
+      const token = jwt.sign(
+        {
+          userID: user.userID,
+          email: user.email,
+          role: user.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      return res.json({
+        success: true,
+        user,
+        token,
+      });
+    } catch (err) {
+      console.error("Google login error:", err.message);
+      return res.status(500).json({
+        success: false,
+        error: err.message || "Google Login failed",
+      });
+    }
   }
-}
 
-
+  /* ===========================================
+      LOGOUT (BLACKLIST TOKEN)
+  =========================================== */
   static async logout(req, res) {
     try {
       await AuthServices.logout(req);
@@ -140,91 +172,99 @@ class AuthController {
       res.json({ message: "Logged out successfully" });
     } catch (error) {
       console.error("Logout error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
+
+  /* ===========================================
+      FORGOT PASSWORD (SEND OTP)
+  =========================================== */
   static async forgotPassword(req, res) {
     try {
-      console.log("📩 [ForgotPassword] Body nhận được:", req.body); // 👈 để debug
-      console.log("📩 Content-Type:", req.headers["content-type"]);
-
-      if (!req.body || !req.body.email) {
-        return res.status(400).json({ error: "Email is required" });
-      }
-
       const { email } = req.body;
       await AuthServices.forgotPassword(email);
 
-      res.json({ message: "OTP email sent" });
+      return res.json({ message: "OTP email sent" });
     } catch (error) {
       console.error("Forgot password error:", error);
-      res.status(500).json({ error: error.message || "Internal server error" });
-    }
-  }
-  static async verifyOtp(req, res) {
-    try {
-      const { email, otp } = req.body;
-      if (!email || !otp) {
-        return res.status(400).json({ error: "Email and OTP are required" });
-      }
-      await AuthServices.verifyOtp(email, otp);
-      // Generate temporary token for password reset (valid 10 min)
-      const tempToken = jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "10m",
-      });
-      res.status(200).json({ message: "OTP verified successfully", tempToken });
-    } catch (error) {
-      console.error("Verify OTP error:", error);
-      res.status(400).json({ error: error.message });
-    }
-  }
-  static async resetPassword(req, res) {
-    try {
-      const { email, newPassword, tempToken } = req.body;
-      if (!email || !newPassword || !tempToken) {
-        return res.status(400).json({
-          error: "Email, new password, and temporary token are required",
-        });
-      }
-      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
-      if (decoded.email !== email) {
-        return res
-          .status(400)
-          .json({ error: "Invalid token for the provided email" });
-      }
-      await AuthServices.resetPassword(email, newPassword);
-      res.json({ message: "Password reset successfully" });
-    } catch (error) {
-      console.error("Reset password error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-  static async signupCustomer(req, res) {
-    try {
-      const customerData = req.body;
-      if (!customerData) {
-        return res.status(400).json({ error: "Request body cannot be null" });
-      }
-      const newCustomer = await AuthServices.signUpCustomer(customerData);
-      res.status(201).json({
-        message: "Customer created",
-        user: newCustomer || null,
-      });
-    } catch (error) {
-      console.error("Error creating customer:", error);
-      res.status(500).json({ error: error.message || "Internal server error" });
+      return res.status(500).json({ error: error.message });
     }
   }
 
-  static async signupOwner(req, res) {
+  /* ===========================================
+      VERIFY OTP
+  =========================================== */
+  static async verifyOtp(req, res) {
     try {
-      const newOwner = await AuthServices.signUpOwner(req.body);
-      return res.status(201).json({ message: "Owner created", user: newOwner });
-    } catch (err) {
-      console.error("Signup owner error:", err.message);
-      return res.status(500).json({ error: err.message });
+      const { email, otp } = req.body;
+
+      await AuthServices.verifyOtp(email, otp);
+
+      const tempToken = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "10m",
+      });
+
+      return res.json({ message: "OTP verified", tempToken });
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      return res.status(400).json({ error: error.message });
     }
   }
+
+  /* ===========================================
+      RESET PASSWORD
+  =========================================== */
+  static async resetPassword(req, res) {
+    try {
+      const { email, newPassword, tempToken } = req.body;
+
+      const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
+      if (decoded.email !== email)
+        return res.status(400).json({ error: "Invalid token" });
+
+      await AuthServices.resetPassword(email, newPassword);
+
+      return res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      SIGN UP CUSTOMER
+  =========================================== */
+  static async signupCustomer(req, res) {
+    try {
+      const user = await AuthServices.signUpCustomer(req.body);
+
+      return res.status(201).json({
+        message: "Customer created",
+        user,
+      });
+    } catch (error) {
+      console.error("Signup customer error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      SIGN UP OWNER (WITH FILE)
+  =========================================== */
+  static async signupOwner(req, res) {
+    try {
+      const data = await AuthServices.signUpOwner(req.body, req.file);
+
+      return res.status(201).json(data);
+    } catch (error) {
+      console.error("Signup owner error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /* ===========================================
+      GET CURRENT USER
+  =========================================== */
   static async getCurrentUser(req, res) {
     try {
       if (!req.user) {
@@ -243,5 +283,37 @@ class AuthController {
       res.status(500).json({ error: "Internal server error" });
     }
   }
+  static async approveOwner(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await AuthServices.approveOwner(id);
+
+      return res.json(result);
+    } catch (error) {
+      console.error("Approve owner error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  static async activateOwner(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await AuthServices.activateOwner(id);
+
+      return res.json(result);
+    } catch (error) {
+      console.error("Activate owner error:", error);
+      return res.status(400).json({ error: error.message });
+    }
+  }
+  static async getNegotiatingPartners(req, res) {
+    try {
+      const list = await UserService.getNegotiatingPartners();
+      res.json({ success: true, data: list });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }
+
 export default AuthController;

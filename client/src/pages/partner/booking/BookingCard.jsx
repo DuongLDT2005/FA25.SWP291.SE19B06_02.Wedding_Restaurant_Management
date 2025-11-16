@@ -5,16 +5,17 @@ import { Calendar, Phone, Mail, Building2 } from "lucide-react";
 const STATUS_LABELS = {
   0: { text: "Đang chờ", color: "warning" },
   1: { text: "Đã xác nhận", color: "success" },
-  2: { text: "Đã hủy", color: "secondary" },
-  3: { text: "Đã đặt cọc", color: "info" },
-  4: { text: "Hoàn tất", color: "primary" },
-  5: { text: "Từ chối", color: "danger" },
+  2: { text: "Từ chối", color: "danger" },
+  3: { text: "Đã xác nhận (khóa lịch)", color: "info" },
+  4: { text: "Đã đặt cọc", color: "info" },
+  5: { text: "Hết hạn", color: "secondary" },
+  6: { text: "Đã hủy", color: "secondary" },
+  7: { text: "Hoàn tất", color: "primary" },
 };
 
 export default function BookingCard({
   booking,
   onViewDetail,
-  onMarkChecked,
   onReject,
   onAccept,
   activeTab, // tab hiện tại để quyết định nút
@@ -91,37 +92,9 @@ export default function BookingCard({
       {/* Footer actions */}
       <div className="d-flex flex-column align-items-stretch gap-2 mt-3">
 
-        {/* ✅ chỉ hiện 2 nút này nếu tab là pending và booking chưa checked */}
-        {activeTab === "pending" && !checked && (
+        {/* Chỉ hiện nút xử lý khi đang chờ */}
+        {activeTab === "pending" && (
           <>
-            <Button
-              variant="outline-success"
-              className="py-2 rounded-3"
-              onClick={() => onMarkChecked?.(bookingID)}
-            >
-              Đánh dấu đã kiểm tra
-            </Button>
-            <Button
-              variant="success"
-              className="py-2 rounded-3 text-white"
-              onClick={() => onAccept?.(bookingID)}
-            >
-              Chấp nhận
-            </Button>
-            <Button
-              variant="danger"
-              className="py-2 rounded-3 text-white"
-              onClick={() => onReject?.(bookingID)}
-            >
-              Từ chối
-            </Button>
-          </>
-        )}
-        {activeTab === "checked" && (
-          <>
-            <Badge bg="secondary" className="px-3 py-2 align-self-center">
-              Đã kiểm tra
-            </Badge>
             <Button
               variant="success"
               className="py-2 rounded-3 text-white"
@@ -141,8 +114,11 @@ export default function BookingCard({
         {activeTab === "confirmed" && (
           <Badge bg="success" className="px-3 py-2 align-self-center">Đã xác nhận / Đặt cọc</Badge>
         )}
-        {activeTab === "done" && (
-          <Badge bg="primary" className="px-3 py-2 align-self-center">Hoàn tất / Hủy</Badge>
+        {activeTab === "completed" && (
+          <Badge bg="primary" className="px-3 py-2 align-self-center">Hoàn tất</Badge>
+        )}
+        {activeTab === "cancelled" && (
+          <Badge bg="secondary" className="px-3 py-2 align-self-center">Đã hủy</Badge>
         )}
         {activeTab === "rejected" && (
           <Badge bg="danger" className="px-3 py-2 align-self-center">Từ chối</Badge>

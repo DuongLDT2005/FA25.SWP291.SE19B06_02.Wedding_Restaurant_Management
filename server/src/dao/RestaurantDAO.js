@@ -1,5 +1,5 @@
+import { Op } from "sequelize";
 import db from "../config/db.js";
-import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 import MenuDAO from './MenuDAO.js';
 import DishDAO from './DishDAO.js';
@@ -10,8 +10,17 @@ import AmenityDAO from './AmenityDAO.js';
 import EventTypeDAO from './EventTypeDAO.js';
 import HallImageDAO from './HallImageDAO.js';
 
-// Models from init-models.cjs
-const { sequelize, restaurant, restaurantimage, address, hall, booking } = db;
+const {
+  restaurant,
+  address,
+  hall,
+  booking,
+  restaurantimage,
+  restauranteventtype,
+  eventtype,
+  restaurantpartner,
+  user,
+} = db;
 
 class RestaurantDAO {
   static async getAll() {
@@ -77,7 +86,7 @@ class RestaurantDAO {
     }));
   }
 
-  static async getByID(restaurantID) {
+   static async getByID(restaurantID) {
     const r = await restaurant.findByPk(restaurantID, {
       attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status','phone'],
       include: [
@@ -98,6 +107,8 @@ class RestaurantDAO {
       EventTypeDAO.getAllByRestaurantID(restaurantID).catch(() => []),
     ]);
 
+    console.log('DAO results:', { menus: menus?.length, dishes: dishes?.length, promotions: promotions?.length, services: services?.length, halls: halls?.length, amenities: amenities?.length, eventTypes: eventTypes?.length });
+
     // attach images per hall
     const hallsWithImages = await Promise.all(
       (halls || []).map(async (h) => {
@@ -106,7 +117,7 @@ class RestaurantDAO {
       })
     );
 
-    return {
+    const result = {
       restaurantID: dto.restaurantID,
       restaurantPartnerID: dto.restaurantPartnerID,
       name: dto.name,
@@ -131,6 +142,9 @@ class RestaurantDAO {
       amenities,
       eventTypes,
     };
+
+    console.log('RestaurantDAO.getByID result keys:', Object.keys(result));
+    return result;
   }
 
   static async getSummaryByID(restaurantID) {
@@ -208,7 +222,7 @@ constructor({
     restaurantID,
     { restaurantPartnerID, name, description, address: addr, thumbnailURL, phone }
   ) {
-    return await sequelize.transaction(async (t) => {
+    return await db.sequelize.transaction(async (t) => {
       const r = await restaurant.findByPk(restaurantID, { transaction: t });
       if (!r) throw new Error('Restaurant not found');
 
@@ -239,72 +253,223 @@ constructor({
     return true;
   }
 
-  static async search({ location, capacity, date, minPrice, maxPrice }) {
-    // Build hall filters
-    const hallWhere = { status: true };
-    if (capacity) {
-      hallWhere.maxTable = { [Op.gte]: capacity };
-    }
-    if (minPrice || maxPrice) {
-      hallWhere.price = {};
-      if (minPrice) hallWhere.price[Op.gte] = minPrice;
-      if (maxPrice) hallWhere.price[Op.lte] = maxPrice;
-    }
+ 
+    static async search({
+      location,
+      eventType,
+      capacity,
+      date,
+      startTime,
+      endTime,
+      minPrice,
+      maxPrice,
+    }) 
+    {
 
-    // Exclude halls already booked on date with status = 1
-    if (date) {
-      const busy = await booking.findAll({
-        attributes: ['hallID'],
-        where: { eventDate: date, status: 1 },
-        raw: true,
-      });
-      const busyIds = busy.map(b => b.hallID).filter(Boolean);
-      if (busyIds.length) {
-        hallWhere.hallID = { [Op.notIn]: busyIds };
-      }
-    }
-
-    const includeAddress = {
-      model: address,
-      as: 'address',
-      attributes: ['fullAddress'],
-      ...(location ? { where: { fullAddress: { [Op.like]: `%${location}%` } } } : {})
-    };
-
-    const rows = await restaurant.findAll({
-      where: { status: true },
-      attributes: ['restaurantID','restaurantPartnerID','name','description','hallCount','addressID','thumbnailURL','status'],
-      include: [ includeAddress, { model: hall, as: 'halls', attributes: ['hallID','name','price','minTable','maxTable','status'], where: hallWhere, required: true } ],
-      order: [['restaurantID','ASC']]
-    });
-    // Flatten per hall (similar to original DISTINCT join result)
-    const plain = toDTOs(rows);
-    const results = [];
-    for (const r of plain) {
-      for (const h of (r.halls || [])) {
-        results.push({
-          restaurantID: r.restaurantID,
-          restaurantPartnerID: r.restaurantPartnerID,
-          name: r.name,
-          description: r.description,
-          hallCount: r.hallCount,
-          addressID: r.addressID,
-          thumbnailURL: r.thumbnailURL,
-          status: r.status,
-          fullAddress: r.address?.fullAddress || null,
-          hallID: h.hallID,
-          hallName: h.name,
-          price: h.price,
-          minTable: h.minTable,
-          maxTable: h.maxTable,
-          // Preserve legacy 'capacity' field expected by some callers: map to maxTable
-          capacity: h.maxTable,
+      try {
+        console.log("🔍 Search filters received:", {
+          location,
+          eventType,
+          capacity,
+          date,
+          startTime,
+          endTime,
+          minPrice,
+          maxPrice,
         });
+
+        // ⚠️ Nếu tất cả điều kiện đều rỗng thì bỏ qua
+        if (
+          (!location || location.trim() === "") &&
+          (!eventType || eventType.trim() === "") &&
+          (!capacity || isNaN(Number(capacity))) &&
+          (!date || date.trim() === "")
+        ) {
+          console.warn(
+            "⚠️ Bỏ qua request rỗng hoặc thiếu capacity/date/location/eventType"
+          );
+          return [];
+        }
+
+        const numCapacity =
+          capacity && !isNaN(Number(capacity)) ? Number(capacity) : null;
+        const numMinPrice =
+          minPrice && !isNaN(Number(minPrice)) ? Number(minPrice) : null;
+        const numMaxPrice =
+          maxPrice && !isNaN(Number(maxPrice)) ? Number(maxPrice) : null;
+
+        // 1️⃣ Lấy danh sách sảnh đã được đặt
+        const bookedHalls = await booking.findAll({
+          where: {
+            eventDate: date,
+            status: { [Op.notIn]: [2, 6, 7] },
+            [Op.or]: [
+              {
+                [Op.and]: [
+                  { startTime: { [Op.lte]: startTime } },
+                  { endTime: { [Op.gt]: startTime } },
+                ],
+              },
+              {
+                [Op.and]: [
+                  { startTime: { [Op.lt]: endTime } },
+                  { endTime: { [Op.gte]: endTime } },
+                ],
+              },
+            ],
+          },
+          attributes: ["hallID"],
+        });
+
+        const bookedHallIDs = bookedHalls.map((b) => b.hallID);
+        console.log("🚫 Booked hall IDs:", bookedHallIDs);
+
+        // 2️⃣ Điều kiện lọc sảnh
+        const hallCondition = {};
+
+        if (numCapacity && numCapacity > 0) {
+          hallCondition.maxTable = { [Op.gte]: numCapacity };
+        }
+
+        if (bookedHallIDs.length > 0) {
+          hallCondition.hallID = { [Op.notIn]: bookedHallIDs };
+        }
+
+        if (numMinPrice && numMaxPrice && numMinPrice > 0 && numMaxPrice > 0) {
+          hallCondition.price = { [Op.between]: [numMinPrice, numMaxPrice] };
+        } else if (numMinPrice && numMinPrice > 0) {
+          hallCondition.price = { [Op.gte]: numMinPrice };
+        } else if (numMaxPrice && numMaxPrice > 0) {
+          hallCondition.price = { [Op.lte]: numMaxPrice };
+        }
+
+        console.log("🏛️ hallCondition:", hallCondition);
+
+        // 3️⃣ Điều kiện địa chỉ
+        const addressCondition = {};
+        if (location) {
+          addressCondition.fullAddress = {
+            [Op.like]: `%${decodeURIComponent(location)}%`,
+          };
+        }
+
+        // 4️⃣ Include loại sự kiện
+        const includeEventType = {
+          model: restauranteventtype,
+          as: "restauranteventtypes",
+          include: [
+            {
+              model: eventtype,
+              as: "eventType",
+              attributes: ["name"],
+              ...(eventType
+                ? {
+                    where: {
+                      name: {
+                        [Op.like]: `%${decodeURIComponent(eventType)}%`,
+                      },
+                    },
+                  }
+                : {}),
+            },
+          ],
+          required: !!eventType,
+        };
+
+        // 5️⃣ Truy vấn chính
+        const restaurants = await restaurant.findAll({
+          where: { status: 1 },
+          include: [
+            {
+              model: address,
+              as: "address",
+              attributes: ["fullAddress"],
+              where:
+                Object.keys(addressCondition).length > 0
+                  ? addressCondition
+                  : undefined,
+            },
+            {
+              model: hall,
+              as: "halls",
+              required: true,
+              where:
+                Object.keys(hallCondition).length > 0 ? hallCondition : undefined,
+            },
+            includeEventType,
+            {
+              model: restaurantimage,
+              as: "restaurantimages",
+              attributes: ["imageURL"],
+            },
+          ],
+          subQuery: false,
+        });
+
+        console.log(
+          `✅ Found ${restaurants.length} restaurant(s) before JS filter`
+        );
+
+        // 6️⃣ Lọc JS theo capacity
+        const filteredRestaurants =
+          numCapacity && numCapacity > 0
+            ? restaurants.filter((r) =>
+                r.halls?.some((h) => Number(h.maxTable) >= numCapacity)
+              )
+            : restaurants;
+
+        console.log(
+          `✅ After JS-level filter: ${filteredRestaurants.length} restaurant(s)`
+        );
+
+        return filteredRestaurants;
+      } catch (error) {
+        console.error("❌ Error in RestaurantDAO.search:", error);
+        throw error;
       }
     }
-    return results;
+      
+  // ------------------ Các hàm phụ trợ ------------------
+  static async getAll() {
+    const data = await restaurant.findAll({
+      include: [
+        { model: address, as: "address" },
+        { model: hall, as: "halls" },
+        { model: restaurantimage, as: "restaurantimages" },
+
+        // restaurant → restaurantpartner
+        {
+          model: restaurantpartner,
+          as: "partner",
+          include: [
+            // restaurantpartner → user
+            {
+              model: user,
+              as: "owner",
+              attributes: ["fullName", "email", "phone"],
+            },
+          ],
+        },
+      ],
+    });
+
+    return data.map((r) => ({
+      ...r.get({ plain: true }),
+      status: Number(r.status),
+    }));
   }
 
+
+  static async getByPartnerID(partnerID) {
+    return await restaurant.findAll({
+      where: { restaurantPartnerID: Number(partnerID) },
+      include: [
+        { model: address, as: "address" },
+        { model: hall, as: "halls" },
+        { model: restaurantimage, as: "restaurantimages" },
+      ],
+    });
+  }
 }
 
 export default RestaurantDAO;

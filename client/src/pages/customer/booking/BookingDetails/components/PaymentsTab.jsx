@@ -1,9 +1,20 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const PRIMARY = "#D81C45";
 
 export default function PaymentsTab({ booking }) {
     const payments = booking?.payments || [];
+    const navigate = useNavigate();
+
+    const handleGoToPayment = () => {
+        if (booking) {
+            try {
+                sessionStorage.setItem("currentBooking", JSON.stringify(booking));
+            } catch {}
+            navigate(`/payment/${booking.bookingID}`);
+        }
+    };
 
     return (
         <div className="tab-pane fade show active">
@@ -25,6 +36,13 @@ export default function PaymentsTab({ booking }) {
                 </div>
 
                 <div className="card-body">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <div className="fw-semibold">Tổng số lần thanh toán: {payments.length}</div>
+                        <button onClick={handleGoToPayment} className="btn btn-primary">
+                            <i className="fas fa-wallet me-2"></i>
+                            Thanh toán/Đặt cọc
+                        </button>
+                    </div>
                     {payments.length > 0 ? (
                         <div className="table-responsive">
                             <table className="table table-bordered">

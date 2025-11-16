@@ -73,15 +73,17 @@ export default function PriceSummaryPanel() {
     Number(summary?.servicesTotal) ??
     normalServices.reduce((s, it) => s + it.price * it.quantity, 0);
 
-  // compute discount: use summary.discount which now includes hall fee in calculation
+  // compute discount: only applies to menu and hall fee, NOT services
   let discount = Number(summary?.discount ?? 0);
   
-  // subtotal includes hallFee and charged services + menu
-  const subtotal = Number((menuTotal + servicesTotal)) + hallFee;
-  const vat = Math.round((subtotal - discount) * 0.08);
-  console.log(discount);
-  const total = subtotal - discount + vat;
-//  console.log(total)
+  // base amount for discount (menu + hall fee only)
+  const discountableBase = menuTotal + hallFee;
+  const discountedBase = discountableBase - discount;
+  
+  // total = discounted base + undiscounted services
+  const subtotal = discountedBase + servicesTotal;
+  const vat = Math.round(subtotal * 0.08);
+  const total = subtotal + vat;
   return (
     <Card className="shadow-sm">
       <Card.Body>
@@ -149,23 +151,37 @@ export default function PriceSummaryPanel() {
         <Table borderless size="sm" className="mt-2">
           <tbody>
             <tr>
-              <td>Tạm tính</td>
-              <td className="text-end">{fmt(subtotal)}</td>
+              <td>Tạm tính (thực đơn + sảnh)</td>
+              <td className="text-end">{fmt(discountableBase)}</td>
             </tr>
 
-            {/* Promotion display */}
-            {applied ? (
-              applied.type === "percent" && (
-                <tr>
-                  <td>Ưu đãi</td>
-                  <td className="text-end">-{fmt(discount)}</td>
-                </tr>
-              )
+            {/* Promotion display - only applies to menu and hall */}
+            {discount > 0 ? (
+              <tr>
+                <td>Ưu đãi (thực đơn + sảnh)</td>
+                <td className="text-end text-danger">-{fmt(discount)}</td>
+              </tr>
+            ) : applied ? (
+              <tr>
+                <td colSpan={2} className="text-muted text-center small">
+                  {applied.type === "gift_service" ? "Ưu đãi dịch vụ tặng" : "Không có ưu đãi được áp dụng"}
+                </td>
+              </tr>
             ) : (
               <tr>
-                <td colSpan={4} className="text-muted text-center small">Không có ưu đãi được áp dụng</td>
+                <td colSpan={2} className="text-muted text-center small">Không có ưu đãi được áp dụng</td>
               </tr>
             )}
+
+            <tr>
+              <td>Dịch vụ bổ sung</td>
+              <td className="text-end">{fmt(servicesTotal)}</td>
+            </tr>
+
+            <tr className="border-top">
+              <td>Tổng trước VAT</td>
+              <td className="text-end">{fmt(subtotal)}</td>
+            </tr>
 
             <tr>
               <td>VAT (8%)</td>

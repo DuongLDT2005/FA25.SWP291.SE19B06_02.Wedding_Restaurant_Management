@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Card, Row, Col, Form, Modal } from "react-bootstrap";
-
+import { useAdditionRestaurant } from "../../../../../hooks/useAdditionRestaurant";
 // ===== MOCK DATA DEMO =====
 const restaurants = [
   {
@@ -132,8 +132,7 @@ const bookingMock = {
 export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) {
   const PRIMARY = "#D81C45";
   const SUCCESS = "#198754";
-
-  const restaurantData = restaurants[0];
+  const { loadMenusByRestaurant, loadServicesByRestaurant } = useAdditionRestaurant();
 
   // =========================
   //  STATE CHÍNH
@@ -147,15 +146,48 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
   const [selectedDishes, setSelectedDishes] = useState([]);
   const [tempMenu, setTempMenu] = useState(null);
   const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [menus, setMenus] = useState([]);
+  const [servicesOptions, setServicesOptions] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
 
   const formatCurrency = (a) =>
     (a || 0).toLocaleString("vi-VN") + " VNĐ";
 
   const eventType = localBooking.eventType;
+  const eventTypeID = localBooking.eventTypeID || localBooking.eventType?.eventTypeID;
   const displayMenu = isEditing ? editingData.menu : localBooking.menu;
   const displayServices = isEditing ? editingData.services : localBooking.services;
-  const availableServices =
-    restaurantData.services.find((s) => s.eventTypeName === eventType)?.list || [];
+  const availableServices = (servicesOptions || [])
+    .filter((s) => !eventTypeID || s.eventTypeID === eventTypeID)
+    .map((s) => ({ id: s.serviceID || s.id, name: s.name, price: Number(s.price) || 0 }));
+
+  useEffect(() => {
+    let ignore = false;
+    async function load() {
+      if (!isEditing) return;
+      const restaurantId = localBooking?.hall?.restaurantID || localBooking?.restaurant?.restaurantID;
+      if (!restaurantId) return;
+      setLoadingOptions(true);
+      try {
+        const [mns, svs] = await Promise.all([
+          loadMenusByRestaurant(restaurantId),
+          loadServicesByRestaurant(restaurantId),
+        ]);
+        if (ignore) return;
+        setMenus(Array.isArray(mns) ? mns : []);
+        setServicesOptions(Array.isArray(svs) ? svs : []);
+      } catch (e) {
+        if (!ignore) {
+          setMenus([]);
+          setServicesOptions([]);
+        }
+      } finally {
+        if (!ignore) setLoadingOptions(false);
+      }
+    }
+    load();
+    return () => { ignore = true; };
+  }, [isEditing, loadMenusByRestaurant, loadServicesByRestaurant, localBooking?.hall?.restaurantID, localBooking?.restaurant?.restaurantID]);
 
   // =========================
   //  TÍNH GIÁ
@@ -166,14 +198,34 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
     const hallPrice = data.hall?.price || 0;
     const menuPrice = (data.menu?.price || 0) * (data.tableCount || 0);
     const servicesTotal = (data.services || []).reduce(
-      (sum, s) => sum + (s.price || 0),
+      (sum, s) => sum + (Number(s.price) || 0) * (Number(s.quantity) || 1),
       0
     );
 
-    const originalPrice = hallPrice + menuPrice + servicesTotal;
-    const discount = Math.round(originalPrice * 0.3);
-    const VAT = Math.round((originalPrice - discount) * 0.1);
-    const total = originalPrice - discount + VAT;
+    const computedOriginal = hallPrice + menuPrice + servicesTotal;
+    const originalPrice = Number(data.originalPrice) || computedOriginal;
+
+    const promos = data.bookingpromotions || [];
+    let discount = 0;
+    let discountPercent = null;
+    // Apply percent discount to (hall + menu) only, not services
+    const discountBase = (data.hall?.price || 0) + ((data.menu?.price || 0) * (data.tableCount || 0));
+    if (promos.length) {
+      const p = promos[0]?.promotion;
+      if (p && p.discountType === 0) {
+        const pct = Number(p.discountValue) || 0;
+        discount = Math.round(discountBase * pct / 100);
+        discountPercent = pct;
+      } else {
+        // If fixed amount or other types come later, fallback to stored discountAmount when provided
+        discount = Number(data.discountAmount) || 0;
+      }
+    } else {
+      discount = Number(data.discountAmount) || 0;
+    }
+
+    const VAT = Number(data.VAT) || Math.round((originalPrice - discount) * 0.1);
+    const total = Number(data.totalAmount) || (originalPrice - discount + VAT);
 
     return {
       hallPrice,
@@ -181,6 +233,7 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
       servicesTotal,
       originalPrice,
       discount,
+      discountPercent,
       VAT,
       total,
     };
@@ -570,7 +623,9 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
 
               {/* ====== Giảm giá, VAT ====== */}
               <Row className="mb-2">
-                <Col>Giảm giá (30%):</Col>
+                <Col>
+                  {prices.discountPercent ? `Giảm giá (${prices.discountPercent}%)` : 'Giảm giá'}:
+                </Col>
                 <Col className="text-end text-danger">
                   -{formatCurrency(prices.discount)}
                 </Col>
@@ -666,14 +721,14 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
             onChange={(e) => {
               const id = parseInt(e.target.value);
               setSelectedMenuId(id);
-              setTempMenu(restaurantData.menus.find((m) => m.id === id));
+              setTempMenu((menus || []).find((m) => (m.menuID || m.id) === id));
               setSelectedDishes([]);
             }}
           >
             <option value="">-- Chọn --</option>
-            {restaurantData.menus.map((m) => (
-              <option value={m.id} key={m.id}>
-                {m.name} ({formatCurrency(m.price)})
+            {(menus || []).map((m) => (
+              <option value={m.menuID || m.id} key={m.menuID || m.id}>
+                {m.name} ({formatCurrency(Number(m.price) || 0)})
               </option>
             ))}
           </Form.Select>
@@ -694,7 +749,7 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
                       ).length;
                       const isSelected = selectedDishes.includes(dish.name);
                       const isFull =
-                        selectedInCat >= (cat.requiredQuantity || 1);
+                        selectedInCat >= (cat.requiredQuantity || cat.category?.requiredQuantity || 1);
 
                       return (
                         <div
@@ -755,7 +810,8 @@ export default function OverviewTab({ booking = bookingMock, onUpdateBooking }) 
                   selectedDishes.includes(d.name)
                 ).length;
 
-                return count !== cat.requiredQuantity;
+                const required = cat.requiredQuantity || cat.category?.requiredQuantity || 0;
+                return count !== required;
               });
 
               if (invalid.length > 0) {

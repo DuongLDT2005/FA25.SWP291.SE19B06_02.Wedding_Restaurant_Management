@@ -32,6 +32,7 @@ export const getRestaurantsByPartner = async (partnerID) => {
   return data;
 };
 
+// === Tạo mới nhà hàng ===
 export const createRestaurant = async (restaurantData) => {
   const res = await fetch(`${API_URL}`, {
     method: "POST",
@@ -101,26 +102,48 @@ export const deleteRestaurantImage = async (imageID) => {
   if (!res.ok) throw data || new Error("Delete image failed");
   return true;
 };
+
+// === 🔍 Tìm kiếm nhà hàng (search) ===
 export const searchRestaurants = async (params = {}) => {
-  // params có thể: location, date, eventType, tables, startTime, endTime, page, limit, sort, ...
   const qp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== "") qp.set(k, String(v));
   });
 
-  const url = qp.toString() ? `${API_URL}/search?${qp.toString()}` : `${API_URL}/search`;
+  const url = qp.toString()
+    ? `${API_URL}/search?${qp.toString()}`
+    : `${API_URL}/search`;
+
+  console.log("[restaurantService] 🔍 SEARCH:", url);
+
   const res = await fetch(url, {
     method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-    credentials: "include", // nếu cần gửi cookie/token
+    headers: { Accept: "application/json" },
+    credentials: "include",
   });
 
-  const data = await res.json();
-  if (!res.ok) throw data || new Error("Search restaurants failed");
-  return data;
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    console.error("[restaurantService] ❌ JSON parse error:", err);
+    throw new Error("Invalid JSON response from server");
+  }
+
+  if (!res.ok) {
+    console.error("[restaurantService] ❌ Search failed:", data);
+    throw data || new Error("Search restaurants failed");
+  }
+
+  // ✅ Chuẩn hóa dữ liệu trả về
+  // backend trả về { restaurants: [...] }
+  const restaurants = data?.restaurants || data?.results || data;
+  console.log(`[restaurantService] ✅ Found ${Array.isArray(restaurants) ? restaurants.length : 0} restaurants`);
+
+  return Array.isArray(restaurants) ? restaurants : [];
 };
+
+// === Nhà hàng nổi bật ===
 export const getFeaturedRestaurants = async () => {
     // Server exposes `/available` route; keep function name for backward compatibility
   const res = await fetch(`${API_URL}/available`, {
