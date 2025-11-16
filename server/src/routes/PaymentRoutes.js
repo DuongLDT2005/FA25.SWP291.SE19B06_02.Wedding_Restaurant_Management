@@ -6,6 +6,8 @@ const router = Router();
 // Generic payment endpoints
 router.post("/", PaymentController.createPayment);
 router.get("/booking/:bookingID", PaymentController.getPaymentsByBooking);
+// Partner-wide payments across their restaurants
+router.get("/partner/:partnerID", PaymentController.getPaymentsByPartner);
 
 // Create PayOS checkout link for a booking
 router.post("/payos/checkout/:bookingID", PaymentController.createPayosCheckout);

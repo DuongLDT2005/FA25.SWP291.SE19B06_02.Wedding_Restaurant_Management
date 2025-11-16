@@ -58,18 +58,6 @@ class AdminBookingController {
       res.status(500).json({ success: false, message: err.message });
     }
   }
-
-  // GET /api/admin/bookings/customer/:customerID
-  static async getBookingsByCustomerID(req, res) {
-    try {
-      const { customerID } = req.params;
-      const data = await AdminBookingService.getBookingsByCustomerID(customerID);
-      return res.json({ success: true, data });
-    } catch (err) {
-      console.error("Admin getBookingsByCustomerID:", err);
-      res.status(500).json({ success: false, message: err.message });
-    }
-  }
 }
 
 export default AdminBookingController;

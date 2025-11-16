@@ -30,9 +30,11 @@ function buildPayOSClient() {
  * Generate a unique order code for each booking
  * => must be a positive integer and unique across all transactions
  */
-function genOrderCode(seed = 0) {
-  const now = Date.now();
-  return Math.abs((now % 1_000_000_000) + (Number(seed) % 1_000_000_000));
+function genOrderCode(bookingID) {
+  // Use bookingID directly for traceability and webhook mapping
+  const n = Number(bookingID);
+  if (!Number.isFinite(n) || n <= 0) throw new Error("[PayOS] Invalid bookingID for orderCode");
+  return n;
 }
 
 /**
@@ -51,7 +53,7 @@ class PayosServices {
    * @param {number} bookingID
    * @param {object} buyer { name, email, phone }
    */
-  static async createCheckoutForBooking(bookingID, buyer = {}) {
+  static async createCheckoutForBooking(bookingID, buyer = {}, amountOverride = null) {
     const payos = buildPayOSClient();
 
     // --- 1. Lấy thông tin booking ---
@@ -59,13 +61,15 @@ class PayosServices {
     if (!booking) throw new Error("Booking not found");
 
     // --- 2. Tính tổng tiền hợp lệ ---
-    const amount = toVndInt(
-      booking.depositAmount ??
-        booking.totalAmount ??
-        Number(booking.originalPrice || 0) -
+    const amount = amountOverride != null
+      ? toVndInt(amountOverride)
+      : toVndInt(
+          booking.depositAmount ??
+          booking.totalAmount ??
+          Number(booking.originalPrice || 0) -
           Number(booking.discountAmount || 0) +
           Number(booking.VAT || 0)
-    );
+        );
 
     // --- 3. Chuẩn bị thông tin mô tả ---
     const restaurantName =
@@ -73,7 +77,7 @@ class PayosServices {
       booking?.restaurantName ||
       "Nhà hàng";
     const hallName = booking?.hall?.name || booking?.hallName || "Sảnh";
-//    const description = `Đặt cọc đơn đặt tiệc #${bookingID} - ${restaurantName}`;
+    //    const description = `Đặt cọc đơn đặt tiệc #${bookingID} - ${restaurantName}`;
     const description = `Đặt cọc`;
 
 
@@ -128,7 +132,7 @@ class PayosServices {
       const verified = payos.webhooks.verify(webhookData);
       return verified;
     } catch (err) {
-      console.error("[PayOS] ❌ Webhook verification failed:", err.message);
+      console.error("[PayOS] Webhook verification failed:", err.message);
       return null;
     }
   }

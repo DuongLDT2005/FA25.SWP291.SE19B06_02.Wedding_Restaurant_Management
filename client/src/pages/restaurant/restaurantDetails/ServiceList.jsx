@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react"; // Lucide icons
 
-const eventTypeNames = {
-  1: "Tiệc cưới",
-  2: "Hội nghị",
-  3: "Sinh nhật",
-};
+
 
 const ServiceList = ({ restaurant }) => {
-  const groupedServices = restaurant.services?.reduce((acc, service) => {
+  const eventTypeNames = {
+    1: "Tiệc cưới",
+    ...restaurant.eventTypes?.reduce((acc, type) => {
+      acc[type.eventTypeID] = type.name;
+      return acc;
+    }, {}),
+  };
+  const activeServices = restaurant.services?.filter(service => service.status == 1) || [];
+  const groupedServices = activeServices.reduce((acc, service) => {
     if (!acc[service.eventTypeID]) acc[service.eventTypeID] = [];
     acc[service.eventTypeID].push(service);
     return acc;
@@ -73,7 +77,7 @@ const ServiceList = ({ restaurant }) => {
             >
               {services.map((service, idx) => (
                 <div
-                  key={service.id || service.serviceID}
+                  key={service.serviceID}
                   className="d-flex justify-content-between align-items-center mb-2 p-3"
                   style={{
                     borderRadius: "8px",

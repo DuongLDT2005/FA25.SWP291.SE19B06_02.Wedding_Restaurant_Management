@@ -17,10 +17,6 @@ class AdminBookingService {
   static async deleteBooking(id) {
     return await AdminBookingDAO.deleteBooking(id);
   }
-
-  static async getBookingsByCustomerID(customerID) {
-    return await AdminBookingDAO.getBookingsByCustomerID(customerID);
-  }
 }
 
 export default AdminBookingService;

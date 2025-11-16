@@ -20,17 +20,27 @@ const ListResult = ({
   const query = new URLSearchParams(useLocation().search);
   const location = query.get("location") || "Kết quả tìm kiếm";
 
-  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity)
+  // 🧮 Tính toán bổ sung từ dữ liệu backend (minPrice, maxCapacity) và map fields
   const processedVenues = useMemo(() => {
     return venues.map((v) => {
       const halls = v.halls || [];
       const minPrice = halls.length
-        ? Math.min(...halls.map((h) => Number(h.price)))
+        ? Math.min(...halls.map((h) => Number(h.price) || 0))
         : 0;
       const maxCapacity = halls.length
-        ? Math.max(...halls.map((h) => Number(h.maxTable)))
+        ? Math.max(...halls.map((h) => Number(h.maxTable) || 0))
         : 0;
-      return { ...v, minPrice, maxCapacity };
+      
+      // Map các field từ backend format sang ProductCard format
+      return {
+        ...v,
+        id: v.restaurantID || v.id, // Map restaurantID -> id
+        image: v.thumbnailURL || v.restaurantimages?.[0]?.imageURL || v.image, // Map thumbnailURL -> image
+        location: v.address?.fullAddress || v.address?.ward || v.location, // Map address.fullAddress -> location
+        rating: v.avgRating ? Number(v.avgRating) : v.rating, // Map avgRating -> rating
+        minPrice,
+        maxCapacity,
+      };
     });
   }, [venues]);
 
@@ -154,44 +164,44 @@ const ListResult = ({
                     overflow: "hidden",
                   }}
                 >
-                  {sortOptions.map((opt) => {
-                    return (
-                      <button
-                        key={opt.value}
-                        onClick={() => {
-                          onSortChange(opt.value);
-                          setIsDropdownOpen(false);
-                        }}
-                        style={{
-                          width: "100%",
-                          padding: "12px 16px",
-                          border: "none",
-                          background: sortBy === opt.value ? "#FFF1F2" : "#fff",
-                          color: sortBy === opt.value ? "#e23359ff" : "#374151",
-                          fontSize: 14,
-                          fontWeight: sortBy === opt.value ? 600 : 400,
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          textAlign: "left",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (sortBy !== opt.value) {
-                            e.currentTarget.style.background = "#F9FAFB";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (sortBy !== opt.value) {
-                            e.currentTarget.style.background = "#fff";
-                          }
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        onSortChange(opt.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        border: "none",
+                        background:
+                          sortBy === opt.value ? "#FFF1F2" : "#fff",
+                        color:
+                          sortBy === opt.value ? "#E11D48" : "#374151",
+                        fontSize: 14,
+                        fontWeight: sortBy === opt.value ? 600 : 400,
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (sortBy !== opt.value) {
+                          e.currentTarget.style.background = "#F9FAFB";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (sortBy !== opt.value) {
+                          e.currentTarget.style.background = "#fff";
+                        }
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
                 </div>
               </>
             )}

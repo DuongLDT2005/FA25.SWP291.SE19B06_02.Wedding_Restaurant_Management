@@ -52,6 +52,19 @@ export const rejectBookingByPartner = createAsyncThunk(
   }
 );
 
+// Update booking by ID
+export const updateBooking = createAsyncThunk(
+  "booking/update",
+  async ({ bookingID, updates }, { rejectWithValue }) => {
+    try {
+      const res = await bookingService.updateBooking(bookingID, updates);
+      return { bookingID, res };
+    } catch (err) {
+      return rejectWithValue(err?.message || err);
+    }
+  }
+);
+
 // Load full detail by ID for detail page
 export const loadBookingDetail = createAsyncThunk(
   "booking/detail/load",
@@ -99,6 +112,7 @@ const initialState = {
     tables: 1,
     eventType: "Tiệc cưới",
     specialRequest: "",
+    dishIDs: [], // normalized list of selected dish IDs
   },
   menu: null, // { id, name, price, categories... }
   services: [], // selected service objects
@@ -195,6 +209,12 @@ const bookingSlice = createSlice({
       // dishes
       if (Array.isArray(b.bookingdishes)) {
         state.dishes = b.bookingdishes.map((bd) => bd.dish).filter(Boolean);
+        // derive dishIDs for bookingInfo
+        const ids = b.bookingdishes
+          .map((bd) => bd.dish?.dishID ?? bd.dishID)
+          .filter((id) => Number.isInteger(Number(id)))
+          .map(Number);
+        state.bookingInfo.dishIDs = ids;
       }
       // services
       if (Array.isArray(b.bookingservices)) {
@@ -299,6 +319,17 @@ const bookingSlice = createSlice({
         );
         if (state.detail && state.detail.bookingID === id) {
           state.detail = { ...state.detail, status: 2 };
+        }
+      })
+      .addCase(updateBooking.fulfilled, (state, action) => {
+        const id = action.payload?.bookingID;
+        // Update partnerRows if exists
+        state.partnerRows = (state.partnerRows || []).map((x) =>
+          x.bookingID === id ? { ...x, ...action.payload.res } : x
+        );
+        // Update detail if matches
+        if (state.detail && state.detail.bookingID === id) {
+          state.detail = { ...state.detail, ...action.payload.res };
         }
       });
   },

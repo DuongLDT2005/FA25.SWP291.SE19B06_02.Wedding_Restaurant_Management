@@ -14,6 +14,8 @@ import UserDAO from "../../dao/userDao.js";
 import NotificationService from "../NotificationServices.js";
 import db from "../../config/db.js";
 import { notifyByStatusById } from "./BookingNotificationService.js";
+import PaymentService from "../payment/PaymentServices.js";
+import { paymentStatus } from "../../models/enums/paymentStatus.js";
 
 class BookingService {
   /**
@@ -86,34 +88,24 @@ class BookingService {
     if (!menu) throw new Error("Menu not found");
 
     const engine = new BookingPricing({ tableCount, services });
-    await engine.calculateBasePrice(hall, menu);
 
     // Load promotions details if provided
     let promoInputs = [];
+    let percentPromo = null;
     if (Array.isArray(promotionIDs) && promotionIDs.length > 0) {
       const promos = await Promise.all(
         promotionIDs.map((pid) => PromotionDAO.getByID(pid))
       );
-      // Normalize promotions to engine format; also expand "Free" promotions to individual freeServiceID entries
+      // Find the first promotion with discountType = 0
+      const percentPromotion = promos.find(p => p && p.discountType === 0);
+      if (percentPromotion && percentPromotion.discountValue) {
+        percentPromo = { discountType: 0, discountValue: Number(percentPromotion.discountValue) || 0, minTable: percentPromotion.minTable || 0 };
+      }
+      // Free service promotions
       for (let i = 0; i < promos.length; i++) {
         const p = promos[i];
-        if (!p) continue;
-        // Percent discount
-        if (
-          p.discountPercentage &&
-          (!p.discountType || p.discountType === "Percent")
-        ) {
-          promoInputs.push({
-            discountType: 0,
-            discountValue: Number(p.discountPercentage) || 0,
-            minTable: p.minTable || 0,
-          });
-        }
-        // Free service(s)
-        if (p.discountType === "Free") {
-          const freeSvcs = await PromotionDAO.getServicesByPromotionID(
-            p.promotionID
-          );
+        if (p && p.discountType === 'Free') {
+          const freeSvcs = await PromotionDAO.getServicesByPromotionID(p.promotionID);
           for (const svc of freeSvcs) {
             promoInputs.push({
               discountType: 1,
@@ -124,6 +116,9 @@ class BookingService {
         }
       }
     }
+
+    await engine.calculateBasePrice(hall, menu, percentPromo ? [percentPromo] : []);
+
     await engine.applyPromotions(promoInputs);
 
     // Load info for selected services
@@ -326,12 +321,47 @@ class BookingService {
       // Perform update via DAO (transaction-aware)
       await BookingDAO.updateBookingStatusWithTransaction(bookingID, status, { isChecked: setChecked, transaction: t });
 
-      // after commit, send notifications (best-effort)
+      // after commit, side-effects: notifications and payment scaffolding
       t.afterCommit(async () => {
         try {
           await notifyByStatusById(bookingID, status, { reason });
         } catch (e) {
           console.error(`Notification for status ${status} on booking ${bookingID} failed:`, e?.message || e);
+        }
+
+        // When booking moves to CONFIRMED, ensure there is a pending DEPOSIT payment created
+        if (status === BookingStatus.CONFIRMED) {
+          try {
+            const bk = await BookingDAO.getBookingById(bookingID);
+            if (bk) {
+              const restaurantID = bk?.hall?.restaurant?.restaurantID || bk?.restaurantID || null;
+              // deposit rate configurable via SystemSetting: DEPOSIT_RATE in [0,1)
+              let depositRate = 0.3;
+              try {
+                const setting = await SystemSettingDAO.getByKey("DEPOSIT_RATE");
+                const val = Number(setting?.settingValue);
+                if (!Number.isNaN(val) && val > 0 && val < 1) depositRate = val;
+              } catch {}
+              const total = Number(bk.totalAmount || 0);
+              const amount = Math.round(total * depositRate);
+              if (amount > 0) {
+                const existing = await PaymentService.getPaymentsByBooking(bookingID);
+                const hasDeposit = (existing || []).some(p => (p?.type === paymentStatus.type.DEPOSIT || p?.type === 0) && (p?.status === paymentStatus.status.PENDING || p?.status === paymentStatus.status.PROCESSING || p?.status === 0 || p?.status === 1));
+                if (!hasDeposit) {
+                  await PaymentService.createPayment({
+                    bookingID,
+                    restaurantID,
+                    amount,
+                    type: paymentStatus.type.DEPOSIT,
+                    paymentMethod: paymentStatus.paymentMethod.PAYOS,
+                    status: paymentStatus.status.PENDING,
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.error(`[BookingService] ensure deposit payment after CONFIRMED failed:`, e?.message || e);
+          }
         }
       });
 
@@ -412,6 +442,36 @@ class BookingService {
     const booking = await BookingDAO.getBookingDetails(bookingID);
     if (!booking) throw new Error("Booking not found.");
     await this.changeStatus(bookingID, BookingStatus.CONFIRMED);
+    // Create a pending DEPOSIT payment record so we can track and reuse for PayOS
+    try {
+      const restaurantID = booking?.hall?.restaurant?.restaurantID || booking?.restaurantID || null;
+      // Get deposit rate from settings if present, else default 30%
+      let depositRate = 0.3;
+      try {
+        const setting = await SystemSettingDAO.getByKey("DEPOSIT_RATE");
+        const val = Number(setting?.settingValue);
+        if (!Number.isNaN(val) && val > 0 && val < 1) depositRate = val;
+      } catch {}
+      const total = Number(booking.totalAmount || 0);
+      const amount = Math.round(total * depositRate);
+      if (amount > 0) {
+        // Avoid duplicate deposit payment creation if one already exists pending/processing
+        const existing = await PaymentService.getPaymentsByBooking(bookingID);
+        const hasDeposit = (existing || []).some(p => (p?.type === paymentStatus.type.DEPOSIT || p?.type === 0) && (p?.status === paymentStatus.status.PENDING || p?.status === paymentStatus.status.PROCESSING || p?.status === 0 || p?.status === 1));
+        if (!hasDeposit) {
+          await PaymentService.createPayment({
+            bookingID,
+            restaurantID,
+            amount,
+            type: paymentStatus.type.DEPOSIT, // 0
+            paymentMethod: paymentStatus.paymentMethod.PAYOS, // 0
+            status: paymentStatus.status.PENDING, // 0
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[BookingService] create deposit payment error:", e?.message || e);
+    }
     // Expiration is handled by cron (bulkExpireConfirmedOlderThanBatch)
     return await BookingDAO.getBookingById(bookingID);
   }
@@ -422,12 +482,34 @@ class BookingService {
     await this.changeStatus(bookingID, BookingStatus.COMPLETED);
     return await BookingDAO.getBookingById(bookingID);
   }
-
-  async getBookingsByCustomerId(customerID) {
-    return await BookingDAO.getBookingsByCustomer({
-      customerID,
-    });
+  /**
+   * Webhook helper: map PayOS orderCode back to bookingID and set status to DEPOSITED
+   */
+  async deposit(orderCode) {
+    const bookingID = Number(orderCode);
+    if (!Number.isFinite(bookingID) || bookingID <= 0) throw new Error("Invalid orderCode");
+    return this.depositBooking(bookingID);
   }
+
+  /**
+   * Webhook helper: update internal payment record by transaction reference if present
+   * newStatus matches internal paymentStatus enum values (e.g., 2 = SUCCESS, 3 = FAILED)
+   */
+  async updatePaymentStatusByOrderCode(orderCode, newStatus, transactionID = null) {
+    try {
+      if (transactionID) {
+        const pay = await PaymentService.getPaymentByTransactionRef(transactionID);
+        if (pay?.paymentID) {
+          await PaymentService.updatePaymentStatus(pay.paymentID, newStatus);
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error("updatePaymentStatusByOrderCode failed:", e?.message || e);
+    }
+    return false;
+  }
+  // get user by customerID from restaurants getBookingsByPartnerId
 }
 
 export default new BookingService();

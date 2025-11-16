@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import * as bookingActions from "../redux/slices/bookingSlice";
 import { calculatePrice } from "../services/bookingService";
 
+
 export function useBooking() {
   const dispatch = useDispatch();
   const booking = useSelector((s) => s.booking) || {};
@@ -24,6 +25,7 @@ export function useBooking() {
   const markCheckedLocal = useCallback((bookingID) => dispatch(bookingActions.markCheckedLocal(bookingID)), [dispatch]);
   // Detail loader
   const loadBookingDetail = useCallback((bookingID) => dispatch(bookingActions.loadBookingDetail(bookingID)), [dispatch]);
+  const updateBooking = useCallback((bookingID, updates) => dispatch(bookingActions.updateBooking({ bookingID, updates })), [dispatch]);
 
   const recalcPrice = useCallback(() => {
     if (!booking) return { guests: 0, menuTotal: 0, servicesTotal: 0, subtotal: 0, discount: 0, vat: 0, total: 0 };
@@ -32,17 +34,18 @@ export function useBooking() {
       tables: booking.bookingInfo?.tables,
       services: booking.services,
       promotion: booking.appliedPromotion,
+      hallFee: booking.hall?.price || booking.bookingInfo?.hallPrice || 0,
     };
-    const summary = calculatePrice({ menu: payload.menu, tables: payload.tables, services: payload.services, promotion: payload.promotion });
+    const summary = calculatePrice(payload);
     dispatch(bookingActions.setPriceSummary(summary));
     return summary;
-  }, [dispatch, booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion]);
+  }, [dispatch, booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion, booking.hall?.price, booking.bookingInfo?.hallPrice]);
 
   // Auto-recalculate whenever inputs change (menu, tables, services, promotion)
   useEffect(() => {
     recalcPrice();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion]);
+  }, [booking.menu, booking.bookingInfo?.tables, booking.services, booking.appliedPromotion, booking.hall?.price, booking.bookingInfo?.hallPrice]);
 
   // derived summary always available locally
   const summary = useMemo(() => {
@@ -108,6 +111,7 @@ export function useBooking() {
     rejectByPartner,
     markCheckedLocal,
     loadBookingDetail,
+    updateBooking,
     partnerBookings: booking.partnerRows || [],
     partnerStatus: booking.partnerStatus || 'idle',
     partnerError: booking.partnerError || null,

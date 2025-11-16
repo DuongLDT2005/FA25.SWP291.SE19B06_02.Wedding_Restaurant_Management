@@ -1,5 +1,6 @@
 // Hàm test: insert OTP và kiểm tra TTL index
 import { client } from "../config/db.js";
+import { Decimal128 } from 'mongodb';
 
 // Tạo TTL index cho collection otps, tự động xóa OTP sau 15 phút
 export async function ensureOtpTTLIndex() {
@@ -109,6 +110,26 @@ export async function insertMessage(userId1, userId2, senderId, text) {
         conversation_id,
         timestamp: now
     };
+}
+
+
+// Thêm function insertNegotiationCommission
+export async function insertNegotiationCommission(userID, description, commissionRate, negotiatedAt) {
+    const collection = getCollection("negotiationCommission");
+    const doc = {
+        userID,
+        description,
+        commissionRate: new Decimal128(commissionRate),
+        negotiatedAt: negotiatedAt || new Date()
+    };
+    return await collection.insertOne(doc);
+}
+
+// Thêm function getNegotiationCommissionsByUserID
+export async function getNegotiationCommissionsByUserID(userID) {
+    const collection = getCollection("negotiationCommission");
+    const cursor = collection.find({ userID }).sort({ negotiatedAt: -1 });
+    return await cursor.toArray();
 }
 
 

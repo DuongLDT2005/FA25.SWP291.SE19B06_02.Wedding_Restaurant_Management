@@ -1,44 +1,42 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Card, Table, Badge, Button, Modal } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import PartnerLayout from "../../../layouts/PartnerLayout";
 import RatingStars from "../../../components/RatingStars";
-const mockReviews = [
-    {
-        reviewId: "R001",
-        bookingID: "BK001",
-        restaurant: "The Rose Hall",
-        customerName: "Nguyễn Văn B",
-        rating: 5,
-        comment: "Dịch vụ tuyệt vời!",
-        date: "2025-10-01T14:30:00",
-        status: "Visible",
-        bookingComplete: true,
-    },
-    {
-        reviewId: "R002",
-        bookingID: "BK002",
-        restaurant: "Sunshine Hotel",
-        customerName: "Trần Thị C",
-        rating: 4,
-        comment: "Rất đẹp nhưng món ăn hơi nhạt.",
-        date: "2025-10-05T11:15:00",
-        status: "Hidden",
-        bookingComplete: true,
-    },
-];
+import useAuth from "../../../hooks/useAuth";
 
 export default function PartnerReviewPage() {
+    const { user } = useAuth();
     const [selectedReview, setSelectedReview] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    // Chỉ lấy review hiển thị và bookingComplete
-    const visibleReviews = useMemo(
-        () =>
-            mockReviews.filter(
-                (r) => r.status === "Visible" && r.bookingComplete
-            ),
-        []
-    );
+    useEffect(() => {
+        const partnerID = user?.userID || user?.partner?.restaurantPartnerID || user?.id;
+        if (!partnerID) return;
+        let ignore = false;
+        (async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const res = await fetch(`/api/partners/${partnerID}/reviews`, {
+                    credentials: "include",
+                    headers: { Accept: "application/json" },
+                });
+                const json = await res.json();
+                if (!res.ok || json?.success === false) throw new Error(json?.message || "Tải review thất bại");
+                if (!ignore) setReviews(Array.isArray(json.data) ? json.data : []);
+            } catch (e) {
+                if (!ignore) setError(e?.message || "Tải review thất bại");
+            } finally {
+                if (!ignore) setLoading(false);
+            }
+        })();
+        return () => {
+            ignore = true;
+        };
+    }, [user]);
 
     return (
         <PartnerLayout>
@@ -50,6 +48,8 @@ export default function PartnerReviewPage() {
 
                 <Card className="mt-3">
                     <Card.Body>
+                        {loading && <div>Đang tải đánh giá…</div>}
+                        {error && <div className="text-danger mb-2">{error}</div>}
                         <Table hover responsive>
                             <thead>
                                 <tr>
@@ -62,34 +62,28 @@ export default function PartnerReviewPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {visibleReviews.map((r) => (
-                                    <tr key={r.reviewId}>
+                                {reviews.map((r) => (
+                                    <tr key={r.reviewID || r.reviewId}>
                                         <td>
-                                            <Link
-                                                to={`/partner/bookings/${r.bookingID}`}
-                                                className="text-primary text-decoration-none"
-                                            >
+                                            <Link to={`/partner/bookings/${r.bookingID}`} className="text-primary text-decoration-none">
                                                 <i className="bi bi-bookmark me-1"></i>
                                                 {r.bookingID}
                                             </Link>
                                         </td>
                                         <td>
                                             <i className="bi bi-shop me-1"></i>
-                                            {r.restaurant}
+                                            {r.restaurantName || r.restaurant}
                                         </td>
                                         <td>{r.comment}</td>
                                         <td>
-                                            <RatingStars rating={r.rating} />
+                                            <RatingStars rating={Number(r.rating || 0)} />
                                         </td>
                                         <td>
                                             <i className="bi bi-calendar-event me-1"></i>
-                                            {new Date(r.date).toLocaleDateString("vi-VN")}
+                                            {r.date ? new Date(r.date).toLocaleDateString("vi-VN") : "-"}
                                         </td>
                                         <td>
-                                            <Button
-                                                size="sm"
-                                                onClick={() => setSelectedReview(r)}
-                                            >
+                                            <Button size="sm" onClick={() => setSelectedReview(r)}>
                                                 <i className="bi bi-eye me-1"></i>
                                                 Xem
                                             </Button>
@@ -127,7 +121,7 @@ export default function PartnerReviewPage() {
                                     <i className="bi bi-shop me-1"></i>
                                     Nhà hàng:
                                 </strong>{" "}
-                                {selectedReview.restaurant}
+                                {selectedReview.restaurantName || selectedReview.restaurant}
                             </p>
                             <p>
                                 <strong>
@@ -141,7 +135,7 @@ export default function PartnerReviewPage() {
                                     <i className="bi bi-star-fill me-1"></i>
                                     Đánh giá:
                                 </strong>{" "}
-                                <RatingStars rating={selectedReview.rating} />
+                                <RatingStars rating={Number(selectedReview.rating || 0)} />
                             </p>
                             <p>
                                 <strong>
@@ -155,7 +149,7 @@ export default function PartnerReviewPage() {
                                     <i className="bi bi-calendar-event me-1"></i>
                                     Ngày review:
                                 </strong>{" "}
-                                {new Date(selectedReview.date).toLocaleString("vi-VN")}
+                                {selectedReview.date ? new Date(selectedReview.date).toLocaleString("vi-VN") : "-"}
                             </p>
                         </Modal.Body>
                     </Modal>

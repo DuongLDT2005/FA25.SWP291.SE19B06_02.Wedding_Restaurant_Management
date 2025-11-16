@@ -36,17 +36,13 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: 0
-    },
-    // Fix: Thêm field createdAt từ database
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      field: 'createdAt'
     }
   }, {
   sequelize,
   tableName: 'user',
-  timestamps: false, // Giữ false vì chỉ có createdAt, không có updatedAt
+  // The database schema for this project doesn't have createdAt/updatedAt columns
+  // so disable Sequelize automatic timestamps to avoid ER_BAD_FIELD_ERROR.
+  timestamps: false,
     indexes: [
       {
         name: "PRIMARY",

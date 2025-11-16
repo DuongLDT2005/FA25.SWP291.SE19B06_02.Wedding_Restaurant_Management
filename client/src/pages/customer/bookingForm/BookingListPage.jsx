@@ -9,7 +9,94 @@ import ScrollToTopButton from "../../../components/ScrollToTopButton"
   import { getMyBookings, customerConfirm, customerCancel } from "../../../services/bookingService"
 import useAuth from "../../../hooks/useAuth"
 import useBooking from "../../../hooks/useBooking"
+import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant"
+import { fetchDishCategoriesByRestaurant } from "../../../redux/slices/additionRestaurantSlice"
+import { useDispatch } from "react-redux"
+import { useReview } from "../../../hooks/useReview"
 import "bootstrap/dist/css/bootstrap.min.css"
+
+function buildDetailPayload(b, categoriesMap) {
+  // Build customer info strictly from booking data (not auth)
+  const embeddedUser = b.customer?.user || {}
+  const customer = {
+    fullName: b.customer?.user?.fullName || embeddedUser.fullName || embeddedUser.name || "Khách hàng",
+    phone: b.customer?.user?.phone || embeddedUser.phone || "N/A",
+    email: b.customer?.user?.email || embeddedUser.email || "N/A",
+  }
+  // Build restaurant from hall.restaurant
+  const restaurant = {
+    name: b.hall?.restaurant?.name || "Nhà hàng",
+    address: b.hall?.restaurant?.fullAddress || "Đang cập nhật",
+    thumbnailURL: b.hall?.restaurant?.thumbnailURL || "",
+  }
+
+  // Build hall
+  const hall = {
+    name: b.hall?.name || "Sảnh",
+    capacity: b.hall?.maxTable || b.tableCount || 0,
+    area: parseFloat(b.hall?.area) || 0,
+    price: parseFloat(b.hall?.price) || 0,
+  }
+
+  // Build menu with categories from bookingdishes
+  const dishMap = {};
+  (b.bookingdishes || []).forEach(bd => {
+    const dish = bd.dish;
+    const categoryId = dish.categoryID;
+    if (!dishMap[categoryId]) {
+      dishMap[categoryId] = {
+        name: categoriesMap[categoryId]?.name || `Danh mục ${categoryId}`,
+        dishes: []
+      };
+    }
+    dishMap[categoryId].dishes.push({
+      id: dish.dishID,
+      name: dish.name,
+      price: 0,
+      imageURL: dish.imageURL,
+      category: categoriesMap[categoryId]?.name || `Danh mục ${categoryId}`
+    });
+  });
+  const menu = {
+    name: b.menu?.name || "Menu đã chọn",
+    price: parseFloat(b.menu?.price) || 0,
+    categories: Object.values(dishMap)
+  }
+
+  // Build services from bookingservices
+  const services = (b.bookingservices || []).map(bs => ({
+    name: bs.service?.name || "Dịch vụ",
+    quantity: bs.quantity || 1,
+    price: parseFloat(bs.service?.price) || 0
+  }));
+
+  return {
+    bookingID: b.bookingID,
+    status: b.status ?? 0,
+    eventType: b.eventType?.name || "Tiệc cưới",
+    eventDate: b.eventDate,
+    startTime: b.startTime || "18:00",
+    endTime: b.endTime || "22:00",
+    tableCount: b.tableCount || 0,
+    specialRequest: b.specialRequest || "",
+    createdAt: b.createdAt || new Date().toISOString(),
+    customer,
+    restaurant,
+    hall,
+    menu,
+    services,
+    payments: b.payments || [],
+    contract: b.contract || {
+      content: "Hợp đồng dịch vụ...",
+      status: 0,
+      signedAt: null,
+    },
+    originalPrice: parseFloat(b.originalPrice) || 0,
+    discountAmount: parseFloat(b.discountAmount) || 0,
+    VAT: parseFloat(b.VAT) || 0,
+    totalAmount: parseFloat(b.totalAmount) || 0,
+  }
+}
 
 function BookingListPage() {
   const navigate = useNavigate()
@@ -19,7 +106,10 @@ function BookingListPage() {
   const [bookingsData, setBookingsData] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
+  const dispatch = useDispatch()
+  const [categoriesMap, setCategoriesMap] = useState({})
+  const { createOne: createReview } = useReview()
+console.log(bookingsData);
   useEffect(() => {
     let ignore = false
     async function load() {
@@ -53,6 +143,26 @@ function BookingListPage() {
     return () => { ignore = true }
   }, [user?.userID])
 
+  useEffect(() => {
+    if (bookingsData.length === 0) return;
+    const uniqueRestaurantIds = [...new Set(bookingsData.map(b => b.hall?.restaurant?.restaurantID).filter(id => id))];
+    const fetchCategories = async () => {
+      const newMap = {};
+      for (const id of uniqueRestaurantIds) {
+        try {
+          const categories = await dispatch(fetchDishCategoriesByRestaurant(id)).unwrap();
+          categories.forEach(cat => {
+            newMap[cat.categoryID] = cat;
+          });
+        } catch (e) {
+          console.error('Failed to fetch categories for restaurant', id, e);
+        }
+      }
+      setCategoriesMap(newMap);
+    };
+    fetchCategories();
+  }, [bookingsData, dispatch])
+
   // Với dữ liệu thật từ backend, bỏ sessionStorage persist (có thể giữ nếu cần offline cache)
 
   async function handleConfirm(b) {
@@ -67,7 +177,8 @@ function BookingListPage() {
   async function handleCancel(b, note) {
     try {
       await customerCancel(b.bookingID, note)
-      setBookingsData(prev => prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 6, cancelReason: note || '' } : it))
+      // Keep cancelled bookings visible; just update status to 6 (CANCELLED)
+      setBookingsData(prev => prev.map(it => it.bookingID === b.bookingID ? { ...it, status: 6 } : it))
     } catch (e) {
       alert(e.message || 'Hủy booking thất bại')
     }
@@ -77,36 +188,34 @@ function BookingListPage() {
     console.log("Transfer deposit for booking", b.bookingID)
   }
 
-  function handleReview(b, payload) {
-    console.log("Review booking", b.bookingID, payload)
+  async function handleReview(b, payload) {
+    try {
+      const restaurantID = b?.hall?.restaurant?.restaurantID || b?.restaurant?.restaurantID
+      if (!restaurantID) throw new Error("Thiếu restaurantID để tạo đánh giá")
+      // Map ReviewModal payload to API: content -> comment
+      await createReview(restaurantID, {
+        bookingID: b.bookingID,
+        rating: payload?.rating,
+        comment: payload?.content || "",
+      })
+      alert("Gửi đánh giá thành công!")
+      // Optional: you could refresh reviews here if showing inline
+    } catch (e) {
+      alert(e.message || "Gửi đánh giá thất bại")
+    }
   }
 
   function handleOpenContract(b) {
-    // Đổ dữ liệu chi tiết booking vào Redux để trang chi tiết có thể dùng ngay
-    try {
-      hydrateFromDTO(b)
-      setFinancial({
-        originalPrice: b.originalPrice,
-        discountAmount: b.discountAmount,
-        VAT: b.VAT,
-        totalAmount: b.totalAmount,
-      })
-    } catch {}
-    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
+    // Lưu toàn bộ dữ liệu booking từ backend
+    const payload = buildDetailPayload(b, categoriesMap)
+    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(payload))
     navigate(`/booking/${b.bookingID}`)
   }
 
   function handleViewContract(b) {
-    try {
-      hydrateFromDTO(b)
-      setFinancial({
-        originalPrice: b.originalPrice,
-        discountAmount: b.discountAmount,
-        VAT: b.VAT,
-        totalAmount: b.totalAmount,
-      })
-    } catch {}
-    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(b))
+    // Lưu toàn bộ dữ liệu booking từ backend
+    const payload = buildDetailPayload(b, categoriesMap)
+    sessionStorage.setItem(`booking_${b.bookingID}`, JSON.stringify(payload))
     navigate(`/booking/${b.bookingID}`)
   }
 
@@ -215,6 +324,7 @@ function BookingListPage() {
                       }}>
                       <BookingCard
                         booking={b}
+                        categoriesMap={categoriesMap}
                         onConfirm={handleConfirm}
                         onCancel={handleCancel}
                         onTransfer={handleTransfer}

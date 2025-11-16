@@ -8,19 +8,22 @@ import { Badge } from "react-bootstrap";
  * Hiển thị khuyến mãi đang áp dụng + gợi ý promotion kế cận
  * Cho phép áp dụng promotion gợi ý.
  */
-export default function PromotionBadge({ promotions, tables, menu, services }) {
-  const { booking, applyPromotion, recallPrice } = useBooking();
+export default function PromotionBadge({ promotions, tables, menu, services, hallFee = 0 }) {
+  const { booking, applyPromotion, recalcPrice } = useBooking();
   const [appliedPromotions, setAppliedPromotions] = React.useState([]);
   // Use provided promotions directly
   const suggestions = promotions || [];
   // Auto apply the best promotion when promotions list or inputs change
   useEffect(() => {
     if (!suggestions.length) return;
-    const base = {menu: menu, tables:tables, services: Array.isArray(services) ? services : [] };
+    const base = {menu: menu, tables:tables, services: Array.isArray(services) ? services : [], hallFee: hallFee };
     let best = suggestions[0];
     let bestDiscount = 0;
     // Only consider promotions with discountType 0 for best discount calculation
-    const discountPromotions = suggestions.filter(p => p.discountType === 0);
+   
+    // Apply all discountType 1 promotions
+    const servicePromotions = suggestions.filter(p => p.discountType === 1);
+     const discountPromotions = suggestions.filter(p => p.discountType === 0);
     discountPromotions.forEach((p) => {
       const { discount } = calculatePrice({ ...base, promotion: p });
       // console.log(`Promotion: ${p.title}, Discount: ${discount}`);
@@ -31,23 +34,13 @@ export default function PromotionBadge({ promotions, tables, menu, services }) {
     });
     // apply only if better or not set yet
     if (best && (!booking.appliedPromotion || booking.appliedPromotion?.id !== best.id)) {
-      applyPromotion(best);
-      // recalc after apply
-      setTimeout(recallPrice, 0);
+      applyPromotion(best);      // recalc after apply and return data
     }
-    // Apply all discountType 1 promotions
-    const servicePromotions = suggestions.filter(p => p.discountType === 1);
-    servicePromotions.forEach((p) => {
-      if (!booking.appliedPromotion || !Array.isArray(booking.appliedPromotion) || !booking.appliedPromotion.some(ap => ap.id === p.id)) {
-        applyPromotion(p);
-        setTimeout(recallPrice, 0);
-      }
-    });
     // Update local applied promotions for display
     const allApplied = [best, ...servicePromotions].filter(Boolean);
     setAppliedPromotions(allApplied);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [suggestions, tables, menu, services]);
+  }, [suggestions, tables, menu, services, hallFee]);
 
   return (
     <div className="mt-3">

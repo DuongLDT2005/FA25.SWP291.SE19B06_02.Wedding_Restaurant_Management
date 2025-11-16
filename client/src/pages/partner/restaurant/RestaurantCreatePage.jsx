@@ -26,7 +26,6 @@ export default function CreateRestaurantPage() {
         restaurantPartnerID: "",
         name: "",
         phone: "",
-        email: "",
         description: "",
         thumbnailURL: "",
         thumbnailFile: null,
@@ -153,7 +152,6 @@ export default function CreateRestaurantPage() {
                 restaurantPartnerID: "",
                 name: "",
                 phone: "",
-                email: "",
                 description: "",
                 thumbnailURL: "",
                 thumbnailFile: null,
@@ -199,21 +197,6 @@ export default function CreateRestaurantPage() {
                                         value={newRestaurant.phone}
                                         onChange={handleChange}
                                         placeholder="VD: 0909xxxxxx"
-                                    />
-                                </Form.Group>
-                            </Col>
-                        </Row>
-
-                        <Row className="mb-3">
-                            <Col md={6}>
-                                <Form.Group controlId="restaurantEmail">
-                                    <Form.Label>Email</Form.Label>
-                                    <Form.Control
-                                        type="email"
-                                        name="email"
-                                        value={newRestaurant.email}
-                                        onChange={handleChange}
-                                        placeholder="VD: info@restaurant.com"
                                     />
                                 </Form.Group>
                             </Col>

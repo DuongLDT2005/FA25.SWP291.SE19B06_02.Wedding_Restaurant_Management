@@ -9,14 +9,10 @@ import {
   Badge,
   Modal,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
 import axios from "../../../../api/axios";
 import AdminLayout from "../../../../layouts/AdminLayout";
-import { getPdfViewUrl } from "../../../../utils/cloudinaryHelper";
-import PdfViewer from "../../../../components/PdfViewer";
 
 export default function AdminLicensePage() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pending");
 
   const [approvedPartners, setApprovedPartners] = useState([]);
@@ -25,8 +21,6 @@ export default function AdminLicensePage() {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState(null);
-  const [showPdfViewer, setShowPdfViewer] = useState(false);
-  const [selectedLicenseUrl, setSelectedLicenseUrl] = useState(null);
 
   useEffect(() => {
     loadApprovedPartners();
@@ -187,22 +181,10 @@ export default function AdminLicensePage() {
                         <div className="text-muted small mb-3 partner-info">
                           <span>📞 {p.phone}</span>
                           <span>
-                            📄 License:{" "}
-                            {p.partner?.licenseUrl ? (
-                              <Button
-                                variant="link"
-                                className="p-0 text-primary text-decoration-none"
-                                onClick={() => {
-                                  setSelectedLicenseUrl(p.partner.licenseUrl);
-                                  setShowPdfViewer(true);
-                                }}
-                                style={{ fontSize: "inherit", textDecoration: "underline" }}
-                              >
-                                Xem giấy phép
-                              </Button>
-                            ) : (
-                              <span className="text-muted">Chưa có</span>
-                            )}
+                            📄 License:
+                            <span className="truncate-url">
+                              {p.partner?.licenseUrl}
+                            </span>
                           </span>
                         </div>
 
@@ -275,44 +257,22 @@ export default function AdminLicensePage() {
                         <div className="text-muted small mb-3 partner-info">
                           <span>📞 {p.phone}</span>
                           <span>
-                            📄 License:{" "}
-                            {p.partner?.licenseUrl ? (
-                              <Button
-                                variant="link"
-                                className="p-0 text-primary text-decoration-none"
-                                onClick={() => {
-                                  setSelectedLicenseUrl(p.partner.licenseUrl);
-                                  setShowPdfViewer(true);
-                                }}
-                                style={{ fontSize: "inherit", textDecoration: "underline" }}
-                              >
-                                Xem giấy phép
-                              </Button>
-                            ) : (
-                              <span className="text-muted">Chưa có</span>
-                            )}
+                            📄 License:
+                            <span className="truncate-url">
+                              {p.partner?.licenseUrl}
+                            </span>
                           </span>
                         </div>
 
                         {/* Footer */}
-                        <div className="d-flex gap-2 mt-2">
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="flex-fill"
-                            onClick={() => navigate(`/admin/negotiation/${p.userID}`)}
-                          >
-                            Đàm phán
-                          </Button>
-                          <Button
-                            variant="success"
-                            size="sm"
-                            className="flex-fill"
-                            onClick={() => handleActivate(p)}
-                          >
-                            Kích hoạt
-                          </Button>
-                        </div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="w-100 mt-2"
+                          onClick={() => handleActivate(p)}
+                        >
+                          Kích hoạt đối tác
+                        </Button>
                       </Card.Body>
                     </Card>
                   </Col>
@@ -357,22 +317,10 @@ export default function AdminLicensePage() {
                           <span>📞 {p.phone}</span>
 
                           <span>
-                            📄 License:{" "}
-                            {p.partner?.licenseUrl ? (
-                              <Button
-                                variant="link"
-                                className="p-0 text-primary text-decoration-none"
-                                onClick={() => {
-                                  setSelectedLicenseUrl(p.partner.licenseUrl);
-                                  setShowPdfViewer(true);
-                                }}
-                                style={{ fontSize: "inherit", textDecoration: "underline" }}
-                              >
-                                Xem giấy phép
-                              </Button>
-                            ) : (
-                              <span className="text-muted">Chưa có</span>
-                            )}
+                            📄 License:
+                            <span className="truncate-url">
+                              {p.partner?.licenseUrl}
+                            </span>
                           </span>
 
                           <span>
@@ -421,17 +369,6 @@ export default function AdminLicensePage() {
             </Button>
           </Modal.Footer>
         </Modal>
-
-        {/* PDF Viewer Modal */}
-        <PdfViewer
-          url={selectedLicenseUrl}
-          show={showPdfViewer}
-          onHide={() => {
-            setShowPdfViewer(false);
-            setSelectedLicenseUrl(null);
-          }}
-          title="Giấy phép kinh doanh"
-        />
       </div>
     </AdminLayout>
   );

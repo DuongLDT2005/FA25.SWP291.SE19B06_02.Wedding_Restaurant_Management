@@ -85,13 +85,13 @@ export default function PartnerBookingPage() {
         // Đã cọc: DEPOSITED(4)
         data = bookings.filter((b) => b.status === 4);
         break;
-      case "alreadyBooked":
-        // Đã chặn tay: MANUAL_BLOCKED(8)
-        data = bookings.filter((b) => b.status === 8);
+      case "completed":
+        // Hoàn tất: COMPLETED(7)
+        data = bookings.filter((b) => b.status === 7);
         break;
-      case "done":
-        // Đã hoàn tất / Hủy: COMPLETED(7), CANCELLED(6)
-        data = bookings.filter((b) => [7, 6].includes(b.status));
+      case "cancelled":
+        // Đã hủy: CANCELLED(6)
+        data = bookings.filter((b) => b.status === 6);
         break;
       case "rejected":
         // Từ chối: REJECTED(2)
@@ -158,8 +158,8 @@ export default function PartnerBookingPage() {
           <Tab eventKey="pending" title="Chờ xử lý" />
           <Tab eventKey="confirmed" title="Đã xác nhận" />
           <Tab eventKey="deposited" title="Đã cọc" />
-          <Tab eventKey="alreadyBooked" title="Đã chặn" />
-          <Tab eventKey="done" title="Đã hoàn tất / Hủy" />
+          <Tab eventKey="completed" title="Hoàn tất" />
+          <Tab eventKey="cancelled" title="Đã hủy" />
           <Tab eventKey="rejected" title="Từ chối" />
         </Tabs>
 

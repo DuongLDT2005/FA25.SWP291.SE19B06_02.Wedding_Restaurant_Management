@@ -88,43 +88,6 @@ class AdminBookingDAO {
     const rows = await BookingModel.destroy({ where: { bookingID } });
     return rows > 0;
   }
-
-  // GET BOOKINGS BY CUSTOMER ID (for admin)
-  static async getBookingsByCustomerID(customerID) {
-    return await BookingModel.findAll({
-      where: { customerID },
-      order: [["createdAt", "DESC"]],
-      include: [
-        {
-          model: CustomerModel,
-          as: "customer",
-          include: [{ model: UserModel, as: "user" }],
-        },
-        { model: EventTypeModel, as: "eventType" },
-        {
-          model: HallModel,
-          as: "hall",
-          include: [{ model: RestaurantModel, as: "restaurant" }],
-        },
-        { model: MenuModel, as: "menu" },
-        {
-          model: BookingDishModel,
-          as: "bookingdishes",
-          include: [{ model: DishModel, as: "dish" }],
-        },
-        {
-          model: BookingServiceModel,
-          as: "bookingservices",
-          include: [{ model: ServiceModel, as: "service" }],
-        },
-        {
-          model: BookingPromotionModel,
-          as: "bookingpromotions",
-          include: [{ model: PromotionModel, as: "promotion" }],
-        },
-      ],
-    });
-  }
 }
 
 export default AdminBookingDAO;

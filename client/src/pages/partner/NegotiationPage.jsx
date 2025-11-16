@@ -1,163 +1,52 @@
-import React, { useState, useEffect } from "react";
-import { Card, Button, Row, Col, Form, Badge, ListGroup, Container, Spinner, Alert } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Card, Button, Row, Col, Form, Badge, ListGroup, Container } from "react-bootstrap";
 import TopBar from "../../components/PartnerTopBar";
-import axios from "../../api/axios";
-import useAuth from "../../hooks/useAuth";
+const mockNegotiation = {
+    partnerName: "Nguyen Van A",
+    currentStatus: "negotiating", // negotiating | agreed
+    history: [
+        { id: 1, role: "ADMIN", rate: 0.15, date: "2025-09-25 10:00" },
+        { id: 2, role: "PARTNER", rate: 0.12, date: "2025-09-26 14:30" },
+        { id: 3, role: "ADMIN", rate: 0.13, date: "2025-09-27 09:15" },
+    ],
+};
 
 export default function NegotiationPage() {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [partnerData, setPartnerData] = useState(null);
-    const [history, setHistory] = useState([]);
+    const [history, setHistory] = useState(mockNegotiation.history);
     const [newRate, setNewRate] = useState("");
-    const [message, setMessage] = useState("");
-    const [submitting, setSubmitting] = useState(false);
 
-    const partnerID = user?.userID || user?.id;
-
-    useEffect(() => {
-        if (!partnerID) {
-            setError("Không tìm thấy thông tin đối tác");
-            setLoading(false);
-            return;
-        }
-        loadNegotiationData();
-    }, [partnerID]);
-
-    const loadNegotiationData = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            // Load partner data and history
-            const [dataRes, historyRes] = await Promise.all([
-                axios.get(`/negotiation/${partnerID}`),
-                axios.get(`/negotiation/${partnerID}/history`)
-            ]);
-
-            if (dataRes.data?.success) {
-                setPartnerData(dataRes.data.data);
-            }
-
-            if (historyRes.data?.success) {
-                setHistory(historyRes.data.data || []);
-            }
-        } catch (err) {
-            console.error("❌ Error loading negotiation data:", err);
-            setError(err.response?.data?.message || "Không thể tải dữ liệu đàm phán");
-        } finally {
-            setLoading(false);
-        }
+    const handleCounterOffer = () => {
+        if (!newRate) return;
+        const newOffer = {
+            id: history.length + 1,
+            role: "PARTNER",
+            rate: parseFloat(newRate),
+            date: new Date().toLocaleString(),
+        };
+        setHistory([...history, newOffer]);
+        setNewRate("");
     };
 
-    const handleCounterOffer = async () => {
-        if (!newRate || parseFloat(newRate) < 0 || parseFloat(newRate) > 100) {
-            alert("Vui lòng nhập mức hoa hồng hợp lệ (0-100%)");
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            const commissionRate = parseFloat(newRate) / 100; // Convert % to decimal
-
-            await axios.post(`/negotiation/${partnerID}/offer`, {
-                commissionRate,
-                message: message || null
-            });
-
-            alert("✅ Đề xuất đã được gửi thành công!");
-            setNewRate("");
-            setMessage("");
-            await loadNegotiationData(); // Reload to show new offer
-        } catch (err) {
-            console.error("❌ Error creating offer:", err);
-            alert(err.response?.data?.message || "Không thể gửi đề xuất");
-        } finally {
-            setSubmitting(false);
-        }
+    const handleAccept = () => {
+        alert("Bạn đã chấp nhận mức hoa hồng này. Trạng thái sẽ chuyển sang 'Hoạt động'.");
+        // TODO: call API update status = active
     };
-
-    const handleAccept = async () => {
-        if (!window.confirm("Bạn có chắc chắn muốn chấp nhận mức hoa hồng hiện tại?")) {
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            await axios.post(`/negotiation/${partnerID}/accept`);
-
-            alert("✅ Bạn đã chấp nhận mức hoa hồng. Trạng thái sẽ chuyển sang 'Hoạt động'.");
-            navigate("/partner");
-        } catch (err) {
-            console.error("❌ Error accepting offer:", err);
-            alert(err.response?.data?.message || "Không thể chấp nhận đề xuất");
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const getStatusBadge = (status) => {
-        if (status === 2) return { bg: "warning", text: "Đang đàm phán" };
-        if (status === 3) return { bg: "success", text: "Đã thống nhất" };
-        return { bg: "secondary", text: "Không xác định" };
-    };
-
-    const getRoleLabel = (role) => {
-        return role === 1 ? "Admin" : "Partner";
-    };
-
-    if (loading) {
-        return (
-            <>
-                <TopBar />
-                <Container className="mt-4 text-center">
-                    <Spinner animation="border" variant="primary" />
-                    <p className="mt-3">Đang tải dữ liệu...</p>
-                </Container>
-            </>
-        );
-    }
-
-    if (error && !partnerData) {
-        return (
-            <>
-                <TopBar />
-                <Container className="mt-4">
-                    <Alert variant="danger">{error}</Alert>
-                </Container>
-            </>
-        );
-    }
-
-    const statusBadge = getStatusBadge(partnerData?.status);
-    const currentRate = partnerData?.commissionRate 
-        ? (partnerData.commissionRate * 100).toFixed(2) 
-        : "Chưa có";
 
     return (
         <>
             <TopBar />
             <Container className="mt-4">
                 <h2 className="mb-4">Đàm phán hoa hồng</h2>
-                
-                {error && <Alert variant="warning" dismissible onClose={() => setError(null)}>{error}</Alert>}
-
                 <Card className="mb-4">
                     <Card.Body>
-                        <h5>{partnerData?.owner?.fullName || user?.fullName || "N/A"}</h5>
-                        <p className="mb-2">
-                            <strong>Email:</strong> {partnerData?.owner?.email || user?.email || "N/A"}
-                        </p>
-                        <p className="mb-2">
-                            <strong>Mức hoa hồng hiện tại:</strong>{" "}
-                            <span className="text-primary fw-bold">{currentRate}%</span>
-                        </p>
-                        <p className="mb-0">
-                            <strong>Trạng thái:</strong>{" "}
-                            <Badge bg={statusBadge.bg}>{statusBadge.text}</Badge>
+                        <h5>{mockNegotiation.partnerName}</h5>
+                        <p>
+                            Trạng thái:{" "}
+                            <Badge bg={mockNegotiation.currentStatus === "negotiating" ? "warning" : "success"}>
+                                {mockNegotiation.currentStatus === "negotiating"
+                                    ? "Đang đàm phán"
+                                    : "Đã thống nhất"}
+                            </Badge>
                         </p>
                     </Card.Body>
                 </Card>
@@ -167,38 +56,13 @@ export default function NegotiationPage() {
                         <Card>
                             <Card.Header>Lịch sử đàm phán</Card.Header>
                             <ListGroup variant="flush">
-                                {history.length === 0 ? (
-                                    <ListGroup.Item className="text-center text-muted py-4">
-                                        Chưa có lịch sử đàm phán
+                                {history.map((h) => (
+                                    <ListGroup.Item key={h.id}>
+                                        <strong>{h.role === "ADMIN" ? "Admin" : "Partner"}: </strong>
+                                        Đề xuất {Math.round(h.rate * 100)}% hoa hồng{" "}
+                                        <small className="text-muted ms-2">{h.date}</small>
                                     </ListGroup.Item>
-                                ) : (
-                                    history.map((h) => (
-                                        <ListGroup.Item key={h.negotiationID || h.id}>
-                                            <div className="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <strong>
-                                                        {getRoleLabel(h.role)}: {h.proposedBy_user?.fullName || "N/A"}
-                                                    </strong>
-                                                    <br />
-                                                    Đề xuất{" "}
-                                                    <span className="fw-bold text-primary">
-                                                        {(h.commissionRate * 100).toFixed(2)}%
-                                                    </span>{" "}
-                                                    hoa hồng
-                                                    {h.message && (
-                                                        <>
-                                                            <br />
-                                                            <small className="text-muted">Ghi chú: {h.message}</small>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <small className="text-muted">
-                                                    {new Date(h.createdAt).toLocaleString("vi-VN")}
-                                                </small>
-                                            </div>
-                                        </ListGroup.Item>
-                                    ))
-                                )}
+                                ))}
                             </ListGroup>
                         </Card>
                     </Col>
@@ -212,67 +76,18 @@ export default function NegotiationPage() {
                                     <Form.Control
                                         type="number"
                                         min="0"
-                                        max="100"
+                                        max="10"
                                         step="0.01"
                                         value={newRate}
                                         onChange={(e) => setNewRate(e.target.value)}
-                                        disabled={submitting || partnerData?.status !== 2}
-                                        placeholder="VD: 12.5"
-                                    />
-                                    <Form.Text className="text-muted">
-                                        Nhập mức hoa hồng từ 0% đến 100%
-                                    </Form.Text>
-                                </Form.Group>
-
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Ghi chú (tùy chọn)</Form.Label>
-                                    <Form.Control
-                                        as="textarea"
-                                        rows={3}
-                                        value={message}
-                                        onChange={(e) => setMessage(e.target.value)}
-                                        disabled={submitting || partnerData?.status !== 2}
-                                        placeholder="Thêm ghi chú cho đề xuất..."
                                     />
                                 </Form.Group>
-
-                                <Button
-                                    variant="primary"
-                                    className="me-2 w-100 mb-2"
-                                    onClick={handleCounterOffer}
-                                    disabled={submitting || !newRate || partnerData?.status !== 2}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Spinner size="sm" className="me-2" />
-                                            Đang gửi...
-                                        </>
-                                    ) : (
-                                        "Gửi đề xuất"
-                                    )}
+                                <Button variant="primary" className="me-2" onClick={handleCounterOffer}>
+                                    Gửi đề xuất
                                 </Button>
-
-                                <Button
-                                    variant="success"
-                                    className="w-100"
-                                    onClick={handleAccept}
-                                    disabled={submitting || partnerData?.status !== 2 || history.length === 0}
-                                >
-                                    {submitting ? (
-                                        <>
-                                            <Spinner size="sm" className="me-2" />
-                                            Đang xử lý...
-                                        </>
-                                    ) : (
-                                        "Chấp nhận mức hiện tại"
-                                    )}
+                                <Button variant="success" onClick={handleAccept}>
+                                    Chấp nhận mức hiện tại
                                 </Button>
-
-                                {partnerData?.status !== 2 && (
-                                    <Alert variant="info" className="mt-3 mb-0">
-                                        Đàm phán đã kết thúc hoặc chưa bắt đầu
-                                    </Alert>
-                                )}
                             </Card.Body>
                         </Card>
                     </Col>

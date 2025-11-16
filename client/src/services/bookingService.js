@@ -57,19 +57,31 @@ export async function getPromotions(params = {}) {
  * services: [{ id, name, price }] (fixed price)
  * promotion: { id, type, value } type: percent | fixed
  */
-export function calculatePrice({ menu, tables = 1, services = [], avgGuestsPerTable = 1, promotion = null }) {
-  const guests = (tables || 1) * avgGuestsPerTable;
-  const menuTotal = (menu?.price || 0) * guests;
-  const servicesTotal = (services || []).reduce((s, it) => s + (parseFloat(it.price) || 0), 0);
-  let subtotal = menuTotal + servicesTotal;
+export function calculatePrice({ menu, tables = 1, services = [], promotion = null, hallFee = 0, avgGuestsPerTable = 1 }) {
+  const menuPrice = Number(menu?.price || 0);
+  const tablesNum = Number(tables || 1);
+  const hallFeeNum = Number(hallFee || 0);
+  const guests = tablesNum * Number(avgGuestsPerTable || 1);
+  const menuTotal = menuPrice * tablesNum;
+  const servicesTotal = (services || []).reduce((s, it) => s + Number(it.price || 0), 0);
+  const subtotal = menuTotal  + hallFeeNum;
   let discount = 0;
   if (promotion) {
-    if (promotion.type === "percent") discount = Math.round((subtotal * (promotion.value || 0)) / 100);
-    else discount = promotion.value || 0;
+    const promoValue = Number(promotion?.discountValue || 0);
+      discount = Math.round((subtotal * promoValue) / 100);
   }
-  const vat = Math.round((subtotal - discount) * 0.08); // 8% VAT
-  const total = subtotal - discount + vat;
-  return { guests, menuTotal, servicesTotal, subtotal, discount, vat, total };
+  const subtotalAfterDiscount = subtotal - discount + servicesTotal;
+  const vat = Math.round((subtotalAfterDiscount) * 0.08); // 8% VAT
+  const total = subtotalAfterDiscount + vat;
+  return {
+    guests,
+    menuTotal,
+    servicesTotal,
+    subtotal,
+    discount,
+    vat,
+    total
+  };
 }
 
 /**
@@ -169,6 +181,22 @@ export async function getAllBookings() {
   const json = await res.json();
   if (!res.ok) throw new Error(json?.message || 'Fetch bookings failed');
   return Array.isArray(json?.data) ? json.data : [];
+}
+
+/**
+ * Update a booking by ID
+ * Backend: PATCH /api/bookings/:id
+ */
+export async function updateBooking(bookingID, updates) {
+  const res = await fetch(`${API_URL}/${bookingID}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+    credentials: 'include',
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.message || 'Update booking failed');
+  return json;
 }
 
 /**

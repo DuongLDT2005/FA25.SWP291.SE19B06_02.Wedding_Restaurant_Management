@@ -6,7 +6,6 @@ import SubmitBookingButton from "./SubmitBookingButton";
 import useBooking from "../../../hooks/useBooking";
 import MainLayout from "../../../layouts/MainLayout";
 import useAuth from "../../../hooks/useAuth";
-import { restaurantDetail as mockRestaurant } from "../../restaurant/restaurantDetails/RestaurantDetailsPage";
 import { Col, Row } from "react-bootstrap";
 import { useAdditionRestaurant } from "../../../hooks/useAdditionRestaurant";
 
@@ -21,10 +20,15 @@ const BookingPage = () => {
   const { loadPromotions, promotions } = useAdditionRestaurant();
   
   // Use restaurant from state; fallback to mock
-  const restaurant = stateRestaurant || mockRestaurant;
-  // Prepare menus mapped for MenuSelectorModal: { id, name, price, categories: [{ name, limit, dishes: [string] }] }
+  const restaurant = stateRestaurant || {};
+  let fitlerMenu = Array.isArray(restaurant?.menus) ? restaurant.menus : [];
+  let fitlerServices = Array.isArray(restaurant?.services) ? restaurant.services : [];
+  fitlerMenu=fitlerMenu.filter(menu => menu.status === 1);
+  fitlerServices=fitlerServices.filter(service => service.status === 1);
+  // Prepare menus mapped for MenuSelectorModal: { 
+  //id, name, price, categories: [{ name, limit, dishes: [string] }] }
   const menus = useMemo(() => {
-    const src = Array.isArray(restaurant?.menus) ? restaurant.menus : [];
+    const src = fitlerMenu;
     return src.map((m) => ({
       id: m.id ?? m.menuID ?? m.name,
       name: m.name || 'Menu không tên',
@@ -40,22 +44,24 @@ const BookingPage = () => {
 
   // Prepare services for ServiceSelector
   const services = useMemo(() => {
-    const svc = Array.isArray(restaurant?.services) ? restaurant.services : [];
+    const svc = fitlerServices;
     return svc.map((s) => ({
       id: s.id ?? s.serviceID ?? s.name,
       name: s.name || 'Dịch vụ không tên',
-      price: s.price ?? s.basePrice ?? 0
+      price: s.price ?? s.basePrice ?? 0,
+      eventTypeID: s.eventTypeID || null,
     }));
   }, [restaurant]);
 
   // Prefill booking info from effective restaurant and hall
   useEffect(() => {
+
     if (!restaurant) return;
     try {
       setBookingField("eventTypeID", searchData?.eventType || ""); 
       setBookingField("restaurant", restaurant.name || "");
       setBookingField("tables", searchData?.tables || 0);
-      console.log(searchData?.tables);
+
       if (stateHall) {
         setBookingField("hall", stateHall.name || "");
         setBookingField("hallPrice", stateHall.price || 0);
@@ -83,7 +89,7 @@ const BookingPage = () => {
       <main className="container mx-auto px-4 py-12 space-y-12">
         <Row>
           <Col xs={12} md={6} lg={7} >
-            <BookingForm restaurant={restaurant} hall={stateHall} user={user} searchData={searchData} promotions={promotions} />
+            <BookingForm menus={menus} services={services} restaurant={restaurant} hall={stateHall} user={user} searchData={searchData} promotions={promotions} />
           </Col>
           <Col xs={12} md={6} lg={5} >
             <PriceSummaryPanel />

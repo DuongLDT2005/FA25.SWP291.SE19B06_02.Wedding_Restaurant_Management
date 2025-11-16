@@ -15,7 +15,7 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
   const [dishesPreview, setDishesPreview] = useState({});
   const [showMenuPreview, setShowMenuPreview] = useState(false);
   const [showServicePreview, setShowServicePreview] = useState(false);
-
+ 
   const { loadMenuById, loadDishCategoriesByRestaurant } = useAdditionRestaurant();
 
   // Check if data comes from search (should be locked)
@@ -26,6 +26,17 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
   const [eventType, setEventType] = useState(searchData?.eventType || bookingInfo?.eventType || "");
   const [tables, setTables] = useState(searchData?.tables || bookingInfo?.tables || 1);
   // Use hall object passed from props
+ 
+  const serviceFiltered = useMemo(() => {
+    // Filter services based on eventTypeID if provided
+    if (!eventType) return services;
+    const eventTypeNum = Number(eventType);
+    return services.filter(service => 
+      service.eventTypeID === eventTypeNum || 
+      service.eventTypeID === null || 
+      service.eventTypeID === undefined
+    );
+  }, [eventType, services]);
   const selectedHall = hall;
   // Update booking state when local state changes
   useEffect(() => {
@@ -43,14 +54,6 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
       setBookingField("tables", searchData.tables || tables);
     }
   }, [restaurant, selectedHall, date, eventType, tables, setBookingField, isFromSearch, searchData]);
-
-  const filteredServices = useMemo(() => {
-    if (!Array.isArray(services) || !eventType) return services || [];
-    return services.filter((s) => s.eventTypeID == eventType && s.status === true);
-  }, [services, eventType]);
-  const filteredMenus = useMemo(() => {
-    return (menus || []).filter(menu => menu.status === true);
-  }, [menus]);
 
   return (
     <section className="p-4 border rounded bg-white shadow-sm text-sm" style={{ fontSize: "0.95rem" }}>
@@ -164,7 +167,7 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
           </Col>
           <Col className="d-flex justify-content-end gap-2">
             <MenuSelectorModal
-              menus={filteredMenus}
+              menus={menus}
               loadMenuDetails={loadMenuById}
               loadDishCategoriesByRestaurant={loadDishCategoriesByRestaurant}
               restaurantId={restaurant?.restaurantID}
@@ -174,9 +177,20 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
                 const menuObj = typeof pickedMenu === 'string' ? { name: pickedMenu } : pickedMenu;
                 setMenu(menuObj);
                 setMenuPreview(menuObj);
-                // flatten dish names across categories
-                const dishNames = Object.values(selection.dishes || {}).flat();
-                setDishes(dishNames.map((d, idx) => ({ id: idx + 1, name: d })));
+                // Build full dish objects with real dishID using dishMap in categories
+                const dishObjects = [];
+                (menuObj.categories || []).forEach(cat => {
+                  const selectedNames = (selection.dishes?.[cat.name] || []);
+                  selectedNames.forEach(name => {
+                    const realId = cat.dishMap?.[name];
+                    dishObjects.push({ dishID: realId, name, categoryID: cat.categoryID });
+                  });
+                });
+                setDishes(dishObjects);
+                // Persist dishIDs separately in bookingInfo for submission
+                if (Array.isArray(selection.dishIDs)) {
+                  setBookingField('dishIDs', selection.dishIDs);
+                }
                 const dishesObj = {};
                 Object.keys(selection.dishes).forEach(cat => {
                   dishesObj[cat] = selection.dishes[cat];
@@ -238,7 +252,8 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
           <Col xs={5} className="fw-semibold">Dịch vụ</Col>
           <Col className="d-flex justify-content-end gap-2">
             <ServiceSelectorModal
-              services={filteredServices}
+              services={serviceFiltered}
+              // eventTypeID={eventType.eventTypeID || eventType}
               onSelect={(payload) => {
                 const svcList = (payload?.services || []).map((s) => ({
                   id: s.id,
@@ -251,7 +266,7 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
                 setServices(svcList);
               }}
             />
-            {filteredServices.length === 0 && (
+            {services.length === 0 && (
               <div className="text-muted small mt-2">Không có dịch vụ bổ sung phù hợp với loại sự kiện này.</div>
             )}
             {booking.services.length > 0 && (
@@ -288,7 +303,7 @@ const BookingInfoSection = ({ menus = [], services = [], restaurant, hall, searc
         )}
       </div>
       {/* <ServiceSelector services={services} /> */}
-      <PromotionBadge promotions={promotions} tables={searchData.tables} menu={menu} services={booking.services} />
+      <PromotionBadge promotions={promotions} tables={searchData.tables} menu={menu} services={booking.services} hallFee={selectedHall?.price || 0} />
       <SpecialRequestSection />
     </section>
   );

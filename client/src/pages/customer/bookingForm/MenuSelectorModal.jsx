@@ -15,33 +15,35 @@ const MenuSelectorModal = ({ menus = [], loadMenuDetails, loadDishCategoriesByRe
   const [menuDetails, setMenuDetails] = useState(null);
   const [loadingMenuDetails, setLoadingMenuDetails] = useState(false);
   const primaryColor = "#E11D48";
-
   // Load menu details when menu is selected
   useEffect(() => {
-    if (selectedMenu?.menuID) {
+    // console.log('Selected Menu changed:', selectedMenu);
+    if (selectedMenu?.id) {
+      
       setLoadingMenuDetails(true);
       Promise.all([
-        loadMenuDetails(selectedMenu.menuID),
+        loadMenuDetails(selectedMenu.id),
         loadDishCategoriesByRestaurant(restaurantId)
       ])
         .then(([menuData, categories]) => {
           // Filter active categories
-          const activeCategories = (categories || []).filter(cat => cat.status === true);
-          
-          // Group dishes by categoryID
+          const activeCategories = (categories || []).filter(cat => cat.status === 1);
+          // Group dishes by categoryID (keep names + map name->dishID)
           const dishesByCategory = {};
           (menuData.dishes || []).forEach(dish => {
             if (!dishesByCategory[dish.categoryID]) {
-              dishesByCategory[dish.categoryID] = [];
+              dishesByCategory[dish.categoryID] = { names: [], map: {} };
             }
-            dishesByCategory[dish.categoryID].push(dish.name);
+            dishesByCategory[dish.categoryID].names.push(dish.name);
+            dishesByCategory[dish.categoryID].map[dish.name] = dish.dishID;
           });
           
           // Assign dishes to categories
           const categoriesWithDishes = activeCategories.map(cat => ({
             ...cat,
             limit: cat.requiredQuantity || 0,
-            dishes: dishesByCategory[cat.categoryID] || []
+            dishes: dishesByCategory[cat.categoryID]?.names || [], // array of dish names (UI unchanged)
+            dishMap: dishesByCategory[cat.categoryID]?.map || {}    // name -> dishID
           }));
           
           // Merge into menuData
@@ -61,7 +63,7 @@ const MenuSelectorModal = ({ menus = [], loadMenuDetails, loadDishCategoriesByRe
       setMenuDetails(null);
       setLoadingMenuDetails(false);
     }
-  }, [selectedMenu?.menuID, loadMenuDetails, loadDishCategoriesByRestaurant, restaurantId]);
+  }, [selectedMenu?.id, loadMenuDetails, loadDishCategoriesByRestaurant, restaurantId]);
 
   // Reset selected dishes when menu changes
   useEffect(() => {
@@ -101,9 +103,24 @@ const MenuSelectorModal = ({ menus = [], loadMenuDetails, loadDishCategoriesByRe
 
   // Hoàn tất chọn
   const handleConfirm = () => {
+    // Derive dishIDs from selected dish names using dishMap
+    const dishIDSet = new Set();
+    const dishesPreview = {};
+    Object.entries(selectedDishes).forEach(([catName, dishNames]) => {
+      // Find matching category
+      const categoryObj = (menuDetails?.categories || []).find(c => c.name === catName);
+      const map = categoryObj?.dishMap || {};
+      dishesPreview[catName] = dishNames; // already names
+      dishNames.forEach(name => {
+        const id = map[name];
+        if (id != null) dishIDSet.add(id);
+      });
+    });
+    const dishIDs = Array.from(dishIDSet);
     onSelect({
-      menu: menuDetails || selectedMenu, // pass full menu details with dishes
-      dishes: selectedDishes,
+      menu: menuDetails || selectedMenu,
+      dishes: dishesPreview,
+      dishIDs,
     });
     setShow(false);
   };

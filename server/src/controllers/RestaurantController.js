@@ -155,6 +155,17 @@ class RestaurantController {
       res.status(500).json({ message: 'Error fetching top booked restaurants', error: err.message });
     }
   }
+  static async getTopRatedRestaurants(req, res) {
+    try {
+      console.log("Received request for top rated restaurants with query:", req.query);
+      const lim = Number(req.query?.limit);
+      const limit = Number.isFinite(lim) && lim > 0 ? lim : undefined;
+      const restaurants = await RestaurantService.getTopRatedRestaurants(limit);
+      res.json(restaurants);
+    } catch (err) {
+      res.status(500).json({ message: 'Error fetching top rated restaurants', error: err.message });
+    }
+  }
 }
 
 export default RestaurantController;

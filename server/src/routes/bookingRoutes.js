@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticateJWT, ensureCustomer, ensurePartner } from "../middlewares/jwtToken.js";
 import BookingController from "../controllers/BookingController.js";
-import PaymentController from "../controllers/PaymentController.js";
+import PaymentController from "../controllers/PaymentController.js"; // ✅ thêm dòng này
 import BookingStatus from "../models/enums/BookingStatus.js";
 const router = Router();
 
@@ -47,7 +47,7 @@ router.patch('/:id/customer/cancel', authenticateJWT, ensureCustomer, (req, res,
   req.body = req.body || {};
   req.body.status = BookingStatus.CANCELLED;
   next();
-}, BookingController.rejectByPartner);
+}, BookingController.updateBookingStatus);
 
 router.patch('/:id/customer/confirm', authenticateJWT, ensureCustomer, (req, res, next) => {
   req.body = req.body || {};

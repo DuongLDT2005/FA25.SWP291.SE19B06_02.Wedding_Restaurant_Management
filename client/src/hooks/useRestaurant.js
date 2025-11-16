@@ -5,6 +5,7 @@ import {
     fetchRestaurantById,
     performSearchRestaurants,
     fetchFeaturedRestaurants,
+    fetchTopRatedRestaurants,
     fetchRestaurantsByPartner,
     fetchToggleRestaurantStatus,
     createRestaurant,
@@ -14,8 +15,11 @@ import {
     clearError,
     selectRestaurants,
     selectFeaturedRestaurants,
+    selectTopRatedRestaurants,
     selectCurrentRestaurant,
     selectSearchResults,
+    selectStatus,
+    selectError,
 } from "../redux/slices/restaurantSlice";
 
 /**
@@ -26,17 +30,13 @@ import {
  */
 export function useRestaurant() {
     const dispatch = useDispatch();
-
-    // ====== Selectors (State + Memo hóa bằng shallowEqual) ======
-    const { list, status, error } = useSelector(
-        selectRestaurants,
-        shallowEqual
-    );
-    const featured = useSelector(selectFeaturedRestaurants, shallowEqual);
-    const current = useSelector(selectCurrentRestaurant, shallowEqual);
-    const searchResults = useSelector(selectSearchResults, shallowEqual);
-
-    // ====== Actions (Async + Memo hóa) ======
+    const list = useSelector(selectRestaurants);
+    const featured = useSelector(selectFeaturedRestaurants);
+    const topRated = useSelector(selectTopRatedRestaurants);
+    const current = useSelector(selectCurrentRestaurant);
+    const searchResults = useSelector(selectSearchResults);
+    const status = useSelector((s) => s.restaurants?.status);
+    const error = useSelector((s) => s.restaurants?.error);
 
     const loadAllPartner = useCallback(async (partnerID) => {
         const action = await dispatch(fetchRestaurantsByPartner(partnerID));
@@ -50,44 +50,49 @@ export function useRestaurant() {
             if (action.error) throw action.payload || action.error.message;
             return action.payload;
         },
-        [dispatch]
-    );
+        [dispatch]);
 
-    const loadAll = useCallback(async () => {
-        const action = await dispatch(fetchRestaurants());
+    
+  // ====== Actions (Async + Memo hóa) ======
+  const loadAll = useCallback(async () => {
+    const action = await dispatch(fetchRestaurants());
+    if (action.error) throw action.payload || action.error.message;
+    console.log("📦 [useRestaurant] Loaded all restaurants:", action.payload);
+    return action.payload;
+  }, [dispatch]);
+
+  const loadById = useCallback(
+    async (id) => {
+      const action = await dispatch(fetchRestaurantById(id));
+      if (action.error) throw action.payload || action.error.message;
+      console.log("📄 [useRestaurant] Loaded restaurant by ID:", action.payload);
+      return action.payload;
+    },
+    [dispatch]
+  );
+  
+  const loadFeatured = useCallback(async () => {
+      const action = await dispatch(fetchFeaturedRestaurants());
+      if (action.error) throw action.payload || action.error.message;
+      return action.payload;
+  }, [dispatch]);
+  const search = useCallback(
+    async (params) => {
+      console.log("🔍 [useRestaurant] Searching with:", params);
+      const action = await dispatch(performSearchRestaurants(params));
+      if (action.error) throw action.payload || action.error.message;
+      return action.payload;
+    },
+    [dispatch]
+  );
+     
+     
+      const loadTopRated = useCallback(async (params) => {
+        const action = await dispatch(fetchTopRatedRestaurants(params));
         if (action.error) throw action.payload || action.error.message;
-        console.log("📦 [useRestaurant] Loaded all restaurants:", action.payload);
         return action.payload;
     }, [dispatch]);
 
-    const loadById = useCallback(
-        async (id) => {
-            const action = await dispatch(fetchRestaurantById(id));
-            if (action.error) throw action.payload || action.error.message;
-            console.log("📄 [useRestaurant] Loaded restaurant by ID:", action.payload);
-            return action.payload;
-        },
-        [dispatch]
-    );
-    
-    // **FIXED:** Đóng ngoặc của useCallback cho hàm search
-    const search = useCallback(
-        async (params) => {
-            console.log("🔍 [useRestaurant] Searching with:", params);
-            const action = await dispatch(performSearchRestaurants(params));
-            if (action.error) throw action.payload || action.error.message;
-            // Bạn có thể trả về action.payload ở đây nếu cần
-            return action.payload; 
-        },
-        [dispatch]
-    );
-
-    const loadFeatured = useCallback(async () => {
-        const action = await dispatch(fetchFeaturedRestaurants());
-        if (action.error) throw action.payload || action.error.message;
-        return action.payload;
-    }, [dispatch]);
-    
     const updateOne = useCallback(
         async ({ id, payload }) => {
             const action = await dispatch(updateRestaurant({ id, payload }));
@@ -96,7 +101,6 @@ export function useRestaurant() {
         },
         [dispatch]
     );
-    
     // create
     const createOne = useCallback(
         async (payload) => {
@@ -122,6 +126,7 @@ export function useRestaurant() {
     return {
         list,
         featured,
+        topRated,
         current,
         searchResults,
         status,
@@ -133,6 +138,7 @@ export function useRestaurant() {
         toggleStatus,
         search,
         loadFeatured,
+        loadTopRated,
         createOne,
         addImage,
         clear,

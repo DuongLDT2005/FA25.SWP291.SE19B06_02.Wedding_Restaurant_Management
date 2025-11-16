@@ -33,7 +33,6 @@ import BookingList from "../pages/admin/management/booking/BookingList";
 import BookingListDetail from "../pages/admin/management/booking/BookingListDetail";
 import AdminProfilePage from "../pages/admin/Profile";
 import AdminLicensePage from "../pages/admin/management/license/AdminLicensePage";
-import AdminNegotiationPage from "../pages/admin/management/license/AdminNegotiationPage";
 import AdminRestaurantList from "../pages/admin/management/restaurant/AdminRestaurantList";
 import AdminPaymentListPage from "../pages/admin/management/payment/AdminPaymentListPage";
 import AdminPaymentDetail from "../pages/admin/management/payment/AdminPaymentDetail";
@@ -44,8 +43,10 @@ import AdminReportListPage from "../pages/admin/management/report/ReportList";
 import BookingListPage from "../pages/customer/bookingForm/BookingListPage";
 // import BookingForm from "../pages/customer/BookingForm";
 import Profile from "../pages/customer/Profile";
-import PaymentPage from "../pages/payment/PaymentPage";
-import BookingDetailsPage from "../pages/booking/BookingDetails/BookingDetailsPage";
+import PaymentPage from "../pages/customer/payment/PaymentPage";
+import PaymentSuccessPage from "../pages/customer/payment/PaymentSuccessPage";
+import PaymentFailedPage from "../pages/customer/payment/PaymentFailedPage";
+import BookingDetailsPage from "../pages/customer/booking/BookingDetails/BookingDetailsPage";
 import BookingPage from "../pages/customer/bookingForm/BookingPage";
 
 function AppRoutes() {
@@ -91,14 +92,13 @@ function AppRoutes() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<UserList />} />
-        <Route path="/admin/users/:id" element = {<UserDetail/>} />
+        <Route path="/admin/users/:id" element={<UserDetail />} />
         <Route path="/admin/restaurants" element={<AdminRestaurantList />} />
         <Route path="/admin/restaurants/:id" element = {<AdminRestaurantDetail/>}/>
         <Route path="/admin/bookings" element={<BookingList />} />
         <Route path="/admin/bookings/:id" element={<BookingListDetail />} />
         <Route path="/admin/license" element={<AdminLicensePage />} />
-        <Route path="/admin/negotiation/:partnerID" element={<AdminNegotiationPage />} />
-        <Route path="/admin/profile" element= {<AdminProfilePage/>} />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
         <Route path="/admin/payments" element={<AdminPaymentListPage />} />
         <Route path="/admin/payments/:id" element={<AdminPaymentDetail />} />
         <Route path="/admin/reviews" element={<AdminReviewListPage />} />
@@ -119,6 +119,8 @@ function AppRoutes() {
         {/* Payment Routes */}
         <Route path="/payment/:bookingId" element={<PaymentPage />} />
         <Route path="/payment/new" element={<PaymentPage />} />
+        <Route path="/payment/success" element={<PaymentSuccessPage />} />
+        <Route path="/payment/failed" element={<PaymentFailedPage />} />
 
         {/* Thêm các route khác tại đây */}
         <Route path="/searchresult" element={<SearchResultList />} />

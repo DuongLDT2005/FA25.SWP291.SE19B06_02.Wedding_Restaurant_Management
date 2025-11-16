@@ -18,9 +18,6 @@ const router = Router();
 // GET /api/admin/bookings - Lấy danh sách tất cả booking
 router.get("/", AdminBookingController.getAllBookings);
 
-// GET /api/admin/bookings/customer/:customerID - Lấy bookings của customer (phải đặt TRƯỚC /:id)
-router.get("/customer/:customerID", AdminBookingController.getBookingsByCustomerID);
-
 // GET /api/admin/bookings/:id - Lấy chi tiết booking
 router.get("/:id", AdminBookingController.getBookingDetail);
 

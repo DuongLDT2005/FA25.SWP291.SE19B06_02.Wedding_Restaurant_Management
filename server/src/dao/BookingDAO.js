@@ -3,6 +3,9 @@ import { Op } from 'sequelize';
 import { toDTO, toDTOs } from '../utils/convert/dto.js';
 import BookingStatus from '../models/enums/BookingStatus.js';
 import UserDAO from './userDao.js';
+import MenuDAO from './MenuDAO.js';
+import DishDAO from './DishDAO.js';
+import DishCategoryDAO from './DishCategoryDAO.js';
 // Models from Sequelize
 const {
   sequelize,
@@ -20,6 +23,8 @@ const {
   customer: CustomerModel,
   eventtype: EventTypeModel,
   user: UserModel,
+  address: AddressModel, // Add AddressModel
+  dishcategory: DishCategoryModel,
 } = db;
 
 class BookingDAO {
@@ -85,14 +90,21 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
+            include: [
+              { model: RestaurantPartnerModel, as: 'partner' },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,
@@ -108,7 +120,39 @@ class BookingDAO {
       order: [['createdAt', 'DESC']]
     });
 
-    return toDTOs(rows);
+    const dtos = toDTOs(rows);
+    // Fetch menu data using MenuDAO and add categories for each booking
+    for (const booking of dtos) {
+      if (booking.menuID) {
+        const menuData = await MenuDAO.getByID(booking.menuID, { includeDishes: false });
+        if (menuData) {
+          booking.menu = menuData;
+          // Add categories to menu based on booking dishes
+          const categoryMap = {};
+          booking.bookingdishes.forEach(bd => {
+            if (bd.dish && bd.dish.categoryID) {
+              if (!categoryMap[bd.dish.categoryID]) {
+                categoryMap[bd.dish.categoryID] = {
+                  categoryID: bd.dish.categoryID,
+                  name: bd.dish.category?.name || 'Unknown',
+                  dishes: []
+                };
+              }
+              categoryMap[bd.dish.categoryID].dishes.push(bd.dish);
+            }
+          });
+          booking.menu.categories = Object.values(categoryMap);
+        }
+      }
+    }
+    // Replace addressID with fullAddress in restaurant
+    dtos.forEach(booking => {
+      if (booking.hall?.restaurant) {
+        booking.hall.restaurant.fullAddress = booking.hall.restaurant.address?.fullAddress;
+        delete booking.hall.restaurant.address;
+      }
+    });
+    return dtos;
   }
 
   // Get the Restaurant Partner owning the hall where this booking is placed
@@ -231,14 +275,21 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{ model: RestaurantPartnerModel, as: 'partner' }]
+            include: [
+              { model: RestaurantPartnerModel, as: 'partner' },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
-        { model: MenuModel, as: 'menu' },
+        // Remove menu include - will fetch via MenuDAO
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,
@@ -252,13 +303,53 @@ class BookingDAO {
         }
       ]
     });
-    return toDTO(row);
+    const dto = toDTO(row);
+    
+    // Fetch menu data using MenuDAO
+    if (dto?.menuID) {
+      try {
+        const allMenus = await MenuDAO.getByRestaurantID(dto.hall?.restaurant?.restaurantID).catch(() => []);
+        // Find the specific menu for this booking
+        dto.menu = allMenus.find(menu => menu.menuID === dto.menuID) || null;
+        
+        // Add categories to menu based on booking dishes
+        if (dto.menu && dto.bookingdishes?.length > 0) {
+          // Get all dish categories for this restaurant
+          const allCategories = await DishDAO.getCategoriesByRestaurantID(dto.hall?.restaurant?.restaurantID).catch(() => []);
+          
+          // Group dishes by categoryID from bookingdishes
+          const dishesByCategory = {};
+          dto.bookingdishes.forEach(bookingDish => {
+            if (bookingDish.dish?.categoryID) {
+              if (!dishesByCategory[bookingDish.dish.categoryID]) {
+                dishesByCategory[bookingDish.dish.categoryID] = [];
+              }
+              dishesByCategory[bookingDish.dish.categoryID].push(bookingDish.dish.name);
+            }
+          });
+          
+          // Create categories array for the menu
+          dto.menu.categories = allCategories
+            .filter(cat => dishesByCategory[cat.categoryID]) // Only include categories that have dishes in this booking
+            .map(cat => ({
+              ...cat,
+              dishes: dishesByCategory[cat.categoryID] || []
+            }));
+        }
+      } catch (error) {
+        console.error('Error fetching menu data:', error);
+        dto.menu = null;
+      }
+    }
+    
+    // Replace addressID with fullAddress in restaurant
+    if (dto?.hall?.restaurant) {
+      dto.hall.restaurant.fullAddress = dto.hall.restaurant.address?.fullAddress;
+      delete dto.hall.restaurant.address;
+    }
+    return dto;
   }
 
-  /**
-   * Get all bookings that belong to restaurants owned by a given partner.
-   * This traverses hall -> restaurant -> restaurantPartner and filters by partner ID.
-   */
   static async getBookingsByPartner(partnerID) {
     if (!partnerID) return [];
     const rows = await BookingModel.findAll({
@@ -310,18 +401,25 @@ class BookingDAO {
           include: [{
             model: RestaurantModel,
             as: 'restaurant',
-            include: [{
-              model: RestaurantPartnerModel,
-              as: 'partner',
-              where: { restaurantPartnerID: partnerID },
-            }]
+            include: [
+              {
+                model: RestaurantPartnerModel,
+                as: 'partner',
+                where: { restaurantPartnerID: partnerID },
+              },
+              { model: AddressModel, as: 'address', attributes: ['fullAddress'] } // Only return fullAddress
+            ]
           }]
         },
         { model: MenuModel, as: 'menu' },
         {
           model: BookingDishModel,
           as: 'bookingdishes',
-          include: [{ model: DishModel, as: 'dish' }]
+          include: [{
+            model: DishModel,
+            as: 'dish',
+            include: [{ model: DishCategoryModel, as: 'category' }]
+          }]
         },
         {
           model: BookingServiceModel,
@@ -336,7 +434,15 @@ class BookingDAO {
       ],
       order: [['createdAt', 'DESC']]
     });
-    return toDTOs(rows);
+    const dtos = toDTOs(rows);
+    // Replace addressID with fullAddress in restaurant
+    dtos.forEach(booking => {
+      if (booking.hall?.restaurant) {
+        booking.hall.restaurant.fullAddress = booking.hall.restaurant.address?.fullAddress;
+        delete booking.hall.restaurant.address;
+      }
+    });
+    return dtos;
   }
 
   // Replace dishes for a booking
@@ -457,6 +563,29 @@ class BookingDAO {
     return rows.map((r) => ({ ...r, count: Number(r.cnt ?? r.count ?? 0) }));
   }
 
+  static async topRatedRestaurantReview(limit = 8) {
+    const rows = await sequelize.query(
+      `SELECT r.restaurantID, r.name, AVG(rv.rating) AS avgRating, COUNT(rv.reviewID) AS cnt
+       FROM restaurant r
+       JOIN hall h ON h.restaurantID = r.restaurantID
+       JOIN booking b ON b.hallID = h.hallID
+       JOIN review rv ON rv.bookingID = b.bookingID
+       WHERE r.status = 1
+       GROUP BY r.restaurantID, r.name
+       ORDER BY avgRating DESC, cnt DESC
+       LIMIT :limit`,
+      {
+        replacements: { limit },
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    return rows.map((r) => ({
+      ...r,
+      avgRating: Number(r.avgRating ?? 0),
+      count: Number(r.cnt ?? 0)
+    }));
+  }
 }
 
 export default BookingDAO;

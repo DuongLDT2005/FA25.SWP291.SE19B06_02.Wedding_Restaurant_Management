@@ -5,6 +5,10 @@ import { toDTO, toDTOs } from '../utils/convert/dto.js';
 const { payment: PaymentModel, sequelize } = db;
 
 class PaymentDAO {
+  static async getByID(paymentID) {
+    const row = await PaymentModel.findByPk(paymentID);
+    return toDTO(row);
+  }
   // Return plain objects for easier handling in services/controllers
   static async getByBookingID(bookingID) {
     const rows = await PaymentModel.findAll({
@@ -17,6 +21,21 @@ class PaymentDAO {
   static async getByRestaurantID(restaurantID) {
     const rows = await PaymentModel.findAll({
       where: { restaurantID },
+      order: [["paymentDate", "DESC"]],
+    });
+    return toDTOs(rows);
+  }
+
+  static async getByRestaurantPartnerID(restaurantPartnerID) {
+    const rows = await PaymentModel.findAll({
+      include: [
+        {
+          model: db.restaurant,
+          as: "restaurant",
+          attributes: ["restaurantID", "name", "restaurantPartnerID"],
+          where: { restaurantPartnerID },
+        },
+      ],
       order: [["paymentDate", "DESC"]],
     });
     return toDTOs(rows);
@@ -37,7 +56,7 @@ class PaymentDAO {
       paymentMethod = 0,
       status = paymentStatus.PENDING ?? 0,
       transactionRef = null,
-      paymentDate = null,
+      paymentDate, // if undefined, let DB default apply
       released = false,
       refundedAmount = 0,
       refundReason = null,
@@ -50,7 +69,7 @@ class PaymentDAO {
       throw new Error("Invalid amount for payment");
     }
 
-    const created = await PaymentModel.create({
+    const createData = {
       bookingID,
       restaurantID,
       amount,
@@ -58,21 +77,30 @@ class PaymentDAO {
       paymentMethod,
       status,
       transactionRef,
-      paymentDate,
       released: released ? 1 : 0,
       refundedAmount: refundedAmount ?? 0,
       refundReason,
       refundDate,
       refundTransactionRef,
       providerResponse,
-    });
+    };
+    if (typeof paymentDate !== 'undefined' && paymentDate !== null) {
+      createData.paymentDate = paymentDate;
+    }
+
+    const created = await PaymentModel.create(createData);
 
     return toDTO(created);
   }
 
   static async updatePaymentStatus(paymentID, newStatus) {
+    const updates = { status: newStatus };
+    // If payment succeeds, stamp paymentDate if not set
+    if (newStatus === (paymentStatus.status?.SUCCESS ?? 2)) {
+      updates.paymentDate = new Date();
+    }
     const [updatedRows] = await PaymentModel.update(
-      { status: newStatus },
+      updates,
       { where: { paymentID } }
     );
     return updatedRows > 0;

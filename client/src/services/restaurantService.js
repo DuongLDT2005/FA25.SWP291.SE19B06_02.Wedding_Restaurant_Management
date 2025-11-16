@@ -34,8 +34,6 @@ export const getRestaurantsByPartner = async (partnerID) => {
 
 // === Tạo mới nhà hàng ===
 export const createRestaurant = async (restaurantData) => {
-  console.log("[restaurantService] POST", API_URL, restaurantData);
-
   const res = await fetch(`${API_URL}`, {
     method: "POST",
     headers: {
@@ -180,5 +178,19 @@ export const getTopBookedRestaurants = async (params = {}) => {
   });
   const data = await res.json().catch(() => []);
   if (!res.ok) throw data || new Error("Fetch top booked restaurants failed");
+  return data;
+};
+
+export const getTopRatedRestaurants = async (params = {}) => {
+  const qp = new URLSearchParams();
+  if (params?.limit != null) qp.set("limit", String(params.limit));
+  const url = qp.toString() ? `${API_URL}/top_rated?${qp.toString()}` : `${API_URL}/top_rated`;
+  const res = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const data = await res.json().catch(() => []);
+  if (!res.ok) throw data || new Error("Fetch top rated restaurants failed");
   return data;
 };

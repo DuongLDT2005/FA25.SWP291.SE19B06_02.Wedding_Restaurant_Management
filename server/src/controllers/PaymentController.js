@@ -1,6 +1,7 @@
 import PayosServices from "../services/payment/PayosServices.js";
 import BookingServices from "../services/Booking/BookingServices.js";
 import PaymentService from "../services/payment/PaymentServices.js";
+import { paymentStatus } from "../models/enums/paymentStatus.js";
 
 class PaymentController {
   // ==============================
@@ -32,6 +33,18 @@ class PaymentController {
     }
   }
 
+  static async getPaymentsByPartner(req, res) {
+    try {
+      const { partnerID } = req.params;
+      if (!partnerID) return res.status(400).json({ success: false, message: "partnerID is required" });
+      const rows = await PaymentService.getPaymentsByPartner(Number(partnerID));
+      return res.status(200).json({ success: true, data: rows });
+    } catch (err) {
+      console.error("[PaymentController] ❌ getPaymentsByPartner:", err);
+      return res.status(400).json({ success: false, message: err?.message || String(err) });
+    }
+  }
+
   /**
    * Tạo link thanh toán đặt cọc PayOS
    * @route POST /api/payments/deposit/:bookingID
@@ -45,7 +58,58 @@ class PaymentController {
         phone: req.body?.phone,
       };
 
-      const result = await PayosServices.createCheckoutForBooking(bookingID, buyer);
+      // Ensure there is a pending DEPOSIT payment, and use its amount
+      let amountOverride = null;
+      try {
+        const payments = await PaymentService.getPaymentsByBooking(bookingID);
+        const depositPay = (payments || []).find(p => (p?.type === 0 || p?.type === (paymentStatus?.type?.DEPOSIT ?? 0)) && (p?.status === 0 || p?.status === (paymentStatus?.status?.PENDING ?? 0) || p?.status === (paymentStatus?.status?.PROCESSING ?? 1)));
+        if (depositPay?.amount) amountOverride = Number(depositPay.amount);
+        // If no deposit payment exists yet, create one now (fallback safety)
+        if (!depositPay) {
+          // Load booking total to compute deposit (30%)
+          const booking = await BookingServices.getBookingById(bookingID);
+          const total = Number(booking?.totalAmount || 0);
+          const computed = Math.round(total * 0.3);
+          if (computed > 0) {
+            const created = await PaymentService.createPayment({
+              bookingID,
+              restaurantID: booking?.hall?.restaurant?.restaurantID || booking?.restaurantID || null,
+              amount: computed,
+              type: 0,
+              paymentMethod: 0,
+              status: 0,
+            });
+            amountOverride = computed;
+          }
+        }
+      } catch (e) {
+        console.error("[PaymentController] ensure deposit payment failed:", e?.message || e);
+      }
+
+      let result;
+      try {
+        result = await PayosServices.createCheckoutForBooking(bookingID, buyer, amountOverride);
+      } catch (e) {
+        const msg = String(e?.message || e || "");
+        const isDuplicate = msg.includes("231") || msg.includes("đã tồn tại") || msg.toLowerCase().includes("already exists") || msg.includes("HTTP 200");
+        if (isDuplicate) {
+          // Fetch existing link info and return it gracefully
+          const info = await PayosServices.getLinkInfo(Number(bookingID));
+          const checkoutUrl = info?.data?.checkoutUrl || info?.checkoutUrl || info?.shortLink || null;
+          const amount = amountOverride ?? info?.data?.amount ?? info?.amount ?? null;
+          if (checkoutUrl) {
+            return res.status(200).json({
+              success: true,
+              bookingID: Number(bookingID),
+              orderCode: Number(bookingID),
+              amount,
+              checkoutUrl,
+              reused: true,
+            });
+          }
+        }
+        throw e;
+      }
 
       // (Tuỳ chọn) có thể lưu tạm payment record vào DB ở đây
       // await PaymentDAO.create({
